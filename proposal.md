@@ -15,6 +15,7 @@ Possible dependencies:
 * `toytree`: to generate phylogenies.
 * `msprime`: process and read .tree objects output by SLiM3
 * `pyslim`: process and read .tree objects output by SLiM3
+* `tskit`: used by `pyslim`
 
 
 Classes:
@@ -75,7 +76,7 @@ The `Demography` class (submodule?) of the program will take the phylogeny from 
 Beyond that, the program will largely generate its own data and output summary statistics that can be used to evaluate observed data. The user will choose from a relatively simple set of options.
 
 
-### Description or demonstration of user interaction
+### Demonstration of user interaction
 The user can optionally provide a phylogeny, which will control the demography of the simulation (detailed above).
 
 User can then adjust other simulation parameters, such as life history, mutation rate, and recombination rate. `package` has built-in defaults for many values (which are adjusted dynamically by the script based on the parameters the user *does* define), so the user does not have to define every parameter for every run:
@@ -94,3 +95,8 @@ User can calculate dN/dS, perform an MK-test, visualize mutations on a phylogeny
 # example of summary statistics from SLiM output
 ...
 ```
+
+### Similar Tools
+[`pyslim`](https://github.com/tskit-dev/pyslim) is a python module that handles tree sequence files output by SLiM as a thin interface with `tskit`. This module will make it much easier to generate summary statistics for the user, as they've already done a lot of the work. `pyslim` will also allow `program` to use a combination of SLiM forward-in-time simulation and coalescent in `msprime` to run simulations more quickly. 
+
+To my knowledge, there are no other publicly available python wrappers for SLiM3
