@@ -1,6 +1,6 @@
 
 # project
-(candidate name: SHaDi) 
+(candidate names: SHaDi, stout) 
 
 ### Description of project goal:
 This program will be a wrapper around the forward-in-time evolutionary simulation program [SLiM3](https://messerlab.org/slim/). It will accept a phylogeny from the user and generate equivalent population demography inside a script that can be fed directly into SLiM3. THe user will also be able to define a number of different parameters for the simulation and the program will prepare the slim script appropriately along with a dispatch script, which is necessary to run SLiM3 from the command line. The user will be able to run the SLiM simulation using the program. After the simulation is complete, the program will also provide a number of summary statistics and methods for inspecting the output of the simulation. 
@@ -45,8 +45,8 @@ The `Demography` class (submodule?) of the program will take the phylogeny from 
 
 | sourceidx | child1    | child2    | nodeheight| gen       |
 | --------- | --------- | --------- | --------- | --------- |
-| 5         | 4         | 3         | 600000    | 800       |
-| 3         | 2         | 1         | 300000    | 1400      |
+| 5         | 4         | 3         | 600000    | 801       |
+| 3         | 2         | 1         | 300000    | 1401      |
  
  `gen` = 1+(abs(nodeheight-treeheight)*(gentime/treeheight))
 
@@ -67,7 +67,7 @@ The `Demography` class (submodule?) of the program will take the phylogeny from 
 #append until out of rows
 
 #then, write last line:
-self.gentime late() { 
+{self.gentime} late() { 
 	sim.outputFull(); 
 }
 ```
