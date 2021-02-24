@@ -7,4 +7,4 @@ and converts user-provided phylogeny into SLiM3-compatible subpopulation demogra
 
 __version__ = "0.0.1"
 
-from projoect.program import Script
+from project.program import Script
