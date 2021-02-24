@@ -1,4 +1,4 @@
-#Program
+# Program
 (candidate names: SHaDi, stout) 
 
 `program` is a wrapper around SLiM3 that implements selection on alternating hapliod/diploid lifecycles
