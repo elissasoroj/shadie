@@ -44,32 +44,37 @@ Users will be able to input a phylogeny and the program will generate the corres
 
 The `Demography` class (submodule?) of the program will take the phylogeny from the user (provided as newick string or toytree object). It will use `toytree` to traverse the tree from root to tips and collect information it needs to generate the SLiM demography in a `pandas` dataframe, for example:
 
-| sourceidx | child1    | child2    | nodeheight| gen       |
-| --------- | --------- | --------- | --------- | --------- |
-| 5         | 4         | 3         | 600000    | 801       |
-| 3         | 2         | 1         | 300000    | 1401      |
+| source    | child2    | nodeheight| gen       |
+| --------- | --------- | --------- | --------- |
+| 0         | 3         | 1000000   | 1         |
+| 3         | 5         | 600000    | 801       |
+| 0         | 2         | 600000    | 801       |
+| 3         | 4         | 300000    | 1401      |
+| 0         | 1         | 300000    | 1401      |
  
- `gen` = 1+(abs(nodeheight-treeheight)*(gentime/treeheight))
+- each node moving from tips to root is renamed with the lowest number of the child tips
+- `gen` = 1+(abs(nodeheight-treeheight)*(gentime/treeheight))
+- This example data is from a tree generated in toytree, wich has no outgroup. Because the first split happens at gen1, we probably want a burn-in time before the simulation begins. 
 
  This will be used to generate this part of the script, which controls when populations in the program split into subpopulations:
 
 ```
  #write beginning row:
-1{
-	sim.addSubpop("p{nodeidx}", K);
+1 { sim.addSubpop("p1", K); 
 }
-
-#for each row in pandas DF, write the following:
+#for row in pandas DF, write the following:
 {gen}{
-	sim.addSubpop("p{child1}", K);
-	sim.addSubpop("p{child2}", K);
-	p{sourceidx}.setSubpopulationSize(0);
+    sim.addSubpopSplit("p{dest}", K, p{source});
+    p{source}.setMigrationRates(p{dest}, 1.0);
+}
+{gen+1}{
+    p1.setMigrationRates(p2, 0.0);
 }
 #append until out of rows
 
 #then, write last line:
-{self.gentime} late() { 
-	sim.outputFull(); 
+self.gentime late() { 
+    sim.outputFull(); 
 }
 ```
 
