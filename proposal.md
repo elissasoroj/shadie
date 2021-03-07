@@ -3,9 +3,9 @@
 ## "Simulating Haploid-Diploid Evolution"
 
 ### Description of project goal:
-`shadie` will be a wrapper around the forward-in-time evolutionary simulation program [SLiM3](https://messerlab.org/slim/). It will accept a phylogeny from the user and generate equivalent population demography inside a script that can be fed directly into SLiM3. THe user will also be able to define a number of different parameters for the simulation and the program will prepare the slim script appropriately along with a dispatch script, which is necessary to run SLiM3 from the command line. The user will be able to run the SLiM simulation using the program. After the simulation is complete, the program will also provide a number of summary statistics and methods for inspecting the output of the simulation. 
+`shadie` will be a wrapper around the forward-in-time evolutionary simulation program [SLiM3](https://messerlab.org/slim/). It will accept a phylogeny from the user and generate equivalent population demography inside a script that can be fed directly into SLiM3. THe user will also be able to define a number of different parameters for the simulation and the program will prepare the slim script appropriately along with a dispatch script, which is necessary to run SLiM3 from the command line. The user will be able to run the SLiM simulation using a `shadie` command. After the simulation is complete, `shadie` will also provide a number of summary statistics and methods for inspecting the output of the simulation. 
 
-The program is specifically designed to model the varied biphasic lifecycles in plants, allowing the user to explore the evolutionary consequences of different life histories. 
+`shadie` is specifically designed to model the varied biphasic lifecycles in plants, allowing the user to explore the evolutionary consequences of different life histories. 
 
 
 ### Description of the code:
@@ -42,7 +42,7 @@ Parameters (not editable by user):
 ### Description of the data:
 Users will be able to input a phylogeny and the program will generate the corresponding population demography for input into SLiM. 
 
-The `Demography` class (submodule?) of the program will take the phylogeny from the user (provided as newick string or toytree object). It will use `toytree` to traverse the tree from root to tips and collect information it needs to generate the SLiM demography in a `pandas` dataframe, for example:
+The `Demography` submodule of `shadie` will take the phylogeny from the user (provided as newick string or toytree object). It will use `toytree` to traverse the tree from root to tips and collect information it needs to generate the SLiM demography in a `pandas` dataframe, for example:
 
 | source    | child2    | nodeheight| gen       |
 | --------- | --------- | --------- | --------- |
@@ -54,7 +54,7 @@ The `Demography` class (submodule?) of the program will take the phylogeny from 
  
 - each node moving from tips to root is renamed with the lowest number of the child tips
 - `gen` = 1+(abs(nodeheight-treeheight)*(gentime/treeheight))
-- This example data is from a tree generated in toytree, wich has no outgroup. Because the first split happens at gen1, we probably want a burn-in time before the simulation begins. 
+- This example data is from a tree generated in toytree, which has no outgroup. Because the first split happens at gen1, we probably want a burn-in time before the simulation begins. 
 
  This will be used to generate this part of the script, which controls when populations in the program split into subpopulations:
 
@@ -104,4 +104,4 @@ User can calculate dN/dS, perform an MK-test, visualize mutations on a phylogeny
 ### Similar Tools
 [`pyslim`](https://github.com/tskit-dev/pyslim) is a python module that handles tree sequence files output by SLiM as a thin interface with `tskit`. This module will make it much easier to generate summary statistics for the user, as they've already done a lot of the work. `pyslim` will also allow `program` to use a combination of SLiM forward-in-time simulation and coalescent in `msprime` to run simulations more quickly. 
 
-To my knowledge, there are no other publicly available python wrappers for SLiM3
+To my knowledge, there are no other publicly available python wrappers for SLiM3 and no other evolution simulation programs that were built to model selection on biphasic lifecycles. 

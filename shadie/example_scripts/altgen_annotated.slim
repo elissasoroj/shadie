@@ -70,12 +70,12 @@ early() //this code clears the unfertilized gametes before moving forward with t
 		p2.individuals.tag = 0;
 		sim.chromosome.setMutationRate(0.0);
 	}
-	else //for oodd-numbered generations
+	else //for odd-numbered generations
 		 // gametes have just undergone fertilization
 	{
 		p2.fitnessScaling = 0.0;//haploid gametes removed
 		p1.fitnessScaling = K / p1.individualCount; //implements density dependence 
-		sim.chromosome.setMutationRate(MU); //mutation trate reset
+		sim.chromosome.setMutationRate(MU); //mutation rate reset
 	}
 }
 

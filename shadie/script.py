@@ -6,8 +6,7 @@ Generates script for SLiM simulation
 """
 
 #imports
-import 
-
+import pandas as pd
 
 
 class Script(object):
@@ -17,9 +16,10 @@ class Script(object):
 	def __init__(
 		self,
 		tree=None,
-		Ne = 1000,
-		nsamples=2,          # number of sampled haplotypes per tip in final data 
-		organism="fern",    # defines how gametes get selected and replicate
+		Ne = 1000,			#K
+		nsamples=2,         # number of sampled haplotypes per tip in final data 
+		organism="pter",    # defines how gametes get selected and replicate
+		mutrate=1e-7,
 		recomb=1e-9,		#sets rate in `initializeRecombinationRate`, also accepts map
 		genome_size=1e6,	#will be used to calculate chromosome end (length -1)
 		model = "nonWF",	#write "nonWF" to initailizeSLiMModelType()
@@ -50,7 +50,30 @@ class Script(object):
 	"""
 
 	def simulate(self):
-		#calls SLiM to run the simulations
+		"calls SLiM to run the simulations"
+
+	def write(self, filename="shadie.slim"):
+		"writes the .slim script; optional to provide filename as 'filename.slim'"
+	    filename.self = filename
+	    mutrate.self = mutrate
+	    muttype.self = muttype
+	    geneltype.self = geneltype
+	    genel.self = genel
+	    recomb.self = recomb
+	    Ne.self = Ne
+	    model.self = model
+	    #write initialize callbacks
+	    script = open(filename.self, "a") #appends so that user does not accidentally overwrite old simulation
+	    L1 = "initialize() {\ninitializeSLiMModelType("+model.self+");\n"
+	    L2 = "defineConstant('K',"+Ne.self+");\n"
+	    L3 = "initializeMutationRate("+mutrate.self+");\n"
+	    L4 = "initializeMutationType"+muttype.self+";\n m1.convertToSubstitution = T;\n"
+	    L5 = "initializeGenomicElementType"+geneltype.self+";\n"
+	    L6 = "initializeGenomicElement"+genel.self+";\n"
+	    L7 = "initializeRecombinationRate("+recomb.self+");\n}"
+	    lines = [L1, L2, L3, L4, L5, L6, L7]
+	    script.writelines(lines)
+	    script.close
 
 
 # call simulate with details on genome structure (and which life stage selection occurs?)
