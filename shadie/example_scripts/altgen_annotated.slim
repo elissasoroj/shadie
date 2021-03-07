@@ -1,0 +1,86 @@
+// Example .slim script
+// Keywords: alternation of generations, sporophyte, gametophyte, sperm, eggs, 
+// 			 diploid, haploid, mating system, fertilization, meiosis, reproduction()
+
+initialize()
+{
+	defineConstant("K", 500);     // carrying capacity (diploid)
+	defineConstant("MU", 1e-7);   // mutation rate
+	defineConstant("R", 1e-7);    // recombination rate
+	defineConstant("L1", 1e5-1);  // chromosome end (length - 1)
+	
+	initializeSLiMModelType("nonWF");
+	initializeSex("A"); // "A" specified modelling of autosome
+	initializeMutationRate(MU);
+	initializeMutationType("m1", 0.5, "f", 0.0); // neutral mutationos only
+	m1.convertToSubstitution = T;
+	initializeGenomicElementType("g1", m1, 1.0); // 
+	initializeGenomicElement(g1, 0, L1); // 
+	initializeRecombinationRate(R);
+}
+1 early()
+{
+	sim.addSubpop("p1", K); //diploid population
+	sim.addSubpop("p2", 0); //haploid population (sperm and ovules)
+}
+reproduction(p1) //produces sperm and egg
+{
+	g_1 = genome1; //defined here to simply code downstream
+	g_2 = genome2;
+	
+	for (meiosisCount in 1:5) //each diploid individual undergoes meiosis 5x
+	{
+		if (individual.sex == "M")
+		{
+			// drawBreakpoints generates the same breakpoints that internal SLiM would generate
+			//uses recomobination rate set for the moodel
+			breaks = sim.chromosome.drawBreakpoints(individual);
+			//resulting haploids are added to p2:
+			s_1 = p2.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL, "M");
+			//addRecombinant(leaves genomes and breakpoints NULL to avoid making second chromosome copy)
+			s_2 = p2.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL, "M");
+			
+			breaks = sim.chromosome.drawBreakpoints(individual);
+			s_3 = p2.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL, "M");
+			s_4 = p2.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL, "M");
+		}
+		else if (individual.sex == "F")
+		{
+			breaks = sim.chromosome.drawBreakpoints(individual);
+			if (runif(1) <= 0.5)
+				e = p2.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL, "F");
+			else
+				e = p2.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL, "F");
+		}
+	}
+}
+reproduction(p2, "F") //produces fertilized ovules that develop into diploids
+{
+	mate = p2.sampleIndividuals(1, sex="M", tag=0);
+	mate.tag = 1; //tags used sperm so they are not used again
+	
+	child = p1.addRecombinant(individual.genome1, NULL, NULL,
+		mate.genome1, NULL, NULL); //no breakpoints - genome is clonal copy of male and female
+}
+early() //this code clears the unfertilized gametes before moving forward with the simulation
+{
+	if (sim.generation % 2 == 0) //for even-numbered generations; 
+	{
+		p1.fitnessScaling = 0.0;
+		p2.individuals.tag = 0;
+		sim.chromosome.setMutationRate(0.0);
+	}
+	else //for oodd-numbered generations
+		 // gametes have just undergone fertilization
+	{
+		p2.fitnessScaling = 0.0;//haploid gametes removed
+		p1.fitnessScaling = K / p1.individualCount; //implements density dependence 
+		sim.chromosome.setMutationRate(MU); //mutation trate reset
+	}
+}
+
+1000 late()
+{
+	sim.simulationFinished();
+}
+

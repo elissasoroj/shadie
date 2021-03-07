@@ -1,9 +1,9 @@
 
-# project
-(candidate names: SHaDi, stout) 
+# SHaDiE
+## "Simulating Haploid-Diploid Evolution"
 
 ### Description of project goal:
-This program will be a wrapper around the forward-in-time evolutionary simulation program [SLiM3](https://messerlab.org/slim/). It will accept a phylogeny from the user and generate equivalent population demography inside a script that can be fed directly into SLiM3. THe user will also be able to define a number of different parameters for the simulation and the program will prepare the slim script appropriately along with a dispatch script, which is necessary to run SLiM3 from the command line. The user will be able to run the SLiM simulation using the program. After the simulation is complete, the program will also provide a number of summary statistics and methods for inspecting the output of the simulation. 
+`shadie` will be a wrapper around the forward-in-time evolutionary simulation program [SLiM3](https://messerlab.org/slim/). It will accept a phylogeny from the user and generate equivalent population demography inside a script that can be fed directly into SLiM3. THe user will also be able to define a number of different parameters for the simulation and the program will prepare the slim script appropriately along with a dispatch script, which is necessary to run SLiM3 from the command line. The user will be able to run the SLiM simulation using the program. After the simulation is complete, the program will also provide a number of summary statistics and methods for inspecting the output of the simulation. 
 
 The program is specifically designed to model the varied biphasic lifecycles in plants, allowing the user to explore the evolutionary consequences of different life histories. 
 
@@ -78,7 +78,7 @@ self.gentime late() {
 }
 ```
 
-Beyond that, the program will largely generate its own data and output summary statistics that can be used to evaluate observed data. The user will choose from a relatively simple set of options.
+Beyond that, `shadie` will largely generate its own data and output summary statistics that can be used to evaluate observed data. The user will choose from a relatively simple set of options.
 
 
 ### Demonstration of user interaction

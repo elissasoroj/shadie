@@ -1,7 +1,7 @@
-#Program
-(candidate names: SHaDi, stout) 
+#SHaDiE: 
+## "Simulating Haploid-Diploid Evolution"
 
-`program` is a wrapper around SLiM3 that implements selection on alternating hapliod/diploid lifecycles
+`shadie` is a wrapper around SLiM3 that implements selection on alternating hapliod/diploid lifecycles
 and converts user-provided phylogeny into SLiM3-compatible subpopulation demography
 
 ### In Development
