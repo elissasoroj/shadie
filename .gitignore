@@ -1,5 +1,7 @@
 #Custom
 .DS_Store
+shadie/example_scripts/working/
+shadie/testing/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -77,6 +79,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+.ipynb
 
 # IPython
 profile_default/
