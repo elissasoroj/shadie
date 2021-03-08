@@ -26,9 +26,7 @@ class Demography:
         edge list with events in the format (source, dest, start, end, rate).
         Time on the tree is defined in units of generations.
         """
-# Define demographic events for msprime
         demogdf = pd.DataFrame()
-    
 
         # traverse tree from root to tips
         for node in self.treenode.traverse():
@@ -50,9 +48,10 @@ class Demography:
                 #^This gives me the values I need but I can't figure out 
                 #how to get them as lists or pd.DataFrame...
 
+    def write_demog(self):
 
-#This is the slim. script structure that needs to be written by the class:
-#Plan is to reference pandas DF with columns: 
+#This is the .slim script structure that needs to be written by the submodule:
+    #Plan is to reference pandas DF with columns: 
 	#source, dest, nodeheight, gen
 	# sorted by youngest --> oldest gen (or longest --> shortest nodeheight)
 
