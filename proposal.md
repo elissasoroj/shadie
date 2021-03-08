@@ -58,8 +58,8 @@ The `Demography` submodule of `shadie` will take the phylogeny from the user (pr
 
  This will be used to generate this part of the script, which controls when populations in the program split into subpopulations:
 
-```
- #write beginning row:
+```Java
+#write beginning row:
 1 { sim.addSubpop("p1", K); 
 }
 #for row in pandas DF, write the following:
@@ -86,18 +86,36 @@ The user can optionally provide a phylogeny, which will control the demography o
 
 User can then adjust other simulation parameters, such as life history, mutation rate, and recombination rate. `package` has built-in defaults for many values (which are adjusted dynamically by the script based on the parameters the user *does* define), so the user does not have to define every parameter for every run:
 ```python
-# example of user-defined inputs and generated slim script file
+# example of user-defined inputs and generated slim script file:
+
+#define simulation parameters
+sim1 = Shadie(
+	Ne = 1000, 
+	organism="pter",  
+	mutrate=1e-7,
+	recomb=1e-9,
+	genome_size=1e6)
+
+sim1.write() #writes script
 ...
 ```
 
 Once the user is finished preparing the simulation script they can run a simulation in SLiM3:
 ```python
-script.run #feeds script into SLiM3
+sim1_out = sim1.runSLIM #feeds script into SLiM3
 ```
 
 User can calculate dN/dS, perform an MK-test, visualize mutations on a phylogeny, etc...
 ```python
 # example of summary statistics from SLiM output
+#MK-test
+sim1_out.mk
+
+#dN/dS
+sim1_out.dnds
+
+#draw gene trees?
+sim1out.draw
 ...
 ```
 
