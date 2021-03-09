@@ -9,7 +9,7 @@ Generates script for SLiM simulation
 import pandas as pd
 
 
-class Script(object):
+class Shadie(object):
 	"""
     A program.script object for writing the script for simulation in SLiM3
 	"""
@@ -64,15 +64,16 @@ class Script(object):
 	    model.self = model
 	    #write initialize callbacks
 	    script = open(filename.self, "a") #appends so that user does not accidentally overwrite old simulation
-	    L1 = "initialize() {\ninitializeSLiMModelType("+model.self+");\n"
-	    L2 = "defineConstant('K',"+Ne.self+");\n"
-	    L3 = "initializeMutationRate("+mutrate.self+");\n"
-	    L4 = "initializeMutationType"+muttype.self+";\n m1.convertToSubstitution = T;\n"
-	    L5 = "initializeGenomicElementType"+geneltype.self+";\n"
-	    L6 = "initializeGenomicElement"+genel.self+";\n"
-	    L7 = "initializeRecombinationRate("+recomb.self+");\n}"
-	    lines = [L1, L2, L3, L4, L5, L6, L7]
-	    script.writelines(lines)
+	    L1 = (
+	    	"initialize() {\ninitializeSLiMModelType("+model.self+");\n"
+	    	f"defineConstant('K',{Ne.self});\n"
+	    	f"initializeMutationRate({mutrate.self});\n"
+	    	f"initializeMutationType{muttype.self};\n m1.convertToSubstitution = T;\n"
+	    	f"initializeGenomicElementType{geneltype.self};\n"
+	    	f"initializeGenomicElement{genel.self};\n"
+	    	"initializeRecombinationRate("+recomb.self+");\n}"
+	    )
+	    script.write(L1)
 	    script.close
 
 
