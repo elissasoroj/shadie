@@ -76,6 +76,10 @@ class Shadie(object):
 	    script.write(L1)
 	    script.close
 
+	def genome(self):
+		if genes = 1:
+
+
 
 # call simulate with details on genome structure (and which life stage selection occurs?)
 mod.simulate(
@@ -114,3 +118,42 @@ mod.simulate(
 		else:
 			#base SLiM hermaphrodite? 
 
+class Genome(object):
+	"""
+    Genome object created based on user parameters
+	"""
+	#standard mutation types
+	NEUT = ("m1", 0.5, "f", 0.0)	#neutral mutation
+	SYN = ("m2", 0.5, "f", 0.0)		#synonymous
+	DEL = ("m3", 0.1, "g", -0.03, 0.2)	#deleterious
+	BEN = ("m4", 0.8, "e", 0.1)		#beneficial
+
+	#standard genetic elements
+	EXON = ("g1", c(m2,m3,m4), c(2,8,0.1))	#exon
+	INTRON = ("g2", c(m1,m3), c(9,1))		#intron
+	NONC = ("g3", c(m1), 1) 				#non-coding
+
+	def __init__(
+		self,
+		genes=1,
+		introns = 0,
+		exons = 0,
+
+		):
+	"""
+	Builds the chromosome for SLiM3 simulation
+
+	Parameters:
+	-----------
+	genes(int): default = 1
+		Number of genes on chromosome
+
+	introns (int): default = 0
+		Number of introns per gene
+
+	exons (int): default = 0
+		Number of exons
+	"""
+
+	def simulate(self):
+		"calls SLiM to run the simulations"
