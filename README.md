@@ -40,12 +40,12 @@ See `demography.py`
 
 This submodule takes a `Toytree` tree object and creates a `.slim` script with population demography that matches the phylogeny. It uses `Toytree` to traverse the tree from root to tips and collect information it needs to generate the SLiM demography in a `pandas` dataframe, for example:
 
-    gen   | source    | child1    | child2    | Ne        |
- -------- | --------- | --------- | --------- | --------- |
-1         | 9         | 8         | 7         | 1000      |
-501       | 7         | 6         | 5         | 2000      |
-901       | 8         | 4         | 3         | 2000      |
-1401      | 5         | 2         | 1         | 4000      |
+ |   gen   | source  | child0   | child1   | Ne      |
+ |-------- | ------- | -------- | -------- | ------- |
+ |1        | 9       | 8        | 7        | 1000    |
+ |501      | 7       | 6        | 5        | 2000    |
+ |901      | 8       | 4        | 3        | 2000    |
+ |1401     | 5       | 2        | 1        | 4000    |
  
 - each node is named by Toytree from tips to root; `Demography` retains that naming
 - `gen` = int((theight - node.height) + 1)
