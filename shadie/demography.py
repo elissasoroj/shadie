@@ -91,30 +91,26 @@ class Demography:
 
 #This is the .slim script structure that needs to be written by the submodule:
     #Plan is to reference pandas DF with columns: 
-	#source, dest, nodeheight, gen
+	#gen, src, child0, child1, Ne
 	# sorted by youngest --> oldest gen (or longest --> shortest nodeheight)
 
 """
 #write beginning row:
-1 { sim.addSubpop("p1", K); 
-}
+1 { sim.addSubpop("{root}", {Neroot}); }
+
 #for row in pandas DF, write the following:
-{gen}{
-    sim.addSubpopSplit("p{dest1}", K, p{source});
-    sim.addSubpopSplit("p{dest2}", K, p{source});    
-    p{source}.setMigrationRates(p{dest1}, 1.0);
-    p{source}.setMigrationRates(p{dest2}, 1.0);    
+{gen} { sim.addSubpopSplit("{child0}", {Nechild0}, p1);
+    sim.addSubpopSplit("{child1}", {Nechild1}, p1);}
+{gen}:{gen+1} {
+    {root}.setMigrationRates(c({child0}, {child1}), c(0.5, 0.5));
 }
-{gen+1}{
-    p1.setMigrationRates({dest1}, 0.0);
-    p1.setMigrationRates({dest2}, 0.0);
+{gen+1} {
+    {root}setSubpopulationSize(0);
 }
 #append until out of rows
 
 #then, write last line:
-self.gentime late() { 
-    sim.outputFull(); 
-}
+10000 late() { sim.outputFull(); }
 """
 
 
