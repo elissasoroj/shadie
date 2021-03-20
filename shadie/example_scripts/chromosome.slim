@@ -48,5 +48,27 @@ initialize() {
 	// single recombination rate
 	initializeRecombinationRate(1e-8);
 }
+
+
+//the code above writes the following code:
+initializeMutationRate(1e-07);
+initializeMutationType(1, 0.5, "f", 0);
+initializeMutationType(2, 0.5, "f", 0);
+initializeMutationType(3, 0.1, "g", -0.03, 0.2);
+initializeMutationType(4, 0.8, "e", 0.1);
+initializeGenomicElementType(1, c(m2, m3, m4), c(2, 8, 0.1));
+initializeGenomicElementType(2, c(m1, m3), c(9, 1));
+initializeGenomicElementType(3, m1, 1);
+initializeGenomicElement(g3, 0, 4684);
+initializeGenomicElement(g1, 4685, 4708);
+initializeGenomicElement(g2, 4709, 4830);
+initializeGenomicElement(g1, 4831, 4958);
+initializeGenomicElement(g3, 4959, 9094);
+initializeGenomicElement(g1, 9095, 9208);
+initializeGenomicElement(g2, 9209, 9267);
+initializeGenomicElement(g1, 9268, 9331);
+initializeGenomicElement(g3, 9332, 12775);
+
+
 1 { sim.addSubpop("p1", 5000); }
 10000 { sim.simulationFinished(); }

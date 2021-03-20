@@ -1,0 +1,900 @@
+//dmiSim
+//---Carlos Alonso Maya-Lastra & Deren Eaton - 2019-2020
+// 
+
+
+//USAGE:
+//slim [parameters] dmiSim_v2.10.slim > output.full
+//-s int						[auto]			Seed
+//-d N=int						[10000]			Number of generations (hybrid generation is N+1) 
+//-d "dmi='str'" 				[Ba-CA-CB]		DMIs pairs, must be a string following the format: geneAgeneB-geneXgeneZ, being lowercase non mutated and upper mutated (e.g. 'Ca-Ba-Bc'), single quotes must be included
+//-d probSup=float				[1.0]			Probability total of been supressed, only use in case DMI pairs do not cause epistatic interaction in populations
+//-d "outputPath='dir'"			[slimOut/]		Output path relative to the script path or absolute, only for tables, not stadin
+//-d gl=int						[200]			Number of positions (length) for each gene
+//-d sl=int						[1000]			Number of positions (length) for each spacer
+//-d a=int						[3]				Number of genes to activate automatic generation of DMIs. dmiGenerator.py must be in bin and be executable
+//-d K1=int						[1000]			Population 1 size 
+//-d K2=int						[500]			Population 2 size  
+//-d K3=int						[500]			Population 3 size 
+//-d K4=int						[500]			Population 4 size (based on migration rate from pop2 and pop3)
+//-d "note='str'"				[empty]			String to append to outputs file names e.g. if note is 'run1_' the table output will be 'run1_resultTable.json'
+//-d "uid='str'"				[empty]			String to append to table plots outputs file names
+//-d verbose=Bool(T/F)			[F]				Show information about each individual
+//-d history=Bool(T/F)			[F]				Show information about each position mutated by individual
+//-d hybrid=Bool(T/F)			[F]				Show information about each individual in the hybrid generation
+//-d totalHybCohort=int			[10]			Create int of cohorts of hybrids during the entire simulation
+//-d multifiles=Bool(T/F)		[F]				Produce multiple files per hybrid population, if F, only produce summary files
+//-d spacer=Bool(T/F)			[T]				Simulate spacers
+//-d zoom=Bool(T/F)				[F]				Generate more hybrids at the start of simulation to track fast changes
+//-d orr=Bool(T/F)				[F]				Modify some variables to emulate Orr simulations
+//-d rev=Bool(T/F)				[F]				Treat each gene as in a reversible model, if A mutate once A is Derived, if mutate again, become ancestral (even mutations = ancestral, odd mutations = derived)
+//-d orrNoInf(T/F)				[F]				Emulate a orr simulation but allowing mutate or not any gene many times. Limited by number of generations.
+//-d orrNoInfCicles=int			[10]			Factor to multiply the number of genes to get the total number of hybrid cohorts (and number of mutation events) Remember in Orr emulations each hybrid cohort is a mutation event
+//-d sampledHybCohort=int		[24]			Only works with orrNoInf models, stablishes number of hybrid cohorts that  will.
+//-d freq=Bool(T/F)				[F]				Print a  JSON file with allele frequencies by subpop and by gene by generation (Slow).
+
+
+//  ######  ##  ##  ######
+//    ##    ### ##    ##
+//    ##    ## ###    ##
+//    ##    ##  ##    ##
+//  ######  ##  ##  ######
+
+initialize() {
+	// Define some constants
+	defineConstant("simID", getSeed());
+	defineConstant("startTimer", clock()); 
+	if (!exists("K1")){defineConstant("K1", 1000);} //initial pop size
+	if (!exists("K2")){defineConstant("K2", 500);} //size for pop 2 (wild)
+	if (!exists("K3")){defineConstant("K3", 500);} //size for pop 3 (domesticated)
+	defineConstant("propMigrP2", 0.5); //migration P2 -> P4 
+	defineConstant("propMigrP3", 0.5); //migration P3 -> P4
+	if (!exists("K4")){defineConstant("K4", asInteger((K2 * propMigrP2) + (K3 * propMigrP3)));} //size for pop 4 (hybrid) half of k2 and half of k3 based on migration rates
+	defineConstant("lowerAlphabet", c("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"));
+	defineConstant("upperAlphabet", c("A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"));
+	// Define some constants if they are not provided in the command line
+	if (!exists("gl")){defineConstant("gl", 200);} //detect number of position for a gene, if not set default
+	if (!exists("sl")){defineConstant("sl", 1000);} //detect number of position for a spacer, if not set default
+	if(!exists("mutRate")){defineConstant("mutRate", 1e-7);}//det default mutation rate
+	if(!exists("recRate")){defineConstant("recRate", 1e-8);}//det default recombination rate
+	if (!exists("probSup")){defineConstant("probSup", 1.0);}//probability of DMI cause supression of individuals
+	if (!exists("spacer")){defineConstant("spacer", T);} //default spacer to true
+	if (!exists("N")){defineConstant("N", 10000);} //detect number of generations
+	if (!exists("totalHybCohort")){defineConstant("totalHybCohort", 10);} //define number of cohorts by default
+	if (!exists("sampledHybCohort")){defineConstant("sampledHybCohort", 24);} //define number of cohorts that will be sampled in OrrNoInf models (to avoid thousands of hybrids)
+	if (!exists("zoom")){defineConstant("zoom", F);} //define default state of zoom
+	if (!exists("rev")){defineConstant("rev", F);} //define default state of reversibility
+	if (!exists("freq")){defineConstant("freq", F);} //define default state of allele frequency print
+	
+	// Define (from input, automatic or default) list of pairs of DMI interactions
+	if (!exists("dmi")){//get dmi from input
+		if (!exists("a")){ //if dmi not provided and -a is not provided, set a default Ba-CA-CB as DMI pairs
+			defineConstant("dmis", "Ba-CA-CB"); //in case dmi does not exit put some incomp.
+		}else{
+			defineConstant("dmis",system("dmiGenerator.py -n " + a + " -s -"));//execute dmiGenerator.py to get the list of pairs
+		}
+	}else{
+		defineConstant("dmis", dmi); //in case dmi exist convert it to binary and put in the binary dmis constant
+	}
+	
+	
+	
+	// Count number of Muller type and Dobzhanski type
+	miCounter = 0; //set counter
+	diCounter = 0;
+	for (i in strsplit(dmis, sep = "-")){ //iterate dmi by dmi
+		firstisupper = match(strsplit(i, sep = "")[0], upperAlphabet); //check if the pair is uppercase (a.k.a. mutated)
+		secondisupper = match(strsplit(i, sep = "")[1], upperAlphabet);
+		if (firstisupper >= 0 & secondisupper >= 0){//if both are uppercase, then are Dobzhasky type, else is Muller (in this case is impossible have lower lower, that is not a DMI)
+			diCounter = diCounter + 1;
+		}else{
+			miCounter = miCounter + 1;
+		}
+	}
+	defineConstant("DMIncompatibilities",length(strsplit(dmis, sep = "-")));
+	defineConstant("mullerIncompatibilities",miCounter);
+	defineConstant("dobzhanskyIncompatibilities",diCounter);
+	// Deduce number of genes from list of DMI
+	uniqueGenes = "";
+	uniqueGenesUpperpre = "";
+	for (i in  strsplit(dmis, sep = "")){ //iterate gene by gene in the DMI pair provided
+		isupper = match(i, upperAlphabet); //check if is upper or lower case to convert in lowercase
+		islower = match(i, lowerAlphabet);
+		if (isupper >= 0 | islower >= 0){ //exclude separators
+			if (isupper >= 0){ //convert to upper using the index (or match postion)
+				l = lowerAlphabet[isupper];
+				lupper = upperAlphabet[isupper];
+			}
+			else{ // else to lower
+				l = lowerAlphabet[islower];
+				lupper = upperAlphabet[islower];
+			}
+			uniqueGenes = uniqueGenes + l; // add to the final list		
+			uniqueGenesUpperpre = uniqueGenesUpperpre + lupper; // add to the final list		
+		}
+	}
+	uniqueGenes = unique(strsplit(uniqueGenes, sep = "")); //convert string to vector and only show unique
+	defineConstant("numGenes", length(uniqueGenes)); //define a constant for number of genes
+	defineConstant("lastGene",numGenes + 1); //define last gene to avoid problems in definition of ranges
+	defineConstant("uniqueGenesUpper", sort(unique(strsplit(uniqueGenesUpperpre, sep = ""))));
+	
+	
+	if (!exists("orr")){defineConstant("orr", F);} //default Orr scenario as False
+	if (!exists("orrNoInf")){defineConstant("orrNoInf", F);} //default orrNoInf scenario as False
+	if (!exists("orrNoInfCicles")){defineConstant("orrNoInfCicles", 10);} //default orrNoInfCicles
+	
+	if (orr | orrNoInf){
+		// Define some constants to create a new theoretical scenarion base on Orr simulations
+		rm(c("gl", "sl", "mutRate",  "K1", "K2", "K3", "K4"), removeConstants=T);
+		defineConstant("gl", 1); //1 position gene
+		defineConstant("sl", 1000); //TOTHINK
+		defineConstant("mutRate", 0);
+		defineConstant("K1", 2);
+		defineConstant("K2", 2);
+		defineConstant("K3", 2);
+		defineConstant("K4", 10);
+		if (orr){
+			rm(c("totalHybCohort", "zoom", "N"), removeConstants=T); //shows an error if N is declared in cli
+			defineConstant("zoom", F);
+			defineConstant("totalHybCohort", numGenes);
+			defineConstant("N", numGenes * 3);
+		}
+		if (orrNoInf){
+			rm(c("totalHybCohort", "N", "zoom"), removeConstants=T);//shows and error if N is declared in cli
+			defineConstant("zoom", F);
+			// rm("N", removeConstants=T); 
+			defineConstant("totalHybCohort", numGenes * orrNoInfCicles);
+			defineConstant("N", (numGenes * orrNoInfCicles) * 3);
+		}
+		//defineConstant("K4", asInteger((K2 * propMigrP2) + (K3 * propMigrP3)));
+	}
+	// Define eachhybrid cohorts 
+	defineConstant("hybridEach", round(N / totalHybCohort) ); // divide number of generations in number of cohorts, so each xxx generation make hybrids
+	// Output parameters and switches
+	if(!exists("outputPath")){defineConstant("outputPath", "slimOut/");} //define default output
+	if(!exists("note")){defineConstant("note", "");} //define default note
+	if(!exists("uid")){defineConstant("uid", "");} //define default unique id per simulation 
+	//system("mkdir -p " + outputPath + simID + "/"); //create folder
+	system("mkdir -p " + outputPath); //create folder
+	
+	if(!exists("multifiles")){defineConstant("multifiles", F);} //define default False produce tons of files per hybrid pop
+
+	
+	defineConstant("output", "none"); //vcf, slim, vcfperpop ;DEPRECATED
+	defineConstant("dmitable", F); //Define if want a dmitable as output
+	defineConstant("genotypestable", T); //Define if want a genotype table as output
+	defineConstant("DMItableFile", outputPath + dmis + "s" + simID + "_DMItable.tab"); //name of the file of DMI table info (put the path too) DEPRECATED
+	
+	// Define report mode to default if not input
+	if (!exists("verbose")){defineConstant("verbose", F);} //define verbose mode
+	if (!exists("history")){defineConstant("history", F);} //define history mode
+	if (!exists("hybrid")){defineConstant("hybrid", F);} //define hybrid mode
+	//Initialize parameters for the simulation
+	initializeSLiMOptions(keepPedigrees = T); // maintain pedigree info in the simulation useful to check if an individual is a hybrid
+	initializeMutationRate(mutRate); 	// set the mutation rate that means: new mutation during meiosis at a rate of 1e-7 per base position per generation
+	initializeRecombinationRate(recRate);//Set the recombination rate that means: recombination occurs at a rate of 1e-8 per base position per generation
+	// Gene and non-gene definitions
+	if(spacer) initializeMutationType("m1", 0.5, "f", 0.0); //set a neutral mutation type, to trace it easily for region 1 (no gene)
+	if(spacer) initializeGenomicElementType("g1", m1, 1.0); //defining the name g1 in which mutation "m1" will occur with 1.0 relative proportion
+	//Set up the genomic elements, defining regions as genes (multiple genes)
+	startPosition = 0; //start in 0 the genome
+	for (tempG in 2:lastGene){
+		me = initializeMutationType("m" + tempG, 0.5, "f", 0.0);// set a neutral mutation type, to trace it easily, the mutation only happen in certain gene
+		me.convertToSubstitution = F;// this force SLiM to maintain the mutation in the genome and not convert it in a substitution (SLiM delete each fixed mutation)
+		ge = initializeGenomicElementType("g" + tempG, me, 1.0); // define the region
+		geneStart = startPosition + sl; //where gene start
+		geneEnd = geneStart + gl - 1; //where gene end
+		if(spacer) initializeGenomicElement(g1, startPosition, geneStart - 1); //set up the spacer before the gene
+		initializeGenomicElement(ge, geneStart, geneEnd);// set up trully the genomic element, defining the lenght in this case from 0 to 999 (check that here g1 is not and string anymore)
+		startPosition = geneEnd + 1; //where next spacer start
+	}
+	if(spacer) initializeGenomicElement(g1, startPosition, startPosition + sl);// create the spacer after the last gene
+}
+
+//    ##     ####   ######           ####   ######  ##  ##
+//   ###    ##        ##            ##      ##      ### ##
+//    ##     ####     ##            ## ###  ####    ## ###
+//    ##        ##    ##            ##  ##  ##      ##  ##    ##
+//  ######   ####     ##             ####   ######  ##  ##    ##
+
+// Before the first generation do:
+1 early() { 
+	// Set the dmis as vector in a global scope
+	if (isNULL(sim.getValue("genotypeDMI"))) { //if not exist, create this value, else not
+		sim.setValue("genotypeDMI", strsplit(dmis, "-"));
+	}
+	defineConstant("probSupByDMI", probSup / length(sim.getValue("genotypeDMI"))); //Define the probability of been supressed by DMI (if an ind. holds all num. of dmis pairs = 100%)
+	// Add ancestral population
+	sim.addSubpop("p1", K1);
+	//Check the commandline parameter for the N of generations to run the script if not put 10000 and reschedule all other blocks
+	// sim.rescheduleScriptBlock(s1, start=(1*N)-1, end=(1*N)-1); //9999  generation
+	// sim.rescheduleScriptBlock(s1, start=N/2, end=(N/2)); //5000 bottleneck generation
+	//Control the first cohort,modifieing the first cohort at 0.25 of the first block, if produce each 1000 generation a hybrid cohort, this modifier set that the first cohort is produced in the generation 250.
+	if (zoom){
+		modifierZoom = 0.25;
+	}else{
+		modifierZoom = 1;
+	}
+	//Set the generation of the first cohort
+	sim.rescheduleScriptBlock(s1, start=asInteger((1*hybridEach*modifierZoom)-1), end=asInteger(1*hybridEach*modifierZoom)-1);  // generation previous hybridization happen
+	sim.rescheduleScriptBlock(s2, start=asInteger(1*hybridEach*modifierZoom), end=asInteger(1*hybridEach*modifierZoom));  // create P4, set migration rates, save grandparents pedigree
+	sim.rescheduleScriptBlock(s3, start=asInteger(1*hybridEach*modifierZoom), end=asInteger(1*hybridEach*modifierZoom));  // create parent pop vcf, save in file genoGraph table
+	sim.rescheduleScriptBlock(s4, start=asInteger((1*hybridEach*modifierZoom)+1), end=asInteger(1*hybridEach*modifierZoom)+1); // stop migration
+	sim.rescheduleScriptBlock(s5, start=asInteger((1*hybridEach*modifierZoom)+1), end=asInteger(1*hybridEach*modifierZoom)+1); // save in file hybrid output
+	sim.setValue("currentCohort", hybridEach*modifierZoom);
+
+	//Report details of simulation
+	cat("Probability of supression total: " + probSup + "\n");
+	cat("Probability of supression per DMI: " + probSupByDMI + "\n");
+	cat("DMI genotype(s): " + dmis + " (Dobzhansky type: " + dobzhanskyIncompatibilities + ", Muller type: " + mullerIncompatibilities + ")\n");
+	cat("Number of genes: " + numGenes + "\n");
+	cat("Hybrids each " + hybridEach + " generations ");
+	if (zoom){cat("(zoom activated! expect more hybrid cohorts)");};
+	cat("\n");
+	cat("Population sizes: ");
+	cat("Pop1 = " + K1 + " Pop2 = " + K2 + " Pop3 = " + K3 + " Pop4 = " + K4 + "\n");
+	if (rev){cat("Reversible model used \n");};
+	catn("=============================");
+	catn("Command:");
+	catn('slim -s '+simID+
+		((!orrNoInf & !orr) ? ' -d N='+N else '')+
+		(!exists("a") ? ' -d "dmi='+'\''+dmis+'\'' else '')+
+		'" -d probSup='+probSup+
+		' -d "outputPath='+'\''+outputPath+'\''+
+		((!orrNoInf & !orr) ? '" -d gl='+gl else '')+
+		((!orrNoInf & !orr) ? ' -d sl='+sl else '')+
+		(exists("a") ? ' -d a='+numGenes else '')+
+		((!orrNoInf & !orr) ? ' -d K1='+K1 else '')+
+		((!orrNoInf & !orr) ? ' -d K2='+K2 else '')+
+		((!orrNoInf & !orr) ? ' -d K3='+K3 else '')+
+		((!orrNoInf & !orr) ? ' -d K4='+K4 else '')+
+		((nchar(note)>0) ? ' -d "note='+'\''+note+'\'' else '')+
+		((nchar(uid)>0) ? '" -d "uid='+'\''+uid+'\'' else '')+
+		((!orrNoInf & !orr) ? '" -d totalHybCohort='+totalHybCohort else '')+
+		' -d spacer='+spacer+
+		(zoom ? ' -d zoom='+zoom else '')+
+		(orr ? ' -d orr='+orr else '')+
+		(rev ? ' -d rev='+rev else '')+
+		(orrNoInf ? ' -d orrNoInf='+orrNoInf else '')+
+		(orrNoInf ? ' -d orrNoInfCicles='+orrNoInfCicles else '')+
+		(orrNoInf ? ' -d sampledHybCohort='+sampledHybCohort else '')+
+		(freq ? ' -d freq='+freq else '')+
+		(multifiles ? ' -d multifiles='+multifiles else '')+
+		' dmiSim_v2.12.slim');
+	catn("=============================\n");
+	//Create empy variables for graphs of pop2 and 3 and hyb pop
+	sim.setValue("genoGraph2","");
+	sim.setValue("genoGraph3","");
+	sim.setValue("genoGraph4","");
+}
+2 early(){
+	// Split the population p1  in two new populations (identical ) and p1 reduce to 0 individuals
+	sim.addSubpopSplit("p2", K2, p1);
+	sim.addSubpopSplit("p3", K3, p1);
+	p1.setSubpopulationSize(0);
+}
+
+
+//   ####     ##             ####       ##
+//  ##       ###            ##      ##  ##
+//   ####     ##    ######   ####   ######
+//      ##    ##                ##      ##
+//   ####   ######           ####       ##
+
+s1 9999 late(){
+	if (orr){//create a new mutation in the n gene in random pop in all individuals and fixed.
+		// define the current gene mutated
+		if (isNULL(sim.getValue("currentGeneInOrr"))) sim.setValue("currentGeneInOrr", 0); //test if currentGeneInOrr exist, if not set 0
+		sim.setValue("currentGeneInOrr", sim.getValue("currentGeneInOrr") + 1); //increase the count
+		
+		genomicElementToSearch = match(sim.getValue("currentGeneInOrr")+1,sim.chromosome.genomicElements.genomicElementType.id);
+		positionToMutate = sim.chromosome.genomicElements[genomicElementToSearch].startPosition; //get the start position of each region to introduce a punctual mutation there. 0 are neutral regions, 1 first gene, 2 second neutral region. 3 second gene... 
+		mutationToSearch = sim.mutationTypes[match(sim.getValue("currentGeneInOrr")+1,sim.mutationTypes.id)]; //trick to get the name of the mutation type cause m + "2" never return the object m2
+		//select randomly one population to introduce the mutation
+		if (runif(1) < 0.5){
+				p2.genomes.addNewDrawnMutation(mutationToSearch, positionToMutate); 
+			}else{
+				p3.genomes.addNewDrawnMutation(mutationToSearch, positionToMutate); 
+		}
+	}
+	if (orrNoInf){//create a new mutation event, this can be mutate or not mutate and can mutate any of the genes included in the simulation
+		// cat("Mutate?");
+		// define if gene mutate or not
+		if (runif(1) < 0.5){
+			// catn(": True");
+			// define the current gene mutated seleting randomly one of the genes
+			// if (isNULL(sim.getValue("currentGeneInOrr"))) sim.setValue("currentGeneInOrr", 0); //test if currentGeneInOrr exist, if not set 0
+			sim.setValue("currentGeneInOrr", rdunif(1,1,numGenes));
+			
+			// catn("Which gene: " + asInteger(sim.getValue("currentGeneInOrr") + 1));
+			genomicElementToSearch = match(sim.getValue("currentGeneInOrr")+1,sim.chromosome.genomicElements.genomicElementType.id);
+			
+			// catn(sim.chromosome.genomicElements.genomicElementType.id);
+			// catn("Which genomicElement:" + genomicElementToSearch);
+			
+			positionToMutate = sim.chromosome.genomicElements[genomicElementToSearch].startPosition; //get the start position of each region to introduce a punctual mutation there. 0 are neutral regions, 1 first gene, 2 second neutral region. 3 second gene... 
+			mutationToSearch = sim.mutationTypes[match(sim.getValue("currentGeneInOrr")+1,sim.mutationTypes.id)]; //trick to get the name of the mutation type cause m + "2" never return the object m2
+			// catn("positionToMutate: " + positionToMutate);
+			// catn(mutationToSearch);
+			//select randomly one population to introduce the mutation
+			if (runif(1) < 0.5){
+					p2.genomes.addNewDrawnMutation(mutationToSearch, positionToMutate); 
+					// catn ("Mutation in pop 2");
+				}else{
+					p3.genomes.addNewDrawnMutation(mutationToSearch, positionToMutate);  
+					// catn ("Mutation in pop 3");
+			}
+		}
+	}
+	
+	if (orrNoInf){ //replace rescheduling in S5 only for OrrNoInf models
+		if (sim.generation < (N)){
+			sim.setValue("currentCohort", sim.getValue("currentCohort") + hybridEach);
+			//Set the generation of the first cohort
+			sim.rescheduleScriptBlock(s1, start=asInteger(1*sim.getValue("currentCohort")-1), end=asInteger(1*sim.getValue("currentCohort"))-1);  // generation where mutation happens
+			if(asInteger(1*sim.getValue("currentCohort")) % (N/sampledHybCohort) == 0 ){
+				sim.rescheduleScriptBlock(s2, start=asInteger(1*sim.getValue("currentCohort")), end=asInteger(1*sim.getValue("currentCohort")));  // create P4, set migration rates, save grandparents pedigree
+				sim.rescheduleScriptBlock(s3, start=asInteger(1*sim.getValue("currentCohort")), end=asInteger(1*sim.getValue("currentCohort")));  // create parent pop vcf, save in file genoGraph table
+				sim.rescheduleScriptBlock(s4, start=asInteger((1*sim.getValue("currentCohort"))+1), end=asInteger(1*sim.getValue("currentCohort"))+1); // stop migration
+				sim.rescheduleScriptBlock(s5, start=asInteger((1*sim.getValue("currentCohort"))+1), end=asInteger(1*sim.getValue("currentCohort"))+1); // save in file hybrid output
+			}
+		}
+	}
+}
+
+//Population matting and hybrid generation at N+1 generation
+s2 10000{
+	sim.addSubpop("p4", K4);//add a new population
+	p4.setMigrationRates(c(p2, p3), c(propMigrP2, propMigrP3));//set the migration from p2 and p3 using a constant propMigr for each pop
+	//defineConstant("P2PED", p2.individuals.pedigreeID);//save current pedigrees for pop 2 to see grandparents, useful to see hybrids
+	sim.setValue("P2PED", p2.individuals.pedigreeID); //save current in a variable pedigrees for pop 2 to see grandparents, useful to see hybrids
+}
+// After N generation do:
+s3 10000 late(){
+	if (multifiles){
+		//Write VCF files for parental populations (swich off temporarly to focus only in the vcf of hybrids)
+		// p2.outputVCFSample(K2,T,"*",T,outputPath + simID + "/" + uid + "_" + sim.generation + "_s" + simID + "_pop2" + ".vcf",T);
+		// p3.outputVCFSample(K3,T,"*",T,outputPath + simID + "/" + uid + "_" + sim.generation + "_s" + simID + "_pop3" + ".vcf",T);
+		//Write the table with the number of individuals per generations per population per genotype
+		// if (genotypestable){
+		// 	for (pop in 2:3){
+		// 		line = "Gen\t";
+		// 		for (genotype in sim.getValue("allGenotypes")){
+		// 			line = line + genotype + "\t";
+		// 		}
+		// 		// writeFile(outputPath + "p" + probSup + "d" + dm + "s" + simID + "_" + pop + "_" + sim.getValue("genotypeDMI") + ".tab", line + "\n" + sim.getValue("genoGraph" + pop));
+		// 		writeFile(outputPath + simID + "/" + uid + "ggg" + sim.generation + "s" + simID + "_" + pop + "_" + dmis + ".tab", line + "\n" + sim.getValue("genoGraph" + pop));
+		// 	}
+		// }
+	}
+}
+s4 10001{
+	// //supress both parent population
+	// p2.setSubpopulationSize(0);
+	// p3.setSubpopulationSize(0);
+	
+	p4.setMigrationRates(c(p2, p3), c(0, 0));//stop migration
+}
+
+
+//   ####   ######           ####   ##  ##  ######  #####   ##  ##  ######   ####
+//  ##      ##              ##  ##  ##  ##    ##    ##  ##  ##  ##    ##    ##
+//   ####    ####           ##  ##  ##  ##    ##    #####   ##  ##    ##     ####
+//      ##      ##          ##  ##  ##  ##    ##    ##      ##  ##    ##        ##
+//   ####   #####            ####    ####     ##    ##       ####     ##     ####
+
+//TODO, CREATE BETTER NOTES FOR THIS
+s5 10001 late(){
+			//FIX: IS CREATING P4 FOR POSTMIGRATION, AND MUST NOT. USE CURRENTCOHORT VALUE TO CONTROL THIS but not here, in the saving information in each child can be the best. 
+			//FIX: CHECK IF THIS IS THE BEST PLACE, SAVING EVERY X GENERATIONS IS BETTER THAN EVERY GENERATION
+			
+	//Print allele frequency
+	if (freq){
+	//if (sim.generation == (sim.getValue("currentCohort")+1)){
+		jsonfile = outputPath + note + simID + "alleleFreq.json";
+		writeFile(jsonfile, sim.getValue("jsonFreqs"), append = T);
+		sim.setValue("jsonFreqs", "");
+	//}
+	}
+
+
+
+	// Print information about the hybrid population (P4), and put in a common file inforHybs 
+	if (genotypestable & !isNULL(sim.getValue("allGenotypes"))){
+		//Write VCF file for hybrid population
+		if (multifiles){
+			p4.outputVCFSample(K4,T,"*",T,outputPath + "/" + uid  + "g_" + sim.generation +  "s_" + simID + "_hyb" + ".vcf",F); //sample entire population for in the hybrid moment and put all infor. in vcf
+		}
+
+		//set a temp variable with a unvariable content
+		hybsinpop4genoReport = '"dmi":"'+ paste(sim.getValue("genotypeDMI"), sep="-") + '"'; 
+		hybsWithDMI = 0;
+		//catn(paste(sim.getValue("allGenotypes"), sep="\t"));//print all genotypes registered during simulation
+		//explore all genotypes in the simulation for the hybrid generation to create infoHybs.json, where count number of hybrids with some genotype, second part count number of DMI pairs per individual
+		for (genotype in sim.getValue("allGenotypes")){
+			//if this value is NULL, the next step fail, try to fix it converting in in 0, but 
+			//TODO: CHECK WHY THIS VALUE IS NULL!, i think that is a genotype from previous hyb cohort, that are saved and not found in this particular cohort.
+			
+			//cat(sim.getValue("genotype4" + genotype)+ "\t");//print the number of individuals per genotypes 
+			
+			numHybswithThisGenotype = sim.getValue("genotype4" + genotype);
+			if (isNULL(numHybswithThisGenotype)) numHybswithThisGenotype = 0; 
+		
+			//For table of information about hybrids
+			//hybsinpop4genoReport = hybsinpop4genoReport + ',"' + genotype + '":' + sim.getValue("genotype4" + genotype) + ''; //add it with the number of individuals in the pop 4 (hybs) 
+			//hybsinpop4genoReport = hybsinpop4genoReport + ',"' + genotype + '":' + numHybswithThisGenotype + ''; //add it with the number of individuals in the pop 4 (hybs) 
+			//only do this if number of hybrids with this genotypes is greater than 0 to reduce the infoHyb file size
+			if (numHybswithThisGenotype > 0 ){
+				hybsinpop4genoReport = hybsinpop4genoReport + ',"' + genotype + '":' + numHybswithThisGenotype + ''; //add it with the number of individuals in the pop 4 (hybs) 
+			}
+			//For detailed information about the simulation, get number of hybrids with ANY DMI $hybsWithDMI.
+			genotypesCounted = ""; //set a empty counter 
+			numberofDMIbyGenotype = 0;
+			for (pair in sim.getValue("genotypeDMI")){//iterate in each DMI pair
+				geneInPair = strsplit(pair,sep="");//split the DMI pair of genes to become a vector
+				geneFirstInInd = match(geneInPair[0],strsplit(genotype, sep="")) >= 0;//check if both genes in the pair are mutated in the individual
+				geneSecondInInd = match(geneInPair[1],strsplit(genotype, sep="")) >= 0;
+				if (all(geneFirstInInd & geneSecondInInd & (match(genotype,strsplit(genotypesCounted, sep=",")) < 0))){//if all genes are in this genotype and the genotypes has not already counted, add this to the total
+					// hybsWithDMI = hybsWithDMI + asInteger(sim.getValue("genotype4" + genotype)); //sum number of hybrids with the genotype
+					hybsWithDMI = hybsWithDMI + asInteger(numHybswithThisGenotype); //sum number of hybrids with the genotype
+					genotypesCounted = genotypesCounted + "," + genotype; //(in ABC with dmis: BA-CA-Cb,, avoid that true match with BA and CA in the genotype ABC sum twice the number of ind.)
+				}
+				//Create counts by number of DMIs, First part
+				if (all(geneFirstInInd & geneSecondInInd)){
+					numberofDMIbyGenotype = numberofDMIbyGenotype + 1; //sum 1 to determine the category (0 to n number of DMI pairs)
+					// byNofDMI = byNofDMI + asInteger(sim.getValue("genotype4" + genotype));
+				}
+				// catn("genotype: " + genotype + " genotypesCounted: " + genotypesCounted);
+			
+			}
+			//Second part of the counts by number of DMIs
+			if (isNULL(sim.getValue(numberofDMIbyGenotype + "dmis"))) sim.setValue(numberofDMIbyGenotype + "dmis", 0); //create differnt global variables for each category, 0,1,2,3,.. dmis if not exist 
+			// sim.setValue(numberofDMIbyGenotype + "dmis", sim.getValue(numberofDMIbyGenotype + "dmis") + asInteger(sim.getValue("genotype4" + genotype))); //sum current number of individual to the category
+			sim.setValue(numberofDMIbyGenotype + "dmis", sim.getValue(numberofDMIbyGenotype + "dmis") + asInteger(numHybswithThisGenotype)); //sum current number of individual to the category
+			
+			// clean genotype for population 4 for next hybrid cohort
+			// this step clean each genotype in allGenotypes variable
+			sim.setValue("genotype4" + genotype, 0);
+			
+		
+		}
+		//clean allGenotypes variable, this reduce the amount of RAM, maintaining only genotypes in hybrids and not in parents.
+		sim.setValue("allGenotypes", NULL);
+	
+		//catn("\n---------genotype loop------------");
+		
+		//  ######   ####    ####   ##  ##          ######  ######  ##      ######   ####
+		//      ##  ##      ##  ##  ### ##          ##        ##    ##      ##      ##
+		//      ##   ####   ##  ##  ## ###          ####      ##    ##      ####     ####
+		//  ##  ##      ##  ##  ##  ##  ##          ##        ##    ##      ##          ##
+		//   ####    ####    ####   ##  ##          ##      ######  ######  ######   ####
+		
+		// catn("enter json files");
+		//save in json format table of number of hybrids with #of DMIs
+		numHybsByNumofDMIsReport = "";
+		sumHybrids = 0;
+		avgDMIperHybrid = 0;
+		sumDMIs = 0;
+		for (numberDMI in 1:length(sim.getValue("genotypeDMI"))){ //iter from 1 to number of genotypes reported in the simulation and put together
+		// cat(" loop" + numberDMI);
+			numHybsByNumofDMIs = sim.getValue(numberDMI + "dmis");
+			//cat(sim.generation + " <gen numHybsByNumofDMIs prev noNull> ");
+			//str(numHybsByNumofDMIs); // problem here, this variable is  integer(0)
+				//check this info
+				//NULL cannot be turned into a value of another type by automatic type promotion.  If you attempt to explicitly coerce NULL to another type using the as...() family of functions, it is dropped since NULL is zero-length, resulting in a zero-length vector.  For example, the result of asInteger(NULL) is integer(0), Eidos’s way of printing a zero-length vector of type integer.  Beginning in Eidos 2.2, an exception to this rule is asString(NULL), which returns the string "NULL" since that behavior is useful for output. 
+				//lo más probable es que sim.getValue(numberDMI + "dmis"); ya venga integer(0), revisar cascada arriba
+			if (isNULL(numHybsByNumofDMIs)) numHybsByNumofDMIs = 0; //transform null values into 0 (NULL is cause in some simulation no one hold all DMIs)
+			numHybsByNumofDMIsReport = numHybsByNumofDMIsReport + '"' + numberDMI + '":' + numHybsByNumofDMIs + ''; 
+			if (numberDMI != length(sim.getValue("genotypeDMI"))) numHybsByNumofDMIsReport = numHybsByNumofDMIsReport + ', ';//add a , to format json
+			//here is the problem and maybe numHybsByNumofDMIs is the problem
+			//Get average dmi per hybrid in the entire hybrid cohort
+			sumHybrids = sumHybrids + asInteger(numHybsByNumofDMIs); // get number of hybrids with 1, 2, 3, ... DMIs and sum them to get the final hybrid count
+			sumDMIs = sumDMIs + (asInteger(numHybsByNumofDMIs) * numberDMI); // multiply number of DMI (1,2,3,...) by number of hybrids with that number of DMIs
+			//clean values for next hybrid cohort
+			sim.setValue(numberDMI + "dmis", 0);
+		}
+		// catn(" endloop");
+		//here is a BUG, the system stop here
+		// divide sumDMIs / sumHybrids get the average DMIs by hybrid
+		avgDMIperHybrid = sumDMIs / sumHybrids;
+		if (isNAN(avgDMIperHybrid)) avgDMIperHybrid = 0; // transform NAN values into 0 (NAN is cause 0 hybrids in current state of the simulation, so 0/0)
+		
+		
+		// catn("avg calculated");
+		jsonfile = outputPath + note + "numHybsByNumofDMIs.json";
+		// if ((system("test -f " + jsonfile + " && echo 1 || echo 0") == 1)){//if file exists modify last line to continue appending
+		// 	system("sed -i '$ s/}]$/},/' " + jsonfile); //replaces }] for },
+		// }
+		writeFile(jsonfile,'{"s":"' + simID + '","generation":' + sim.generation + ',"avgDMIsperHyb":' + avgDMIperHybrid + ',' + numHybsByNumofDMIsReport + '},', append = T);
+		// system("sed -i '1 s/^{/[{/' " + jsonfile); //replaces {  for [
+		// system("sed -i '$ s/},$/}]/' " + jsonfile); //replaces }, for }]
+	
+		//save in a json format
+		jsonfile = outputPath + note + "infoHybs.json";
+		// if ((system("test -f " + jsonfile + " && echo 1 || echo 0") == 1)){//if file exists modify last line to continue appending
+		// 	system("sed -i '$ s/}]$/},/' " + jsonfile); //replaces }] for },
+		// }
+		writeFile(jsonfile,'{"s":"' + simID + '","generation":' + sim.generation + ',' + hybsinpop4genoReport + '},', append = T);
+		// system("sed -i '1 s/^{/[{/' " + jsonfile); //replaces {  for [{
+		// system("sed -i '$ s/},$/}]/' " + jsonfile); //replaces }, for }]
+		
+		//Put into a var informative row to add in the hybrid table in JSON
+		totalHybridInfoRow = '{' +
+							'"Seed":"' + simID + '",' +
+							'"N_Generations":' + N + ',' +
+							'"N_Genes":' + numGenes + ',' +
+							'"N_Hyb_w_DMI":' + hybsWithDMI + ',' +
+							'"N_DMIpairs":' + DMIncompatibilities + ',' +
+							'"N_DIpairs":' + dobzhanskyIncompatibilities + ',' +
+							'"N_MIpairs":' + mullerIncompatibilities + ',' +
+							'"Pop2_Size":' + K2 + ',' +
+							'"Pop3_Size":' + K3 + ',' +
+							'"Pop4_Size":' + K4 + ',' +
+							'"Generation":' + sim.generation + '' +
+							'},';
+		
+		//save in json format (if the file exist, modify the last characters to allow add more object, after add a new object, that finish at },, replace to }] to close it as one array)
+		jsonfile = outputPath + note + "resultTable.json";
+		// if ((system("test -f " + jsonfile + " && echo 1 || echo 0") == 1)){
+		// 	system("sed -i '$ s/}]$/},/' " + jsonfile); //replaces }] for },
+		// }		
+		writeFile(jsonfile,totalHybridInfoRow, append = T);
+		// system("sed -i '1 s/^{/[{/' " + jsonfile); //replaces {  for [
+		// system("sed -i '$ s/},$/}]/' " + jsonfile); //replaces }, for }]
+	
+
+	//print in screen the result and write the file
+	if (verbose) catn("Number of individuals in hybrid population at generation " + sim.generation + ": " + '[avgDMIperHybrid:' + avgDMIperHybrid +'] ' + hybsinpop4genoReport);
+	// catn("Average DMI per hybrid: " + avgDMIperHybrid);
+	}else{
+		catn("All individuals show ancestral genotype at generation " + sim.generation);
+		//catn("no enter cause genotyestabpe is true or allGenotypes are not null");
+	}
+
+	// if (sim.generation >= (N)) cat("Simulation finished in: " + (clock() - startTimer) + "s. (" + ((clock() - startTimer))/3600 + "h.)\n"); 
+	if (sim.generation >= (N)) {
+		// cat("Simulation finished in: " + ((clock() - startTimer))/3600 + "h.\n");
+		d = ((clock() - startTimer));
+		if (d >= 3600){
+			timetoDisplay = (d/3600) + "h.";
+		}else{
+			if(d >= 60){
+				timetoDisplay = (d/60) + "m.";
+			}else{
+				timetoDisplay = d + "s.";
+			}
+		}
+		catn("Simulation finished in: " + timetoDisplay +
+			" - Peak of memory: " + usage(peak = T) + "MB"
+		);
+	}
+ 
+	//Remove P4 (hybrids) entirelly to give some space for the next one 
+	p4.setSubpopulationSize(0);
+	
+	if (zoom){
+		if (sim.generation < (N * 0.25)){
+			modifierZoom = 0.25;
+		} else {
+			if  (sim.generation < (N * 0.5)){
+				modifierZoom = 0.5;
+			} else{
+				if  (sim.generation < (N * 0.75)){
+					modifierZoom = 0.75;
+				} else {
+					modifierZoom = 1;
+				}
+			}
+		}
+	} else {
+		modifierZoom = 1;
+	}
+	if (!orrNoInf){ //don't do this if is an OrrNoInf model, this resquedule is done in S1
+		if (sim.generation < (N)){
+		sim.setValue("currentCohort", sim.getValue("currentCohort") + hybridEach * modifierZoom);
+		//Set the generation of the first cohort
+		sim.rescheduleScriptBlock(s1, start=asInteger(1*sim.getValue("currentCohort")-1), end=asInteger(1*sim.getValue("currentCohort"))-1);  // generation before hybrid happens
+		sim.rescheduleScriptBlock(s2, start=asInteger(1*sim.getValue("currentCohort")), end=asInteger(1*sim.getValue("currentCohort")));  // create P4, set migration rates, save grandparents pedigree
+		sim.rescheduleScriptBlock(s3, start=asInteger(1*sim.getValue("currentCohort")), end=asInteger(1*sim.getValue("currentCohort")));  // create parent pop vcf, save in file genoGraph table
+		sim.rescheduleScriptBlock(s4, start=asInteger((1*sim.getValue("currentCohort"))+1), end=asInteger(1*sim.getValue("currentCohort"))+1); // stop migration
+		sim.rescheduleScriptBlock(s5, start=asInteger((1*sim.getValue("currentCohort"))+1), end=asInteger(1*sim.getValue("currentCohort"))+1); // save in file hybrid output
+		}
+	}
+}
+
+
+//Do something before every all generations
+early(){
+	//Restart allele frequency every generation
+	if (freq){
+		for (popID in c(1:4)){
+			for (upperGene in uniqueGenesUpper){
+				sim.setValue(upperGene+"_freq_"+popID, 0);
+			}
+		}
+	}
+}
+
+//Do something after every all generations
+late(){
+	//Save allele frequency variable to print every hybrid cohort
+	if (freq){	
+		frequenciesToJson = NULL;
+		popfrequenciesToJson = NULL;
+		for (popID in c(1:4)){
+			for (upperGene in uniqueGenesUpper){
+				if (sim.getValue(upperGene+"_freq_"+popID) > 0) {
+					frequenciesToJson = c(frequenciesToJson,'"' +upperGene+'_'+popID+'":' + sim.getValue(upperGene+"_freq_"+popID));
+				}
+			}
+			if (!isNULL(frequenciesToJson)){
+				//popfrequenciesToJson = c(popfrequenciesToJson, '"Population_'+popID+'":{'+ paste(frequenciesToJson, sep=",") + '}');//nested json
+				popfrequenciesToJson = c(popfrequenciesToJson, paste(frequenciesToJson, sep=","));//no-nested
+			}
+			frequenciesToJson = NULL;
+		}
+		if (!isNULL(popfrequenciesToJson)){	
+			//cat('{"Generation":'+sim.generation +','+ paste(popfrequenciesToJson, sep=",") + '},\n');
+			//writeFile(jsonfile,'{"G":'+sim.generation +','+ paste(popfrequenciesToJson, sep=",") + '},', append = T);
+			if (isNULL(sim.getValue("jsonFreqs"))) sim.setValue("jsonFreqs", "");
+			sim.setValue("jsonFreqs",sim.getValue("jsonFreqs") + '{"G":'+sim.generation +','+ paste(popfrequenciesToJson, sep=",") + '},' + "\n");
+			
+			//save in json is located in JSON save portion to avoid 1000s of file managment. This increases a little bit the ram consumed, but not so far.
+		}
+	}
+
+	//Append the number of individuals per pop with some genotype
+	if (genotypestable){
+		if (!isNULL(sim.getValue("allGenotypes"))){// detect if something is in the allGenotypes variable if not is because no mutation happen in the focus genes 
+			for (pop in 2:4){// do for population 2 AND 3 only
+				genotypesByGeneration = "";//create a empty variable
+				for (genotype in sim.getValue("allGenotypes")){//check how manu individuals hold some particular genotypes at this generation
+					key = "genotype" + pop + genotype;
+					if (isNULL(sim.getValue(key))) sim.setValue(key, 0);
+					genotypesByGeneration = genotypesByGeneration + sim.getValue(key) + "\t";
+					sim.setValue(key, 0);
+				}
+				sim.setValue("genoGraph" + pop, sim.getValue("genoGraph" + pop) + sim.generation + "\t" + genotypesByGeneration + "\n");//Save info in a global variable to write it in a file in the N generation
+			}
+		}
+	}
+	//test lenghts
+	// if(!isNULL(sim.getValue("allGenotypes"))){
+	// cat(sim.generation + " - ");
+	// catn(sim.getValue("allGenotypes"));
+	// }
+	//BUG????: the output show very low mutations
+	//Try to simulate the "haploid approach" removing all mutations from genome 2 (check futher information in sect 13.13 in manual)
+	// sim.subpopulations.individuals.genome2.removeMutations();
+	
+}
+
+
+//  ######  ##  ##  ######  #####   ##  ##           ####   ##  ##  ######  ##      #####
+//  ##      ##  ##  ##      ##  ##   ####           ##  ##  ##  ##    ##    ##      ##  ##
+//  ####    ##  ##  ####    #####     ##            ##      ######    ##    ##      ##  ##
+//  ##       ####   ##      ##  ##    ##            ##  ##  ##  ##    ##    ##      ##  ##
+//  ######    ##    ######  ##  ##    ##             ####   ##  ##  ######  ######  #####
+
+
+//Suppress the child if carry some epistatic interaction (cummulative), seeking in all pops, each individual.
+modifyChild() {
+	//Detect hybrids verbose part in last generations
+	// if (sim.generation >= (N-1) & child.subpopulation.id == 4 & verbosehyb){
+	// 		cat (sim.generation + "\t" + (parent1.subpopulation.id == parent2.subpopulation.id) + "\t" + parent1.subpopulation.id + " <1 parentPop 2> " + parent2.subpopulation.id + "\t childPop>" + child.subpopulation.id + "\n");
+	// 		// catn(child.pedigreeID);
+	// 		// catn(child.pedigreeParentIDs);
+	// 		// catn(child.pedigreeGrandparentIDs);			
+	// }
+	//if is in current chort + 1 generation and only for children in pop4 check the grandparents to see if the child is a mix from grampas from pop2 and grampas from pop3
+	if (child.subpopulation.id == 4){
+		if (sim.generation == (sim.getValue("currentCohort")+1)){
+			//verbose that report the current history of each child and if the granparents come from pop2 or 3.
+			if(hybrid){
+				cat (sim.generation + "\t" + (parent1.subpopulation.id == parent2.subpopulation.id) + "\t" + parent1.subpopulation.id + " <1 parentPop 2> " + parent2.subpopulation.id + "\t childPop>" + child.subpopulation.id + "\n");
+				// catn("grandparent from p2 " + match(child.pedigreeGrandparentIDs, P2PED) + "\t");
+				catn("grandparent from p2 " + match(child.pedigreeGrandparentIDs, sim.getValue("P2PED")) + "\t");
+				// catn("grandparent from p3 " + match(child.pedigreeGrandparentIDs, P3PED) + "\t");
+				// catn((match(child.pedigreeGrandparentIDs, P2PED)[0] >= 0) + "&" + (match(child.pedigreeGrandparentIDs, P2PED)[2] >= 0));
+				catn((match(child.pedigreeGrandparentIDs, sim.getValue("P2PED"))[0] >= 0) + "&" + (match(child.pedigreeGrandparentIDs, sim.getValue("P2PED"))[2] >= 0));
+				// catn((match(child.pedigreeGrandparentIDs, P2PED)[0] >= 0) != (match(child.pedigreeGrandparentIDs, P2PED)[2] >= 0));
+				}
+			/* search if the pedigree of each granparent is in the constant P2PED (that hold all pedigrees in the N generation)
+				pedigreeGranparentID return a 4 elements vector, comparing 0 and 2 I can check if one of the grandparents are form population 2.
+				if both are from pop2, that individual is not a "hybrid", and is supressed. SLiM try to mate other parents until this stamend is false.
+			*/
+			// if ((match(child.pedigreeGrandparentIDs, P2PED)[0] >= 0) == (match(child.pedigreeGrandparentIDs, P2PED)[2] >= 0)){
+			if ((match(child.pedigreeGrandparentIDs, sim.getValue("P2PED"))[0] >= 0) == (match(child.pedigreeGrandparentIDs, sim.getValue("P2PED"))[2] >= 0)){
+				if(hybrid){catn("ind. was supressed");}
+				return F;
+			}else{
+				if(hybrid){catn("ind. is an hybrid");}
+			}
+		}
+	}
+	//detect if a mutation 2 or 3 happens in the child (exclude first one in case that we incluse nogene regions)
+	hasMutation = any(child.uniqueMutations.mutationType.id  >= 2);
+	//if the child has some mutation in the interest genes
+	if (hasMutation){
+		//historic report of which individual hold which mutation
+		if (history){
+			cat("\nGeneration: " + sim.generation + " Child: " + child.index);
+		}
+		//Define some variables
+		mutationTypes = child.uniqueMutations.mutationType.id; //Get all mutations in this child
+		currentPop = child.subpopulation.id; //Get the current population of this child
+		
+		// //Obtain the current genotype of the individual that hold a mutation
+		// currentGenotype = ""; //set the variable
+		// for (geneMut in 2:lastGene){//iterate for each gene, starting with the second mutation (first mutation is in spacers)
+		// 	if ((match(geneMut,child.uniqueMutations.mutationType.id) >= 0)){//if found that current ind. hold a mutation in the current gene, set it as uppercase, otherwise return lowercase
+		// 		currentGenotype = currentGenotype + upperAlphabet[geneMut-2]; //region 2, mutationtype 2 == A, 3==B,..., the vector start in 0 for A for that subst. 2
+		// 	}else{
+		// 		currentGenotype = currentGenotype + lowerAlphabet[geneMut-2]; 
+		// 	}
+			
+		// 	//Report history with mutations id and positions
+		// 	if (history){
+		// 		if (any(child.uniqueMutations.mutationType.id == geneMut)){ //check if m2, m3 is in the current child
+		// 			cat("\tM" + geneMut + ": id=" + child.uniqueMutations.id + " ps=" + child.uniqueMutations.position);//print where is the mutation and the ID
+		// 		}
+		// 	}
+		// }
+		// if (history) cat("\tgenotype:" + currentGenotype); //history
+		currentGenotype1 = ""; //set the variable
+		currentGenotype2 = ""; //set the variable
+		//test, if probSup 0 and is not pop 4 (hybrids), avoid genotypication of child to speed up the simulation
+		if (probSup > 0 | child.subpopulation.id == 4){
+			//newgenotype to search in both copies
+			//Obtain the current genotype of the individual that hold a mutation
+	
+			// currentGenotype1 = ""; //set the variable
+			// currentGenotype2 = ""; //set the variable
+			for (geneMut in 2:lastGene){//iterate for each gene, starting with the second mutation (first mutation is in spacers)
+				
+				if (rev){
+					
+					//Define genotype of genome 1 reversible model 
+					//verbose for reversible model
+					// cat(sim.mutationTypes[match(geneMut,sim.mutationTypes.id)]); 
+					// cat(" => " + child.genome1.countOfMutationsOfType(sim.mutationTypes[match(geneMut,sim.mutationTypes.id)]));//count number of mutations of that kind (geneMut)
+					// catn(" =residuo> " +  child.genome1.countOfMutationsOfType(sim.mutationTypes[match(geneMut,sim.mutationTypes.id)])%2);//count number of mutations of that kind (geneMut)
+					
+					if ((match(geneMut,child.genome1.mutations.mutationType.id) >= 0)){//if found that current ind. hold a mutation in the current gene, set it as uppercase, otherwise return lowercase
+						
+						if (child.genome1.countOfMutationsOfType(sim.mutationTypes[match(geneMut,sim.mutationTypes.id)])%2 == 1){ //detect if even is ancestral if odd  and even for derived (0 ancestral, 1 derived, 2 back to ancestral)
+							currentGenotype1 = currentGenotype1 + upperAlphabet[geneMut-2];
+						}else{
+							currentGenotype1 = currentGenotype1 + lowerAlphabet[geneMut-2];
+						}
+					}else{
+						currentGenotype1 = currentGenotype1 + lowerAlphabet[geneMut-2]; 
+					}
+					//Define genotype of genome 2 reversible model
+					if ((match(geneMut,child.genome2.mutations.mutationType.id) >= 0)){ //maybe this if is redundant in this code
+						if (child.genome2.countOfMutationsOfType(sim.mutationTypes[match(geneMut,sim.mutationTypes.id)])%2 == 1){ //detect if even is ancestral if odd  and even for derived (0 ancestral, 1 derived, 2 back to ancestral)
+							currentGenotype2 = currentGenotype2 + upperAlphabet[geneMut-2];
+						}else{
+							currentGenotype2 = currentGenotype2 + lowerAlphabet[geneMut-2];
+						}
+					}else{
+						currentGenotype2 = currentGenotype2 + lowerAlphabet[geneMut-2]; 
+					}
+				}else{
+					
+					//Non reversible model
+					//Define genotype of genome 1
+					if ((match(geneMut,child.genome1.mutations.mutationType.id) >= 0)){//if found that current ind. hold a mutation in the current gene, set it as uppercase, otherwise return lowercase
+						currentGenotype1 = currentGenotype1 + upperAlphabet[geneMut-2]; //region 2, mutationtype 2 == A, 3==B,..., the vector start in 0 for A for that subst. 2
+					}else{
+						currentGenotype1 = currentGenotype1 + lowerAlphabet[geneMut-2]; 
+					}
+					//Define genotype of genome 2 
+					if ((match(geneMut,child.genome2.mutations.mutationType.id) >= 0)){
+						currentGenotype2 = currentGenotype2 + upperAlphabet[geneMut-2]; 
+					}else{
+						currentGenotype2 = currentGenotype2 + lowerAlphabet[geneMut-2]; 
+					}
+				
+				}
+				//Report history with mutations id and positions
+				if (history){
+					if (any(child.uniqueMutations.mutationType.id == geneMut)){ //check if m2, m3 is in the current child
+						cat("\tm" + child.uniqueMutations.mutationType.id + " id=" + child.uniqueMutations.id + " ps=" + child.uniqueMutations.position);//print where is the mutation and the ID
+						// catn("\nm"+ geneMut + "# (both genomes): " + child.countOfMutationsOfType(geneMut));
+					}
+				}
+			}
+		}
+			
+		//Define a general currentGenotype, in this genotype is searched the DMI between copies and within a copy for example dmi:aB, so abcaBc, hold the DMI, also, abcABc.
+		currentGenotype = currentGenotype1 + currentGenotype2;
+		if (history) cat("\tgenotype:" + currentGenotype); //history
+
+		//verbose purpose
+		if (verbose){
+				// cat("hasMut:");
+				// cat(hasMutation); //hasMutation (excluding first one)
+				// cat("\t");
+				cat('{"Gen":' + sim.generation + '\t"Child":' + child.index);
+				cat('\t');
+				cat('"M":' + mutationTypes); //vector for only mutation for individual
+				cat('\t');
+				cat('"Population":');
+				cat(currentPop);
+				cat('\t"currentGenotype1":"');
+				cat (currentGenotype1);
+				cat('"\t"currentGenotype2":"');
+				cat (currentGenotype2);
+				cat('"\t"currentGenotypeBoth":"');
+				cat (currentGenotype);
+				cat('"');
+		}
+		//endverbose
+
+		//test if probSup is 0, avoid enter here to filter child with dmis, speed
+		if (child.subpopulation.id < 4){ //only do that in subpop parents not in hybrids
+			if (probSup > 0){
+				probSupIndividual = 0; //declare probability of been supressd by individual
+				if (verbose) cat ('\t"DMIs":"');// verbose
+				//Detect DMI pairs in the current child except if is the last generation (hybrids)
+				for (pair in sim.getValue("genotypeDMI")){//iterate in each DMI
+					geneInPair = strsplit(pair,sep="");//split the DMI pair of genes to become a vector
+					geneFirstInInd = match(geneInPair[0],strsplit(currentGenotype, sep="")) >= 0;//check if both genes in the pair are mutated in the individual
+					geneSecondInInd = match(geneInPair[1],strsplit(currentGenotype, sep="")) >= 0;
+					if (all(geneFirstInInd & geneSecondInInd & sim.generation <= N)){//if all genes are in the individual and the generation is previous to the hybrids suppress the child
+						if (verbose) cat (pair + ",");// verbose
+						probSupIndividual = probSupIndividual + probSupByDMI; //sum current probability to the probability of been supressed of this individual
+					}
+				}
+				if (verbose){cat('"\t"Probsup":' + probSupIndividual);}
+				//consider the accumulation of negative selection in a individual with multiple epistatic interactions
+				if (runif(1) < probSupIndividual){
+					if (verbose) cat ('\t"Suppresed":"Yes"}\n');//verbose
+					return F; //supresss child
+				}else{
+					if (verbose) cat ('\t"Supressed":"No"}\n');//verbose
+				}
+			}
+		}
+
+
+		//ONLY HAPPENS WHEN THE INDIVIDUAL GO TO THE NEXT GENERATION 
+		//AND IN POP4 (HYBRIDS) TO AVOID HIGH RAM USAGE
+		if (child.subpopulation.id == 4){
+			//register the current genotype and add to the sum of the genotypes (one per pop)
+			if (isNULL(sim.getValue("genotype" + currentPop + currentGenotype))) sim.setValue("genotype" + currentPop + currentGenotype, 0);
+			sim.setValue("genotype" + currentPop + currentGenotype, sim.getValue("genotype" + currentPop + currentGenotype) + 1);
+			// print (sim.getValue("genotype" + currentPop + currentGenotype));
+			
+			//if the value allGenotypes (that storage all genotypes in the simulation) does not exist, create it with an empty string
+			if (isNULL(sim.getValue("allGenotypes"))) sim.setValue("allGenotypes", string(0)); 
+			
+			//if the current genotype is not in the allGenotypes object add it
+			if (match(currentGenotype, sim.getValue("allGenotypes")) < 0){	
+				sim.setValue("allGenotypes", c(sim.getValue("allGenotypes"),currentGenotype));
+				//print (sim.getValue("allGenotypes"));
+			}
+		}
+		
+		// Check allele frequency of every gene (if AbcAbc, A=2 then / popSize*2)
+		if (freq){
+			if ((child.subpopulation.id == 4 & sim.generation == (sim.getValue("currentCohort")+1)) | child.subpopulation.id < 4){ //exclude all inds in pop4 after migration.
+				for (upperGene in uniqueGenesUpper){
+					if (any(match(strsplit(currentGenotype,sep=""),upperGene) > -1)){
+						countAllele = asInteger(sum(match(strsplit(currentGenotype,sep=""),upperGene) > -1));
+						freqAllele = countAllele / (subpop.individualCount*2);
+						sim.setValue(upperGene+"_freq_"+subpop.id, (asFloat(sim.getValue(upperGene+"_freq_"+subpop.id)) + freqAllele));
+						// catn(upperGene + ": " + sim.getValue(upperGene+"_freq_"+subpop.id));
+						// catn("count: " + countAllele);
+						// catn("freq: " + freqAllele);
+					}
+				}
+			}
+		}
+	}
+	
+	//After test if the algorithm consider no DMI in the individual return T to allow the child become parent
+	
+	return T;
+}
