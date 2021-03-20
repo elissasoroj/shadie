@@ -8,7 +8,7 @@ and converts user-provided phylogeny into SLiM3-compatible subpopulation demogra
 To install locally:
 ```bash
 #dependencies:
-conda install [pandas, numpy, toytree, msprime, pyslim] -c conda-forge
+conda install [pandas, numpy, toyplot, toytree, msprime, pyslim, loguru] -c conda-forge
 
 #clone and install
 git clone [https://github.com/elissasoroj/shadie.git]
@@ -52,7 +52,7 @@ This submodule takes a `Toytree` tree object and creates a `.slim` script with p
 
  This will be used to generate this part of the script, which controls when populations in the program split into subpopulations:
 
-```
+```java
  #write beginning row:
 1 { sim.addSubpop("{root}", {Neroot}); }
 
@@ -61,7 +61,7 @@ This submodule takes a `Toytree` tree object and creates a `.slim` script with p
 	sim.addSubpopSplit("{child0}", {Nechild0}, p1);
     sim.addSubpopSplit("{child1}", {Nechild1}, p1);}
 {gen}:{gen+1} {
-    {root}.setMigrationRates(c({child0}, {child1}), c(0.5, 0.5));}
+    {root}.setMigrationRates(c({child0}, {child1}), c(0.5, 0.5));} //may not be necessary
 {gen+1} {
     {root}setSubpopulationSize(0);}
 #append until out of rows
@@ -71,9 +71,40 @@ This submodule takes a `Toytree` tree object and creates a `.slim` script with p
 ```
 
 
+#### 3. Chromosome
+
+Working Example:
+
+install `shadie` from the `./shadie` local directory
+```bash
+pip install -e .
+```
+
+launch jupyter notebook and create a new Python3 Notebook
+```bash
+jupyter notebook
+```
+
+In the notebook:
+```python
+from shadie import Chromosome
+
+#create a Chromosome class object
+#default genome size = 1e6; set size with "genome_size=(int)"
+random_chromosome = Chromosome()
+
+#build a random chromosome with `make_rand` function
+Chromosome.make_rand(random_chromosome)
+
+#inspect your chromosome using 'review' function
+#dataframe of genomic elements
+Chromosome.review(random_chromosome, item = "elements")
+
+#Chromosome plot with # of genes, mean intron & exon length, etc...
+Chromosome.review(random_chromosome, item = "chromosome")
+```
+
+
 #### 3. Summary Statistics
 
 *Not yet written*
-
-
-
