@@ -26,10 +26,10 @@ This project has 3 main parts:
 3. write a `.slim` script and execute in the program SLiM3 
 4. take output from SLiM simulation and provide useful summary statistics, such as MK and dN/dS
 
-Right now, we are focusing on **#2**. See detail below ~
+Right now, we are focusing on **#1 and #2**. See detail below ~
 
 
-#### 1. Phylogeny --> SliM3 Demography
+### 1. Phylogeny --> SliM3 Demography
 
 See `demography.py` for script
 
@@ -66,23 +66,23 @@ This submodule takes a `Toytree` tree object and creates a `.slim` script with p
 ```
 
 
-#### 2. Chromosome
+### 2. Chromosome
 
 See `chromosome.py` for script
 
-Working Example:
+**Working Example:**
 
-install `shadie` from the `./shadie` local directory
+1. install `shadie` from the `./shadie` local directory
 ```bash
 pip install -e .
 ```
 
-launch jupyter notebook and create a new Python3 Notebook
+2. launch jupyter notebook and create a new Python3 Notebook
 ```bash
 jupyter notebook
 ```
 
-In the notebook:
+3. In the notebook:
 ```python
 from shadie import Chromosome
 
@@ -102,7 +102,7 @@ Chromosome.review(random_chromosome, item = "chromosome")
 ```
 
 
-#### 3. Generate the .slim Script
+### 3. Generate the .slim Script
 
 See `shadie.py` for script
 
@@ -110,6 +110,6 @@ This submodule needs to create a `.slim`  script with correct syntax that will r
 
 
 
-#### 4. Summary Statistics
+### 4. Summary Statistics
 
 *Not yet written*
