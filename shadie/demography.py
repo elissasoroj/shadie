@@ -8,7 +8,7 @@ population demography for SLiM
 #imports
 import pandas as pd
 import toytree
-
+from loguru import logger
 
 
 class Demography:
@@ -62,7 +62,7 @@ class Demography:
                 demogdf.loc[idx, 'child0'] = f'p{node.children[0].idx}'
                 demogdf.loc[idx, 'child1'] = f'p{node.children[1].idx}'
         self.demog = demogdf
-        print(self.demog)
+        logger.debug(self.demog)
 
 
 #This is the .slim script structure that needs to be written by the submodule:
