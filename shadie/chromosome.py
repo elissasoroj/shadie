@@ -7,10 +7,13 @@ Generates script for SLiM simulation
 
 #imports
 import math
+import os
+import io
 import pandas as pd
 import numpy as np
 from loguru import logger
 import toyplot
+import altair as alt
 
 #standard mutation types, with structure:
 #(name, dominance, distribution, {following depends on distribution})
@@ -52,11 +55,11 @@ class Chromosome:
 
         Parameters:
         -----------
-        type(str): default = "random"
+        chromtype(str): default = "random"
             "random" will generate a random chromosome
             "dict" will accept a dictionary object
 
-        genes(int): default = 1
+        genes(int): default = None
             Number of genes on chromosome
             Can be supplied as `int` for random chromosome generation
             or as dict object for explicit chromosome generation, e.g:
@@ -74,35 +77,66 @@ class Chromosome:
             dict(name='C', selection=0.03, start=9000, end=10000, haploid=False),
             )
 
-        introns (int): default = 0
-            Number of introns per gene
+        introns (int): default = None
+            For random generator: number of introns per gene; default = random
+            For dict generator: number of introns per gene; default = 0
 
-        exons (int): default = 1
-            Number of exons
+        exons (int): default = None
+           For random generator: number of exons per gene; default = random
+           For dict generator: number of exons per gene; default = 1
+
+        mutation_rate(int): default = 1e-7
+            Chance of mutation at each bp
+
+
+        genome_size(int): default = =1e6
+            Length of chromosome
         """
 
 
-    def make(self):
-        if self.type == "dict":
-            self.genedict = self.genes
-            for self.gene in self.genedict:
-                #make the mutation types
-                mutdict = {}
-                #...
-                self.mutdict = mutdict
+    def make(self, *args):
+        """
+        argument must be in form of dictionary objects in the format:
+        a = dict(name = "a", mutations = (-.01, 0.5), start = 2000, end = 3000)
+        OR
+        .csv file
+        OR 
+        pandas DataFrame
+        """
+        if self.type == "custom":
+            if isinstance(arg, io.TextIOBase):
+                #save .csv as dataframe
+                pass
 
-                #make the genomic element types
-                elemdict = {}
-                #...
-                self.selemdict = elemdict
+            elif isinstance(args, pd.DataFrame):
+                self.genedf = arg
 
-                #write the initializeGenomicElement lines to a dict
-                initdict = {}
-                #...
-                self.initdict = initdict
+            else:
+                genelist = []
+                for i in args:
+                    if isinstance(i, dict):
+                        genelist.append(i)
+                genedf = pd.DataFrame(genelist)
 
         elif self.type == "random":
-            pass
+                    pass
+
+    def generate(self):
+        for gene in self.genedf:
+            #make the mutation types
+            mutdict = {}
+            #...
+            self.mutdict = mutdict
+
+            #make the genomic element types
+            elemdict = {}
+            #...
+            self.selemdict = elemdict
+
+            #write the initializeGenomicElement lines to a dict
+            initdict = {}
+            #...
+            self.initdict = initdict
 
 
     def make_rand(self):
@@ -113,7 +147,7 @@ class Chromosome:
                 data=None,
                 )
                 base = int(0)
-                finalnc_length = np.random.randint(100, 15000)
+                finalnc_length = np.random.randint(100, 5000)
                 end = self.gensize - finalnc_length
                 logger.debug("Made objects: base = {base}, genelements = {}, end = {end}")
 
@@ -136,7 +170,7 @@ class Chromosome:
                     logger.info("Gene added")    
                         
                     while (np.random.random_sample() < 0.75):  #25% probability of stopping
-                        in_length = round(np.random.normal(400, 100))
+                        in_length = round(np.random.normal(450, 100))
                         genelements.loc[base, 'name'] = "intron"
                         genelements.loc[base, 'eltype'] = INTRON
                         genelements.loc[base, 'start'] = base
@@ -167,6 +201,36 @@ class Chromosome:
 
     def review(self, item = None):
         "prints mutations, genetic elements, and genes dataframe"
+        #Make the `rectangles` dataframe for plotting
+        eltype = []
+        startbase = []
+        endbase = []
+        y1 = []
+        y2 = []
+        for index, row in self.genelements.iterrows():
+                    eltype.append(row['name'])
+                    startbase.append(row['start'])
+                    endbase.append(row['finish'])
+                    y1.append(0)
+                    y2.append(1)
+
+        chromcoords = list(zip(eltype, startbase, endbase, y1, y2))
+        rectangles = pd.DataFrame(chromcoords, columns = ['Element Type', 'x1', 'x2', 'y1', 'y2'])
+
+        #define colors for each element
+        #add will need to re-write for custom genetic elements
+        color = []
+        for index, row in rectangles.iterrows():
+            if row["Element Type"] == "noncoding":
+                color.append("firebrick")
+            elif row["Element Type"] == "exon":
+                color.append("steelblue")
+            elif row["Element Type"] == "intron":
+                color.append("orange")
+
+        #assign colors to rectangles dataframe 
+        rectangles.insert(5, "color", color)
+
         if item == "mutations":
             pass
             #print("Mutations:\n" self.mutdict)
@@ -176,6 +240,7 @@ class Chromosome:
         elif item == "elements":
             print("Genomic elements:\n", self.genelements)
         elif item == "chromosome":
+
             #Calculate Stats
             genecount = (rectangles["Element Type"]=='noncoding').sum()-1
             exoncount = (rectangles["Element Type"]=='exon').sum()
@@ -195,38 +260,8 @@ class Chromosome:
                 f"Average # introns per gene: {introncount/genecount}\n"
                 f"Average introns length: {totintronlength/introncount} nt\n"
                 )
-            
-            print("Chromosome Plot:\n")
-            #Make the rectangles dataframe
-            eltype = []
-            startbase = []
-            endbase = []
-            y1 = []
-            y2 = []
-            for index, row in self.genelements.iterrows():
-                        eltype.append(row['name'])
-                        startbase.append(row['start'])
-                        endbase.append(row['finish'])
-                        y1.append(0)
-                        y2.append(1)
 
-            chromcoords = list(zip(eltype, startbase, endbase, y1, y2))
-            rectangles = pd.DataFrame(chromcoords, columns = ['Element Type', 'x1', 'x2', 'y1', 'y2'])
-
-            #define colors for each element
-            #add will need to re-write for custom genetic elements
-            color = []
-            for index, row in rectangles.iterrows():
-                if row["Element Type"] == "noncoding":
-                    color.append("firebrick")
-                elif row["Element Type"] == "exon":
-                    color.append("steelblue")
-                elif row["Element Type"] == "intron":
-                    color.append("orange")
-
-            #assign colors to rectangles dataframe 
-            rectangles.insert(5, "color", color)
-
+            print(f"Chromosome Plot:\n")
             # make the canvas and axes
             canvas = toyplot.Canvas(width=3000, height=200)
             axes = canvas.cartesian()
@@ -239,6 +274,23 @@ class Chromosome:
                     color = row['color']
                 )
 
+        elif item == "interactive": 
+            alt.Chart(rectangles).mark_rect().encode(
+                x=alt.X('x1:Q', axis=alt.Axis(title='Base Pairs')),
+                x2='x2:Q',
+                y = alt.Y('y1:Q', axis=None),
+                y2='y2:Q', 
+                color='Element Type',
+                tooltip=[
+                    alt.Tooltip('Element Type', title='Element Type'),
+                    alt.Tooltip('x1', title='Start'),
+                    alt.Tooltip('x2', title='Stop'),
+                ]
+            ).properties(
+                height = 40,
+                width = 850
+            )
+
         else:
             print("please enter an item to review")
 
@@ -250,3 +302,4 @@ if __name__ == "__main__":
     Chromosome.make_rand(init_chromosome)
     Chromosome.review(init_chromosome, item = "elements")
     Chromosome.review(init_chromosome, item = "chromosome")
+    Chromosome.review(init_chromosome, item = "interactive")
