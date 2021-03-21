@@ -7,6 +7,7 @@ population demography for SLiM
 
 #imports
 import pandas as pd
+import numpy as np
 import toytree
 from loguru import logger
 
