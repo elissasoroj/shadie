@@ -7,8 +7,11 @@ Generates script for SLiM simulation
 
 #imports
 import math
+import subprocess
 import numpy as np
 import pandas as pd
+import msprime
+import pyslim
 
 
 class Shadie(object):
@@ -26,7 +29,7 @@ class Shadie(object):
         recomb=1e-9,        #sets rate in `initializeRecombinationRate`, also accepts map
         genome_size=1e6,    #will be used to calculate chromosome end (length -1)
         model = "nonWF",    #nucleotide simulation must be nonWF
-        treeseq = "T", #turns on tree sequence recording 
+        treeseq = "T",      #turns on tree sequence recording 
         ):
         """
         Builds script to run SLiM3 simulation
@@ -50,33 +53,35 @@ class Shadie(object):
 
         """
 
-    def simulate(self):
-        "calls SLiM to run the simulations"
-        pass
-
-    def write(self, filename="shadie.slim"):
+      def write(self, filename="shadie.slim"):
         "writes the .slim script; optional to provide filename as 'filename.slim'"
-        filename.self = filename
-        mutrate.self = mutrate
-        muttype.self = muttype
-        geneltype.self = geneltype
-        genel.self = genel
-        recomb.self = recomb
-        Ne.self = Ne
-        model.self = model
+        self.filename = filename
+        self.mutrate = mutrate
+        self.muttype = muttype
+        self.geneltype = geneltype
+        self.genel = genel
+        self.recomb = recomb
+        self.Ne = Ne
+        self.model = model
         #write initialize callbacks
         script = open(filename.self, "a") #appends so that user does not accidentally overwrite old simulation
         L1 = (
-            "initialize() {\ninitializeSLiMModelType("+model.self+");\n"
-            f"defineConstant('K',{Ne.self});\n"
-            f"initializeMutationRate({mutrate.self});\n"
-            f"initializeMutationType{muttype.self};\n m1.convertToSubstitution = T;\n"
-            f"initializeGenomicElementType{geneltype.self};\n"
-            f"initializeGenomicElement{genel.self};\n"
-            "initializeRecombinationRate("+recomb.self+");\n}"
+            "initialize() {\ninitializeSLiMModelType("+self.model+");\n"
+            f"defineConstant('K',{self.Ne});\n"
+            f"initializeMutationRate({self.mutrate});\n"
+            f"initializeMutationType{self.muttype};\n m1.convertToSubstitution = T;\n"
+            f"initializeGenomicElementType{self.geneltype};\n"
+            f"initializeGenomicElement{self.genel};\n"
+            "initializeRecombinationRate("+self.recomb+");\n}"
         )
         script.write(L1)
         script.close
+
+    def simulate(self):
+        "calls SLiM to run the simulations"
+        # Run the SLiM model and load the resulting .trees
+        subprocess.check_output(["slim", "-m", "-s", "0", "./recipe_17.4.slim"])
+        ts = pyslim.load("./recipe_17.4.trees")
 
 
     def organism(self):
@@ -108,9 +113,6 @@ class Shadie(object):
             #base SLiM hermaphrodite? 
             pass
 
-
-    def simulate(self):
-        "calls SLiM to run the simulations"
 
 
 if __name__ == "__main__":
