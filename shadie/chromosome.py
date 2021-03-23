@@ -104,19 +104,18 @@ class Chromosome:
         pandas DataFrame
         """
         if self.type == "custom":
-            if isinstance(arg, io.TextIOBase):
-                #save .csv as dataframe
-                pass
+            if isinstance(args, io.TextIOBase):
+                self.genedf = pd.read_csv(args)
 
             elif isinstance(args, pd.DataFrame):
-                self.genedf = arg
+                self.genedf = args
 
             else:
                 genelist = []
                 for i in args:
                     if isinstance(i, dict):
                         genelist.append(i)
-                genedf = pd.DataFrame(genelist)
+                self.genedf = pd.DataFrame(genelist)
 
         elif self.type == "random":
                     pass
