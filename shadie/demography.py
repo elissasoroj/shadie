@@ -56,12 +56,14 @@ class Demography:
 
         # traverse tree from root to tips
         for idx, node in enumerate(self.tree.treenode.traverse('preorder')):
-            if node.children:
+            if len(node.children) == 2: #patrick told me this avoids silly errors
                 gen = int((theight - node.height) + 1)
                 demogdf.loc[idx, 'gen'] = gen
                 demogdf.loc[idx, 'src'] = f'p{node.idx}'
                 demogdf.loc[idx, 'child0'] = f'p{node.children[0].idx}'
                 demogdf.loc[idx, 'child1'] = f'p{node.children[1].idx}'
+                demogdf.loc[idx, 'Ne'] = node.Ne
+                #I started by following the f-string format, but it seems like just having the value is better
         self.demog = demogdf
         logger.debug(self.demog)
 
