@@ -6,7 +6,6 @@ Generates script for SLiM simulation
 """
 
 #imports
-import math
 import os
 import io
 import pandas as pd
@@ -125,7 +124,7 @@ class Chromosome:
             #make the mutation types
             mutdict = {}
             #...
-            self.mutdict = mutdict
+            self.mutdict = mutdict #my linter is telling me these should be defined in init
 
             #make the genomic element types
             elemdict = {}
@@ -150,7 +149,7 @@ class Chromosome:
                 end = self.gensize - finalnc_length
                 logger.debug("Made objects: base = {base}, genelements = {}, end = {end}")
 
-                while (base < end):
+                while base < end:
                     #make initial non-coding region
                     nc_length = np.random.randint(100, 5000)
                     genelements.loc[base, 'name'] = "noncoding"
@@ -158,31 +157,32 @@ class Chromosome:
                     genelements.loc[base, 'start'] = base
                     genelements.loc[base, 'finish'] = base + nc_length - 1
                     base = base + nc_length
-                    
+                
                     #make first exon
-                    ex_length = round(np.random.lognormal(math.log(250), math.log(1.3))) + 1
+                    ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
                     genelements.loc[base, 'name'] = "exon"
                     genelements.loc[base, 'eltype'] = EXON
                     genelements.loc[base, 'start'] = base
                     genelements.loc[base, 'finish'] = base + ex_length -1
                     base = base + ex_length
                     logger.info("Gene added")    
-                        
-                    while (np.random.random_sample() < 0.75):  #25% probability of stopping
+                    
+                    while np.random.random_sample() < 0.75:  #25% probability of stopping
                         in_length = round(np.random.normal(450, 100))
                         genelements.loc[base, 'name'] = "intron"
                         genelements.loc[base, 'eltype'] = INTRON
                         genelements.loc[base, 'start'] = base
                         genelements.loc[base, 'finish'] = base + in_length -1
-                        base = base + in_length;
-                        
-                        ex_length = round(np.random.lognormal(math.log(250), math.log(1.3))) + 1
+                        base = base + in_length
+                      
+                        ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
+                        #do you need math for that? You can just do it with numpy
                         genelements.loc[base, 'name'] = "exon"
                         genelements.loc[base, 'eltype'] = EXON
                         genelements.loc[base, 'start'] = base
                         genelements.loc[base, 'finish'] = base + ex_length -1
                         base = base + ex_length 
-                            
+                          
             #final non-coding region
             genelements.loc[base, 'name'] = "noncoding"
             genelements.loc[base, 'eltype'] = NONCOD
