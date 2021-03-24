@@ -56,6 +56,7 @@ class Shadie(object):
             The per-site per-generation recombination rate.
 
         """
+
         self.recomb = recomb
         self.Ne = Ne
         self.model = model
@@ -84,6 +85,7 @@ class Shadie(object):
             self.muttype = muttype
             self.geneltype = geneltype
             self.genel = genel
+
         #write initialize callbacks
         script = open(filename.self, "a") #appends so that user does not accidentally overwrite old simulation
         initialize = (
