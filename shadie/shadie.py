@@ -53,7 +53,7 @@ class Shadie(object):
 
         """
 
-      def write(self, filename="shadie.slim"):
+    def write(self, filename="shadie.slim"):
         "writes the .slim script; optional to provide filename as 'filename.slim'"
         self.filename = filename
         self.mutrate = mutrate
@@ -63,6 +63,7 @@ class Shadie(object):
         self.recomb = recomb
         self.Ne = Ne
         self.model = model
+
         #write initialize callbacks
         script = open(filename.self, "a") #appends so that user does not accidentally overwrite old simulation
         L1 = (
