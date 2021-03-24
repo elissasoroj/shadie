@@ -86,6 +86,7 @@ class Shadie(object):
             self.geneltype = geneltype
             self.genel = genel
 
+
         #write initialize callbacks
         script = open(filename.self, "a") #appends so that user does not accidentally overwrite old simulation
         initialize = (

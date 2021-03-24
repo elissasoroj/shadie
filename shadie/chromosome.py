@@ -6,6 +6,7 @@ Generates script for SLiM simulation
 """
 
 #imports
+import os
 import io
 import pandas as pd
 import numpy as np
