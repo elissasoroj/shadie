@@ -7,7 +7,6 @@ Generates script for SLiM simulation
 
 #imports
 import math
-import os
 import io
 import pandas as pd
 import numpy as np
@@ -15,8 +14,16 @@ from loguru import logger
 import toyplot
 import altair as alt
 
+#optional imports
+try:
+    import IPython 
+except ImportError:
+    pass
+
 #standard mutation types, with structure:
 #(name, dominance, distribution, {following depends on distribution})
+
+
 NEUT = '("m100", 0.5, "f", 0.0)'      #neutral mutation
 SYN = '("m101", 0.5, "f", 0.0)'           #synonymous
 DEL = '("m102", 0.1, "g", -0.03, 0.2)'    #deleterious
@@ -122,6 +129,7 @@ class Chromosome:
                     pass
 
     def generate(self):
+        "generates chromosome based on explicit user structure"
         for gene in self.genedf:
             #make the mutation types
             mutdict = {}
@@ -140,6 +148,7 @@ class Chromosome:
 
 
     def make_rand(self):
+        "generates a random chromosome"
         if self.type == "random":
             if self.exons == None and self.introns == None:
                 genelements = pd.DataFrame(
@@ -200,36 +209,11 @@ class Chromosome:
             print("'type' must be 'random' or 'dict'")
 
     def review(self, item = None):
-        "prints mutations, genetic elements, and genes dataframe"
-        #Make the `rectangles` dataframe for plotting
-        eltype = []
-        startbase = []
-        endbase = []
-        y1 = []
-        y2 = []
-        for index, row in self.genelements.iterrows():
-                    eltype.append(row['name'])
-                    startbase.append(row['start'])
-                    endbase.append(row['finish'])
-                    y1.append(0)
-                    y2.append(1)
-
-        chromcoords = list(zip(eltype, startbase, endbase, y1, y2))
-        rectangles = pd.DataFrame(chromcoords, columns = ['Element Type', 'x1', 'x2', 'y1', 'y2'])
-
-        #define colors for each element
-        #add will need to re-write for custom genetic elements
-        color = []
-        for index, row in rectangles.iterrows():
-            if row["Element Type"] == "noncoding":
-                color.append("firebrick")
-            elif row["Element Type"] == "exon":
-                color.append("steelblue")
-            elif row["Element Type"] == "intron":
-                color.append("orange")
-
-        #assign colors to rectangles dataframe 
-        rectangles.insert(5, "color", color)
+        """
+        allows user to inspect chromosome settings, including:
+        mutation rates, genomic element types, and genomic elements
+        also creates interactive plot of the chromosome, so the user can inspect it
+        """
 
         if item == "mutations":
             pass
@@ -240,6 +224,35 @@ class Chromosome:
         elif item == "elements":
             print("Genomic elements:\n", self.genelements)
         elif item == "chromosome":
+            #Make the `rectangles` dataframe for plotting
+            eltype = []
+            startbase = []
+            endbase = []
+            y1 = []
+            y2 = []
+            for index, row in self.genelements.iterrows():
+                eltype.append(row['name'])
+                startbase.append(row['start'])
+                endbase.append(row['finish'])
+                y1.append(0)
+                y2.append(1)
+
+            chromcoords = list(zip(eltype, startbase, endbase, y1, y2))
+            rectangles = pd.DataFrame(chromcoords, columns = ['Element Type', 'x1', 'x2', 'y1', 'y2'])
+
+            #define colors for each element
+            #add will need to re-write for custom genetic elements
+            color = []
+            for index, row in rectangles.iterrows():
+                if row["Element Type"] == "noncoding":
+                    color.append("firebrick")
+                elif row["Element Type"] == "exon":
+                    color.append("steelblue")
+                elif row["Element Type"] == "intron":
+                    color.append("orange")
+
+            #assign colors to rectangles dataframe
+            rectangles.insert(5, "color", color)
 
             #Calculate Stats
             genecount = (rectangles["Element Type"]=='noncoding').sum()-1
@@ -274,25 +287,61 @@ class Chromosome:
                     color = row['color']
                 )
 
-        elif item == "interactive": 
-            alt.Chart(rectangles).mark_rect().encode(
+        elif item == "interactive":
+            print("Interactive altair chromosome map:")
+            #Make the `rectangles` dataframe for plotting
+            eltype = []
+            startbase = []
+            endbase = []
+            y1 = []
+            y2 = []
+            for index, row in self.genelements.iterrows():
+                eltype.append(row['name'])
+                startbase.append(row['start'])
+                endbase.append(row['finish'])
+                y1.append(0)
+                y2.append(1)
+
+            chromcoords = list(zip(eltype, startbase, endbase, y1, y2))
+            rectangles = pd.DataFrame(chromcoords, columns = ['Element Type', 'x1', 'x2', 'y1', 'y2'])
+
+            #make the altair plot
+            dom = ['exon', 'intron', 'noncoding'] 
+            rng = ['mediumvioletred', 'lightgoldenrodyellow', 'cornflowerblue'] 
+
+            brush = alt.selection_interval(
+                encodings=['x'], 
+                mark=alt.BrushConfig(fill='red', fillOpacity = 0.700))
+
+            ichrom = alt.Chart(rectangles).mark_rect().encode(
                 x=alt.X('x1:Q', axis=alt.Axis(title='Base Pairs')),
                 x2='x2:Q',
                 y = alt.Y('y1:Q', axis=None),
                 y2='y2:Q', 
-                color='Element Type',
+                color=alt.Color('Element Type', 
+                                scale=alt.Scale(domain=dom, range=rng)),
                 tooltip=[
                     alt.Tooltip('Element Type', title='Element Type'),
                     alt.Tooltip('x1', title='Start'),
                     alt.Tooltip('x2', title='Stop'),
-                ]
+                    alt.Tooltip('length', title='Length'),
+                        ]
             ).properties(
-                height = 40,
+                height = 80,
                 width = 850
-            )
+            ).add_selection(brush)
+
+            zoom = alt.vconcat(
+                ichrom.encode(
+                alt.X('x1:Q', title=None, scale=alt.Scale(domain=brush))),
+                ichrom.add_selection(brush).properties(height=40),
+                data=rectangles)
+
+            IPython.display.display_html(zoom)
 
         else:
-            print("please enter an item to review")
+            logger.info("Please enter a valid item to review. Options include:\n"
+                "'mutations'\n'eltypes'\n'elements'\n''chromosome'\n'interractive'")
 
 
 if __name__ == "__main__":
