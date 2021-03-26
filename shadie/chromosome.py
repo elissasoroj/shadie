@@ -5,7 +5,7 @@ Generates script for SLiM simulation
 
 """
 
-#imports
+#package imports
 import os
 import io
 import pandas as pd
@@ -14,26 +14,20 @@ from loguru import logger
 import toyplot
 import altair as alt
 
+#internal imports
+#from mutations import MutationList
+#from elements import ElementList
+from globals import NONCOD
+from globals import INTRON
+from globals import EXON
+
 #optional imports
 try:
     import IPython 
 except ImportError:
     pass
 
-#standard mutation types, with structure:
-#(name, dominance, distribution, {following depends on distribution})
-
-
-NEUT = '("m100", 0.5, "f", 0.0)'      #neutral mutation
-SYN = '("m101", 0.5, "f", 0.0)'           #synonymous
-DEL = '("m102", 0.1, "g", -0.03, 0.2)'    #deleterious
-BEN = '("m103", 0.8, "e", 0.1)'           #beneficial
-
-#standard genetic elements have the structure:
-#(name, mutations, frequency of each mutation)
-EXON = '("g100", c(m100,m101,m102), c(2,8,0.1))'  #exon
-INTRON = '("g101", c(m100,m102), c(9,1))'         #intron
-NONCOD = '("g102", c(m100), 1)'               #non-coding
+#
 
 
 class Chromosome:
@@ -49,6 +43,8 @@ class Chromosome:
         exons = None,           #number of exons per gene (if None, random)
         mutation_rate = 1e-7,   #mutation rate will be used to calculate mutation matrix
         genome_size=1e6,        #will be used to calculate chromosome end (length -1)
+        mutationtypes = None,   #read in MutationList object
+        elementtypes = None,    #read in ElementList object
         ):
     
         self.type = chromtype
@@ -100,16 +96,6 @@ class Chromosome:
             Length of chromosome
         """
 
-
-    def make(self, *args):
-        """
-        argument must be in form of dictionary objects in the format:
-        a = dict(name = "a", mutations = (-.01, 0.5), start = 2000, end = 3000)
-        OR
-        .csv file
-        OR 
-        pandas DataFrame
-        """
         if self.type == "custom":
             if isinstance(args, io.TextIOBase):
                 self.genedf = pd.read_csv(args)
@@ -126,6 +112,18 @@ class Chromosome:
 
         elif self.type == "random":
                     pass
+
+
+    def make(self, *args):
+        """
+        argument must be in form of dictionary objects in the format:
+        a = dict(name = "a", mutations = (-.01, 0.5), start = 2000, end = 3000)
+        OR
+        .csv file
+        OR 
+        pandas DataFrame
+        """
+        
 
     def generate(self):
         "generates chromosome based on explicit user structure"
