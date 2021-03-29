@@ -1,24 +1,25 @@
 #!/usr/bin/env python
 
 """
-Generates script for SLiM simulation
+Review chromosome object that will be used for a simulation. Reads in
+object from subclass BuildChromosome. Otherwise, creates a single gene.
 
 """
 
 #package imports
-import os
-import io
 import pandas as pd
-import numpy as np
 from loguru import logger
 import toyplot
 import altair as alt
 
 #internal imports
-#from mutations import MutationList
-#from elements import ElementList
-from globals import NONCOD
-from globals import INTRON
+from buildchromosome import Build
+from mutations import MutationList
+from elements import ElementList
+
+from globals import BEN
+from globals import SYN
+from globals import DEL
 from globals import EXON
 
 #optional imports
@@ -32,61 +33,32 @@ except ImportError:
 
 class Chromosome:
     """
-    Chromosome object created based on user parameters
+    shadie.Chromosome object stores the genome information for a SLiM
+    simulation. Allows the use to inspect the genome parameters 
+    before proceeding
+
     """
 
     def __init__(
         self,
-        chromtype = "random",       #"random" or "dict" 
-        genes=None,             #number of genes on the chromosome (if None, random)
-        introns = None,         #number of introns per gene (if None, random)
-        exons = None,           #number of exons per gene (if None, random)
         mutation_rate = 1e-7,   #mutation rate will be used to calculate mutation matrix
         genome_size=1e6,        #will be used to calculate chromosome end (length -1)
-        mutationtypes = None,   #read in MutationList object
-        elementtypes = None,    #read in ElementList object
+        genome = None           #optional BuildChromosome object
         ):
-    
-        self.type = chromtype
-        self.genes = genes
-        self.introns = introns
-        self.exons = exons
+
         self.mutrate = mutation_rate
         self.gensize = genome_size
+        self.genome = genome
+
         """
-        Builds the chromosome for SLiM3 simulation
+        Accepts a subclass Build object to define chromosome structure.
+        Otherwise, takes genome_size (length) and mutation rate and 
+        creates a single gene for the simulation using default EXON 
+        genomic element type and default mutation types assigned to 
+        EXON (see globals.py). 
 
         Parameters:
         -----------
-        chromtype(str): default = "random"
-            "random" will generate a random chromosome
-            "dict" will accept a dictionary object
-
-        genes(int): default = None
-            Number of genes on chromosome
-            Can be supplied as `int` for random chromosome generation
-            or as dict object for explicit chromosome generation, e.g:
-
-            dict(name = "name", mutations = (fitness effect,  dominance), start = bp, end = bp)
-            dict(name = "a", mutations = (-.01, 0.5), start = 2000, end = 3000)
-
-            # call simulate with details on genome structure (and which life stage selection occurs?)
-            mod.simulate(
-            dict(name='a', selection=-0.01, start=2000, end=3000, haploid=True),
-            dict(name='b', selection=-0.02, start=5000, end=6000, haploid=True),
-            dict(name='c', selection=-0.03, start=9000, end=10000, haploid=True),
-            dict(name='A', selection=0.01, start=2000, end=3000, haploid=False),
-            dict(name='B', selection=0.02, start=5000, end=6000, haploid=False),
-            dict(name='C', selection=0.03, start=9000, end=10000, haploid=False),
-            )
-
-        introns (int): default = None
-            For random generator: number of introns per gene; default = random
-            For dict generator: number of introns per gene; default = 0
-
-        exons (int): default = None
-           For random generator: number of exons per gene; default = random
-           For dict generator: number of exons per gene; default = 1
 
         mutation_rate(int): default = 1e-7
             Chance of mutation at each bp
@@ -96,115 +68,21 @@ class Chromosome:
             Length of chromosome
         """
 
-        if self.type == "custom":
-            if isinstance(args, io.TextIOBase):
-                self.genedf = pd.read_csv(args)
+        if self.genome != None:
+            if isinstance(self.genome, Build):
+                self.mutationlist = self.genome.mutationlist
+                self.elementlist = self.genome.elementlist
+                self.genome = self.genome.genelements
+            
 
-            elif isinstance(args, pd.DataFrame):
-                self.genedf = args
-
-            else:
-                genelist = []
-                for i in args:
-                    if isinstance(i, dict):
-                        genelist.append(i)
-                self.genedf = pd.DataFrame(genelist)
-
-        elif self.type == "random":
-                    pass
-
-
-    def make(self, *args):
-        """
-        argument must be in form of dictionary objects in the format:
-        a = dict(name = "a", mutations = (-.01, 0.5), start = 2000, end = 3000)
-        OR
-        .csv file
-        OR 
-        pandas DataFrame
-        """
+        elif self.genome == None:
+            g1 = [{'name': "exon", 'start': 1, 
+            'finish': self.gensize - 1, 'eltype':EXON}]
+            gene = pd.DataFrame(g1)
+            self.genome = gene
+            self.mutationlist = MutationList(SYN, DEL, BEN)
+            self.elementlist = ElementList(EXON)
         
-
-    def generate(self):
-        "generates chromosome based on explicit user structure"
-        for gene in self.genedf:
-            #make the mutation types
-            mutdict = {}
-            #...
-            self.mutdict = mutdict #my linter is telling me these should be defined in init
-
-            #make the genomic element types
-            elemdict = {}
-            #...
-            self.selemdict = elemdict
-
-            #write the initializeGenomicElement lines to a dict
-            initdict = {}
-            #...
-            self.initdict = initdict
-
-
-    def make_rand(self):
-        "generates a random chromosome"
-        if self.type == "random":
-            if self.exons == None and self.introns == None:
-                genelements = pd.DataFrame(
-                columns=['name', 'start', 'finish', 'eltype'],
-                data=None,
-                )
-                base = int(0)
-                finalnc_length = np.random.randint(100, 5000)
-                end = self.gensize - finalnc_length
-                logger.debug("Made objects: base = {base}, genelements = {}, end = {end}")
-
-                while base < end:
-                    #make initial non-coding region
-                    nc_length = np.random.randint(100, 5000)
-                    genelements.loc[base, 'name'] = "noncoding"
-                    genelements.loc[base, 'eltype'] = NONCOD
-                    genelements.loc[base, 'start'] = base
-                    genelements.loc[base, 'finish'] = base + nc_length - 1
-                    base = base + nc_length
-                
-                    #make first exon
-                    ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
-                    genelements.loc[base, 'name'] = "exon"
-                    genelements.loc[base, 'eltype'] = EXON
-                    genelements.loc[base, 'start'] = base
-                    genelements.loc[base, 'finish'] = base + ex_length -1
-                    base = base + ex_length
-                    logger.info("Gene added")    
-                    
-                    while np.random.random_sample() < 0.75:  #25% probability of stopping
-                        in_length = round(np.random.normal(450, 100))
-                        genelements.loc[base, 'name'] = "intron"
-                        genelements.loc[base, 'eltype'] = INTRON
-                        genelements.loc[base, 'start'] = base
-                        genelements.loc[base, 'finish'] = base + in_length -1
-                        base = base + in_length
-                      
-                        ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
-                        #do you need math for that? You can just do it with numpy
-                        genelements.loc[base, 'name'] = "exon"
-                        genelements.loc[base, 'eltype'] = EXON
-                        genelements.loc[base, 'start'] = base
-                        genelements.loc[base, 'finish'] = base + ex_length -1
-                        base = base + ex_length 
-                          
-            #final non-coding region
-            genelements.loc[base, 'name'] = "noncoding"
-            genelements.loc[base, 'eltype'] = NONCOD
-            genelements.loc[base, 'start'] = base
-            genelements.loc[base, 'finish'] = self.gensize - 1
-            logger.info("Chromosome complete!")
-            logger.debug(genelements)
-            self.genelements = genelements
-
-        elif self.type == "dict":
-            pass
-
-        else:
-            print("'type' must be 'random' or 'dict'")
 
     def review(self, item = None):
         """
@@ -214,13 +92,13 @@ class Chromosome:
         """
 
         if item == "mutations":
-            pass
+            print("Mutation Types:\n", self.mutationlist)
             #print("Mutations:\n" self.mutdict)
         elif item == "eltypes":
-            pass
+            print("Genomic Element Types:\n", self.elementlist)
             #print("Genomic Element Types:\n" self.eldict)
         elif item == "elements":
-            print("Genomic elements:\n", self.genelements)
+            print("Genomic elements:\n", self.genome)
         elif item == "chromosome":
             #Make the `rectangles` dataframe for plotting
             eltype = []
@@ -228,7 +106,7 @@ class Chromosome:
             endbase = []
             y1 = []
             y2 = []
-            for index, row in self.genelements.iterrows():
+            for index, row in self.genome.iterrows():
                 eltype.append(row['name'])
                 startbase.append(row['start'])
                 endbase.append(row['finish'])
@@ -253,7 +131,7 @@ class Chromosome:
             rectangles.insert(5, "color", color)
 
             #Calculate Stats
-            genecount = (rectangles["Element Type"]=='noncoding').sum()-1
+            genecount = max(1, (rectangles["Element Type"]=='noncoding').sum()-1)
             exoncount = (rectangles["Element Type"]=='exon').sum()
             introncount = (rectangles["Element Type"]=='intron').sum()
             totexonlength = 0
@@ -293,7 +171,7 @@ class Chromosome:
             endbase = []
             y1 = []
             y2 = []
-            for index, row in self.genelements.iterrows():
+            for index, row in self.genome.iterrows():
                 eltype.append(row['name'])
                 startbase.append(row['start'])
                 endbase.append(row['finish'])
@@ -345,8 +223,13 @@ class Chromosome:
 if __name__ == "__main__":
 
     # generate random chromosome
-    init_chromosome = Chromosome()
-    Chromosome.make_rand(init_chromosome)
+    init_chromosome = Chromosome(genome_size = 2000)
     Chromosome.review(init_chromosome, item = "elements")
     Chromosome.review(init_chromosome, item = "chromosome")
     Chromosome.review(init_chromosome, item = "interactive")
+
+    random_chromosome = Build()
+    Build.random(random_chromosome)
+    final_chromosome = Chromosome(genome = random_chromosome)
+    final_chromosome.review("elements")
+    final_chromosome.review("mutations")
