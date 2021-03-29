@@ -20,7 +20,7 @@ class Demography:
     tree: (str, Toytree)
         Ultrametric ToyTree tree object with units in generations.
     """
-    def __init__(self, tree, Ne=1000):
+    def __init__(self, tree, Ne=None):
        
         # store input params
         self.tree = toytree.tree(tree)
@@ -99,13 +99,14 @@ if __name__ == "__main__":
     tree = toytree.rtree.unittree(ntips=10, treeheight=1e6, seed=123)
 
     # set Ne values on the nodes of hte tree
-    tree = tree.set_node_values(
+    tree2 = tree.set_node_values(
         feature="Ne", 
         values={i: np.random.randint(10000, 100000) for i in tree.idx_dict},
     )
 
    # TODO: dem loads a tree and parses Ne from nodes
-    dem = Demography(tree)
+    dem2 = Demography(tree2)
+    Demography.get_demog(dem2)
 
     # supported already
     dem = Demography(tree, Ne=10000)
