@@ -6,28 +6,25 @@ Generates script for SLiM simulation
 """
 
 #package imports
-import os
 import io
 import pandas as pd
 import numpy as np
 from loguru import logger
-import toyplot
-import altair as alt
 
 #internal imports
-from mutations import MutationList
-from elements import ElementList
+from .mutations import MutationList
+from .elements import ElementList
 
 #default element types
-from globals import NONCOD
-from globals import INTRON
-from globals import EXON
+from .globals import NONCOD
+from .globals import INTRON
+from .globals import EXON
 
 #default mutation types
-from globals import NEUT
-from globals import SYN
-from globals import DEL
-from globals import BEN
+from .globals import NEUT
+from .globals import SYN
+from .globals import DEL
+from .globals import BEN
 
 #optional imports
 try:
@@ -47,7 +44,6 @@ class Build:
     	self,
     	chromtype = "random",       #"random" or "dict" 
     	genes=None,             #number of genes on the chromosome (if None, random)
-		introns = None,         #number of introns per gene (if None, random)
 		exons = None,           #number of exons per gene (if None, random)
 		mutationtypes = None,   #read in MutationList object
 		elementtypes = None,    #read in ElementList object
@@ -124,7 +120,7 @@ class Build:
             pass
         
 
-    def make(self):
+    def dict(self):
         "generates chromosome based on explicit user structure"
         for gene in self.genedf:
             #make the mutation types
@@ -148,7 +144,7 @@ class Build:
         if self.type == "random":
             if self.exons == None and self.introns == None:
                 genelements = pd.DataFrame(
-                columns=['name', 'start', 'finish', 'eltype'],
+                columns=['name', 'start', 'finish', 'eltype', 'script'],
                 data=None,
                 )
                 base = int(0)
@@ -160,7 +156,8 @@ class Build:
                     #make initial non-coding region
                     nc_length = np.random.randint(100, 5000)
                     genelements.loc[base, 'name'] = "noncoding"
-                    genelements.loc[base, 'eltype'] = NONCOD
+                    genelements.loc[base, 'eltype'] = NONCOD.name
+                    genelements.loc[base, 'script'] = NONCOD
                     genelements.loc[base, 'start'] = base
                     genelements.loc[base, 'finish'] = base + nc_length - 1
                     base = base + nc_length
@@ -168,7 +165,8 @@ class Build:
                     #make first exon
                     ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
                     genelements.loc[base, 'name'] = "exon"
-                    genelements.loc[base, 'eltype'] = EXON
+                    genelements.loc[base, 'eltype'] = EXON.name
+                    genelements.loc[base, 'script'] = EXON
                     genelements.loc[base, 'start'] = base
                     genelements.loc[base, 'finish'] = base + ex_length -1
                     base = base + ex_length
@@ -177,7 +175,8 @@ class Build:
                     while np.random.random_sample() < 0.75:  #25% probability of stopping
                         in_length = round(np.random.normal(450, 100))
                         genelements.loc[base, 'name'] = "intron"
-                        genelements.loc[base, 'eltype'] = INTRON
+                        genelements.loc[base, 'eltype'] = INTRON.name
+                        genelements.loc[base, 'script'] = INTRON
                         genelements.loc[base, 'start'] = base
                         genelements.loc[base, 'finish'] = base + in_length -1
                         base = base + in_length
@@ -185,14 +184,16 @@ class Build:
                         ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
                         #do you need math for that? You can just do it with numpy
                         genelements.loc[base, 'name'] = "exon"
-                        genelements.loc[base, 'eltype'] = EXON
+                        genelements.loc[base, 'eltype'] = EXON.name
+                        genelements.loc[base, 'script'] = EXON
                         genelements.loc[base, 'start'] = base
                         genelements.loc[base, 'finish'] = base + ex_length -1
                         base = base + ex_length 
                           
             #final non-coding region
             genelements.loc[base, 'name'] = "noncoding"
-            genelements.loc[base, 'eltype'] = NONCOD
+            genelements.loc[base, 'eltype'] = NONCOD.name
+            genelements.loc[base, 'script'] = NONCOD
             genelements.loc[base, 'start'] = base
             genelements.loc[base, 'finish'] = self.gensize - 1
             logger.info("Chromosome complete!")
