@@ -17,14 +17,10 @@ from shadie.buildchromosome import Build
 from shadie.mutations import MutationList
 from shadie.elements import ElementList
 
-from shadie.globals import BEN
-from shadie.globals import SYN
-from shadie.globals import DEL
-from shadie.globals import EXON
-
 #optional imports
 try:
     import IPython
+    from IPython.display import display
 except ImportError:
     pass
 
@@ -44,9 +40,6 @@ class Chromosome:
         genome_size=2e3,        #will be used to calculate chromosome end (length -1)
         genome = None           #optional BuildChromosome object
         ):
-
-        self.genome = genome
-        self.gensize = genome_size
         """
         Accepts a subclass Build object to define chromosome structure.
         Otherwise, takes genome_size (length) and mutation rate and 
@@ -65,20 +58,26 @@ class Chromosome:
             Length of chromosome
         """
 
-        if self.genome != None:
-            if isinstance(self.genome, Build):
-                self.mutationlist = self.genome.mutationlist
-                self.elementlist = self.genome.elementlist
-                self.genome = self.genome.genelements
-                self.gensize = self.genome.gensize
+        if genome != None:
+            if isinstance(genome, Build):
+                self.mutationlist = genome.mutationlist
+                self.elementlist = genome.elementlist
+                self.genome = genome.genelements
+                self.gensize = genome.gensize
             
 
-        elif self.genome == None:
+        elif genome == None:
+            from shadie.globals import BEN
+            from shadie.globals import SYN
+            from shadie.globals import DEL
+            from shadie.globals import EXON
+
+            self.gensize = genome_size
+
             g1 = [{'name': "exon", 'start': 1, 
             'finish': self.gensize - 1, 'eltype':EXON.name, 'script':EXON}]
             gene = pd.DataFrame(g1)
             self.genome = gene
-            self.gensize = genome_size
             self.mutationlist = MutationList(SYN, DEL, BEN)
             self.elementlist = ElementList(EXON)
         
@@ -91,13 +90,16 @@ class Chromosome:
         """
 
         if item == "mutations":
-            print("Mutation Types:\n", self.mutationlist)
+            print('\033[1m' + "Mutation Types:\n" + '\033[0m', self.mutationlist, "\n")
             #print("Mutations:\n" self.mutdict)
         elif item == "eltypes":
-            print("Genomic Element Types:\n", self.elementlist)
+            print('\033[1m' + "Genomic Element Types:\n" + '\033[0m', self.elementlist, "\n")
             #print("Genomic Element Types:\n" self.eldict)
         elif item == "elements":
-            print("Genomic elements:\n", self.genome)
+            print('\033[1m' + "Genomic Elements:\n" + '\033[0m')
+            df = pd.DataFrame(self.genome)
+            display(df)
+
         elif item == "chromosome":
             #Make the `rectangles` dataframe for plotting
             eltype = []
@@ -141,12 +143,18 @@ class Chromosome:
                 elif row["Element Type"]=='intron':
                     totintronlength += (1+row["x2"]-row["x1"])
 
+            if introncount == 0:
+                avintron = 0
+            else:
+                avintron = totintronlength/introncount
 
-            print(f"# of Genes: {genecount}\n"
+            print(
+                '\033[1m' + "Chromosome Summary\n" + '\033[0m'
+                f"# of Genes: {genecount}\n"
                 f"Average # exons per gene: {exoncount/genecount}\n"
                 f"Average exon length: {totexonlength/exoncount} nt\n"
                 f"Average # introns per gene: {introncount/genecount}\n"
-                f"Average introns length: {totintronlength/introncount} nt\n"
+                f"Average introns length: {avintron} nt\n"
                 )
 
             print(f"Chromosome Plot:\n")
@@ -215,8 +223,7 @@ class Chromosome:
                 ichrom.add_selection(brush).properties(height=40),
                 data=rectangles)
 
-            print(rectangles)
-            #ichrom.save('ichrom.html')
+            #zoom.save('zoom.html')
             IPython.display.display_html(zoom)
             
         else:
