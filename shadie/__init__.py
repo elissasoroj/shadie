@@ -16,4 +16,4 @@ from shadie.globals import *
 from shadie.buildchromosome import Build
 from shadie.chromosome import Chromosome
 from shadie.demography import Demography
-from shadie.shadie import Shadie
+from shadie.main import Shadie
