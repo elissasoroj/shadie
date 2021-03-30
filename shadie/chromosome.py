@@ -13,14 +13,14 @@ import toyplot
 import altair as alt
 
 #internal imports
-from .buildchromosome import Build
-from .mutations import MutationList
-from .elements import ElementList
+from shadie.buildchromosome import Build
+from shadie.mutations import MutationList
+from shadie.elements import ElementList
 
-from .globals import BEN
-from .globals import SYN
-from .globals import DEL
-from .globals import EXON
+from shadie.globals import BEN
+from shadie.globals import SYN
+from shadie.globals import DEL
+from shadie.globals import EXON
 
 #optional imports
 try:
