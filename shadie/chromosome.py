@@ -13,18 +13,18 @@ import toyplot
 import altair as alt
 
 #internal imports
-from buildchromosome import Build
-from mutations import MutationList
-from elements import ElementList
+from .buildchromosome import Build
+from .mutations import MutationList
+from .elements import ElementList
 
-from globals import BEN
-from globals import SYN
-from globals import DEL
-from globals import EXON
+from .globals import BEN
+from .globals import SYN
+from .globals import DEL
+from .globals import EXON
 
 #optional imports
 try:
-    import IPython 
+    import IPython
 except ImportError:
     pass
 
@@ -171,15 +171,18 @@ class Chromosome:
             endbase = []
             y1 = []
             y2 = []
+            length = []
             for index, row in self.genome.iterrows():
                 eltype.append(row['name'])
                 startbase.append(row['start'])
                 endbase.append(row['finish'])
                 y1.append(0)
                 y2.append(1)
+                length.append(row['finish']-row['start'])
 
-            chromcoords = list(zip(eltype, startbase, endbase, y1, y2))
-            rectangles = pd.DataFrame(chromcoords, columns = ['Element Type', 'x1', 'x2', 'y1', 'y2'])
+            chromcoords = list(zip(eltype, startbase, endbase, y1, y2, length))
+            rectangles = pd.DataFrame(chromcoords, 
+                columns = ['Element Type', 'x1', 'x2', 'y1', 'y2', 'length'])
 
             #make the altair plot
             dom = ['exon', 'intron', 'noncoding'] 
@@ -194,7 +197,7 @@ class Chromosome:
                 x2='x2:Q',
                 y = alt.Y('y1:Q', axis=None),
                 y2='y2:Q', 
-                color=alt.Color('Element Type', 
+                color=alt.Color('Element Type:N', 
                                 scale=alt.Scale(domain=dom, range=rng)),
                 tooltip=[
                     alt.Tooltip('Element Type', title='Element Type'),
@@ -213,8 +216,10 @@ class Chromosome:
                 ichrom.add_selection(brush).properties(height=40),
                 data=rectangles)
 
+            print(rectangles)
+            #ichrom.save('ichrom.html')
             IPython.display.display_html(zoom)
-
+            
         else:
             logger.info("Please enter a valid item to review. Options include:\n"
                 "'mutations'\n'eltypes'\n'elements'\n''chromosome'\n'interractive'")
