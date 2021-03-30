@@ -42,7 +42,7 @@ class Chromosome:
     def __init__(
         self,
         mutation_rate = 1e-7,   #mutation rate will be used to calculate mutation matrix
-        genome_size=1e6,        #will be used to calculate chromosome end (length -1)
+        genome_size=2e3,        #will be used to calculate chromosome end (length -1)
         genome = None           #optional BuildChromosome object
         ):
 
@@ -138,9 +138,9 @@ class Chromosome:
             totintronlength = 0
             for index, row in rectangles.iterrows():
                 if row["Element Type"]=='exon':
-                    totexonlength += (row["x2"]-row["x1"])
+                    totexonlength += (1+row["x2"]-row["x1"]) 
                 elif row["Element Type"]=='intron':
-                    totintronlength += (row["x2"]-row["x1"])
+                    totintronlength += (1+row["x2"]-row["x1"])
 
 
             print(f"# of Genes: {genecount}\n"
