@@ -6,7 +6,7 @@ Allows user to create mutation types for their simulation
 
 #package imports
 from loguru import logger
-from .mutations import MutationType
+from shadie.mutations import MutationType
 
 
 class ElementType:
@@ -96,14 +96,17 @@ class ElementList:
             if isinstance(i, ElementType):
                 pass
             else: 
-                logger.info("please enter MutationType class objects only")
+                logger.warning("please enter MutationType class objects only")
 
         elementdict = {}
 
         for i in elementtypes:
             mutscript = [str(a) for a in i.mutations]
             freqscript = [str(b) for b in i.freq]
-            script = f"'{i.name}', c({', '.join(mutscript)}), c({', '.join(freqscript)}), {i.mutmatrix}"
+            script = (
+                f"'{i.name}', c({', '.join(mutscript)})," 
+                f"c({', '.join(freqscript)}), {i.mutmatrix}"
+                )
             elementdict[i.name] = script
         self.elementdict = elementdict  #dictionary of script lines
 
