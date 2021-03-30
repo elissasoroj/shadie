@@ -6,7 +6,7 @@ Allows user to create mutation types for their simulation
 
 #package imports
 from loguru import logger
-from .mutations import MutationType
+from mutations import MutationType
 
 
 class ElementType:
@@ -17,8 +17,10 @@ class ElementType:
 
     def __init__(
         self,
-        mutationtypes: list(),
-        frequency: list()
+        mutationtypes,
+        frequency,
+        mutationrate = 1e-6,
+        mutationmatrix = "mmJukesCantor"
         ):
     
         ElementType.idx += 1
@@ -27,6 +29,7 @@ class ElementType:
 
         self.muttypes = mutationtypes
         self.freq = frequency
+        self.mutmatrix = f"{mutationmatrix}({mutationrate}/3)"
 
         """
         Creates mutation types for the simulation
