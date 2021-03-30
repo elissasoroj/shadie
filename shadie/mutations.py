@@ -18,7 +18,8 @@ class MutationType:
         self,
         dominance: float,
         distribution: str,
-        *params: float):
+        *params: float
+        ):
 
     
         MutationType.idx += 1
@@ -45,10 +46,11 @@ class MutationType:
 
         genome_size(int): default = =1e6
             Length of chromosome
-        """
+        """ 
 
-        disttypes = ['f', 'g', 'e', 'n', 'w', 's']
-        if self.dist in disttypes:
+
+        DISTOPTS = ['f', 'g', 'e', 'n', 'w', 's']
+        if self.dist in DISTOPTS:
             pass
 
         else:
@@ -79,27 +81,38 @@ class MutationType:
         else:
             pass
 
+        #convert single param to integer insteaf of list
+        # if len(params) == 1:
+        #     self.distparams = params[0]
+ 
+
     def __repr__(self):
-        return f"<MutationType: {self.name}, {self.dom}, {self.dist}, {self.distparams}"
+        return f"<MutationType: {self.name}, {self.dom}, {self.dist}, {self.distparams}>"
 
 
 class MutationList:
 
     def __init__(self, *mutationtypes):
 
+        mutationdict = {}
+
         for i in mutationtypes:
             if isinstance(i, MutationType):
-                pass
+                distlist = [str(a) for a in i.distparams]
+                script = f"'{i.name}', {i.dom}, '{i.dist}', {', '.join(distlist)}"
+                mutationdict[i.name] = script
+        self.mutationdict = mutationdict  #dictionary of script lines
+            # else:
+            #     print("please enter MutationType class objects only")
 
-        mutnames = []
         self.mutationlist = mutationtypes
-        self.mutnames = mutnames
-
 
     def __repr__(self):
+        mutnames = []
         for mutation in self.mutationlist:
-            self.mutnames.append(mutation.name)
-        return f"<MutationList: {self.mutnames}"
+            mutnames.append(mutation.name)
+        self.mutnames = mutnames
+        return f"<MutationList: {self.mutnames}>"
 
 if __name__ == "__main__":
 
@@ -110,3 +123,5 @@ if __name__ == "__main__":
     list1 = MutationList(mut1, mut2)
     print(list1)
     print(list1.mutnames)
+
+    print(list1.mutationdict)
