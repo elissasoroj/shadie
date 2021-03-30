@@ -138,7 +138,7 @@ class Build:
     def random(self):
         "generates a random chromosome"
         if self.type == "random":
-            if self.exons == None and self.introns == None:
+            if self.exons == None:
                 genelements = pd.DataFrame(
                 columns=['name', 'start', 'finish', 'eltype', 'script'],
                 data=None,
