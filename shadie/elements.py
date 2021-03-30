@@ -6,7 +6,7 @@ Allows user to create mutation types for their simulation
 
 #package imports
 from loguru import logger
-from mutations import MutationType
+from .mutations import MutationType
 
 
 class ElementType:
@@ -30,6 +30,7 @@ class ElementType:
         self.muttypes = mutationtypes
         self.freq = frequency
         self.mutmatrix = f"{mutationmatrix}({mutationrate}/3)"
+        self.mutrate = mutationrate
 
         """
         Creates mutation types for the simulation
@@ -84,7 +85,7 @@ class ElementType:
 
     def __repr__(self):
 
-        return f"<ElementType: {self.name}, {self.mutations}, {self.freq}"
+        return f"<ElementType: {self.name}, {self.mutations}, {self.freq}, {self.mutmatrix}"
 
 
 class ElementList:
@@ -102,7 +103,7 @@ class ElementList:
         for i in elementtypes:
             mutscript = [str(a) for a in i.mutations]
             freqscript = [str(b) for b in i.freq]
-            script = f"'{i.name}', c({', '.join(mutscript)}), c({', '.join(freqscript)})"
+            script = f"'{i.name}', c({', '.join(mutscript)}), c({', '.join(freqscript)}), {i.mutmatrix}"
             elementdict[i.name] = script
         self.elementdict = elementdict  #dictionary of script lines
 

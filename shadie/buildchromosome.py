@@ -12,19 +12,19 @@ import numpy as np
 from loguru import logger
 
 #internal imports
-from .mutations import MutationList
-from .elements import ElementList
+from shadie.mutations import MutationList
+from shadie.elements import ElementList
 
 #default element types
-from .globals import NONCOD
-from .globals import INTRON
-from .globals import EXON
+from shadie.globals import NONCOD
+from shadie.globals import INTRON
+from shadie.globals import EXON
 
 #default mutation types
-from .globals import NEUT
-from .globals import SYN
-from .globals import DEL
-from .globals import BEN
+from shadie.globals import NEUT
+from shadie.globals import SYN
+from shadie.globals import DEL
+from shadie.globals import BEN
 
 #optional imports
 try:
@@ -47,16 +47,12 @@ class Build:
 		exons = None,           #number of exons per gene (if None, random)
 		mutationtypes = None,   #read in MutationList object
 		elementtypes = None,    #read in ElementList object
-		genome_size=1e6,        #will be used to calculate chromosome end (length -1)
-		mutation_rate = 1e-7,   #mutation rate will be used to calculate mutation matrix
-	        
+		genome_size=1e6,        #will be used to calculate chromosome end (length -1)     
         ):
     
         self.type = chromtype
         self.genes = genes
-        self.introns = introns
         self.exons = exons
-        self.mutrate = mutation_rate
         self.gensize = genome_size
 
         """

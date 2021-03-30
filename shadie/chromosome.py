@@ -41,15 +41,12 @@ class Chromosome:
 
     def __init__(
         self,
-        mutation_rate = 1e-7,   #mutation rate will be used to calculate mutation matrix
         genome_size=2e3,        #will be used to calculate chromosome end (length -1)
         genome = None           #optional BuildChromosome object
         ):
 
-        self.mutrate = mutation_rate
-        self.gensize = genome_size
         self.genome = genome
-
+        self.gensize = genome_size
         """
         Accepts a subclass Build object to define chromosome structure.
         Otherwise, takes genome_size (length) and mutation rate and 
@@ -73,6 +70,7 @@ class Chromosome:
                 self.mutationlist = self.genome.mutationlist
                 self.elementlist = self.genome.elementlist
                 self.genome = self.genome.genelements
+                self.gensize = self.genome.gensize
             
 
         elif self.genome == None:
@@ -80,6 +78,7 @@ class Chromosome:
             'finish': self.gensize - 1, 'eltype':EXON.name, 'script':EXON}]
             gene = pd.DataFrame(g1)
             self.genome = gene
+            self.gensize = genome_size
             self.mutationlist = MutationList(SYN, DEL, BEN)
             self.elementlist = ElementList(EXON)
         
