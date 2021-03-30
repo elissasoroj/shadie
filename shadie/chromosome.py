@@ -77,7 +77,7 @@ class Chromosome:
 
         elif self.genome == None:
             g1 = [{'name': "exon", 'start': 1, 
-            'finish': self.gensize - 1, 'eltype':EXON}]
+            'finish': self.gensize - 1, 'eltype':EXON.name, 'script':EXON}]
             gene = pd.DataFrame(g1)
             self.genome = gene
             self.mutationlist = MutationList(SYN, DEL, BEN)
