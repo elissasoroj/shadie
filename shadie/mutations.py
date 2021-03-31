@@ -5,7 +5,11 @@ Allows user to create mutation types for their simulation
 """
 
 #package imports
+import numpy as np
+import pandas as pd
+import altair as alt
 from loguru import logger
+import IPython
 
 
 class MutationType:
@@ -48,7 +52,7 @@ class MutationType:
             Length of chromosome
         """ 
 
-
+        #check distribution
         DISTOPTS = ['f', 'g', 'e', 'n', 'w', 's']
         if self.dist in DISTOPTS:
             pass
@@ -67,8 +71,7 @@ class MutationType:
             if len(params) == 1:
                 pass
             elif len(params) != 1:
-                pass
-                
+                logger.warning("'e' and 'f' distributions take 1 param")
         else: 
             pass
 
@@ -76,8 +79,7 @@ class MutationType:
             if len(params) == 2:
                 pass
             elif len(params) != 2:
-                pass
-                
+                logger.warning("'g', 'n', and 'w' distributions take 2 params")        
         else:
             pass
 
@@ -88,6 +90,71 @@ class MutationType:
 
     def __repr__(self):
         return f"<MutationType: {self.name}, {self.dom}, {self.dist}, {self.distparams}>"
+
+    def inspect(self):
+        print(
+            f"idx: {self.name}\n"
+            f"dominance coefficient: {self.dom}\n"
+            f"distribution: {self.dist}\n"
+            f"distribution parameters: {self.distparams}\n"
+            "Distribution plot:"
+        )
+        if self.dist == "n":
+            mean = self.distparams[0]
+            stddev = self.distparams[1]
+            source = pd.DataFrame({"Normal Distribution": np.random.normal(self.distparams[0], self.distparams[1], 5000)})
+            base = alt.Chart(source).transform_fold(
+                ["Normal Distribution"],
+                as_=['Mutation', 'Fitness Effect'])
+            histo = base.mark_bar(
+                opacity=0.3,
+            ).encode(
+                alt.X('Fitness Effect:Q', bin=alt.Bin(maxbins=100)),
+                alt.Y('count()', stack=None))
+            rule = base.mark_rule().encode(
+                x='mean(Fitness Effect):Q',
+                size=alt.value(2))
+        elif self.dist == "g": #distparams: (mean, shape)
+            if self.dist == "g":
+                mean = self.distparams[0]
+                shape = self.distparams[1]
+                scale = mean/shape
+                stddev = np.sqrt((mean**2)/shape)
+                if mean < 0:
+                    source = pd.DataFrame({f"{self.name}": -(np.random.gamma(shape, -scale, 5000))})
+                elif mean > 0:
+                    source = pd.DataFrame({f"{self.name}": np.random.gamma(shape, scale, 5000)})
+            base = alt.Chart(source).transform_fold(
+                [f"{self.name}"],
+                as_=[f'{self.name}', 'Fitness Effect'])
+            histo = base.mark_bar(
+                opacity=0.3,
+            ).encode(
+                alt.X('Fitness Effect:Q', bin=alt.Bin(maxbins=100)),
+                alt.Y('count()', stack=None))
+            rule = base.mark_rule().encode(
+                x='mean(Fitness Effect):Q',
+                size=alt.value(2))
+        elif self.dist == "w": #distparams= (scale, shape)
+            mean = "NaN"
+            stddev = "Nan"
+            source = pd.DataFrame({"Weibull Distribution": self.distparams[0]*(np.random.weibull(self.distparams[1], 5000))})
+            base = alt.Chart(source).transform_fold(
+                ["Weibull Distribution"],
+                as_=['Mutation', 'Fitness Effect'])
+            histo = base.mark_bar(
+                opacity=0.3,
+            ).encode(
+                alt.X('Fitness Effect:Q', bin=alt.Bin(maxbins=100)),
+                alt.Y('count()', stack=None))
+            rule = base.mark_rule().encode(
+                x='mean(Fitness Effect):Q',
+                size=alt.value(2))
+        IPython.display.display_html(histo)
+        print(
+            f"mean: {mean}\n"
+            f"standard deviation: {stddev}")
+
 
 
 class MutationList:
