@@ -9,7 +9,7 @@ from setuptools import setup
 
 # build command
 setup(
-    name="SHaDiE",
+    name="shadie",
     version="0.0.6",
     author="Elissa Sorojsrisom",
     author_email="ess2239@columbia.edu",
