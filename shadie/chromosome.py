@@ -13,18 +13,20 @@ import toyplot
 import altair as alt
 
 #internal imports
-from .buildchromosome import Build
-from .mutations import MutationList
-from .elements import ElementList
+from shadie.buildchromosome import Build
+from shadie.mutations import MutationList
+from shadie.elements import ElementList
 
-from .globals import BEN
-from .globals import SYN
-from .globals import DEL
-from .globals import EXON
+#internal defaults
+from shadie.globals import BEN
+from shadie.globals import SYN
+from shadie.globals import DEL
+from shadie.globals import EXON
 
 #optional imports
 try:
     import IPython
+    from IPython.display import display
 except ImportError:
     pass
 
@@ -41,15 +43,9 @@ class Chromosome:
 
     def __init__(
         self,
-        mutation_rate = 1e-7,   #mutation rate will be used to calculate mutation matrix
         genome_size=2e3,        #will be used to calculate chromosome end (length -1)
         genome = None           #optional BuildChromosome object
         ):
-
-        self.mutrate = mutation_rate
-        self.gensize = genome_size
-        self.genome = genome
-
         """
         Accepts a subclass Build object to define chromosome structure.
         Otherwise, takes genome_size (length) and mutation rate and 
@@ -68,20 +64,24 @@ class Chromosome:
             Length of chromosome
         """
 
-        if self.genome != None:
-            if isinstance(self.genome, Build):
-                self.mutationlist = self.genome.mutationlist
-                self.elementlist = self.genome.elementlist
-                self.genome = self.genome.genelements
+        if genome != None:
+            if isinstance(genome, Build):
+                self.mutationlist = genome.mutationlist
+                self.elementlist = genome.elementlist
+                self.genome = genome.genelements
+                self.gensize = genome.gensize
             
 
-        elif self.genome == None:
-            g1 = [{'name': "exon", 'start': 1, 
+        elif genome == None:
+
+            self.gensize = genome_size
+
+            g1 = [{'type': "exon", 'name': 'exon', 'start': 1,
             'finish': self.gensize - 1, 'eltype':EXON.name, 'script':EXON}]
             gene = pd.DataFrame(g1)
             self.genome = gene
             self.mutationlist = MutationList(SYN, DEL, BEN)
-            self.elementlist = ElementList(EXON)
+            self.elementlist = ElementList(self.mutationlist, EXON)
         
 
     def review(self, item = None):
@@ -92,13 +92,16 @@ class Chromosome:
         """
 
         if item == "mutations":
-            print("Mutation Types:\n", self.mutationlist)
+            print('\033[1m' + "Mutation Types:\n" + '\033[0m', self.mutationlist, "\n")
             #print("Mutations:\n" self.mutdict)
         elif item == "eltypes":
-            print("Genomic Element Types:\n", self.elementlist)
+            print('\033[1m' + "Genomic Element Types:\n" + '\033[0m', self.elementlist, "\n")
             #print("Genomic Element Types:\n" self.eldict)
         elif item == "elements":
-            print("Genomic elements:\n", self.genome)
+            df = pd.DataFrame(self.genome)
+            print('\033[1m' + "Genomic Elements:\n" + '\033[0m')
+            display(df)
+
         elif item == "chromosome":
             #Make the `rectangles` dataframe for plotting
             eltype = []
@@ -107,17 +110,17 @@ class Chromosome:
             y1 = []
             y2 = []
             for index, row in self.genome.iterrows():
-                eltype.append(row['name'])
+                eltype.append(row['type'])
                 startbase.append(row['start'])
                 endbase.append(row['finish'])
                 y1.append(0)
                 y2.append(1)
 
             chromcoords = list(zip(eltype, startbase, endbase, y1, y2))
-            rectangles = pd.DataFrame(chromcoords, columns = ['Element Type', 'x1', 'x2', 'y1', 'y2'])
+            rectangles = pd.DataFrame(chromcoords, columns = [
+                'Element Type', 'x1', 'x2', 'y1', 'y2'])
 
             #define colors for each element
-            #add will need to re-write for custom genetic elements
             color = []
             for index, row in rectangles.iterrows():
                 if row["Element Type"] == "noncoding":
@@ -142,16 +145,27 @@ class Chromosome:
                 elif row["Element Type"]=='intron':
                     totintronlength += (1+row["x2"]-row["x1"])
 
+            if introncount == 0:
+                avintron = 0
+            else:
+                avintron = totintronlength/introncount
 
-            print(f"# of Genes: {genecount}\n"
+            print(
+                '\033[1m' + "Chromosome Summary\n" + '\033[0m'
+                f"# of Genes: {genecount}\n"
                 f"Average # exons per gene: {exoncount/genecount}\n"
                 f"Average exon length: {totexonlength/exoncount} nt\n"
                 f"Average # introns per gene: {introncount/genecount}\n"
-                f"Average introns length: {totintronlength/introncount} nt\n"
+                f"Average introns length: {avintron} nt\n"
                 )
 
-            print(f"Chromosome Plot:\n")
-            # make the canvas and axes
+            print(f"Static Chromosome Plot:\n")
+            """
+            this is a simplified plot showing exons, coding regions, 
+            and non-codding regions collapsed, even if they consist of 
+            more that one genomic element type
+            """
+            # make the canvas and axes with toyplot
             canvas = toyplot.Canvas(width=3000, height=200)
             axes = canvas.cartesian()
             axes.show = True
@@ -167,43 +181,63 @@ class Chromosome:
             print("Interactive altair chromosome map:")
             #Make the `rectangles` dataframe for plotting
             eltype = []
+            altname = []
             startbase = []
             endbase = []
             y1 = []
             y2 = []
             length = []
             for index, row in self.genome.iterrows():
-                eltype.append(row['name'])
+                eltype.append(row['type'])
+                if pd.isna(row['name']):
+                    altname.append(row['type'])
+                else: 
+                    altname.append(row['name'])
                 startbase.append(row['start'])
                 endbase.append(row['finish'])
                 y1.append(0)
                 y2.append(1)
                 length.append(row['finish']-row['start'])
 
-            chromcoords = list(zip(eltype, startbase, endbase, y1, y2, length))
+            chromcoords = list(zip(eltype, altname, startbase, endbase, y1, y2, length))
             rectangles = pd.DataFrame(chromcoords, 
-                columns = ['Element Type', 'x1', 'x2', 'y1', 'y2', 'length'])
+                columns = ['type', 'altname', 'x1', 'x2', 'y1', 'y2', 'length'])
 
-            #make the altair plot
-            dom = ['exon', 'intron', 'noncoding'] 
-            rng = ['mediumvioletred', 'lightgoldenrodyellow', 'cornflowerblue'] 
+            #set the colors
+            extypecount = rectangles.loc[rectangles['type']=='exon'].altname.nunique()
+            extypes = list(rectangles.loc[rectangles['type']=='exon'].altname.unique())
+            intypecount = rectangles.loc[rectangles['type']=='intron'].altname.nunique()
+            intypes = list(rectangles.loc[rectangles['type']=='intron'].altname.unique())
+            nctypecount = rectangles.loc[rectangles['type']=='noncoding'].altname.nunique()
+            nctypes = list(rectangles.loc[rectangles['type']=='noncoding'].altname.unique())
+
+            excolors = ['mediumvioletred', 'lightcoral','firebrick', 'crimson', 'lightpink']
+            incolors = ['lightgoldenrodyellow', 'gold', 'orange',  'yellow', 'khaki']
+            ncodcolors = ['cornflowerblue', 'mediumblue','dodgerblue', 'darkslateblue', 'skyblue']
+
+
+            dom = extypes + intypes + nctypes
+            rng = excolors[0:extypecount] + incolors[0:intypecount] + ncodcolors[0:nctypecount]
 
             brush = alt.selection_interval(
                 encodings=['x'], 
                 mark=alt.BrushConfig(fill='red', fillOpacity = 0.700))
 
+            #make the altair plot
             ichrom = alt.Chart(rectangles).mark_rect().encode(
                 x=alt.X('x1:Q', axis=alt.Axis(title='Base Pairs')),
                 x2='x2:Q',
                 y = alt.Y('y1:Q', axis=None),
                 y2='y2:Q', 
-                color=alt.Color('Element Type:N', 
+                color=alt.Color('altname:N', 
                                 scale=alt.Scale(domain=dom, range=rng)),
                 tooltip=[
-                    alt.Tooltip('Element Type', title='Element Type'),
+                    alt.Tooltip('type', title='Element Type'),
+                    alt.Tooltip('altname', title='Name'),
+                    #alt.Tooltip('mutations', title='Mutations'),
+                    alt.Tooltip('length', title='Length'),
                     alt.Tooltip('x1', title='Start'),
                     alt.Tooltip('x2', title='Stop'),
-                    alt.Tooltip('length', title='Length'),
                         ]
             ).properties(
                 height = 80,
@@ -216,8 +250,7 @@ class Chromosome:
                 ichrom.add_selection(brush).properties(height=40),
                 data=rectangles)
 
-            print(rectangles)
-            #ichrom.save('ichrom.html')
+            #zoom.save('zoom.html')
             IPython.display.display_html(zoom)
             
         else:
@@ -230,11 +263,4 @@ if __name__ == "__main__":
     # generate random chromosome
     init_chromosome = Chromosome(genome_size = 2000)
     Chromosome.review(init_chromosome, item = "elements")
-    Chromosome.review(init_chromosome, item = "chromosome")
-    Chromosome.review(init_chromosome, item = "interactive")
-
-    random_chromosome = Build()
-    Build.random(random_chromosome)
-    final_chromosome = Chromosome(genome = random_chromosome)
-    final_chromosome.review("elements")
-    final_chromosome.review("mutations")
+    init_chromosome.review("interactive")

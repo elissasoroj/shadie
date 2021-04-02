@@ -7,32 +7,15 @@ Generates script for SLiM simulation
 
 #package imports
 import io
+import random
 import pandas as pd
 import numpy as np
 from loguru import logger
 
 #internal imports
-from .mutations import MutationList
-from .elements import ElementList
-
-#default element types
-from .globals import NONCOD
-from .globals import INTRON
-from .globals import EXON
-
-#default mutation types
-from .globals import NEUT
-from .globals import SYN
-from .globals import DEL
-from .globals import BEN
-
-#optional imports
-try:
-    import IPython 
-except ImportError:
-    pass
-
-#
+from shadie.mutations import MutationList
+from shadie.elements import ElementList
+from shadie.elements import ElementType
 
 
 class Build:
@@ -42,21 +25,19 @@ class Build:
 
     def __init__(
     	self,
-    	chromtype = "random",       #"random" or "dict" 
-    	genes=None,             #number of genes on the chromosome (if None, random)
-		exons = None,           #number of exons per gene (if None, random)
-		mutationtypes = None,   #read in MutationList object
-		elementtypes = None,    #read in ElementList object
-		genome_size=1e6,        #will be used to calculate chromosome end (length -1)
-		mutation_rate = 1e-7,   #mutation rate will be used to calculate mutation matrix
-	        
+    	chromtype = "random",  #"random" or "dict" 
+		exons = None,          #list of ElementTypes eligible for exon regions
+        introns = None,        #list of ElementTypes eligible for intron regions
+        noncoding = None,      #list of ElementTypes eligible for non-coding regions
+		elementlist = None,    #read in ElementList object
+		genome_size=1e6,       #will be used to calculate chromosome end (length -1)     
         ):
     
         self.type = chromtype
-        self.genes = genes
-        self.introns = introns
         self.exons = exons
-        self.mutrate = mutation_rate
+        self.introns = introns
+        self.noncoding = noncoding
+        self.elements = elementlist
         self.gensize = genome_size
 
         """
@@ -120,7 +101,7 @@ class Build:
             pass
         
 
-    def dict(self):
+    def dict(self, genedf):
         "generates chromosome based on explicit user structure"
         for gene in self.genedf:
             #make the mutation types
@@ -141,21 +122,32 @@ class Build:
 
     def random(self):
         "generates a random chromosome"
+        #default element types
+        from shadie.globals import NONCOD
+        from shadie.globals import INTRON
+        from shadie.globals import EXON
+
+        #default mutation types
+        from shadie.globals import NEUT
+        from shadie.globals import SYN
+        from shadie.globals import DEL
+        from shadie.globals import BEN
+
         if self.type == "random":
-            if self.exons == None and self.introns == None:
+            if self.exons == None:
                 genelements = pd.DataFrame(
-                columns=['name', 'start', 'finish', 'eltype', 'script'],
+                columns=['type', 'name', 'start', 'finish', 'eltype', 'script'],
                 data=None,
                 )
                 base = int(0)
-                finalnc_length = np.random.randint(100, 5000)
+                finalnc_length = np.random.randint(3000, 5000)
                 end = self.gensize - finalnc_length
                 logger.debug("Made objects: base = {base}, genelements = {}, end = {end}")
 
                 while base < end:
                     #make initial non-coding region
                     nc_length = np.random.randint(100, 5000)
-                    genelements.loc[base, 'name'] = "noncoding"
+                    genelements.loc[base, 'type'] = "noncoding"
                     genelements.loc[base, 'eltype'] = NONCOD.name
                     genelements.loc[base, 'script'] = NONCOD
                     genelements.loc[base, 'start'] = base
@@ -164,7 +156,7 @@ class Build:
                 
                     #make first exon
                     ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
-                    genelements.loc[base, 'name'] = "exon"
+                    genelements.loc[base, 'type'] = "exon"
                     genelements.loc[base, 'eltype'] = EXON.name
                     genelements.loc[base, 'script'] = EXON
                     genelements.loc[base, 'start'] = base
@@ -174,7 +166,7 @@ class Build:
                     
                     while np.random.random_sample() < 0.75:  #25% probability of stopping
                         in_length = round(np.random.normal(450, 100))
-                        genelements.loc[base, 'name'] = "intron"
+                        genelements.loc[base, 'type'] = "intron"
                         genelements.loc[base, 'eltype'] = INTRON.name
                         genelements.loc[base, 'script'] = INTRON
                         genelements.loc[base, 'start'] = base
@@ -182,34 +174,141 @@ class Build:
                         base = base + in_length
                       
                         ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
-                        #do you need math for that? You can just do it with numpy
-                        genelements.loc[base, 'name'] = "exon"
+                        genelements.loc[base, 'type'] = "exon"
                         genelements.loc[base, 'eltype'] = EXON.name
                         genelements.loc[base, 'script'] = EXON
                         genelements.loc[base, 'start'] = base
                         genelements.loc[base, 'finish'] = base + ex_length -1
                         base = base + ex_length 
                           
-            #final non-coding region
-            genelements.loc[base, 'name'] = "noncoding"
-            genelements.loc[base, 'eltype'] = NONCOD.name
-            genelements.loc[base, 'script'] = NONCOD
-            genelements.loc[base, 'start'] = base
-            genelements.loc[base, 'finish'] = self.gensize - 1
-            logger.info("Chromosome complete!")
-            logger.debug(genelements)
-            self.genelements = genelements
-            self.mutationlist = MutationList(NEUT, SYN, DEL, BEN)
-            self.elementlist = ElementList(EXON, INTRON, NONCOD)
+                #final non-coding region
+                genelements.loc[base, 'type'] = "noncoding"
+                genelements.loc[base, 'eltype'] = NONCOD.name
+                genelements.loc[base, 'script'] = NONCOD
+                genelements.loc[base, 'start'] = base
+                genelements.loc[base, 'finish'] = self.gensize - 1
+                logger.info("Chromosome complete!")
+                logger.debug(genelements)
+                self.genelements = genelements
+                self.mutationlist = MutationList(NEUT, SYN, DEL, BEN)
+                self.elementlist = ElementList(EXON, INTRON, NONCOD)
 
-        elif self.type == "dict":
-            pass
+       
+            elif self.exons != None: 
+                #check the types
+                for i in self.exons:
+                    if isinstance(i, ElementType):
+                        pass
+                    else:
+                        raise TypeError("exons must be ElementType class objects")
+
+                for i in self.introns:
+                    if isinstance(i, ElementType):
+                        pass
+                    else:
+                        raise TypeError("introns must be ElementType class objects")
+
+                #check the types
+                for i in self.noncoding:
+                    if isinstance(i, ElementType):
+                        pass
+                    else:
+                        raise TypeError("noncoding must be ElementType class objects")
+
+                genelements = pd.DataFrame(
+                columns=['name', 'start', 'finish', 'eltype', 'script'],
+                data=None,
+                )
+                base = int(0)
+                finalnc_length = np.random.randint(3000, 5000)
+                end = self.gensize - finalnc_length
+                logger.debug("Made objects: base = {base}, genelements = {}, end = {end}")
+
+                while base < end:
+                    #make initial non-coding region
+                    nc_length = np.random.randint(100, 5000)
+                    choose = random.choice(self.noncoding)
+
+                    genelements.loc[base, 'type'] = "noncoding"
+                    genelements.loc[base, 'name'] = choose.altname
+                    genelements.loc[base, 'eltype'] = choose.name
+                    genelements.loc[base, 'script'] = self.elements.elementdict[choose.name]
+                    genelements.loc[base, 'start'] = base
+                    genelements.loc[base, 'finish'] = base + nc_length - 1
+                    base = base + nc_length
+
+                    #make first exon
+                    ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
+                    choose = random.choice(self.exons)
+
+                    genelements.loc[base, 'type'] = "exon"
+                    genelements.loc[base, 'name'] = choose.altname
+                    genelements.loc[base, 'eltype'] = choose.name
+                    genelements.loc[base, 'script'] = self.elements.elementdict[choose.name]
+                    genelements.loc[base, 'start'] = base
+                    genelements.loc[base, 'finish'] = base + ex_length -1
+                    base = base + ex_length
+                    logger.info("Gene added")    
+
+                    while np.random.random_sample() < 0.75:  #25% probability of stopping
+                        in_length = round(np.random.normal(450, 100))
+                        choose = random.choice(self.introns)
+                        genelements.loc[base, 'type'] = "intron"
+                        genelements.loc[base, 'name'] = choose.altname
+                        genelements.loc[base, 'eltype'] = choose.name
+                        genelements.loc[base, 'script'] = self.elements.elementdict[choose.name]
+                        genelements.loc[base, 'start'] = base
+                        genelements.loc[base, 'finish'] = base + in_length -1
+                        base = base + in_length
+
+                        ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
+                        choose = random.choice(self.exons)
+
+                        genelements.loc[base, 'type'] = "exon"
+                        genelements.loc[base, 'name'] = choose.altname
+                        genelements.loc[base, 'eltype'] = choose.name
+                        genelements.loc[base, 'script'] = self.elements.elementdict[choose.name]
+                        genelements.loc[base, 'start'] = base
+                        genelements.loc[base, 'finish'] = base + ex_length -1
+                        base = base + ex_length 
+
+                #final non-coding region
+                choose = random.choice(self.noncoding)
+
+                genelements.loc[base, 'type'] = "noncoding"
+                genelements.loc[base, 'name'] = choose.altname
+                genelements.loc[base, 'eltype'] = choose.name
+                genelements.loc[base, 'script'] = self.elements.elementdict[choose.name]
+                genelements.loc[base, 'start'] = base
+                genelements.loc[base, 'finish'] = self.gensize - 1
+                logger.info("Chromosome complete!")
+                logger.debug(genelements)
+                self.genelements = genelements
+                self.mutationlist = self.elements.mutationlist
+                self.elementlist = self.elements
 
         else:
             print("'type' must be 'random' or 'dict'")
 
 
 if __name__ == "__main__":
+
+    #test custom builder:
+    from shadie.elements import ElementList
+    from shadie.elements import ElementType
+    from shadie.mutations import MutationType
+    from shadie.mutations import MutationList
+
+    mut1 = MutationType(0.5, "f", .03)
+    mut2 = MutationType(0.5, "e", 0.4)
+    mutlist = MutationList(mut1, mut2)
+    eltype1 = ElementType(mut1, 1)
+    eltype2 = ElementType(mut2, 1)
+    mylist = ElementList(mutlist, eltype1, eltype2)
+
+    custom = Build(exons = [eltype1, eltype2], introns = [eltype1, eltype2], 
+        noncoding = [eltype1, eltype2], elementlist = mylist)
+
     # generate random chromosome
-	init_chromosome =  Build()
-	Build.random(init_chromosome)
+    init_chromosome =  Build()
+    Build.random(custom)

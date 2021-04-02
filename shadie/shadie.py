@@ -13,10 +13,10 @@ import msprime
 import pyslim
 
 
-from .globals import EXON 
+from shadie.globals import EXON 
 
-from .chromosome import Chromosome
-from .demography import Demography
+from shadie.chromosome import Chromosome
+from shadie.demography import Demography
 
 class Shadie(object):
     """
@@ -64,16 +64,16 @@ class Shadie(object):
         if self.chromosome == None:
             gene = Chromosome()
             self.chromosome = gene.genome 
-            self.mutrate = gene.mutrate
             self.mutationlist = gene.mutationlist
             self.elementlist = gene.elementlist
             self.chromosome = gene.genome
+            self.gensize = gene.gensize
 
         elif isinstance(self.chromosome, Chromosome): 
-            self.mutrate = self.chromosome.mutrate
             self.mutationlist = self.chromosome.mutationlist
             self.elementlist = self.chromosome.elementlist
             self.chromosome = self.chromosome.genome
+            self.gensize = self.chromosome.gensize
 
         else:
             raise ValueError("please input valid Chromosome class object")
@@ -92,7 +92,8 @@ class Shadie(object):
             "initialize() {\ninitializeSLiMModelType('"+self.model+"');\n"
             f"defineConstant('K',{self.Ne});\n"
             "initializeTreeSeq();"
-            f"initializeMutationRate({self.mutrate});\n")
+            "initializeSLiMOptions(nucleotideBased=T);\n"
+            f"initializeAncestralNucleotides(randomNucleotides({self.gensize}));\n")
         init2 = ""
         for key in self.mutationlist.mutationdict:
             init2 += f"initializeMutationType({self.mutationlist.mutationdict[key]});\n"

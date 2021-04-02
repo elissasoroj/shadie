@@ -6,7 +6,8 @@ Allows user to create mutation types for their simulation
 
 #package imports
 from loguru import logger
-from mutations import MutationType
+from shadie.mutations import MutationType
+from shadie.mutations import MutationList
 
 
 class ElementType:
@@ -20,7 +21,8 @@ class ElementType:
         mutationtypes,
         frequency,
         mutationrate = 1e-6,
-        mutationmatrix = "mmJukesCantor"
+        mutationmatrix = "mmJukesCantor",
+        altname = None
         ):
     
         ElementType.idx += 1
@@ -30,6 +32,7 @@ class ElementType:
         self.muttypes = mutationtypes
         self.freq = frequency
         self.mutmatrix = f"{mutationmatrix}({mutationrate}/3)"
+        self.mutrate = mutationrate
 
         """
         Creates mutation types for the simulation
@@ -80,29 +83,48 @@ class ElementType:
         
         #return list of names
         self.mutations = mutations
+        self.altname = altname
 
 
     def __repr__(self):
 
-        return f"<ElementType: {self.name}, {self.mutations}, {self.freq}"
+        return f"<ElementType: '{self.altname}', {self.name}, {self.mutations}, {self.freq}, {self.mutmatrix}"
 
 
 class ElementList:
     
-    def __init__(self, *elementtypes):
+    def __init__(self, mutationlist, *elementtypes):
+
+        self.mutationlist = mutationlist
+
+        if isinstance(self.mutationlist, MutationList):
+            for element in elementtypes:
+                for mutation in element.mutations:
+                    if mutation in self.mutationlist.mutnames:
+                        pass
+                    else:
+                        logger.warning(f"mutation is not in {self.mutationlist}")
+                        #print(f"{mutation} is not in {self.mutationlist}")
+        else:
+            #logger.warning("mutationlist must be MutationList class object")
+            TypeError("mutationlist must be MutationList class object")
 
         for i in elementtypes:
             if isinstance(i, ElementType):
                 pass
             else: 
-                logger.info("please enter MutationType class objects only")
+                raise TypeError("please enter ElementType class objects only")
+                #logger.warning("please enter ElementType class objects only")
 
         elementdict = {}
 
         for i in elementtypes:
             mutscript = [str(a) for a in i.mutations]
             freqscript = [str(b) for b in i.freq]
-            script = f"'{i.name}', c({', '.join(mutscript)}), c({', '.join(freqscript)})"
+            script = (
+                f"'{i.name}', c({', '.join(mutscript)})," 
+                f"c({', '.join(freqscript)}), {i.mutmatrix}"
+                )
             elementdict[i.name] = script
         self.elementdict = elementdict  #dictionary of script lines
 
@@ -112,7 +134,25 @@ class ElementList:
         elnames = []
         for element in self.elementlist:
             elnames.append(element.name)
-        return f"<ElementList: {elnames}"
+        return (f"<ElementList: {elnames}>")
+
+    def inspect(self):
+        print(
+            '\033[1m' + "Genomic Element List" + '\033[0m' + "\n"
+            f"Element types: {self.elementlist}\n"
+            f"Mutation types: {self.mutationlist}\n"
+            )
+        for element in self.elementlist:
+            print(
+                '\033[1m' + "Genomic Element Type" + '\033[0m' + "\n"
+                f"name: {element.name}\n"
+                f"alternate name: {element.altname}\n"
+                f"mutations: {element.mutations}\n"
+                f"frequencies: {element.freq}\n"
+                )
+            for mutation in element.muttypes:
+                mutation.inspect()
+
 
 if __name__ == "__main__":
 
@@ -126,7 +166,10 @@ if __name__ == "__main__":
     genel1 = ElementType([mut1, mut2], (1,1))
     genel2 = ElementType(mut2, 1)
     print(genel1, genel2)
-    elemlist = ElementList(genel1, genel2)
-    print(elemlist)
+    elemlist = ElementList(list1, genel1, genel2)
 
-    print(elemlist.elementdict)
+    from shadie import globals
+    deflist = MutationList(globals.SYN, globals.DEL, globals.BEN)
+    print(deflist)
+    elemlist2 = ElementList(deflist, globals.EXON)
+    print(elemlist2)

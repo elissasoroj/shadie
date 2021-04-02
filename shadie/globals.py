@@ -1,8 +1,8 @@
 #standard mutation types, with structure:
 #(name, dominance, distribution, {following depends on distribution})
 
-from .mutations import MutationType
-from .elements import ElementType
+from shadie.mutations import MutationType
+from shadie.elements import ElementType
 
 #saved as MutationType and ElementType objects
 NEUT = MutationType(0.5, "f", 0.0)		#neutral mutation
@@ -17,3 +17,8 @@ NONCOD = ElementType(NEUT, 1)              	 #non-coding
 #nucleotide defulats
 
 nucEXON = ElementType([SYN, DEL, BEN], (2,8,0.1))
+
+if __name__ == "__main__":
+
+    # generate random chromosome
+    print(EXON)
