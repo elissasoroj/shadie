@@ -67,6 +67,8 @@ class Demography:
         self.demog = demogdf
         logger.debug(self.demog)
 
+        return(self.demog)
+
 
 #This is the .slim script structure that needs to be written by the submodule:
    #Plan is to reference pandas DF with columns: 
@@ -105,8 +107,8 @@ if __name__ == "__main__":
     )
 
    # TODO: dem loads a tree and parses Ne from nodes
-    dem2 = Demography(tree2)
-    Demography.get_demog(dem2)
+    dem2 = Demography(tree2).get_demog()
+
 
     # supported already
     dem = Demography(tree, Ne=10000)
