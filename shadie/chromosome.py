@@ -17,6 +17,12 @@ from shadie.buildchromosome import Build
 from shadie.mutations import MutationList
 from shadie.elements import ElementList
 
+#internal defaults
+from shadie.globals import BEN
+from shadie.globals import SYN
+from shadie.globals import DEL
+from shadie.globals import EXON
+
 #optional imports
 try:
     import IPython
@@ -67,19 +73,15 @@ class Chromosome:
             
 
         elif genome == None:
-            from shadie.globals import BEN
-            from shadie.globals import SYN
-            from shadie.globals import DEL
-            from shadie.globals import EXON
 
             self.gensize = genome_size
 
-            g1 = [{'name': "exon", 'start': 1, 
+            g1 = [{'type': "exon", 'start': 1,
             'finish': self.gensize - 1, 'eltype':EXON.name, 'script':EXON}]
             gene = pd.DataFrame(g1)
             self.genome = gene
             self.mutationlist = MutationList(SYN, DEL, BEN)
-            self.elementlist = ElementList(EXON)
+            self.elementlist = ElementList(self.mutationlist, EXON)
         
 
     def review(self, item = None):
@@ -96,8 +98,8 @@ class Chromosome:
             print('\033[1m' + "Genomic Element Types:\n" + '\033[0m', self.elementlist, "\n")
             #print("Genomic Element Types:\n" self.eldict)
         elif item == "elements":
-            print('\033[1m' + "Genomic Elements:\n" + '\033[0m')
             df = pd.DataFrame(self.genome)
+            print('\033[1m' + "Genomic Elements:\n" + '\033[0m')
             display(df)
 
         elif item == "chromosome":
@@ -108,17 +110,17 @@ class Chromosome:
             y1 = []
             y2 = []
             for index, row in self.genome.iterrows():
-                eltype.append(row['name'])
+                eltype.append(row['type'])
                 startbase.append(row['start'])
                 endbase.append(row['finish'])
                 y1.append(0)
                 y2.append(1)
 
             chromcoords = list(zip(eltype, startbase, endbase, y1, y2))
-            rectangles = pd.DataFrame(chromcoords, columns = ['Element Type', 'x1', 'x2', 'y1', 'y2'])
+            rectangles = pd.DataFrame(chromcoords, columns = [
+                'Element Type', 'x1', 'x2', 'y1', 'y2'])
 
             #define colors for each element
-            #add will need to re-write for custom genetic elements
             color = []
             for index, row in rectangles.iterrows():
                 if row["Element Type"] == "noncoding":
@@ -157,8 +159,13 @@ class Chromosome:
                 f"Average introns length: {avintron} nt\n"
                 )
 
-            print(f"Chromosome Plot:\n")
-            # make the canvas and axes
+            print(f"Static Chromosome Plot:\n")
+            """
+            this is a simplified plot showing exons, coding regions, 
+            and non-codding regions collapsed, even if they consist of 
+            more that one genomic element type
+            """
+            # make the canvas and axes with toyplot
             canvas = toyplot.Canvas(width=3000, height=200)
             axes = canvas.cartesian()
             axes.show = True
@@ -174,43 +181,60 @@ class Chromosome:
             print("Interactive altair chromosome map:")
             #Make the `rectangles` dataframe for plotting
             eltype = []
+            altname = []
             startbase = []
             endbase = []
             y1 = []
             y2 = []
             length = []
             for index, row in self.genome.iterrows():
-                eltype.append(row['name'])
+                eltype.append(row['type'])
+                altname.append(row['name'])
                 startbase.append(row['start'])
                 endbase.append(row['finish'])
                 y1.append(0)
                 y2.append(1)
                 length.append(row['finish']-row['start'])
 
-            chromcoords = list(zip(eltype, startbase, endbase, y1, y2, length))
+            chromcoords = list(zip(eltype, altname, startbase, endbase, y1, y2, length))
             rectangles = pd.DataFrame(chromcoords, 
-                columns = ['Element Type', 'x1', 'x2', 'y1', 'y2', 'length'])
+                columns = ['type', 'altname', 'x1', 'x2', 'y1', 'y2', 'length'])
 
-            #make the altair plot
-            dom = ['exon', 'intron', 'noncoding'] 
-            rng = ['mediumvioletred', 'lightgoldenrodyellow', 'cornflowerblue'] 
+            #set the colors
+            extypecount = rectangles.loc[rectangles['type']=='exon'].altname.nunique()
+            extypes = list(rectangles.loc[rectangles['type']=='exon'].altname.unique())
+            intypecount = rectangles.loc[rectangles['type']=='intron'].altname.nunique()
+            intypes = list(rectangles.loc[rectangles['type']=='intron'].altname.unique())
+            nctypecount = rectangles.loc[rectangles['type']=='noncoding'].altname.nunique()
+            nctypes = list(rectangles.loc[rectangles['type']=='noncoding'].altname.unique())
+
+            excolors = ['mediumvioletred', 'lightcoral','firebrick', 'crimson', 'lightpink']
+            incolors = ['lightgoldenrodyellow', 'gold', 'orange',  'yellow', 'khaki']
+            ncodcolors = ['cornflowerblue', 'mediumblue','dodgerblue', 'darkslateblue', 'skyblue']
+
+
+            dom = extypes + intypes + nctypes
+            rng = excolors[0:extypecount] + incolors[0:intypecount] + ncodcolors[0:nctypecount]
 
             brush = alt.selection_interval(
                 encodings=['x'], 
                 mark=alt.BrushConfig(fill='red', fillOpacity = 0.700))
 
+            #make the altair plot
             ichrom = alt.Chart(rectangles).mark_rect().encode(
                 x=alt.X('x1:Q', axis=alt.Axis(title='Base Pairs')),
                 x2='x2:Q',
                 y = alt.Y('y1:Q', axis=None),
                 y2='y2:Q', 
-                color=alt.Color('Element Type:N', 
+                color=alt.Color('altname:N', 
                                 scale=alt.Scale(domain=dom, range=rng)),
                 tooltip=[
-                    alt.Tooltip('Element Type', title='Element Type'),
+                    alt.Tooltip('type', title='Element Type'),
+                    alt.Tooltip('altname', title='Name'),
+                    #alt.Tooltip('mutations', title='Mutations'),
+                    alt.Tooltip('length', title='Length'),
                     alt.Tooltip('x1', title='Start'),
                     alt.Tooltip('x2', title='Stop'),
-                    alt.Tooltip('length', title='Length'),
                         ]
             ).properties(
                 height = 80,
@@ -238,9 +262,3 @@ if __name__ == "__main__":
     Chromosome.review(init_chromosome, item = "elements")
     Chromosome.review(init_chromosome, item = "chromosome")
     Chromosome.review(init_chromosome, item = "interactive")
-
-    random_chromosome = Build()
-    Build.random(random_chromosome)
-    final_chromosome = Chromosome(genome = random_chromosome)
-    final_chromosome.review("elements")
-    final_chromosome.review("mutations")
