@@ -189,7 +189,7 @@ class Chromosome:
             length = []
             for index, row in self.genome.iterrows():
                 eltype.append(row['type'])
-                if self.genome.loc['name'].isnull():
+                if pd.isna(row['name']):
                     altname.append(row['type'])
                 else: 
                     altname.append(row['name'])
@@ -263,3 +263,4 @@ if __name__ == "__main__":
     # generate random chromosome
     init_chromosome = Chromosome(genome_size = 2000)
     Chromosome.review(init_chromosome, item = "elements")
+    init_chromosome.review("interactive")
