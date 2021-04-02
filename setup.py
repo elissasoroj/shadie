@@ -10,7 +10,7 @@ from setuptools import setup
 # build command
 setup(
     name="shadie",
-    version="0.0.6",
+    version="0.0.7",
     author="Elissa Sorojsrisom",
     author_email="ess2239@columbia.edu",
     license="GPLv3",
