@@ -17,3 +17,8 @@ NONCOD = ElementType(NEUT, 1)              	 #non-coding
 #nucleotide defulats
 
 nucEXON = ElementType([SYN, DEL, BEN], (2,8,0.1))
+
+if __name__ == "__main__":
+
+    # generate random chromosome
+    print(EXON)

@@ -5,7 +5,7 @@
 and converts user-provided phylogeny into SLiM3-compatible subpopulation demography
 """
 
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 
 
 from shadie.mutations import MutationType
@@ -19,4 +19,4 @@ from shadie.demography import Demography
 from shadie.main import Shadie
 
 from .utils import set_loglevel
-set_loglevel("WARNING")
+set_loglevel("INFO")

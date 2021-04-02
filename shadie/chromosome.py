@@ -76,7 +76,7 @@ class Chromosome:
 
             self.gensize = genome_size
 
-            g1 = [{'type': "exon", 'start': 1,
+            g1 = [{'type': "exon", 'name': 'exon', 'start': 1,
             'finish': self.gensize - 1, 'eltype':EXON.name, 'script':EXON}]
             gene = pd.DataFrame(g1)
             self.genome = gene
@@ -189,7 +189,10 @@ class Chromosome:
             length = []
             for index, row in self.genome.iterrows():
                 eltype.append(row['type'])
-                altname.append(row['name'])
+                if self.genome.loc['name'].isnull():
+                    altname.append(row['type'])
+                else: 
+                    altname.append(row['name'])
                 startbase.append(row['start'])
                 endbase.append(row['finish'])
                 y1.append(0)
@@ -260,5 +263,3 @@ if __name__ == "__main__":
     # generate random chromosome
     init_chromosome = Chromosome(genome_size = 2000)
     Chromosome.review(init_chromosome, item = "elements")
-    Chromosome.review(init_chromosome, item = "chromosome")
-    Chromosome.review(init_chromosome, item = "interactive")

@@ -26,8 +26,8 @@ class ElementType:
         ):
     
         ElementType.idx += 1
-        self.idnum = ElementType.idx
-        self.idx = "g"+str(self.idx)
+        self.idx = ElementType.idx
+        self.name = "g"+str(self.idx)
 
         self.muttypes = mutationtypes
         self.freq = frequency
@@ -88,7 +88,7 @@ class ElementType:
 
     def __repr__(self):
 
-        return f"<ElementType: '{self.altname}', {self.idx}, {self.mutations}, {self.freq}, {self.mutmatrix}"
+        return f"<ElementType: '{self.altname}', {self.name}, {self.mutations}, {self.freq}, {self.mutmatrix}"
 
 
 class ElementList:
@@ -122,10 +122,10 @@ class ElementList:
             mutscript = [str(a) for a in i.mutations]
             freqscript = [str(b) for b in i.freq]
             script = (
-                f"'{i.idx}', c({', '.join(mutscript)})," 
+                f"'{i.name}', c({', '.join(mutscript)})," 
                 f"c({', '.join(freqscript)}), {i.mutmatrix}"
                 )
-            elementdict[i.idx] = script
+            elementdict[i.name] = script
         self.elementdict = elementdict  #dictionary of script lines
 
         self.elementlist = elementtypes
@@ -133,20 +133,22 @@ class ElementList:
     def __repr__(self):
         elnames = []
         for element in self.elementlist:
-            elnames.append(element.idx)
-        return (
-            f"<ElementList: {elnames}>\n"
-            )
+            elnames.append(element.name)
+        return (f"<ElementList: {elnames}>")
 
     def inspect(self):
-        print(f"Mutation types: {self.mutationlist}")
+        print(
+            '\033[1m' + "Genomic Element List" + '\033[0m' + "\n"
+            f"Element types: {self.elementlist}\n"
+            f"Mutation types: {self.mutationlist}\n"
+            )
         for element in self.elementlist:
             print(
                 '\033[1m' + "Genomic Element Type" + '\033[0m' + "\n"
-                f"idx: {element.idx}\n"
+                f"name: {element.name}\n"
                 f"alternate name: {element.altname}\n"
                 f"mutations: {element.mutations}\n"
-                f"frequencies: {element.freq}"
+                f"frequencies: {element.freq}\n"
                 )
             for mutation in element.muttypes:
                 mutation.inspect()
@@ -165,3 +167,9 @@ if __name__ == "__main__":
     genel2 = ElementType(mut2, 1)
     print(genel1, genel2)
     elemlist = ElementList(list1, genel1, genel2)
+
+    from shadie import globals
+    deflist = MutationList(globals.SYN, globals.DEL, globals.BEN)
+    print(deflist)
+    elemlist2 = ElementList(deflist, globals.EXON)
+    print(elemlist2)
