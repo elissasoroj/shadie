@@ -76,7 +76,7 @@ class Demography:
         for i in range(0, maxp):
             rpdndict["p"+str(i)] = "p" + prefix + str(i)
         self.rpdndict = rpdndict
-        logger.debug(rpdndict)
+        logger.debug(self.rpdndict)
 
         self.demog = demogdf
         logger.debug(self.demog)
