@@ -25,11 +25,11 @@ class Shadie(object):
     def __init__(
         self,
         tree=None,          # reads in 
-        chromosome=None,        # reads in chromosome object from Chromosome class
+        chromosome = None,        # reads in chromosome object from Chromosome class
         Ne = 1000,          # K
         nsamples=2,         # number of sampled haplotypes per tip in final data 
-        reproduction="pter",    # defines how gametes get selected and replicate
-        recomb=1e-9,        # sets rate in `initializeRecombinationRate`, also accepts map
+        reproduction = None,    # defines how gametes get selected and replicate
+        recomb = 1e-9,        # sets rate in `initializeRecombinationRate`, also accepts map
         generations = 3000  #required if no tree object is supplied
         ):
         """
@@ -62,11 +62,12 @@ class Shadie(object):
         self.gens = generations
         
         if self.tree != None:
-            initdemog = Demography(tree)
-            createdemog = initdemog.get_demog()
-            self.demog = createdemog.sort_values("gen")
+            initdemog = Demography(self.tree)
+            initdemog.get_demog()
+            self.demog = initdemog.demog.sort_values("gen")
             self.treeheight = int(tree.treenode.height)
-            self.rpdndict = createdemog.rpdndict
+            self.rpdndict = initdemog.rpdndict
+            logger.info(f"{self.rpdndict}")
         else:
             defdemog = [{'gen': "1", 'src': 'p1', 'Ne': self.Ne}]
             self.demog = pd.DataFrame(defdemog)
@@ -75,7 +76,6 @@ class Shadie(object):
             logger.warning("if no tree is provided, 'generations'"
                 "argument must be provided (defines length of simulation in "
                 "generations. Default value = 10000")
-            pass
 
         if self.chromosome == None:
             gene = Chromosome()
@@ -131,65 +131,72 @@ class Shadie(object):
         #######
 
         #write the firstline:
+        if self.reproduction !=None:   
+            rpdn0 = (f"sim.addSubpop('{self.rpdndict[self.demog.loc[0]['src']]}', 0);\n")
+        else:
+            rpdn0 =  ""
+
         start = (
             "\n1 early(){\n"
-            f"sim.addSubpop('{self.demog.loc[0]['src']}', {self.demog.loc[0]['Ne']});"
-            f"sim.addSubpop('{self.rpdndict[self.demog.loc[0]['src']]}', 0);"
+            f"sim.addSubpop('{self.demog.loc[0]['src']}', {self.demog.loc[0]['Ne']});\n"
+            + rpdn0 + 
             "}\n"
             )
         #write the reproduction callbacks
-        rep1 = (
-            "\nreproduction() {\n"
-            "g_1 = genome1;\n"
-            "g_2 = genome2;\n"
-            "for (meiosisCount in 1:5)\n"
-            "{\n"
-                "if (individual.sex == 'M')\n"
+        if self.reproduction !=None:
+            rep1 = (
+                "\nreproduction() {\n"
+                "g_1 = genome1;\n"
+                "g_2 = genome2;\n"
+                "for (meiosisCount in 1:5)\n"
                 "{\n"
-                    "breaks = sim.chromosome.drawBreakpoints(individual);\n"
-                    f"s_1 = {self.rpdndict[self.demog.loc[0]['src']]}."
-                    "addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL, 'M');\n"
-                    f"s_2 = {self.rpdndict[self.demog.loc[0]['src']]}."
-                    "addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL, 'M');\n"
+                    "if (individual.sex == 'M')\n"
+                    "{\n"
+                        "breaks = sim.chromosome.drawBreakpoints(individual);\n"
+                        f"s_1 = {self.rpdndict[self.demog.loc[0]['src']]}."
+                        "addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL, 'M');\n"
+                        f"s_2 = {self.rpdndict[self.demog.loc[0]['src']]}."
+                        "addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL, 'M');\n"
+                    "}\n"
+                    "else if (individual.sex == 'F')\n"
+                    "{\n"
+                        "breaks = sim.chromosome.drawBreakpoints(individual);\n"
+                        "if (runif(1) <= 0.5)\n"
+                            f"e = {self.rpdndict[self.demog.loc[0]['src']]}."
+                            "addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL, 'F');\n"
+                        "else\n"
+                            f"e = {self.rpdndict[self.demog.loc[0]['src']]}."
+                            "addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL, 'F');\n"
+                    "}\n"
                 "}\n"
-                "else if (individual.sex == 'F')\n"
+                "}\n"
+
+                "reproduction({self.rpdndict[self.demog.loc[0]['src']]}, 'F')\n"
                 "{\n"
-                    "breaks = sim.chromosome.drawBreakpoints(individual);\n"
-                    "if (runif(1) <= 0.5)\n"
-                        f"e = {self.rpdndict[self.demog.loc[0]['src']]}."
-                        "addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL, 'F');\n"
+                    f"mate = {self.rpdndict[self.demog.loc[0]['src']]}.sampleIndividuals(1, sex='M, tag=0);\n"
+                    " mate.tag = 1;"
+                    
+                    f"child = {self.demog.loc[0]['src']}.addRecombinant(individual.genome1, "
+                    "NULL, NULL, mate.genome1, NULL, NULL);\n"
+                "\n"
+                "early()\n"
+                "{\n"
+                    "if (sim.generation % 2 == 0)\n"
+                    "{\n"
+                        f"{self.demog.loc[0]['src']}.fitnessScaling = 0.0;\n"
+                        f"{self.rpdndict[self.demog.loc[0]['src']]}.individuals.tag = 0;\n"
+                        "sim.chromosome.setMutationRate(0.0);\n"
+                    "}\n"
                     "else\n"
-                        f"e = {self.rpdndict[self.demog.loc[0]['src']]}."
-                        "addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL, 'F');\n"
+                    "{\n"
+                        f"{self.rpdndict[self.demog.loc[0]['src']]}.fitnessScaling = 0.0;\n"
+                        f"{self.demog.loc[0]['src']}.fitnessScaling = K / {self.demog.loc[0]['src']}.individualCount;"
+                        f"sim.chromosome.setMutationRate(MU);"
+                    "}\n"
                 "}\n"
-            "}\n"
-            "}\n"
-
-            "reproduction({self.rpdndict[self.demog.loc[0]['src']]}, 'F')\n"
-            "{\n"
-                f"mate = {self.rpdndict[self.demog.loc[0]['src']]}.sampleIndividuals(1, sex='M, tag=0);\n"
-                " mate.tag = 1;"
-                
-                f"child = {self.demog.loc[0]['src']}.addRecombinant(individual.genome1, "
-                "NULL, NULL, mate.genome1, NULL, NULL);\n"
-            "\n"
-            "early()\n"
-            "{\n"
-                "if (sim.generation % 2 == 0)\n"
-                "{\n"
-                    f"{self.demog.loc[0]['src']}.fitnessScaling = 0.0;\n"
-                    f"{self.rpdndict[self.demog.loc[0]['src']]}.individuals.tag = 0;\n"
-                    "sim.chromosome.setMutationRate(0.0);\n"
-                "}\n"
-                "else\n"
-                "{\n"
-                    f"{self.rpdndict[self.demog.loc[0]['src']]}.fitnessScaling = 0.0;\n"
-                    f"{self.demog.loc[0]['src']}.fitnessScaling = K / {self.demog.loc[0]['src']}.individualCount;"
-                    f"sim.chromosome.setMutationRate(MU);"
-                "}\n"
-            "}\n"
-            )
-
+                )
+        else:
+            rep1 = ""
 
         #write the demography
         if self.tree != None:
@@ -210,7 +217,7 @@ class Shadie(object):
             "}"
             )
 
-        script.write(init1 + init2 + init3 + init4 + initfinal + start + gens + final)
+        script.write(init1 + init2 + init3 + init4 + initfinal + start + gens + rep1 + final)
         script.close
 
     def run(self):
@@ -274,4 +281,13 @@ class Shadie(object):
 
 
 if __name__ == "__main__":
-    pass
+    import toytree
+    import numpy as np
+
+    #Make the tree
+    tree = toytree.rtree.unittree(ntips=10, treeheight=1e4, seed=123)
+    randtree = tree.set_node_values(
+        feature="Ne", 
+        values={i: np.random.randint(10000, 100000) for i in tree.idx_dict}
+    )
+    tree_sim = Shadie(tree = randtree)
