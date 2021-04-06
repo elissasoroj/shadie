@@ -65,7 +65,7 @@ class Demography:
                 demogdf.loc[idx, 'Ne'] = node.Ne
         
         #define reproduction popoulation prefix based on largest pop value        
-        maxp = tree.nnodes
+        maxp = self.tree.nnodes
         n = [1]
         for i in str(maxp):
             n.append(0)
@@ -75,12 +75,13 @@ class Demography:
         rpdndict = {}
         for i in range(0, maxp):
             rpdndict["p"+str(i)] = "p" + prefix + str(i)
+        self.rpdndict = rpdndict
         logger.debug(rpdndict)
 
         self.demog = demogdf
         logger.debug(self.demog)
 
-        return self.demog
+        #return self.demog
 
 
 #This is the .slim script structure that needs to be written by the submodule:
