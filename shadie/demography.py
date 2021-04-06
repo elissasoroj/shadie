@@ -63,11 +63,25 @@ class Demography:
                 demogdf.loc[idx, 'child0'] = f'p{node.children[0].idx}'
                 demogdf.loc[idx, 'child1'] = f'p{node.children[1].idx}'
                 demogdf.loc[idx, 'Ne'] = node.Ne
-                #I started by following the f-string format, but it seems like just having the value is better
+        
+        #define reproduction popoulation prefix based on largest pop value        
+        maxp = self.tree.nnodes
+        n = [1]
+        for i in str(maxp):
+            n.append(0)
+        prefix = (''.join([str(a) for a in n]))
+        
+        #define reproduction populations
+        rpdndict = {}
+        for i in range(0, maxp):
+            rpdndict["p"+str(i)] = "p" + prefix + str(i)
+        self.rpdndict = rpdndict
+        logger.debug(rpdndict)
+
         self.demog = demogdf
         logger.debug(self.demog)
 
-        return(self.demog)
+        #return self.demog
 
 
 #This is the .slim script structure that needs to be written by the submodule:
