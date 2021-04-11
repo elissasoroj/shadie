@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Generates script for SLiM simulation
+Generates chromosome strurcture for SLiM simulation
 
 """
 
@@ -206,8 +206,6 @@ class Build:
                     else:
                         break
                 
-
-                logger.info("Chromosome complete!")
                 logger.debug(genelements)
                 self.genelements = genelements
                 self.mutationlist = MutationList(NEUT, SYN, DEL, BEN)
@@ -229,55 +227,60 @@ class Build:
                 end = self.gensize - finalnc_length
                 logger.debug("Made objects: base = {base}, genelements = {}, end = {end}")
 
-                while base < end:
-                    #make initial non-coding region
-                    nc_length = np.random.randint(100, 5000)
-                    genelements.loc[base, 'type'] = "noncoding"
-                    genelements.loc[base, 'eltype'] = NONCOD.name
-                    genelements.loc[base, 'script'] = NONCOD
-                    genelements.loc[base, 'start'] = base
-                    genelements.loc[base, 'finish'] = base + nc_length - 1
-                    base = base + nc_length
-                
-                    #make first exon
-                    ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
-                    genelements.loc[base, 'type'] = "exon"
-                    genelements.loc[base, 'eltype'] = EXON.name
-                    genelements.loc[base, 'script'] = EXON
-                    genelements.loc[base, 'start'] = base
-                    genelements.loc[base, 'finish'] = base + ex_length -1
-                    base = base + ex_length
-                    logger.info("Gene added")    
-                    
-                    while np.random.random_sample() < 0.75:  #25% probability of stopping
-                        in_length = round(np.random.normal(450, 100))
-                        genelements.loc[base, 'type'] = "intron"
-                        genelements.loc[base, 'eltype'] = INTRON.name
-                        genelements.loc[base, 'script'] = INTRON
+                while True:
+                    while base < end:
+                        #make initial non-coding region
+                        nc_length = np.random.randint(100, 5000)
+                        genelements.loc[base, 'type'] = "noncoding"
+                        genelements.loc[base, 'eltype'] = NONCOD.name
+                        genelements.loc[base, 'script'] = NONCOD
                         genelements.loc[base, 'start'] = base
-                        genelements.loc[base, 'finish'] = base + in_length -1
-                        base = base + in_length
-                      
+                        genelements.loc[base, 'finish'] = base + nc_length - 1
+                        base = base + nc_length
+                    
+                        #make first exon
                         ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
                         genelements.loc[base, 'type'] = "exon"
                         genelements.loc[base, 'eltype'] = EXON.name
                         genelements.loc[base, 'script'] = EXON
                         genelements.loc[base, 'start'] = base
                         genelements.loc[base, 'finish'] = base + ex_length -1
-                        base = base + ex_length 
+                        base = base + ex_length
+                        logger.info("Gene added")    
+                        
+                        while np.random.random_sample() < 0.75:  #25% probability of stopping
+                            in_length = round(np.random.normal(450, 100))
+                            genelements.loc[base, 'type'] = "intron"
+                            genelements.loc[base, 'eltype'] = INTRON.name
+                            genelements.loc[base, 'script'] = INTRON
+                            genelements.loc[base, 'start'] = base
+                            genelements.loc[base, 'finish'] = base + in_length -1
+                            base = base + in_length
                           
-                #final non-coding region
-                genelements.loc[base, 'type'] = "noncoding"
-                genelements.loc[base, 'eltype'] = NONCOD.name
-                genelements.loc[base, 'script'] = NONCOD
-                genelements.loc[base, 'start'] = base
-                genelements.loc[base, 'finish'] = self.gensize - 1
-                logger.info("Chromosome complete!")
-                logger.debug(genelements)
-                self.genelements = genelements
-                self.mutationlist = MutationList(NEUT, SYN, DEL, BEN)
-                self.elementlist = ElementList(self.mutationlist, EXON, INTRON, NONCOD)
+                            ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
+                            genelements.loc[base, 'type'] = "exon"
+                            genelements.loc[base, 'eltype'] = EXON.name
+                            genelements.loc[base, 'script'] = EXON
+                            genelements.loc[base, 'start'] = base
+                            genelements.loc[base, 'finish'] = base + ex_length -1
+                            base = base + ex_length 
+                              
+                    #final non-coding region
+                    genelements.loc[base, 'type'] = "noncoding"
+                    genelements.loc[base, 'eltype'] = NONCOD.name
+                    genelements.loc[base, 'script'] = NONCOD
+                    genelements.loc[base, 'start'] = base
+                    genelements.loc[base, 'finish'] = self.gensize - 1
 
+                    logger.debug(genelements)
+                    self.genelements = genelements
+                    self.mutationlist = MutationList(NEUT, SYN, DEL, BEN)
+                    self.elementlist = ElementList(self.mutationlist, EXON, INTRON, NONCOD)
+
+                    if base > (self.gensize-1):
+                        continue
+                    else:
+                        break
        
             elif self.exons != None: 
                 #check the types
@@ -309,43 +312,21 @@ class Build:
                 end = self.gensize - finalnc_length
                 logger.debug("Made objects: base = {base}, genelements = {}, end = {end}")
 
-                while base < end:
-                    #make initial non-coding region
-                    nc_length = np.random.randint(100, 5000)
-                    choose = random.choice(self.noncoding)
+                while True:
+                    while base < end:
+                        #make initial non-coding region
+                        nc_length = np.random.randint(100, 5000)
+                        choose = random.choice(self.noncoding)
 
-                    genelements.loc[base, 'type'] = "noncoding"
-                    genelements.loc[base, 'name'] = choose.altname
-                    genelements.loc[base, 'eltype'] = choose.name
-                    genelements.loc[base, 'script'] = self.elements.elementdict[choose.name]
-                    genelements.loc[base, 'start'] = base
-                    genelements.loc[base, 'finish'] = base + nc_length - 1
-                    base = base + nc_length
-
-                    #make first exon
-                    ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
-                    choose = random.choice(self.exons)
-
-                    genelements.loc[base, 'type'] = "exon"
-                    genelements.loc[base, 'name'] = choose.altname
-                    genelements.loc[base, 'eltype'] = choose.name
-                    genelements.loc[base, 'script'] = self.elements.elementdict[choose.name]
-                    genelements.loc[base, 'start'] = base
-                    genelements.loc[base, 'finish'] = base + ex_length -1
-                    base = base + ex_length
-                    logger.info("Gene added")    
-
-                    while np.random.random_sample() < 0.75:  #25% probability of stopping
-                        in_length = round(np.random.normal(450, 100))
-                        choose = random.choice(self.introns)
-                        genelements.loc[base, 'type'] = "intron"
+                        genelements.loc[base, 'type'] = "noncoding"
                         genelements.loc[base, 'name'] = choose.altname
                         genelements.loc[base, 'eltype'] = choose.name
                         genelements.loc[base, 'script'] = self.elements.elementdict[choose.name]
                         genelements.loc[base, 'start'] = base
-                        genelements.loc[base, 'finish'] = base + in_length -1
-                        base = base + in_length
+                        genelements.loc[base, 'finish'] = base + nc_length - 1
+                        base = base + nc_length
 
+                        #make first exon
                         ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
                         choose = random.choice(self.exons)
 
@@ -355,18 +336,46 @@ class Build:
                         genelements.loc[base, 'script'] = self.elements.elementdict[choose.name]
                         genelements.loc[base, 'start'] = base
                         genelements.loc[base, 'finish'] = base + ex_length -1
-                        base = base + ex_length 
+                        base = base + ex_length
+                        logger.info("Gene added")    
 
-                #final non-coding region
-                choose = random.choice(self.noncoding)
+                        while np.random.random_sample() < 0.75:  #25% probability of stopping
+                            in_length = round(np.random.normal(450, 100))
+                            choose = random.choice(self.introns)
+                            genelements.loc[base, 'type'] = "intron"
+                            genelements.loc[base, 'name'] = choose.altname
+                            genelements.loc[base, 'eltype'] = choose.name
+                            genelements.loc[base, 'script'] = self.elements.elementdict[choose.name]
+                            genelements.loc[base, 'start'] = base
+                            genelements.loc[base, 'finish'] = base + in_length -1
+                            base = base + in_length
 
-                genelements.loc[base, 'type'] = "noncoding"
-                genelements.loc[base, 'name'] = choose.altname
-                genelements.loc[base, 'eltype'] = choose.name
-                genelements.loc[base, 'script'] = self.elements.elementdict[choose.name]
-                genelements.loc[base, 'start'] = base
-                genelements.loc[base, 'finish'] = self.gensize - 1
-                logger.info("Chromosome complete!")
+                            ex_length = round(np.random.lognormal(np.log(250), np.log(1.3))) + 1
+                            choose = random.choice(self.exons)
+
+                            genelements.loc[base, 'type'] = "exon"
+                            genelements.loc[base, 'name'] = choose.altname
+                            genelements.loc[base, 'eltype'] = choose.name
+                            genelements.loc[base, 'script'] = self.elements.elementdict[choose.name]
+                            genelements.loc[base, 'start'] = base
+                            genelements.loc[base, 'finish'] = base + ex_length -1
+                            base = base + ex_length 
+
+                    #final non-coding region
+                    choose = random.choice(self.noncoding)
+
+                    genelements.loc[base, 'type'] = "noncoding"
+                    genelements.loc[base, 'name'] = choose.altname
+                    genelements.loc[base, 'eltype'] = choose.name
+                    genelements.loc[base, 'script'] = self.elements.elementdict[choose.name]
+                    genelements.loc[base, 'start'] = base
+                    genelements.loc[base, 'finish'] = self.gensize - 1
+                    
+                    if base > (self.gensize-1):
+                        continue
+                    else:
+                        break
+
                 logger.debug(genelements)
                 self.genelements = genelements
                 self.mutationlist = self.elements.mutationlist
