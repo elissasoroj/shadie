@@ -116,6 +116,7 @@ class PostSim:
             )
 
         #static toyplot
+        print("Mutation positions along chromosome:")
         chrom = Chromosome(self.genome)
         chrom.toyplot()
         self.rectangles = chrom.rectangles
