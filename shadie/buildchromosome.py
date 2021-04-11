@@ -17,6 +17,17 @@ from shadie.mutations import MutationList
 from shadie.elements import ElementList
 from shadie.elements import ElementType
 
+#default element types
+from shadie.globals import NONCOD
+from shadie.globals import INTRON
+from shadie.globals import EXON
+
+#default mutation types
+from shadie.globals import NEUT
+from shadie.globals import SYN
+from shadie.globals import DEL
+from shadie.globals import BEN
+
 
 class Build:
     """
@@ -26,6 +37,7 @@ class Build:
     def __init__(
     	self,
     	chromtype = "random",  #"random" or "dict" 
+        genecount = None,
 		exons = None,          #list of ElementTypes eligible for exon regions
         introns = None,        #list of ElementTypes eligible for intron regions
         noncoding = None,      #list of ElementTypes eligible for non-coding regions
@@ -34,6 +46,7 @@ class Build:
         ):
     
         self.type = chromtype
+        self.exoncount = genecount
         self.exons = exons
         self.introns = introns
         self.noncoding = noncoding
@@ -48,6 +61,10 @@ class Build:
         chromtype(str): default = "random"
             "random" will generate a random chromosome
             "dict" will accept a dictionary object
+
+        exoncount(int): default = None
+            Will produce a random chromosome using defaults with specified number 
+            of genes (composed of exons only)
 
         genes(int): default = None
             Number of genes on chromosome
@@ -67,20 +84,20 @@ class Build:
             dict(name='C', selection=0.03, start=9000, end=10000, haploid=False),
             )
 
-        introns (int): default = None
-            For random generator: number of introns per gene; default = random
-            For dict generator: number of introns per gene; default = 0
+        exons (ElementList): default = None
+           list of genomic elements that may be used as exons
 
-        exons (int): default = None
-           For random generator: number of exons per gene; default = random
-           For dict generator: number of exons per gene; default = 1
+        introns (ElementList): default = None
+           list of genomic elements that may be used as introns
+
+        noncoding (ElementList): default = None
+           list of genomic elements that may be used as non-coding regions
 
         mutation_rate(int): default = 1e-7
-            Chance of mutation at each bp
-
+            Chance of mutation at each nucleotide
 
         genome_size(int): default = =1e6
-            Length of chromosome
+            Length of chromosome in nucleootides
         """
 
         if self.type == "custom":
@@ -120,18 +137,86 @@ class Build:
             self.initdict = initdict
 
 
+    def genes(self):
+        "generates a chromosome with specified number of exons"
+
+        if self.exons == None:
+            if self.exoncount != None:
+                maxexon = int(self.gensize/(self.exoncount*1.25))
+                minexon = int(self.gensize)/(self.exoncount*3)
+                ncmin = (self.gensize - maxexon)/(self.exoncount + 1)
+                ncmax = (self.gensize - minexon)/(self.exoncount + 1)
+
+                genelements = pd.DataFrame(
+                    columns=['type', 'name', 'start', 'finish', 'eltype', 'script'],
+                    data=None,)
+
+                base = int(0)
+                exons = 0
+                
+                while True:
+                        
+                    #make initial non-coding region
+                    nc_length = np.random.randint(ncmin, ncmax)
+                    genelements.loc[base, 'type'] = "noncoding"
+                    genelements.loc[base, 'eltype'] = NONCOD.name
+                    genelements.loc[base, 'script'] = NONCOD
+                    genelements.loc[base, 'start'] = base
+                    genelements.loc[base, 'finish'] = base + nc_length - 1
+                    base = base + nc_length
+                
+                    #make first exon
+                    ex_length = np.random.randint(minexon, maxexon) + 1
+                    genelements.loc[base, 'type'] = "exon"
+                    genelements.loc[base, 'eltype'] = EXON.name
+                    genelements.loc[base, 'script'] = EXON
+                    genelements.loc[base, 'start'] = base
+                    genelements.loc[base, 'finish'] = base + ex_length -1
+                    base = base + ex_length
+                    exons += 1
+
+                    while exons < self.exoncount:
+                        nc_length = np.random.randint(ncmin, ncmax)
+                        genelements.loc[base, 'type'] = "noncoding"
+                        genelements.loc[base, 'eltype'] = NONCOD.name
+                        genelements.loc[base, 'script'] = NONCOD
+                        genelements.loc[base, 'start'] = base
+                        genelements.loc[base, 'finish'] = base + nc_length - 1
+                        base = base + nc_length
+                    
+                        #make first exon
+                        ex_length = np.random.randint(minexon, maxexon) + 1
+                        genelements.loc[base, 'type'] = "exon"
+                        genelements.loc[base, 'eltype'] = EXON.name
+                        genelements.loc[base, 'script'] = EXON
+                        genelements.loc[base, 'start'] = base
+                        genelements.loc[base, 'finish'] = base + ex_length -1
+                        base = base + ex_length
+                        exons += 1
+
+                    #final non-coding region
+                    genelements.loc[base, 'type'] = "noncoding"
+                    genelements.loc[base, 'eltype'] = NONCOD.name
+                    genelements.loc[base, 'script'] = NONCOD
+                    genelements.loc[base, 'start'] = base
+                    genelements.loc[base, 'finish'] = self.gensize - 1
+
+                    if base > (self.gensize-1):
+                        continue
+                    else:
+                        break
+                
+
+                logger.info("Chromosome complete!")
+                logger.debug(genelements)
+                self.genelements = genelements
+                self.mutationlist = MutationList(NEUT, SYN, DEL, BEN)
+                self.elementlist = ElementList(self.mutationlist, EXON, NONCOD)
+
+
+
     def random(self):
         "generates a random chromosome"
-        #default element types
-        from shadie.globals import NONCOD
-        from shadie.globals import INTRON
-        from shadie.globals import EXON
-
-        #default mutation types
-        from shadie.globals import NEUT
-        from shadie.globals import SYN
-        from shadie.globals import DEL
-        from shadie.globals import BEN
 
         if self.type == "random":
             if self.exons == None:
@@ -191,7 +276,7 @@ class Build:
                 logger.debug(genelements)
                 self.genelements = genelements
                 self.mutationlist = MutationList(NEUT, SYN, DEL, BEN)
-                self.elementlist = ElementList(EXON, INTRON, NONCOD)
+                self.elementlist = ElementList(self.mutationlist, EXON, INTRON, NONCOD)
 
        
             elif self.exons != None: 
@@ -312,3 +397,7 @@ if __name__ == "__main__":
     # generate random chromosome
     init_chromosome =  Build()
     Build.random(custom)
+
+    #chromosome with specified number of genes
+    fourgenes = Build(genecount = 4)
+    fourgenes.genes()
