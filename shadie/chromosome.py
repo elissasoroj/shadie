@@ -64,24 +64,23 @@ class Chromosome:
             Length of chromosome
         """
 
-        if genome != None:
-            if isinstance(genome, Build):
+        self.genome = genome
+
+        if self.genome is not None:
+            if isinstance(self.genome, Build):
                 self.mutationlist = genome.mutationlist
                 self.elementlist = genome.elementlist
                 self.genome = genome.genelements
                 self.gensize = genome.gensize
             
 
-        elif genome == None:
-
-            self.gensize = genome_size
-
-            g1 = [{'type': "exon", 'name': 'exon', 'start': 1,
-            'finish': self.gensize - 1, 'eltype':EXON.name, 'script':EXON}]
-            gene = pd.DataFrame(g1)
-            self.genome = gene
-            self.mutationlist = MutationList(SYN, DEL, BEN)
-            self.elementlist = ElementList(self.mutationlist, EXON)
+        elif self.genome is None:
+            onegene = Build(genecount = 1, genome_size=2e3)
+            onegene.genes()
+            self.mutationlist = onegene.mutationlist
+            self.elementlist = onegene.elementlist
+            self.genome = onegene.genelements
+            self.gensize = onegene.gensize
         
 
     def review(self, item = None):
