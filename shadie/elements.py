@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Allows user to create mutation types for their simulation
+Allows user to create element types for their simulation
 """
 
 #package imports

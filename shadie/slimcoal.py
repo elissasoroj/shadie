@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Generates script for SLiM simulation
+Overlays neutral mutations using coalescent
 
 """
 
@@ -36,3 +36,7 @@ class Coal:
 
         print(f"The tree sequence now has {self.tscoal.num_mutations} mutations, "
           f"and mean pairwise nucleotide diversity is {self.tscoal.diversity()}.")
+
+
+if __name__ == "__main__":
+    pass

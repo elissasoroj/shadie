@@ -14,17 +14,5 @@ EXON = ElementType([DEL, BEN], (8,0.1))  #exon
 INTRON = ElementType([DEL], (1))         #intron
 NONCOD = ElementType(NEUT, 1, mutationrate = 0)              	 #non-coding
 
-#nucleotide defulats
-
-nucEXON = ElementType([SYN, DEL, BEN], (2,8,0.1))
-
 if __name__ == "__main__":
-
-    # testing
-    print(EXON)
-    print(INTRON)
-    print(NONCOD)
-
-    from shadie.elements import ElementList
-    test = ElementList(EXON, INTRON, NONCOD)
-    print(test)
+	pass
