@@ -12,9 +12,6 @@ import pandas as pd
 import pyslim
 from loguru import logger
 
-
-from shadie.globals import EXON 
-
 from shadie.chromosome import Chromosome
 from shadie.demography import Demography
 
@@ -25,12 +22,13 @@ class Shadie(object):
     def __init__(
         self,
         tree=None,          # reads in 
-        chromosome = None,        # reads in chromosome object from Chromosome class
+        chromosome = None,  # reads in chromosome object from Chromosome class
         Ne = 1000,          # K
         nsamples=2,         # number of sampled haplotypes per tip in final data 
         reproduction = None,    # defines how gametes get selected and replicate
         recomb = 1e-9,        # sets rate in `initializeRecombinationRate`, also accepts map
-        generations = 3000  #required if no tree object is supplied
+        generations = 3000,  #required if no tree object is supplied
+        model = "WF"
         ):
         """
         Builds script to run SLiM3 simulation
@@ -53,7 +51,7 @@ class Shadie(object):
             The per-site per-generation recombination rate.
 
         """
-        self.model = "WF"             # nonWF is probably needed for repoduction 
+        self.model = model         # nonWF is probably needed for repoduction 
         self.recomb = recomb
         self.Ne = Ne
         self.chromosome = chromosome
@@ -67,7 +65,6 @@ class Shadie(object):
             self.demog = initdemog.demog.sort_values("gen")
             self.treeheight = int(tree.treenode.height)
             self.rpdndict = initdemog.rpdndict
-            logger.info(f"{self.rpdndict}")
         else:
             defdemog = [{'gen': "1", 'src': 'p1', 'Ne': self.Ne}]
             self.demog = pd.DataFrame(defdemog)
@@ -77,7 +74,14 @@ class Shadie(object):
                 "argument must be provided (defines length of simulation in "
                 "generations. Default value = 10000")
 
-        if self.chromosome == None:
+
+        if isinstance(self.chromosome, Chromosome): 
+            self.mutationlist = self.chromosome.mutationlist
+            self.elementlist = self.chromosome.elementlist
+            self.genome = self.chromosome.genome
+            self.gensize = self.chromosome.gensize
+
+        elif self.chromosome is None:
             gene = Chromosome()
             self.genome = gene.genome 
             self.mutationlist = gene.mutationlist
@@ -85,14 +89,22 @@ class Shadie(object):
             self.genome = gene.genome
             self.gensize = gene.gensize
 
-        elif isinstance(self.chromosome, Chromosome): 
-            self.mutationlist = self.chromosome.mutationlist
-            self.elementlist = self.chromosome.elementlist
-            self.genome = self.chromosome.genome
-            self.gensize = self.chromosome.gensize
-
         else:
             raise ValueError("please input valid Chromosome class object")
+
+        exonstart = []
+        exonstop = []
+
+        
+        for index, row in self.genome.iterrows():
+            if row["type"] == "exon":
+                exonstart.append(row['start'])
+                exonstop.append(row['finish'])
+
+        genemap = pd.DataFrame(list(zip(exonstart, exonstop)),
+              columns=['exonstart', 'exonstop'])
+
+        self.genemap = genemap
 
         logger.info(f"testing part of code: {self.rpdndict[self.demog.loc[0]['src']]}")
 
@@ -171,27 +183,27 @@ class Shadie(object):
                 "}\n"
                 "}\n"
 
-                "reproduction({self.rpdndict[self.demog.loc[0]['src']]}, 'F')\n"
+                f"reproduction({self.rpdndict[self.demog.loc[0]['src']]}, 'F')\n"
                 "{\n"
-                    f"mate = {self.rpdndict[self.demog.loc[0]['src']]}.sampleIndividuals(1, sex='M, tag=0);\n"
+                    f"mate = {self.rpdndict[self.demog.loc[0]['src']]}.sampleIndividuals(1, sex='M', tag=0);\n"
                     " mate.tag = 1;"
                     
                     f"child = {self.demog.loc[0]['src']}.addRecombinant(individual.genome1, "
                     "NULL, NULL, mate.genome1, NULL, NULL);\n"
-                "\n"
+                "}\n"
                 "early()\n"
                 "{\n"
                     "if (sim.generation % 2 == 0)\n"
                     "{\n"
                         f"{self.demog.loc[0]['src']}.fitnessScaling = 0.0;\n"
                         f"{self.rpdndict[self.demog.loc[0]['src']]}.individuals.tag = 0;\n"
-                        "sim.chromosome.setMutationRate(0.0);\n"
+                        "sim.chromosome.setHotspotMap(0.0);\n"
                     "}\n"
                     "else\n"
                     "{\n"
                         f"{self.rpdndict[self.demog.loc[0]['src']]}.fitnessScaling = 0.0;\n"
-                        f"{self.demog.loc[0]['src']}.fitnessScaling = K / {self.demog.loc[0]['src']}.individualCount;"
-                        f"sim.chromosome.setMutationRate(MU);"
+                        f"{self.demog.loc[0]['src']}.fitnessScaling = {self.Ne} / {self.demog.loc[0]['src']}.individualCount;\n"
+                        f"sim.chromosome.setHotspotMap(1.0);\n"
                     "}\n"
                 "}\n"
                 )
@@ -214,6 +226,7 @@ class Shadie(object):
         final = (
             f"{self.treeheight} late()" + "{\n"
             f"sim.treeSeqOutput('{self.outname}');\n"
+            f"sim.outputFull('model_output.txt');\n"
             "}"
             )
 
@@ -242,11 +255,14 @@ class Shadie(object):
                 assert(parent_mut.site == mut.site)
                 parent_nuc = parent_mut.metadata["mutation_list"][0]["nucleotide"]
             M[parent_nuc][derived_nuc] += 1
-                
+        
+        counts = 0        
         print("{}\t{}\t{}".format('ancestr', 'derived', 'count'))
         for j, a in enumerate(pyslim.NUCLEOTIDES):
             for k, b in enumerate(pyslim.NUCLEOTIDES):
+                counts += M[j][k]
                 print("{}\t{}\t{}".format(a, b, M[j][k]))
+        print(f"\nNumber of mutations: {counts}")
 
 
     def reproduction(self):
