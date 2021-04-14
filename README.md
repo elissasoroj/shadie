@@ -243,6 +243,13 @@ This submodule needs to create a `.slim`  script with correct syntax that will r
 
 7. ~~Shadie() reads the output back in, allowing the user to look at output with `Postsim` module~~
 
+**Future Changes**:
+* Remove nucleotides from the simulation (should run faster without them and they are no longer needed)
+* Re-configure reproduction callbacks to write script using `Reproduction` class instead of `Shadie`
+* Make all scripts consistent with nonWF models
+	* consider making a separate module for writing simple WF models?
+	* *or* just implement WF into nonWF model
+
 ~
 
 **Working Example:**
