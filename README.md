@@ -16,7 +16,7 @@ cd ./shadie
 pip install -e .
 ```
 
-You can install SLiM3 [here](https://messerlab.org/slim/). For development purposes you can refer to the `example_scripts` folder in the `shadie` directory for examples of SLiM scripts. It is  highly recommended you also familiarize yourself with the SliM language `Eidos`; the SLiMgui is included with the Mac OS install and may be of tremendous help in this regard.  *You must install SliM3 for most of the functionality of `shadie to work*
+You can install SLiM3 [here](https://messerlab.org/slim/). For development purposes you can refer to the `example_scripts` folder in the `shadie` directory for examples of SLiM scripts. It is  highly recommended you also familiarize yourself with the SliM language `Eidos`; the SLiMgui is included with the Mac OS install and may be of tremendous help in this regard.  *You must install SliM3 for most of the functionality of `shadie` to work*
 
 ~
 
