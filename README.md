@@ -1,6 +1,6 @@
 # SHaDiE (Simulating Haploid-Diploid Evolution)
 
-`shadie` is a wrapper around SLiM3 that implements selection on alternating hapliod/diploid lifecycles
+`shadie` is a wrapper around SLiM3 that provides a user-friendly python API interface, implements selection on alternating hapliod/diploid lifecycles,
 and converts user-provided phylogeny into SLiM3-compatible subpopulation demography
 
 ### *`shadie` is Under Active Development*
