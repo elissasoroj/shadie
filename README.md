@@ -3,30 +3,44 @@
 `shadie` is a wrapper around SLiM3 that implements selection on alternating hapliod/diploid lifecycles
 and converts user-provided phylogeny into SLiM3-compatible subpopulation demography
 
-### In Development
+### *`shadie` is Under Active Development*
 
 To install locally:
 ```bash
 #dependencies:
-conda install [pandas, numpy, toyplot, toytree, altair, msprime, pyslim, loguru] -c conda-forge
+conda install [pandas, numpy, toyplot, toytree, altair, msprime, pyslim, tskit, loguru, IPython] -c conda-forge
 
-#clone and install
+#clone and install from GitHub
 git clone [https://github.com/elissasoroj/shadie.git]
 cd ./shadie
 pip install -e .
 ```
 
-You can optionally install SLiM3 [here](https://messerlab.org/slim/). However, for development purposes you can simply refer to the `example_scripts` folder in the `shadie` directory for examples of SLiM scripts, which should be adequate. *You do NOT have to install SliM3*
+You can install SLiM3 [here](https://messerlab.org/slim/). For development purposes you can refer to the `example_scripts` folder in the `shadie` directory for examples of SLiM scripts. It is  highly recommended you also familiarize yourself with the SliM language `Eidos`; the SLiMgui is included with the Mac OS install and may be of tremendous help in this regard.  *You must install SliM3 for most of the functionality of `shadie to work*
 
+~
 
-This project has 3 main parts:
+**Dependencies:**
+
+* numpy
+* pandas
+* toytree
+* toyplot
+* altair
+* pyslim
+* tskit
+
+~
+
+**This project has 5 main parts:**
 
 1. convert a phylogeny (provided as newick string) into SLiM3-comptaible demography 
 2. generate chromosome, either random or based on user input
-3. write a `.slim` script and execute in the program SLiM3 
-4. take output from SLiM simulation and provide useful summary statistics, such as MK and dN/dS
+3. pre-define reproduction scripts that reflect lifecycles of major plant lineages
+4. write a `.slim` script and execute in the program SLiM3 
+5. take output from SLiM simulation and provide useful summary statistics, such as MK and dN/dS
 
-Right now, we are focusing on **#1 and #2**. See detail below ~
+Right now, we are focusing on **#4 and #5**. See detail below ~
 
 ---
 ### 1. Phylogeny --> SliM3 Demography
@@ -45,42 +59,22 @@ This submodule takes a `Toytree` tree object and creates a `.slim` script with p
 - each node is named by Toytree from tips to root; `Demography` retains that naming
 - `gen` = int((theight - node.height) + 1)
 
- This will be used to generate this part of the script, which controls when populations in the program split into subpopulations:
+ This will be used to generate this part of the script, which controls when populations in the program split into subpopulations.
 
-```java
-//write beginning row:
-1 { sim.addSubpop("{root}", {Neroot}); }
-
-// for row in pandas DF, write the following:
-{gen} { 
-	sim.addSubpopSplit("{child0}", {Nechild0}, p1);
-    sim.addSubpopSplit("{child1}", {Nechild1}, p1);}
-{gen}:{gen+1} {
-    {root}.setMigrationRates(c({child0}, {child1}), c(0.5, 0.5));} //may not be necessary
-{gen+1} {
-    {root}setSubpopulationSize(0);}
-// append until out of rows
-
-//then, write last line:
-10000 late() { sim.outputFull(); }
-```
 ~
 
 **Working Example**
 
+*Refer to notebook #3 in the `notebooks` directory.*
+
 Right now, the code can successfully traverse a tree and save the output to a pandas DF:
 
-1. install `shadie` from the `./shadie` local directory
-```bash
-pip install -e .
-```
-
-2. launch jupyter notebook and create a new Python3 Notebook
+1. launch jupyter notebook and create a new Python3 Notebook
 ```bash
 jupyter notebook
 ```
 
-3. In the notebook:
+2. In the notebook:
 ```python
 #import dependencies
 from shadie import Demography
@@ -97,29 +91,21 @@ tree = tree.set_node_values(
 )
 
 #retrieve demography from the tree and save as pandas DF:
-dem = Demography(tree, Ne=10000)
+dem = Demography(tree)
 Demography.get_demog(dem)
 ```
 ~
-
-**To Add**
-1. Read 'Ne' from each tree node and store in `self.demog`
-2. Store all the SLiM lines in a dictionary 
-	a. `(key, value) = (generation, (str))` where (str) = lines of code that need to be printed to the SLiM script
 ---
 
 ### 2. Chromosome
 
-See `chromosome.py` for script
+See `chromosome.py` for script. 
+
+*Refer to notebook #2 in the `notebooks` directory.*
 
 **Working Example:**
 
-1. install `shadie` from the `./shadie` local directory
-```bash
-pip install -e .
-```
-
-2. launch jupyter notebook and create a new Python3 Notebook
+1. launch jupyter notebook and create a new Python3 Notebook
 ```bash
 jupyter notebook
 ```
@@ -153,27 +139,27 @@ random_chromosome.review("interactive")
 	a. Tooltips: hovering over chart displays:
 	* ~~genomic element type (e.g. coding, non-coding, etc...)~~
 	* ~~start and stop bases~~
-	* element length
+	* ~~element length~~
 	* gene #
 	* mutation types 
 
-	b. double-plot zxoom feature
+	~~b. double-plot zoom feature~~
 	* one full chromosome plot with selector rectangle (see the last section of [this chapter of altair docs](https://altair-viz.github.io/user_guide/interactions.html#conditions-making-the-chart-respond))
 	* selector defines coordinate for the plot below, which displays a zoomed in version of the chromosome
 
-	c. choose better colors
+	~~c. choose better colors~~
 
 2. Add more customization to `make_rand()`
 
-	a. # of genes
+	~~a. # of genes~~
 
-	b. average # of exons and introns per chromosome (adjusts chance generator adds another non-coding regiono)
+	b. average # of exons and introns per chromosome (adjusts chance generator adds another non-coding region)
 
 	c. average length of exons and introns (adjusts distributions that exon and intron lengths are drawn from)
 
 	d. average length of non-coding regions (adjusts distirbution that non-coding regions are drawn from)
 
-	e. Need to validate default values and provide average numbers (with citation) for users to reference
+	~~e. Need to validate default values and provide average numbers (with citation) for users to reference~~
 
 3. Load chromosome structure from user dictionary 
 
@@ -189,14 +175,43 @@ random_chromosome.review("interactive")
 	- genomic elements (chromosome structure)
 
 ---
-### 3. Generate the .slim Script
+### 3. Reproduction 
 
-See `shadie.py` for script
+*Not yet written*
+
+See `reproduction.py` for script
+
+This submodule will pre-define script parameters for different life-cycles. 
+
+For now, reproduction is an optional argument in the `Shadie()` class object that will add alternation of generations to the simulation:
+
+~
+
+**Working Example**
+
+```python
+#imports
+from shadie import Shadie
+
+#init a Shadie class object with reproduction settings
+altgen_sim = Shadie(reproduction = True, model = "nonWF")
+
+altgen_sim.write()
+altgen_sim.run()
+
+#see the next section for more details on write/run
+
+```
+
+---
+### 4. Generate the .slim Script
+
+See `main.py` for script
 
 This submodule needs to create a `.slim`  script with correct syntax that will run in SLiM3. Refer to the `README` file in the `/shadie/examples_scripts/` subdirectory for an  example of `.slim script` structure. 
 
 **Steps**
-1. Read in Chromosome object
+~~1. Read in Chromosome object~~
 	
 	a. mutation rate
 
@@ -208,19 +223,86 @@ This submodule needs to create a `.slim`  script with correct syntax that will r
 
 2. Read in demography dictionary
 
+	This part of the script works, but is not compatible with the `nonWF` model required by complex `reproduction` required to model plant  lifecycles. We are working on a different workflow, tentatively outlines below:
+
+	a. `shadie` uses the demography df to set up parallel simulations, one for each edge of the tree. 
+
+	b. Ideally, these simulations will be able to run in  parallel 
+
+	c. *Note* this will be a separate program
+
 3. User will choose `organism` type, which determines reproduction
 
-4. `Shadie()` uses information from `Chromosome` to write initialize callbacks to a .slim file
+4. ~~`Shadie()` uses information from `Chromosome` to write initialize callbacks to a .slim file~~
 
 5. `Shadie()` uses `Demography` dictionary, pre-defined `reproduction` dictionaries, and `early/late` callback dictionaries to construct the rest of the .slim script
 
-	a. possible future functionality to add: let users adjust reproduction settings
+	a. possible future functionality to add: let users adjust reproduction settings rather than just choosing from defaults
 
-6. Shadie() passes the script to SliM3 and runs the simulation
+6. ~~Shadie() passes the script to SliM3 and runs the simulation~~
 
-7. Shadie() reads the output back in, allowing the user to look at output with `Postsim` module
+7. ~~Shadie() reads the output back in, allowing the user to look at output with `Postsim` module~~
+
+~
+
+**Working Example:**
+*Refer to notebook #4 in the `notebooks` directory.*
+
+```python
+from shadie import Chromosome
+
+sim1 = Shadie() #this initializes a simulation with all the shadie defaults
+
+#write a shadie.slim file to the working dir
+sim1.write()
+
+#run the shadie.slim file
+sim1.run
+```
 
 ---
-### 4. Summary Statistics (Postsim module)
 
-*Not yet written*
+### 5. Summary Statistics (`Postsim` module)
+
+This module will read the output of SLiM (reads in tree sequence) and overlays neutral mutations uing `pyslim`. 
+It then allows the user to analyze their simulation results. 
+
+**To Add:**
+
+1. View phylogeny with tip `idx` that allows users to refer to different lineages
+
+2. `sample()` function: will sample individuals from the tips (last generation of the simulation)
+
+	a. random sample
+
+	b. lineage-specific sample
+
+	c. more control over sample (e.g. plot a distribution of individuals based on genetic variation from ancestral state and choose based on degree of variance)
+
+3. dNdS calculation
+
+4. Mk-test (needs phylogeny)
+
+5. Linkage Disequilibrium
+
+6. ~~Plot mutations on chromosome map to show postitions/densities~~
+
+7. Allow users to read in a `.trees` file plus saved info from the simulation
+	* alternatively, we couls have `shadie` "read" the .slim file and save all the info to new objects instead
+
+~
+
+**Working Example:**
+*Refer to notebook #5 in the `notebooks` directory.*
+
+```python
+from shadie import PostSim
+
+sim1_post = PostSim(sim1)
+
+#see a plot of all the mutations that occurred (this plots ALL the mutations)
+sim1_post.summary()
+
+#calculate non-synonymous:synonymous mutation ratio (will become dNdS late)
+sim1_post.dNdS()
+```
