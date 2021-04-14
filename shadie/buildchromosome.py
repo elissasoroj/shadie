@@ -143,19 +143,18 @@ class Build:
         if self.exons == None:
             if self.exoncount != None:
                 maxexon = int(self.gensize/(self.exoncount*1.25))
-                minexon = int(self.gensize)/(self.exoncount*3)
-                ncmin = (self.gensize - maxexon)/(self.exoncount + 1)
-                ncmax = (self.gensize - minexon)/(self.exoncount + 1)
+                minexon = int(self.gensize)/(self.exoncount*3) #200 
+                ncmin = int((self.gensize - (self.exoncount*maxexon))/(self.exoncount + 1))
+                ncmax = int((self.gensize - (self.exoncount*minexon))/(self.exoncount + 1))
 
                 genelements = pd.DataFrame(
                     columns=['type', 'name', 'start', 'finish', 'eltype', 'script'],
                     data=None,)
-
-                base = int(0)
-                exons = 0
                 
                 while True:
-                        
+                    exons = 0
+                    base = int(0)
+
                     #make initial non-coding region
                     nc_length = np.random.randint(ncmin, ncmax)
                     genelements.loc[base, 'type'] = "noncoding"
@@ -202,6 +201,9 @@ class Build:
                     genelements.loc[base, 'finish'] = self.gensize - 1
 
                     if base > (self.gensize-1):
+                        logger.info("trying again")
+                        exons = 0
+                        base = int(0)
                         continue
                     else:
                         break
@@ -222,12 +224,12 @@ class Build:
                 columns=['type', 'name', 'start', 'finish', 'eltype', 'script'],
                 data=None,
                 )
-                base = int(0)
                 finalnc_length = np.random.randint(3000, 5000)
                 end = self.gensize - finalnc_length
                 logger.debug("Made objects: base = {base}, genelements = {}, end = {end}")
 
                 while True:
+                    base = int(0)
                     while base < end:
                         #make initial non-coding region
                         nc_length = np.random.randint(100, 5000)
@@ -278,6 +280,8 @@ class Build:
                     self.elementlist = ElementList(self.mutationlist, EXON, INTRON, NONCOD)
 
                     if base > (self.gensize-1):
+                        logger.info("trying again")
+                        base = int(0)
                         continue
                     else:
                         break
@@ -307,12 +311,12 @@ class Build:
                 columns=['name', 'start', 'finish', 'eltype', 'script'],
                 data=None,
                 )
-                base = int(0)
-                finalnc_length = np.random.randint(3000, 5000)
+                finalnc_length = np.random.randint(self.gensize/300, self.gensize/200)
                 end = self.gensize - finalnc_length
                 logger.debug("Made objects: base = {base}, genelements = {}, end = {end}")
 
                 while True:
+                    base = int(0)
                     while base < end:
                         #make initial non-coding region
                         nc_length = np.random.randint(100, 5000)
@@ -372,6 +376,8 @@ class Build:
                     genelements.loc[base, 'finish'] = self.gensize - 1
                     
                     if base > (self.gensize-1):
+                        logger.info("trying again")
+                        base = int(0)
                         continue
                     else:
                         break

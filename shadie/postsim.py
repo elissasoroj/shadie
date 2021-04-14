@@ -29,7 +29,8 @@ class PostSim:
     """
     def __init__(
         self,
-        shadie,
+        shadie = None,
+        file = None,
         ):
     
         """
@@ -42,15 +43,17 @@ class PostSim:
         """
         if isinstance(shadie, Shadie):
             self.shadie = shadie
+            self.tsraw = pyslim.load(self.shadie.outname)
+            self.genemap = shadie.genemap
+            self.genome = shadie.genome
 
-        self.tsraw = pyslim.load(self.shadie.outname)
+        elif shadie is None:
+            self.tsraw = pyslim.load(file)
 
         tsout = Coal(self.tsraw)
         tsout.slimcoal()
 
         self.tscoal = tsout.tscoal
-        self.genemap = shadie.genemap
-        self.genome = shadie.genome
 
         #positions
         positions = []
@@ -190,7 +193,7 @@ class PostSim:
                         nc_neut.append(mut.id)
         
         dnds = len(c_non)/len(c_syn)
-        print(f"dN/dS for the whole genome = {dnds}")
+        print(f"N:S for the coding regions in whole genome = {dnds}")
 
 
     def mktest(self):

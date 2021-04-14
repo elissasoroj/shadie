@@ -85,7 +85,7 @@ class MutationType:
  
 
     def __repr__(self):
-        return (f"<MutationType: {self.name}, {self.dom},"
+        return (f"<MutationType: {self.name}, {self.dom}, "
             f"{self.dist}, {self.distparams}>")
 
     def inspect(self):

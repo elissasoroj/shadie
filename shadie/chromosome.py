@@ -146,7 +146,7 @@ class Chromosome:
                     ]
         ).properties(
             width = 850
-        )
+        ).add_selection(brush)
 
         zoom = alt.vconcat(
             ichrom.encode(
@@ -246,7 +246,7 @@ class Chromosome:
             more that one genomic element type
             """
             # make the canvas and axes with toyplot
-            canvas = toyplot.Canvas(width=3000, height=200)
+            canvas = toyplot.Canvas(width=2400, height=200)
             axes = canvas.cartesian()
             axes.show = True
 

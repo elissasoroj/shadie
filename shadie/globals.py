@@ -8,7 +8,7 @@ from shadie.elements import ElementType
 NEUT = MutationType(0.5, "f", 0.0)		#neutral mutation
 SYN = MutationType(0.5, "f", 0.0)         #synonymous (REMOVED for now)
 DEL = MutationType(0.1, "g", -0.03, 0.2)  #deleterious
-BEN = MutationType(0.8, "e", 0.1)          	#beneficial
+BEN = MutationType(0.8, "e", 0.04)          	#beneficial
 
 EXON = ElementType([DEL, BEN], (8,0.1))  #exon
 INTRON = ElementType([DEL], (1))         #intron

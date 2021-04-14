@@ -20,7 +20,7 @@ class ElementType:
         self,
         mutationtypes,
         frequency,
-        mutationrate = 1e-6,
+        mutationrate = 1e-9,
         mutationmatrix = "mmJukesCantor",
         altname = None
         ):

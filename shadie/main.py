@@ -21,13 +21,13 @@ class Shadie(object):
     """
     def __init__(
         self,
-        tree=None,          # reads in 
-        chromosome = None,  # reads in chromosome object from Chromosome class
-        Ne = 1000,          # K
-        nsamples=2,         # number of sampled haplotypes per tip in final data 
+        tree=None,              # reads in 
+        chromosome = None,      # reads in chromosome object from Chromosome class
+        Ne = 20000,             # K = carrying capacity
+        nsamples=2,             # number of sampled haplotypes per tip in final data 
         reproduction = None,    # defines how gametes get selected and replicate
-        recomb = 1e-9,        # sets rate in `initializeRecombinationRate`, also accepts map
-        generations = 3000,  #required if no tree object is supplied
+        recomb = 1e-9,          # sets rate in `initializeRecombinationRate`, also accepts map
+        generations = 10000,     #required if no tree object is supplied
         model = "WF"
         ):
         """
@@ -51,7 +51,7 @@ class Shadie(object):
             The per-site per-generation recombination rate.
 
         """
-        self.model = model         # nonWF is probably needed for repoduction 
+        self.model = model         # nonWF is needed for repoduction 
         self.recomb = recomb
         self.Ne = Ne
         self.chromosome = chromosome
@@ -106,7 +106,6 @@ class Shadie(object):
 
         self.genemap = genemap
 
-        logger.info(f"testing part of code: {self.rpdndict[self.demog.loc[0]['src']]}")
 
     def write(self, filename="shadie.slim"):
         "writes the .slim script; optional to provide filename as 'filename.slim'"
@@ -121,7 +120,7 @@ class Shadie(object):
         init1 = (
             "initialize() {\ninitializeSLiMModelType('"+self.model+"');\n"
             "initializeSLiMOptions(nucleotideBased=T);\n"
-            "initializeHotspotMap(1.0);"
+            "initializeHotspotMap(1.0);\n"
             "initializeSex('A');\n"
             "initializeTreeSeq();\n"
             f"initializeAncestralNucleotides(randomNucleotides({int(self.gensize)}));\n")
@@ -142,7 +141,7 @@ class Shadie(object):
 
         #######
 
-        #write the firstline:
+        #write the first line:
         if self.reproduction !=None:   
             rpdn0 = (f"sim.addSubpop('{self.rpdndict[self.demog.loc[0]['src']]}', 0);\n")
         else:
@@ -168,6 +167,12 @@ class Shadie(object):
                         f"s_1 = {self.rpdndict[self.demog.loc[0]['src']]}."
                         "addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL, 'M');\n"
                         f"s_2 = {self.rpdndict[self.demog.loc[0]['src']]}."
+                        "addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL, 'M');\n"
+                        "\n"
+                        "breaks = sim.chromosome.drawBreakpoints(individual);\n"
+                        f"s_3 = {self.rpdndict[self.demog.loc[0]['src']]}."
+                        "addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL, 'M');\n"
+                        f"s_4 = {self.rpdndict[self.demog.loc[0]['src']]}."
                         "addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL, 'M');\n"
                     "}\n"
                     "else if (individual.sex == 'F')\n"
