@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 """
-`shadie` is a wrapper around SLiM3 that implements selection on alternating hapliod/diploid lifecycles
-and converts user-provided phylogeny into SLiM3-compatible subpopulation demography
+`shadie` is a wrapper around SLiM3 that implements selection on 
+alternating hapliod/diploid lifecycles and converts user-provided 
+phylogeny into SLiM3-compatible subpopulation demography
 """
 
 __version__ = "0.0.6"
@@ -19,5 +20,5 @@ from shadie.demography import Demography
 from shadie.main import Shadie
 from shadie.postsim import PostSim
 
-from .utils import set_loglevel
+from shadie.utils import set_loglevel
 set_loglevel("INFO")

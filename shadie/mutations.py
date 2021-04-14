@@ -11,12 +11,9 @@ import altair as alt
 from loguru import logger
 import IPython
 
-
 class MutationType:
+    "Makes mutations for the simulation"
     idx = 0
-    """
-    Makes mutations for the simulation
-    """
 
     def __init__(
         self,
@@ -59,7 +56,7 @@ class MutationType:
 
         else:
             raise ValueError("please input valid distribution type")
-            logger.info(f"Distribution type options: \n"
+            logger.info("Distribution type options: \n"
                 "'f' = fixed fitness effect\n"
                 "'g' = gamma distribution\n"
                 "'e' = exponential distribution\n"
@@ -89,6 +86,7 @@ class MutationType:
             f"{self.dist}, {self.distparams}>")
 
     def inspect(self):
+        "View mutation fitness effect distributions"
         print(
             '\033[1m' + "Mutation Type" + '\033[0m' + "\n"
             f"idx: {self.name}\n"
@@ -151,6 +149,7 @@ class MutationType:
                 f"standard deviation: {stddev}\n\n\n")
 
 class MutationList:
+    "Creates a list of mutations and the mutationdict object for Shadie"
 
     def __init__(self, *mutationtypes):
 

@@ -14,14 +14,6 @@ import altair as alt
 
 #internal imports
 from shadie.buildchromosome import Build
-from shadie.mutations import MutationList
-from shadie.elements import ElementList
-
-#internal defaults
-from shadie.globals import BEN
-from shadie.globals import SYN
-from shadie.globals import DEL
-from shadie.globals import EXON
 
 #optional imports
 try:
@@ -43,7 +35,7 @@ class Chromosome:
 
     def __init__(
         self,
-        genome_size=2e3,        #will be used to calculate chromosome end (length -1)
+        genome_size=2e5,        #will be used to calculate chromosome end (length -1)
         genome = None           #optional BuildChromosome object
         ):
         """
@@ -75,7 +67,7 @@ class Chromosome:
             
 
         elif self.genome is None:
-            onegene = Build(genecount = 1, genome_size=2e3)
+            onegene = Build(genecount = 1, genome_size = genome_size)
             onegene.genes()
             self.mutationlist = onegene.mutationlist
             self.elementlist = onegene.elementlist
@@ -84,7 +76,7 @@ class Chromosome:
         
 
     def altair(self):
-        #Make the `rectangles` dataframe for plotting
+        "Makes interactive altair plot"
         eltype = []
         altname = []
         startbase = []
@@ -160,7 +152,7 @@ class Chromosome:
         self.zoom = zoom        #for interactive plot
 
     def toyplot(self):
-        #Make the `rectangles` dataframe for plotting
+        "Makes static toyplot"
         eltype = []
         startbase = []
         endbase = []

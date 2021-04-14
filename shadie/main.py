@@ -16,9 +16,8 @@ from shadie.chromosome import Chromosome
 from shadie.demography import Demography
 
 class Shadie(object):
-    """
-    A program.script object for writing the script for simulation in SLiM3
-    """
+    "Producces a shadie.slim script for running a simulation in SLiM3"
+
     def __init__(
         self,
         tree=None,              # reads in 
@@ -59,7 +58,7 @@ class Shadie(object):
         self.reproduction = reproduction
         self.gens = generations
         
-        if self.tree != None:
+        if self.tree is not None:
             initdemog = Demography(self.tree)
             initdemog.get_demog()
             self.demog = initdemog.demog.sort_values("gen")
@@ -142,7 +141,7 @@ class Shadie(object):
         #######
 
         #write the first line:
-        if self.reproduction !=None:   
+        if self.reproduction is not None:   
             rpdn0 = (f"sim.addSubpop('{self.rpdndict[self.demog.loc[0]['src']]}', 0);\n")
         else:
             rpdn0 =  ""
@@ -154,7 +153,7 @@ class Shadie(object):
             "}\n"
             )
         #write the reproduction callbacks
-        if self.reproduction !=None:
+        if self.reproduction is not None:
             rep1 = (
                 "\nreproduction() {\n"
                 "g_1 = genome1;\n"
@@ -216,7 +215,7 @@ class Shadie(object):
             rep1 = ""
 
         #write the demography
-        if self.tree != None:
+        if self.tree is not None:
             gens = ""
             for index, row in self.demog.iterrows():
                 gens += (
@@ -245,6 +244,7 @@ class Shadie(object):
         subprocess.check_output(["slim", "-m", "-s", "0", self.filename])
         
     def postsim(self):
+        "post-SLiMulation analysis"
         self.ts = pyslim.load(self.outname)
 
         M = [[0 for _ in pyslim.NUCLEOTIDES] for _ in pyslim.NUCLEOTIDES]
@@ -257,7 +257,7 @@ class Shadie(object):
                 parent_nuc = pyslim.NUCLEOTIDES.index(acgt)
             else:
                 parent_mut = self.ts.mutation(mut.parent)
-                assert(parent_mut.site == mut.site)
+                assert parent_mut.site == mut.site
                 parent_nuc = parent_mut.metadata["mutation_list"][0]["nucleotide"]
             M[parent_nuc][derived_nuc] += 1
         
@@ -303,8 +303,7 @@ class Shadie(object):
 
 if __name__ == "__main__":
     import toytree
-    import numpy as np
-
+    
     #Make the tree
     tree = toytree.rtree.unittree(ntips=10, treeheight=1e4, seed=123)
     randtree = tree.set_node_values(

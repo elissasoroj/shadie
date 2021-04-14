@@ -11,10 +11,8 @@ from shadie.mutations import MutationList
 
 
 class ElementType:
+    "Makes element types for the simulation"
     idx = 0
-    """
-    Makes mutations for the simulation
-    """
 
     def __init__(
         self,
@@ -50,18 +48,18 @@ class ElementType:
         mutations = []
 
         #check frequency formatting
-        if type(self.freq) is list:
+        if isinstance(self.freq, list):
             pass
-        elif type(self.freq) is tuple:
+        elif isinstance(self.freq, tuple):
             self.freq = list(self.freq)
         else:
             self.freq = [self.freq]
             logger.debug(f"frequencies: {self.freq}")
 
         #check mutation type formatting
-        if type(self.muttypes) is list:
+        if isinstance(self.muttypes, list):
             pass
-        elif type(self.muttypes) is tuple:
+        elif isinstance(self.muttypes, tuple):
             self.muttypes = list(self.muttypes)
         else:
             self.muttypes = [self.muttypes]
@@ -88,10 +86,12 @@ class ElementType:
 
     def __repr__(self):
 
-        return f"<ElementType: '{self.altname}', {self.name}, {self.mutations}, {self.freq}, {self.mutmatrix}"
+        return (f"<ElementType: '{self.altname}', {self.name}, " 
+            f"{self.mutations}, {self.freq}, {self.mutmatrix}")
 
 
 class ElementList:
+    "makes elementlist and elementdict objects for Shadie"
     
     def __init__(self, mutationlist, *elementtypes):
 
@@ -134,9 +134,10 @@ class ElementList:
         elnames = []
         for element in self.elementlist:
             elnames.append(element.name)
-        return (f"<ElementList: {elnames}>")
+        return f"<ElementList: {elnames}>"
 
     def inspect(self):
+        "plots mutation types fitness effect distributions"
         print(
             '\033[1m' + "Genomic Element List" + '\033[0m' + "\n"
             f"Element types: {self.elementlist}\n"
@@ -157,7 +158,6 @@ class ElementList:
 if __name__ == "__main__":
 
     # generate random chromosome
-    from mutations import MutationList
     mut1 = MutationType(0.5, "f", .01)
     mut2 = MutationType(0.5, "n", .05, .02)
     list1 = MutationList(mut1, mut2)

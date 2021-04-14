@@ -24,9 +24,8 @@ from shadie.slimcoal import Coal
 
 
 class PostSim:
-    """
-    Post-simulation summary statistics
-    """
+    "Post-simulation analysis and summary statistics"
+
     def __init__(
         self,
         shadie = None,
@@ -63,7 +62,7 @@ class PostSim:
 
     
     def summary(self):
-        "view selection coefficient distributions and mutation type counts"
+        "View selection coefficient distributions and mutation type counts"
         #calculate number of neutral mutations
         neutral = 0
         for mut in self.tscoal.mutations():
@@ -266,3 +265,4 @@ class PostSim:
 
 if __name__ == "__main__":
     pass
+    

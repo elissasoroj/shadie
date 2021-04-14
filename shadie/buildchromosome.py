@@ -140,8 +140,8 @@ class Build:
     def genes(self):
         "generates a chromosome with specified number of exons"
 
-        if self.exons == None:
-            if self.exoncount != None:
+        if self.exons is None:
+            if self.exoncount is not None:
                 maxexon = int(self.gensize/(self.exoncount*1.25))
                 minexon = int(self.gensize)/(self.exoncount*3) #200 
                 ncmin = int((self.gensize - (self.exoncount*maxexon))/(self.exoncount + 1))
@@ -219,7 +219,7 @@ class Build:
         "generates a random chromosome"
 
         if self.type == "random":
-            if self.exons == None:
+            if self.exons is None:
                 genelements = pd.DataFrame(
                 columns=['type', 'name', 'start', 'finish', 'eltype', 'script'],
                 data=None,
@@ -286,7 +286,7 @@ class Build:
                     else:
                         break
        
-            elif self.exons != None: 
+            elif self.exons is not None: 
                 #check the types
                 for i in self.exons:
                     if isinstance(i, ElementType):
@@ -394,10 +394,7 @@ class Build:
 if __name__ == "__main__":
 
     #test custom builder:
-    from shadie.elements import ElementList
-    from shadie.elements import ElementType
     from shadie.mutations import MutationType
-    from shadie.mutations import MutationList
 
     mut1 = MutationType(0.5, "f", .03)
     mut2 = MutationType(0.5, "e", 0.4)
