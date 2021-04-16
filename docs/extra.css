@@ -2,40 +2,48 @@
 /*
 Custom CSS added by Elissa
 */
+
+/* Hide "On GitHub" section from versions menu */
+div.rst-versions > div.rst-other-versions > div.injected > dl:nth-child(4) {
+    display: none;
+}
+
+
+/*Colors*/
 h1 {
   color: #611631 ;
 }
 
 h2{
-	color: #323e63;
+  color: #323e63;
 }
 
 h3{
-	color: #2a5245;
+  color: #2a5245;
 }
 
 .wy-nav-top {
-	background: #432c4a;
+  background: #432c4a;
 }
 
 .wy-side-nav-search {
-	background: #432c4a;
+  background: #432c4a;
 }
 
 .wy-side-nav-search input[type=text] {
-	border-color: #8a0442;
+  border-color: #8a0442;
 }
 
 a {
-	color: #52bf76;
+  color: #52bf76;
 }
 
 a:visited {
-	color: #ba74d6;
+  color: #ba74d6;
 }
 
 a:hover{
-	color: #248bc7;
+  color: #248bc7;
 }
 
 .rst-content code {
