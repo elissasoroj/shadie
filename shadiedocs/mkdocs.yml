@@ -1,0 +1,10 @@
+site_name: shadie Docs
+nav:
+    - Overview: overview.md
+    - Installation: install.md
+    - Tutorial: tutorial.md
+theme: readthedocs
+extra_css: [extra.css]
+repo_url: https://github.com/elissasoroj/shadie
+site_author: Elissa Sorojsrisom
+
