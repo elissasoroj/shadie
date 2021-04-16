@@ -7,4 +7,5 @@ theme: readthedocs
 extra_css: [extra.css]
 repo_url: https://github.com/elissasoroj/shadie
 site_author: Elissa Sorojsrisom
+docs_dir: docs
 
