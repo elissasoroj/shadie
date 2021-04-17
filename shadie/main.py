@@ -16,18 +16,19 @@ from shadie.chromosome import Chromosome
 from shadie.demography import Demography
 
 class Shadie(object):
-    "Producces a shadie.slim script for running a simulation in SLiM3"
+    "Produces a shadie.slim script for running a simulation in SLiM3"
 
     def __init__(
         self,
         tree=None,              # reads in 
         chromosome = None,      # reads in chromosome object from Chromosome class
-        Ne = 20000,             # K = carrying capacity
+        Ne = 2000,             # K = carrying capacity
         nsamples=2,             # number of sampled haplotypes per tip in final data 
         reproduction = None,    # defines how gametes get selected and replicate
         recomb = 1e-9,          # sets rate in `initializeRecombinationRate`, also accepts map
         generations = 10000,     #required if no tree object is supplied
-        model = "WF"
+        model = "WF",
+        mutation_rate = 1e-9
         ):
         """
         Builds script to run SLiM3 simulation
@@ -57,6 +58,7 @@ class Shadie(object):
         self.tree = tree
         self.reproduction = reproduction
         self.gens = generations
+        self.mutrate = mutation_rate
         
         if self.tree is not None:
             initdemog = Demography(self.tree)
@@ -69,9 +71,9 @@ class Shadie(object):
             self.demog = pd.DataFrame(defdemog)
             self.rpdndict = {'p1': 'p0'}
             self.treeheight = self.gens
-            logger.warning("if no tree is provided, 'generations'"
+            logger.warning("if no tree is provided, 'generations' "
                 "argument must be provided (defines length of simulation in "
-                "generations. Default value = 10000")
+                f"generations. Current value = {self.gens}")
 
 
         if isinstance(self.chromosome, Chromosome): 
@@ -118,14 +120,13 @@ class Shadie(object):
         script = open(self.filename, "w") #overwrites old file
         init1 = (
             "initialize() {\ninitializeSLiMModelType('"+self.model+"');\n"
-            "initializeSLiMOptions(nucleotideBased=T);\n"
-            "initializeHotspotMap(1.0);\n"
             "initializeSex('A');\n"
             "initializeTreeSeq();\n"
+            f"initializeMutationRate({self.mutrate});\n"
             f"initializeAncestralNucleotides(randomNucleotides({int(self.gensize)}));\n")
         init2 = ""
         for key in self.mutationlist.mutationdict:
-            init2 += f"initializeMutationTypeNuc({self.mutationlist.mutationdict[key]});\n"
+            init2 += f"initializeMutationType({self.mutationlist.mutationdict[key]});\n"
             f"{key}.convertToSubstitution = T;\n"
         
         init3 = ""
@@ -267,7 +268,16 @@ class Shadie(object):
             for k, b in enumerate(pyslim.NUCLEOTIDES):
                 counts += M[j][k]
                 print("{}\t{}\t{}".format(a, b, M[j][k]))
-        print(f"\nNumber of mutations: {counts}")
+
+        print(
+            f"\nNumber of mutations: {counts}\n"
+            " ---------------------\n"
+            "Simulation settings\n\n"
+            f"Carrying Capacity: {self.Ne}\n"
+            f"Generations: {self.gens}\n"
+            f"Tree: {self.tree}\n"
+            f"Reproduction: {self.reproduction}\n"
+            )
 
 
     def reproduction(self):
@@ -303,7 +313,7 @@ class Shadie(object):
 
 if __name__ == "__main__":
     import toytree
-    
+
     #Make the tree
     tree = toytree.rtree.unittree(ntips=10, treeheight=1e4, seed=123)
     randtree = tree.set_node_values(

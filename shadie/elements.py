@@ -19,7 +19,6 @@ class ElementType:
         mutationtypes,
         frequency,
         mutationrate = 1e-9,
-        mutationmatrix = "mmJukesCantor",
         altname = None
         ):
     
@@ -29,7 +28,6 @@ class ElementType:
 
         self.muttypes = mutationtypes
         self.freq = frequency
-        self.mutmatrix = f"{mutationmatrix}({mutationrate}/3)"
         self.mutrate = mutationrate
 
         """
@@ -87,7 +85,7 @@ class ElementType:
     def __repr__(self):
 
         return (f"<ElementType: '{self.altname}', {self.name}, " 
-            f"{self.mutations}, {self.freq}, {self.mutmatrix}")
+            f"{self.mutations}, {self.freq}")
 
 
 class ElementList:
@@ -123,7 +121,7 @@ class ElementList:
             freqscript = [str(b) for b in i.freq]
             script = (
                 f"'{i.name}', c({', '.join(mutscript)})," 
-                f"c({', '.join(freqscript)}), {i.mutmatrix}"
+                f"c({', '.join(freqscript)})"
                 )
             elementdict[i.name] = script
         self.elementdict = elementdict  #dictionary of script lines

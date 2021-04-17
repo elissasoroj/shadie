@@ -15,8 +15,7 @@ BEN = MutationType(0.8, "e", 0.04)          #beneficial
 
 EXON = ElementType([DEL, BEN], (8,0.1))             #exon
 INTRON = ElementType([DEL], (1))                    #intron
-NONCOD = ElementType(NEUT, 1, mutationrate = 0)     #non-coding
+NONCOD = ElementType(NEUT, 1)     #non-coding
 
 if __name__ == "__main__":
     pass
-
