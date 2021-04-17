@@ -6,7 +6,11 @@
 
 `shadie` also provides a user-friendly Python API framework for using SLiM3. This is meant to make SLiM a little more approachable for users with prior Python knowledge, however it does not incorporate all the functionality of SLiM and it is hightly encouraged for users to familiarize themselves with the SLiMgui and the SliM Manual. 
 
-Finally, `shadie` was first developed with the intention of modelling realistic plant lifecycles in SLiM.  
+Finally, `shadie` was first developed with the intention of modelling realistic plant lifecycles in SLiM.
+
+## Use
+
+`shadie` works best in [Jupyter Notebooks](https://jupyter.org/). There are plans to develop a command line tool, however `shadie` relies heavily on visualizations to aid users in designing their SLiM model and analyzing the output of their simulations. For this reason a Python API is recommended, especially for new users. 
 
 ### SLiM
 
@@ -15,3 +19,17 @@ Finally, `shadie` was first developed with the intention of modelling realistic 
 ### pyslim
 
 [`pyslim`](https://pyslim.readthedocs.io/en/latest/index.html) is a package that modifies `tskit` tree sequence files outpu by SLiM. `shadie` utilizes `pyslim` to overlay neutral muations with `msprime`. This method uses coalescent and is therefore *much* faster than SLiM. 
+
+### Dependencies
+
+**General**
+
+* subprocess
+* numpy
+* pandas
+
+**Plotting:**
+
+* toyplot: for static plots
+* altair: for interactive plots
+* IPython: for displaying plots in Jupyter Notebooks
