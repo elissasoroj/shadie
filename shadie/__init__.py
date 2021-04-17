@@ -7,6 +7,6 @@ and converts user-provided phylogeny into SLiM3-compatible subpopulation demogra
 
 __version__ = "0.0.4"
 
-from shadie.shadie import Shadie
+# from shadie.shadie import Shadie
 from shadie.chromosome import Chromosome
 from shadie.demography import Demography

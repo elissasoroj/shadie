@@ -143,8 +143,8 @@ class Chromosome:
         if self.type == "random":
             if self.exons == None and self.introns == None:
                 genelements = pd.DataFrame(
-                columns=['name', 'start', 'finish', 'eltype'],
-                data=None,
+                    columns=['name', 'start', 'finish', 'eltype'],
+                    data=None,
                 )
                 base = int(0)
                 finalnc_length = np.random.randint(100, 5000)
