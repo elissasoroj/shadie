@@ -94,7 +94,7 @@ tree = tree.set_node_values(
 dem = Demography(tree)
 Demography.get_demog(dem)
 ```
-~
+
 ---
 
 ### 2. Chromosome
@@ -105,12 +105,8 @@ See `chromosome.py` for script.
 
 **Working Example:**
 
-1. launch jupyter notebook and create a new Python3 Notebook
-```bash
-jupyter notebook
-```
+In a Jupyter Notebook:
 
-3. In the notebook:
 ```python
 from shadie import Chromosome
 
@@ -131,9 +127,11 @@ random_chromosome.review("chromosome")
 #interactive `altair` plot:
 random_chromosome.review("interactive")
 ```
+
 ~
 
 **To Add**
+
 1. Interactive `altair` chart
 	
 	a. Tooltips: hovering over chart displays:
@@ -310,6 +308,6 @@ sim1_post = PostSim(sim1)
 #see a plot of all the mutations that occurred (this plots ALL the mutations)
 sim1_post.summary()
 
-#calculate non-synonymous:synonymous mutation ratio (will become dNdS late)
+#calculate non-synonymous:synonymous mutation ratio (will become dNdS later)
 sim1_post.dNdS()
 ```
