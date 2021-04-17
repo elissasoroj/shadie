@@ -20,7 +20,7 @@ class Demography:
     tree: (str, Toytree)
         Ultrametric ToyTree tree object with units in generations.
     """
-    def __init__(self, tree, Ne=1000):
+    def __init__(self, tree, Ne=None):
        
         # store input params
         self.tree = toytree.tree(tree)
@@ -56,14 +56,32 @@ class Demography:
 
         # traverse tree from root to tips
         for idx, node in enumerate(self.tree.treenode.traverse('preorder')):
-            if node.children:
+            if len(node.children) == 2: #patrick told me this avoids silly errors
                 gen = int((theight - node.height) + 1)
                 demogdf.loc[idx, 'gen'] = gen
                 demogdf.loc[idx, 'src'] = f'p{node.idx}'
                 demogdf.loc[idx, 'child0'] = f'p{node.children[0].idx}'
                 demogdf.loc[idx, 'child1'] = f'p{node.children[1].idx}'
+                demogdf.loc[idx, 'Ne'] = node.Ne
+        
+        #define reproduction popoulation prefix based on largest pop value        
+        maxp = self.tree.nnodes
+        n = [1]
+        for i in str(maxp):
+            n.append(0)
+        prefix = (''.join([str(a) for a in n]))
+        
+        #define reproduction populations
+        rpdndict = {}
+        for i in range(0, maxp):
+            rpdndict["p"+str(i)] = "p" + prefix + str(i)
+        self.rpdndict = rpdndict
+        logger.debug(self.rpdndict)
+
         self.demog = demogdf
         logger.debug(self.demog)
+
+        #return self.demog
 
 
 #This is the .slim script structure that needs to be written by the submodule:
@@ -97,13 +115,14 @@ if __name__ == "__main__":
     tree = toytree.rtree.unittree(ntips=10, treeheight=1e6, seed=123)
 
     # set Ne values on the nodes of hte tree
-    tree = tree.set_node_values(
+    tree2 = tree.set_node_values(
         feature="Ne", 
         values={i: np.random.randint(10000, 100000) for i in tree.idx_dict},
     )
 
    # TODO: dem loads a tree and parses Ne from nodes
-    dem = Demography(tree)
+    dem2 = Demography(tree2).get_demog()
+
 
     # supported already
     dem = Demography(tree, Ne=10000)
