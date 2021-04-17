@@ -7,7 +7,7 @@ Produces reproduction scripts
 #package imports
 
 class Lifecycle:
-"creates reproduction callbacks for SLiM script"
+    "creates reproduction callbacks for SLiM script"
 
 	def __init__(self):
 
@@ -16,11 +16,11 @@ class Lifecycle:
 		"standard WF model, implemented in base SLiM (diploid hermaphrodite)"
 		rpdn = (
 			"reproduction() {\n"
-			f"K = sim.getValue('{K}'');\n"
+			f"K = sim.getValue('{self.Ne}'');\n"
 			"for (i in seqLen(K))\n{"
-			f"firstParent = {p1}.sampleIndividuals(1);\n"
-			f"secondParent = {p1}.sampleIndividuals(1);\n"
-			f"{p1}.addCrossed(firstParent, secondParent);\n"
+			f"firstParent = {self.rpdndict[self.demog.loc[0]['src']]}.sampleIndividuals(1);\n"
+			f"secondParent = {self.rpdndict[self.demog.loc[0]['src']]}.sampleIndividuals(1);\n"
+			f"{self.rpdndict[self.demog.loc[0]['src']]}.addCrossed(firstParent, secondParent);\n"
 			"}\nself.active = 0;"
 			"}")
 
@@ -87,12 +87,43 @@ class Lifecycle:
             "}\n"
             )
 
+        fit1 = "" 
+        for key in self.mutationlist.mutationdict:
+            fitness1 =+ (
+                f"fitness({key})" + "{\n"
+                "if (sim.generation % 2 == 0)\n" #creation of haploids occurs in even gens
+                    "return 1.0 + mut.selectionCoeff;\n"
+                "else\n" #odd generations = creation of diploids happens in odd gens
+                    "if (homozygous)\n"
+                        "return 1.0 + mut.selectionCoeff;\n"
+                    "else\n"
+                        "return 1.0 + mut.mutationType.dominanceCoeff * mut.selectionCoeff;\n"
+                "}"
+            )
 
-	def gymnosperm(self):
+
+    def gymnosperm(self):
 		pass
 
 	def angiosperm(self):
 		pass
 
 
+    def clonalhap(self):
+
+        rpdn1 = (
+            "reproduction() {\n"
+            f"{self.rpdndict[self.demog.loc[0]['src']]}.addRecombinant("
+            "genome1, NULL, NULL, NULL, NULL, NULL);\n"
+            "\n"
+
+            "early() {\n"
+            f"{self.rpdndict[self.demog.loc[0]['src']]}.fitnessScaling = \n"
+            f"{self.Ne} / {self.rpdndict[self.demog.loc[0]['src']]}.individualCount;\n"
+            "\n"
+           )
+
+        fit1 = "" 
+        for key in self.mutationlist.mutationdict:
+            fitness1 =+ (f"fitness({key}) " + "{return 1.0 + mut.selectionCoeff;}")
 
