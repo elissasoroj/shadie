@@ -40,4 +40,4 @@ def set_loglevel(loglevel="INFO"):
         "colorize": TTY1 or TTY2,
     }]
     logger.configure(**config)
-    logger.enable("commsim")
+    logger.enable("shadie")
