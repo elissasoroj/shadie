@@ -119,7 +119,7 @@ class PostSim:
 
         #static toyplot
         print("Mutation positions along chromosome:")
-        chrom = Chromosome(self.genome)
+        chrom = Chromosome(genome = self.genome)
         chrom.toyplot()
         self.rectangles = chrom.rectangles
 
@@ -199,70 +199,7 @@ class PostSim:
         "Perform mk-test"
         pass
 
-    def pointmutations(self):
-        "lists point mutations (for nucleotide simulation only)"
-        self.ts = self.tscoal
-        neutral = 0
-        M = [[0 for _ in pyslim.NUCLEOTIDES] for _ in pyslim.NUCLEOTIDES]
-        for mut in self.ts.mutations():
-            mut_list = mut.metadata["mutation_list"]
-            if mut_list == []:
-                neutral += 1
-            else:
-                k = np.argmax([u["slim_time"] for u in mut_list])
-                derived_nuc = mut_list[k]["nucleotide"]
-                if mut.parent == -1:
-                    acgt = self.tsraw.reference_sequence[int(mut.position)]
-                    parent_nuc = pyslim.NUCLEOTIDES.index(acgt)
-                else:
-                    parent_mut = self.ts.mutation(mut.parent)
-                    assert(parent_mut.site == mut.site)
-                    parent_nuc = parent_mut.metadata["mutation_list"][0]["nucleotide"]
-                M[parent_nuc][derived_nuc] += 1
-                
-        print("{}\t{}\t{}".format('ancestr', 'derived', 'count'))
-        for j, a in enumerate(pyslim.NUCLEOTIDES):
-            for k, b in enumerate(pyslim.NUCLEOTIDES):
-                print("{}\t{}\t{}".format(a, b, M[j][k]))
-        print(f"\nneutral mutations overlaid with coalescent: {neutral}")
-
-    def aminoacids (self):
-        "lists amino acid mutations (for nucleotide simulation only)"
-        self.ts = self.tscoal
-
-        slim_gen = self.ts.metadata["SLiM"]["generation"]
-        
-        M = np.zeros((4,4,4,4), dtype='int')
-        for mut in self.ts.mutations():
-            pos = self.ts.site(mut.site).position
-            # skip mutations at the end of the sequence
-            if pos > 0 and pos < self.ts.sequence_length - 1:
-                mut_list = mut.metadata["mutation_list"]   
-                k = np.argmax([u["slim_time"] for u in mut_list])
-                derived_nuc = mut_list[k]["nucleotide"]
-                left_nuc = self.ts.nucleotide_at(mut.node, pos - 1,
-                time = slim_gen - mut_list[k]["slim_time"] - 1.0)
-                right_nuc = self.ts.nucleotide_at(mut.node, pos + 1,
-                time = slim_gen - mut_list[k]["slim_time"] - 1.0)
-                if mut.parent == -1:
-                    acgt = self.ts.reference_sequence[int(mut.position)]
-                parent_nuc = pyslim.NUCLEOTIDES.index(acgt)
-            else:
-                parent_mut = self.ts.mutation(mut.parent)
-                assert(parent_mut.site == mut.site)
-                parent_nuc = parent_mut.metadata["mutation_list"][0]["nucleotide"]
-        
-            M[left_nuc, parent_nuc, right_nuc, derived_nuc] += 1
-        print("{}\t{}\t{}".format('ancestral', 'derived', 'count'))
-        for j0, a0 in enumerate(pyslim.NUCLEOTIDES):
-            for j1, a1 in enumerate(pyslim.NUCLEOTIDES):
-                for j2, a2 in enumerate(pyslim.NUCLEOTIDES):
-                    for k, b in enumerate(pyslim.NUCLEOTIDES):
-                        print("{}{}{}\t{}{}{}\t{}".format(a0, a1, a2, a0, b, a2,
-                        M[j0, j1, j2, k]))
-
 
 
 if __name__ == "__main__":
     pass
-    
