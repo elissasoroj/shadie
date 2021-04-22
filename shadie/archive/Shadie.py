@@ -18,6 +18,7 @@ from shadie.globals import EXON
 from shadie.chromosome import Chromosome
 from shadie.demography import Demography
 
+
 class Shadie(object):
     """
     A program.script object for writing the script for simulation in SLiM3
@@ -77,6 +78,8 @@ class Shadie(object):
 
         else:
             raise ValueError("please input valid Chromosome class object")
+
+
 
     def write(self, filename="shadie.slim"):
         "writes the .slim script; optional to provide filename as 'filename.slim'"
