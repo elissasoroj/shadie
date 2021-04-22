@@ -15,9 +15,28 @@ from loguru import logger
 from shadie.chromosome import Chromosome
 from shadie.demography import Demography
 
-class Shadie(object):
-    "Produces a shadie.slim script for running a simulation in SLiM3"
 
+class Shadie(object):
+    """
+    Builds script to run SLiM3 simulation
+
+    Parameters:
+    -----------
+    tree: (str)
+        Optional. A newick string or Toytree object of a species tree with edges in 
+        SLiM 'generation' units
+
+    Ne (int): default = 1000
+        The effective population size. This value will be set to all edges of the tree.
+
+    organism (str):
+        Options: "pteridophyte", "bryophyte", "angiosperm".
+        Defines the haploid/diploid lifecycle and how selection will act at different
+        life stages. Also defines how individuals replicate and hoow gametes are generated
+
+    recomb (float):
+        The per-site per-generation recombination rate.
+    """
     def __init__(
         self,
         tree=None,              # reads in 
@@ -30,27 +49,6 @@ class Shadie(object):
         model = "WF",
         mutation_rate = 1e-9
         ):
-        """
-        Builds script to run SLiM3 simulation
-
-        Parameters:
-        -----------
-        tree: (str)
-            Optional. A newick string or Toytree object of a species tree with edges in 
-            SLiM 'generation' units
-
-        Ne (int): default = 1000
-            The effective population size. This value will be set to all edges of the tree.
-
-        organism (str):
-            Options: "pteridophyte", "bryophyte", "angiosperm".
-            Defines the haploid/diploid lifecycle and how selection will act at different
-            life stages. Also defines how individuals replicate and hoow gametes are generated
-
-        recomb (float):
-            The per-site per-generation recombination rate.
-
-        """
         self.model = model         # nonWF is needed for repoduction 
         self.Ne = Ne
         self.chromosome = chromosome
@@ -320,4 +318,4 @@ if __name__ == "__main__":
         feature="Ne", 
         values={i: np.random.randint(10000, 100000) for i in tree.idx_dict}
     )
-    tree_sim = Shadie(tree = randtree)
+    tree_sim = Shadie(tree=randtree)
