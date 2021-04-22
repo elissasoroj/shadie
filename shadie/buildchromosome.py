@@ -143,7 +143,7 @@ class Build:
         if self.exons is None:
             if self.exoncount is not None:
                 maxexon = int(self.gensize/(self.exoncount*1.25))
-                minexon = int(self.gensize)/(self.exoncount*3) #200 
+                minexon = int(self.gensize)/(self.exoncount*3) 
                 ncmin = int((self.gensize - (self.exoncount*maxexon))/(self.exoncount + 1))
                 ncmax = int((self.gensize - (self.exoncount*minexon))/(self.exoncount + 1))
 
@@ -374,7 +374,8 @@ class Build:
                     genelements.loc[base, 'script'] = self.elements.elementdict[choose.name]
                     genelements.loc[base, 'start'] = base
                     genelements.loc[base, 'finish'] = self.gensize - 1
-                    
+                    logger.info(f"Base: {base}, End: {self.gensize-1}")
+
                     if base > (self.gensize-1):
                         logger.info("trying again")
                         base = int(0)

@@ -52,13 +52,13 @@ class Shadie(object):
 
         """
         self.model = model         # nonWF is needed for repoduction 
-        self.recomb = recomb
         self.Ne = Ne
         self.chromosome = chromosome
         self.tree = tree
         self.reproduction = reproduction
         self.gens = generations
         self.mutrate = mutation_rate
+        self.recomb = recomb
         
         if self.tree is not None:
             initdemog = Demography(self.tree)
@@ -155,7 +155,7 @@ class Shadie(object):
             )
         #write the reproduction callbacks
         if self.reproduction is not None:
-            rep1 = (
+            rpdn1 = (
                 "\nreproduction() {\n"
                 "g_1 = genome1;\n"
                 "g_2 = genome2;\n"
@@ -213,7 +213,7 @@ class Shadie(object):
                 "}\n"
                 )
         else:
-            rep1 = ""
+            rpdn1 = ""
 
         #write the demography
         if self.tree is not None:
