@@ -22,23 +22,19 @@ BEN = MutationType(0.8, "e", 0.04)          #beneficial
 # beneficial (+E overdominant) mutations.
 EXON = ElementType(
 	[DEL, BEN], 
-	(8, 0.1), 
-	mutation_matrix="mmJukesCantor", 
-	mutation_rate=2.5e-8,
+	(8, 0.1),  
 	altname="exon",
 )
 
 # INTRON has only deleterious (-Gamma) mutations
 INTRON = ElementType(
 	[DEL], 
-	[1], 
-	mutation_matrix="mmJukesCantor", 
-	mutation_rate=2.5e-8,
+	[1],  
 	altname="intron",
 	)
 
 # NONCOD has only neutral (fixed) and no mutations recorded.
-NONCDS = ElementType([NEUT], [1], mutation_rate=0, altname="noncds")
+NONCDS = ElementType([NEUT], [1], altname="noncds")
 
 
 if __name__ == "__main__":

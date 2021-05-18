@@ -38,8 +38,6 @@ class ElementType:
         self,
         mutations: List[MutationTypeBase],
         frequencies: List[float],
-        mutation_rate: float = 1e-9,
-        mutation_matrix: str = "mmJukesCantor",
         altname=None,
         ):
     
@@ -56,8 +54,6 @@ class ElementType:
         )
 
         self.freq = frequencies
-        self.mutmatrix = f"{mutation_matrix}({mutation_rate}/3)"
-        self.mutrate = mutation_rate
 
         #check frequency formatting
         if isinstance(self.freq, float):
@@ -71,7 +67,7 @@ class ElementType:
     def __repr__(self):
         view = [
             self.altname, self.name, self.mlist.names, 
-            self.freq, self.mutmatrix
+            self.freq
         ]
         return f"<ElementType: {', '.join(map(str, view))}>"
 
@@ -92,7 +88,6 @@ class ElementType:
             "c({})".format(",".join(self.mlist.names)),
             str(self.freq[0]) if len(self.freq) == 1 else 
             "c({})".format(",".join(map(str, self.freq))),
-            self.mutmatrix,
         ])
         return f"initializeGenomicElementType({inner});"
 
