@@ -18,7 +18,7 @@ class ChromosomeBase:
     def __init__(self, genome_size):
         self.genome_size = genome_size
         self.data = pd.DataFrame(
-            columns=['name', 'start', 'end', 'eltype', 'script'],
+            columns=['name', 'start', 'end', 'eltype', 'script', 'coding'],
             data=None,
         )
 
@@ -160,6 +160,7 @@ class ChromosomeRandom(ChromosomeBase):
                 self.noncds.altname, 
                 idx, min(idx + pos, self.genome_size), 
                 self.noncds.name, self.noncds,
+                self.noncds.coding,
             )
             idx += pos + 1
             
@@ -177,12 +178,14 @@ class ChromosomeRandom(ChromosomeBase):
                         self.exon.altname, 
                         idx, idx + pos + 1, 
                         self.exon.name, self.exon,
+                        self.exon.coding,
                     )
                 else:
                     self.data.loc[idx] = (
                         self.intron.altname,
                         idx, idx + pos + 1,
-                        self.intron.name, self.intron,
+                        self.intron.name, self.intron, 
+                        self.intron.coding,
                     )
                 idx += pos + 1
         self.data = self.data.sort_index()
@@ -216,7 +219,7 @@ class ChromosomeExplicit(ChromosomeBase):
             start, end = key
             if data[key] is not None:
                 self.data.loc[start] = (
-                    data[key].altname, start, end, data[key].name, data[key])
+                    data[key].altname, start, end, data[key].name, data[key], data[key].coding)
 
 
 if __name__ == "__main__":
@@ -227,10 +230,11 @@ if __name__ == "__main__":
     # define mutation types
     m0 = shadie.mtype(0.5, 'n', 2.0, 1.0)
     m1 = shadie.mtype(0.5, 'g', 3.0, 1.0)
+    m2 = shadie.mtype(0.5, 'f', 0)
     
     # define elements types
     e0 = shadie.etype([m0, m1], [1, 2])
-    e1 = shadie.etype([m1], [1])
+    e1 = shadie.etype([m2], [1])
 
     # design chromosome of elements
     chrom = shadie.chromosome.explicit({
@@ -239,3 +243,8 @@ if __name__ == "__main__":
         (3001, 5000): e1,
     })
     print(chrom.data.iloc[:, :3])
+    elem = chrom.data.loc[500]["eltype"]
+    print(chrom.data)
+    print(m2.coding)
+
+

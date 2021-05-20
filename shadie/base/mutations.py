@@ -60,7 +60,7 @@ class MutationTypeBase:
         self.dist = distribution
         self.distparams = params
         if self.dist == 'f':
-            if self.distparams == 0:
+            if self.distparams == (0,):
                 self.coding = 0
             else: 
                 self.coding = 1
@@ -314,6 +314,7 @@ if __name__ == "__main__":
     import shadie
 
     mlist = shadie.mlist(
+        shadie.mtype(0.5, 'f', 0.0),
         shadie.mtype(0.5, 'f', 0.1),
         shadie.mtype(0.5, 'n', 0.5, 0.25),
         shadie.mtype(0.5, 'g', 2.0, 0.1),
@@ -321,6 +322,9 @@ if __name__ == "__main__":
     )
     for muta in mlist:
         muta.summary()
+    m2 = shadie.mtype(0.5, 'f', 0)
 
     print(mlist)
-    print(mlist[1].to_slim())
+    print(mlist[0].to_slim())
+    print(m2)
+    print(m2.coding)
