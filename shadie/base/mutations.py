@@ -59,6 +59,13 @@ class MutationTypeBase:
         self.dom = dominance
         self.dist = distribution
         self.distparams = params
+        if self.dist == 'f':
+            if self.distparams == 0:
+                self.coding = 0
+            else: 
+                self.coding = 1
+        else:
+            self.coding =  1
 
         # values overwritten by inherited classes
         self._dist = stats.norm

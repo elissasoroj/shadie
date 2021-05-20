@@ -53,6 +53,15 @@ class ElementType:
             else mutations
         )
 
+        #store coding attribute (0 = noncoding)
+        test = 0
+        for mut in self.mlist:
+            test += mut.coding
+        if test > 0:
+            self.coding = 1
+        else:
+            self.coding = 0
+
         self.freq = frequencies
 
         #check frequency formatting
@@ -165,7 +174,7 @@ class ElementList(list):
 
 
 
-# class EElementList:
+# class ElementList:
 #     """
 #     Elementlist container class for multiple ElementType objects.
 #     """   
@@ -226,6 +235,7 @@ if __name__ == "__main__":
     print(ele1)
     print(ele2)
     print(ele2.to_slim())
+    print(ele2.coding)
 
     # create an ElementList ()
 
