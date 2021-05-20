@@ -68,12 +68,27 @@ class ChromosomeBase:
         """
         commands = []
         for idx in self.data.index:
-            commands.append(
-                "initializeGenomicElement({}, {}, {});"
-                .format(*self.data.loc[idx, ["eltype", "start", "end"]])
-            )
+            if self.data.loc[idx, ["coding"]] == 0:
+                commands.append(
+                    "initializeGenomicElement({}, {}, {});"
+                    .format(*self.data.loc[idx, ["eltype", "start", "end"]])
+                )
+            if self.data.loc[idx, ["coding"]] == 1:
+                commands.append(
+                    "types = rep(c({}, "
+                    .format(*self.data.loc[idx, ["eltype"]])
+                    )
+                commands.append(
+                    f"{NONCDS.name}), "
+                    "({}-{}));\n"
+                    "starts = repEach({}+seqLen({}-{}) * 3, 2) + rep(c(0,2), ({}-{}));\n"
+                    "ends = starts + rep(c(1,0), 1e5);\n"
+                    "initializeGenomicElement(types, starts, ends);"
+                    .format(*self.data.loc[idx, ["end", "start", "start", "end", 
+                                                 "start", "end", "start"]]
+                           )
+                )
         return "\n  ".join(commands)
-
 
 
 class Chromosome(ChromosomeBase):
@@ -242,9 +257,8 @@ if __name__ == "__main__":
         (2000, 3000): e0,
         (3001, 5000): e1,
     })
+
     print(chrom.data.iloc[:, :3])
     elem = chrom.data.loc[500]["eltype"]
     print(chrom.data)
     print(m2.coding)
-
-
