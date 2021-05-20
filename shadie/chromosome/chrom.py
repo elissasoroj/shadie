@@ -53,13 +53,3 @@ def explicit(data):
     })
     """
     return ChromosomeExplicit(data)
-
-def plot():
-    """
-    Static toyplot chromosome viewer
-    """
-
-def iplot():
-    """
-    Interactive altair chromosome viewer
-    """

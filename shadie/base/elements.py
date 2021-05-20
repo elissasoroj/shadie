@@ -18,7 +18,6 @@ import toyplot
 from shadie.base.mutations import MutationList, MutationTypeBase
 
 
-
 class ElementType:
     """
     Makes element types for the simulation. An Element contains one or

@@ -11,7 +11,7 @@ import numpy as np
 
 # internal imports
 from shadie.base.elements import ElementType
-from shadie.base.defaults import NONCDS, INTRON, EXON
+from shadie.base.defaults import SYN, NONCDS, INTRON, EXON, NEUT
 
 
 class ChromosomeBase:
@@ -39,6 +39,8 @@ class ChromosomeBase:
         initializeMutationTypeNuc("m2", 0.1, "g", -0.03, 0.2);  
         """
         elements = self.data.script.unique()
+        #default SYN element  type:
+        elements = np.append(elements, SYN)
         mut_lists = [i.mlist for i in elements]
         mutations = set(itertools.chain(*mut_lists))
         return "\n  ".join([i.to_slim(nuc=True) for i in mutations])
@@ -54,6 +56,8 @@ class ChromosomeBase:
         initializeGenomicElementType("g2", c(m1,m2), c(5,1), mm);
         """
         elements = self.data.script.unique()
+        elements = np.append(elements, SYN)
+        print(elements)
         return "\n  ".join([i.to_slim() for i in elements])
 
     def to_slim_elements(self):
@@ -66,23 +70,24 @@ class ChromosomeBase:
         initializeGenomicElement(g3, 0, 4684);
         initializeGenomicElement(g1, 4685, 4708);
         """
+        #Note: will need to fix the formatting on this chunk**
         commands = []
         for idx in self.data.index:
-            if self.data.loc[idx, ["coding"]] == 0:
+            if self.data.loc[idx, ["coding"]].all() == 0:
                 commands.append(
                     "initializeGenomicElement({}, {}, {});"
                     .format(*self.data.loc[idx, ["eltype", "start", "end"]])
                 )
-            if self.data.loc[idx, ["coding"]] == 1:
+            if self.data.loc[idx, ["coding"]].any() == 1:
                 commands.append(
                     "types = rep(c({}, "
                     .format(*self.data.loc[idx, ["eltype"]])
                     )
                 commands.append(
-                    f"{NONCDS.name}), "
-                    "({}-{}));\n"
-                    "starts = repEach({}+seqLen({}-{}) * 3, 2) + rep(c(0,2), ({}-{}));\n"
-                    "ends = starts + rep(c(1,0), 1e5);\n"
+                    f"{SYN.name}), "
+                    "({}-{}));"
+                    "starts = repEach({}+seqLen({}-{}) * 3, 2) + rep(c(0,2), ({}-{}));"
+                    "ends = starts + rep(c(1,0), 1e5);"
                     "initializeGenomicElement(types, starts, ends);"
                     .format(*self.data.loc[idx, ["end", "start", "start", "end", 
                                                  "start", "end", "start"]]
@@ -260,5 +265,4 @@ if __name__ == "__main__":
 
     print(chrom.data.iloc[:, :3])
     elem = chrom.data.loc[500]["eltype"]
-    print(chrom.data)
-    print(m2.coding)
+    chrom.to_slim_mutation_types()
