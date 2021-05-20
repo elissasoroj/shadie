@@ -80,7 +80,7 @@ class MutationTypeBase:
         """
         Returns the SLIM command to Initialize the MutationType
         """
-        inner = f"{self.idx}, {self.dom}, '{self.dist}', "
+        inner = f"'{self.name}', {self.dom}, '{self.dist}', "
         inner += ", ".join(map(str, self.distparams))
         if nuc:
             return f"initializeMutationTypeNuc({inner});"
@@ -188,7 +188,6 @@ class MutationTypeBase:
         """
         self.summary()
         return self.draw()
-
 
 
 class MutationNormal(MutationTypeBase):
@@ -326,5 +325,3 @@ if __name__ == "__main__":
 
     print(mlist)
     print(mlist[0].to_slim())
-    print(m2)
-    print(m2.coding)
