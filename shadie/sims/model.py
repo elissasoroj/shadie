@@ -51,11 +51,10 @@ initialize() {{
    
   // model type
   initializeSLiMModelType("nonWF");
-  initializeSLiMOptions(nucleotideBased=T);
 
   // config
   initializeRecombinationRate({recombination_rate});
-  initializeAncestralNucleotides(randomNucleotides({genome_size}));
+  initializeMutationRate({mutation_rate});
   initializeTreeSeq();
 
   // MutationType init
