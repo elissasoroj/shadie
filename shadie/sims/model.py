@@ -40,6 +40,7 @@ from contextlib import AbstractContextManager
 from loguru import logger
 from shadie.base.mutations import MutationTypeBase
 from shadie.base.elements import ElementType
+from shadie.reproduction import Reproduction
 
 # cannot do both mutationRate and nucleotidebased 
 OLD = """
@@ -75,14 +76,31 @@ initialize() {{
 """
 # --------------------------------------------
 
-LATE = """
-{time} late() {{
+#basic default
+REPRO = """
+{reproduction({population}) {{
+    {scripts}
+}}
+"""
+
+#basic fitness
+FITN = """
+fitness({mutation}){
+    {scripts}
+}}
+"""
+
+# --------------------------------------------
+
+EARLY = """
+{time} early() {{ //executes after offspring are generated
   {scripts}
 }}
 """
 
-EARLY = """
-{time} early() {{
+
+LATE = """
+{time} late() {{
   {scripts}
 }}
 """
@@ -107,6 +125,7 @@ class Model(AbstractContextManager):
         self.chromosome = None
         self.constants = {}
         self.populations = {}
+        self.length = {} #length of simulation in generations
 
 
     def __repr__(self):
@@ -145,6 +164,7 @@ class Model(AbstractContextManager):
     def initialize(
         self, 
         chromosome, 
+        length:int=1000, #length of sim in # of generations
         mut:float=1e-8, 
         recomb:float=1e-9, 
         constants:Union[None, dict]=None,
@@ -175,10 +195,39 @@ class Model(AbstractContextManager):
         )
 
 
-    def reproduction(self, population:str, scripts:Union[str, list]):
+    def reproduction(self, population:str, scripts:Union[str, list]
+        ):
         """
         Add reproduction block code here.
         """
+        logger.debug("Reproduction Block")
+        self.script[('reproduction', None)] = (
+            INIT.format(**{
+                "female_tag": femtag,
+                "male_tag": maletag,
+                "hermaphrodite_tag": hermtag,
+                "used_tag": usedtag,
+                "scripts": "\n  ".join([i.strip(";") + ";" for i in scripts]),
+            })
+        )
+
+
+    def fitness(self, mutation:Union[int, None], scripts:Union[str, list]):
+        """
+        Add an event that happens before every generation (early).
+        """
+        # todo: validate script
+        # compress list of scripts into a string
+        if isinstance(scripts, list):
+            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
+
+        # time as int or empty
+        time_str = str(time) if time else ""
+
+        # expand EARLY script block
+        self.script[("early", time)] = (
+            EARLY.format(**{'time': time_str, 'scripts': scripts})
+        ).lstrip()
 
 
     def early(self, time:Union[int, None], scripts:Union[str, list]):
@@ -195,7 +244,7 @@ class Model(AbstractContextManager):
 
         # expand EARLY script block
         self.script[("early", time)] = (
-            LATE.format(**{'time': time_str, 'scripts': scripts})
+            EARLY.format(**{'time': time_str, 'scripts': scripts})
         ).lstrip()
 
 
@@ -212,10 +261,16 @@ class Model(AbstractContextManager):
         # time as int or empty
         time_str = str(time) if time else ""
 
-        # expand EARLY script block
+        end = (
+            'time': self.length, 
+            'scripts': "sim.treeSeqOutput('shadie.trees');"
+            )
+
+        # expand LATE script block
         self.script[("late", time)] = (
             LATE.format(**{'time': time_str, 'scripts': scripts})
         ).lstrip()
+
 
 
     def _check_script(self):
