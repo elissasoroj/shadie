@@ -222,11 +222,11 @@ class Model(AbstractContextManager):
             scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
 
         # time as int or empty
-        time_str = str(time) if time else ""
+        mutation_str = str(mutation) if mutation else ""
 
         # expand EARLY script block
-        self.script[("early", time)] = (
-            EARLY.format(**{'time': time_str, 'scripts': scripts})
+        self.script[("fitness", mutation)] = (
+            EARLY.format(**{'mutation': mutation_str, 'scripts': scripts})
         ).lstrip()
 
 
