@@ -169,6 +169,7 @@ class Model(AbstractContextManager):
         recomb:float=1e-9, 
         constants:Union[None, dict]=None,
         scripts:Union[None, list]=None,
+        fileout: str("shadie.trees"),
         ):
         """
         Initialize a simulation. This fills the SLIM intialize() code
@@ -261,10 +262,7 @@ class Model(AbstractContextManager):
         # time as int or empty
         time_str = str(time) if time else ""
 
-        end = (
-            'time': self.length, 
-            'scripts': "sim.treeSeqOutput('shadie.trees');"
-            )
+        end = [("late", self.length), f"sim.treeSeqOutput('{self.fileout}')"]
 
         # expand LATE script block
         self.script[("late", time)] = (
