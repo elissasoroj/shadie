@@ -1,9 +1,10 @@
 initialize() {
 	defineConstant("dK", 1000); //diploid
-	defineConstant("hK", 1000); //haploid
+	defineConstant("hK", 2000); //haploid
 	defineConstant("Death_chance", 0.05);
 	defineConstant("FtoM", 0.60); //female:male ratio (adults)
-	defineConstant("gFtoM", 0.20); //hermaphrodie:male ratio (gametophytes)
+	defineConstant("gFtoM", 0.20); //hermaphrodite:male ratio (gametophytes)
+	defineConstant("Spore_num", 100); //number of spores per sporophyte
 	defineConstant("Clone_rate", 0); //chance of cloning
 	defineConstant("Clone_num", 1); //number of clones
 	defineConstant("gClone_rate", 0); //chance of gametophytic cloning
@@ -41,15 +42,15 @@ reproduction(p1) {	// creation of gametes from sporophytes
 	// clones give the focal individual extra opportunities to reproduce
 	if (runif(1) <= Clone_rate)
 		meiosis_reps = meiosis_reps*Clone_num;
-		
-		for (rep in 1:meiosis_reps)
-		{
-			breaks = sim.chromosome.drawBreakpoints(individual);
-			p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
-			p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-		}
 	
+	for (rep in 1:meiosis_reps)
+	{
+		breaks = sim.chromosome.drawBreakpoints(individual);
+		p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
+		p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
 	}
+
+}
 
 
 reproduction(p0) //creation of sporophyte from haploids
@@ -58,30 +59,31 @@ reproduction(p0) //creation of sporophyte from haploids
 	{
 		reproduction_opportunity_count = 1;
 		
-	// clones give the focal individual extra opportunities to reproduce
-	if (runif(1) <= gClone_rate)
-		reproduction_opportunity_count = reproduction_opportunity_count + Clone_num;
+		// clones give the focal individual extra opportunities to reproduce
+		if (runif(1) <= gClone_rate)
+			reproduction_opportunity_count = reproduction_opportunity_count + Clone_num;
 		
-	for (repro in seqLen(reproduction_opportunity_count))
-	{
-		if (runif(1) <= Self_rate)
+		for (repro in seqLen(reproduction_opportunity_count))
 		{
-			// this is selfing using two identical gametes – intragametophytic selfing
-			p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
-			// intergametophytic selfing might happen below, by chance
-		}
-		else
-		{
-			sperm = p0.sampleIndividuals(1);	
+			if (runif(1) <= Self_rate)
+				p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
+				// this is selfing using two identical gametes – intragametophytic selfing
+				// intergametophytic selfing might happen below, by chance
 
-			child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
-					
-			if (Maternal_weight > 0) //Mother's fitness affects sporophyte fitness; see survival()
-				child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+			else
+			{
+				sperm = p0.sampleIndividuals(1);
 				
+				child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
+				
+				if (Maternal_weight > 0) //Mother's fitness affects sporophyte fitness; see survival()
+					child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+			
 			}
 		}
 	}
+}
+
 
 
 early() //executes after offspring are generated
@@ -90,15 +92,15 @@ early() //executes after offspring are generated
 	{
 		//fitness affects gametophyte survival
 		p0.fitnessScaling = (hK / p0.individualCount);
-		
+	
 	}
 	else //odd generations = gametophytes (p0) just generated sporophytes
 	{
 		//fitness affects sporophytes
 		p1.fitnessScaling = dK / p1.individualCount;
-		
-	}
 	
+	}
+
 }
 
 early()
@@ -143,13 +145,12 @@ s3 survival(p1)
 
 s4 survival(p1)
 {
-//this code implements random death chance
-		if (Death_chance > 0)
-		{
-			deaths = 1.0 - rbinom(p1.individualCount, 1, Death_chance);
-			p1.individuals.fitnessScaling = deaths;
-		}
-		
+	//this code implements random death chance
+	if (runif(1) < Death_chance)
+		return F;
+	else
+		return NULL;
+	
 	// maternal effect
 	maternal_effect = individual.getValue("maternal_fitness");
 	
@@ -164,12 +165,11 @@ s4 survival(p1)
 
 s5 survival(p0) //even
 {
-			//this code implements random death chance
-		if (Death_chance > 0)
-		{
-			deaths = 1.0 - rbinom(p0.individualCount, 1, Death_chance);
-			p0.individuals.fitnessScaling = deaths;
-		}
+	//this code implements random death chance
+	if (runif(1) < Death_chance)
+		return F;
+	else
+		return NULL;
 }
 
 s6 survival(p0) //odd

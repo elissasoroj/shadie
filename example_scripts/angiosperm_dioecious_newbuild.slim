@@ -9,8 +9,10 @@ initialize() {
 	defineConstant("Self_rate", 0);
 	defineConstant("Maternal_weight", 0); //weighted average for maternal fitness effect
 	defineConstant("ovule_count", 30); //ovules per female
-	defineConstant("fertilization_rate", 1.0); //successful fertilization
+	defineConstant("fertilization_rate", 1.0); //successful fertilization rate
 	defineConstant("pollen_count", 100);  //pollen per male
+	defineConstant("pollen_comp", T); // turn on sperm competition
+	defineConstant("pollen_per_stigma", 5); // number of pollen grains competing for fertilization
 	
 	initializeSLiMModelType('nonWF');
 	initializeSLiMOptions(keepPedigrees=T);
@@ -76,7 +78,21 @@ reproduction(p0) //creation of sporophyte from haploids
 {
 	if (individual.tag == 1)  // females find male gametes to reproduce
 	{
-		sperm = p0.sampleIndividuals(1, tag=0);	// find a male
+		if (pollen_comp == T)
+		{
+			pollen_pool = p0.sampleIndividuals(pollen_per_stigma, tag=0);	// sperm land on stigma
+			for (pollen in pollen_pool)
+			{
+				pollen.setValue("fitness", p0.cachedFitness(pollen.index)); //store fitness value
+				pollen.tag = 2;
+			}
+			
+			target_fitness = max(pollen_pool.getValue("fitness"));
+			winners = pollen_pool[pollen_pool.getValue("fitness") == target_fitness];
+			sperm = winners[0];
+		}
+		else
+			sperm = p0.sampleIndividuals(1, tag=0);	// find a male
 		if (sperm.size() == 1)
 		{
 			child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
@@ -133,12 +149,18 @@ early()
 
 s1 fitness(m3)  //even
 {
-	return 1 + mut.selectionCoeff; //gametophytes have no dominance effects
+	if (individual.tag == 1)
+		return 1.0; //females gametophytes have no fitness
+	else
+		return 1 + mut.selectionCoeff;
 }
 
 s2 fitness(m4) //even
 {
-	return 1 + mut.selectionCoeff;
+	if (individual.tag == 1)
+		return 1.0; //females gametophytes have no fitness
+	else
+		return 1 + mut.selectionCoeff;
 }
 
 s3 survival(p1) //even

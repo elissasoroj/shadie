@@ -4,6 +4,8 @@ initialize() {
 	defineConstant("Death_chance", 0.05);
 	defineConstant("FtoM", 0.60); //female:male ratio
 	defineConstant("Spore_num", 100); //number of spores per sporophyte
+	defineConstant("Clone_rate", 0); //chance of cloning
+	defineConstant("Clone_num", 1); //number of clones produced by cloning
 	defineConstant("Self_rate", 0); //chance of intragametophytic selfing
 	defineConstant("Maternal_weight", 0.7); //weighted average for maternal fitness effect
 	
@@ -33,15 +35,15 @@ reproduction(p1) {	// creation of spores from sporophytes
 	g_2 = genome2;
 	
 	meiosis_reps = floor(Spore_num/2);
-		for (rep in 1:meiosis_reps)
-		{
-			breaks = sim.chromosome.drawBreakpoints(individual);
-			p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = ifelse (runif(1)<FtoM, 1, 0);
-			p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = ifelse (runif(1)<FtoM, 1, 0);
-		}
-	
+	for (rep in 1:meiosis_reps)
+	{
+		breaks = sim.chromosome.drawBreakpoints(individual);
+		p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = ifelse (runif(1)<FtoM, 1, 0);
+		p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = ifelse (runif(1)<FtoM, 1, 0);
 	}
+
 }
+
 
 reproduction(p0) //creation of sporophyte from haploids
 {
@@ -85,28 +87,10 @@ early() //executes after offspring are generated
 	{
 		//fitness affects gametophyte survival
 		p0.fitnessScaling = (hK / p0.individualCount);
-		
-		//this code implements random death chance
-		if (Death_chance > 0)
-		{
-			deaths = 1.0 - rbinom(p0.individualCount, 1, Death_chance);
-			p0.individuals.fitnessScaling = deaths;
-		}
+	
 	}
 	else //odd generations = gametophytes (p0) just generated sporophytes
-	{
-		//fitness affects sporophytes
-		p1.fitnessScaling = dK / p1.individualCount;
-		
-		//this code implements random death chance
-		if (Death_chance > 0)
-		{
-			deaths = 1.0 - rbinom(p1.individualCount, 1, Death_chance);
-			p1.individuals.fitnessScaling = deaths;
-		}
-	}
-	
-	// MOVE DEATH CHANCE LOGIC TO survival()
+		p1.fitnessScaling = dK / p1.individualCount; //fitness affects sporophytes
 }
 
 early()
@@ -151,13 +135,12 @@ s3 survival(p1)
 
 s4 survival(p1)
 {
-//this code implements random death chance
-		if (Death_chance > 0)
-		{
-			deaths = 1.0 - rbinom(p1.individualCount, 1, Death_chance);
-			p1.individuals.fitnessScaling = deaths;
-		}
-		
+	//this code implements random death chance
+	if (runif(1) < Death_chance)
+		return F;
+	else
+		return NULL;
+	
 	// maternal effect
 	maternal_effect = individual.getValue("maternal_fitness");
 	
@@ -172,12 +155,11 @@ s4 survival(p1)
 
 s5 survival(p0) //even
 {
-			//this code implements random death chance
-		if (Death_chance > 0)
-		{
-			deaths = 1.0 - rbinom(p0.individualCount, 1, Death_chance);
-			p0.individuals.fitnessScaling = deaths;
-		}
+	//this code implements random death chance
+	if (runif(1) < Death_chance)
+		return F;
+	else
+		return NULL;
 }
 
 s6 survival(p0) //odd
