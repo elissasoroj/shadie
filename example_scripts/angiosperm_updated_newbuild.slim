@@ -1,0 +1,207 @@
+initialize() {
+	defineConstant("hK", 2000); //haploid K
+	defineConstant("dK", 1000); //diploids K
+	defineConstant("MU", 1e-07); //mutation rate
+	defineConstant("Death_chance", 0.05);
+	defineConstant("FtoM", 0.5); //female:male ratio
+	defineConstant("Clone_rate", 0); //chance of cloning
+	defineConstant("Clone_num", 1); //number of clones
+	defineConstant("Self_rate", 0);
+	defineConstant("Maternal_weight", 0); //weighted average for maternal fitness effect
+	defineConstant("ovule_count", 30); //ovules per female
+	defineConstant("fertilization_rate", 1.0); //successful fertilization
+	defineConstant("pollen_count", 100);  //pollen per male
+	
+	initializeSLiMModelType('nonWF');
+	initializeSLiMOptions(keepPedigrees=T);
+	initializeTreeSeq();
+	initializeMutationType('m3', 0.1, 'g', -0.03, 0.2);
+	m3.convertToSubstitution = T;
+	initializeMutationType('m4', 0.8, 'e', 0.1);
+	m4.convertToSubstitution = T;
+	initializeGenomicElementType('g1', c(m3, m4),c(8, 0.1));
+	initializeGenomicElementType('g3', c(m3),c(1));
+	initializeGenomicElement(g1, 40001, 100000);
+	initializeGenomicElement(g3, 140000, 175000);
+	initializeGenomicElement(g1 , 199998, 199999);
+	initializeRecombinationRate(1e-09, 199999);
+	initializeMutationRate(MU);
+}
+
+// sex: male == 0, female == 1
+
+1 early(){
+	sim.addSubpop('p1', dK); //diploid sporophyte pop
+	sim.addSubpop('p0', 0); //haploid gametophyte pop
+	
+	dsex_starts = c(rep(1, asInteger(FtoM*dK)), rep(0, asInteger((1-FtoM)*dK)));
+	p1.individuals.tag = dsex_starts;
+}
+
+reproduction(p1) {
+	g_1 = genome1;
+	g_2 = genome2;
+	
+	if (individual.tag == 1)
+	{
+		// determine how many ovules were fertilized, out of the total
+		fertilizedOvules = rbinom(1, ovule_count, fertilization_rate);
+		meiosis_reps = floor(fertilizedOvules/2);
+		if (runif(1) <= Clone_rate)
+			meiosis_reps = meiosis_reps*Clone_num;
+		
+		for (rep in 1:meiosis_reps)
+		{
+			breaks = sim.chromosome.drawBreakpoints(individual);
+			p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 1;
+			p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 1;
+		}
+	
+	}
+	else //individual is male
+	{
+		meiosis_reps = floor(pollen_count/2);
+		if (runif(1) <= Clone_rate)
+			meiosis_reps = meiosis_reps*2;
+		for (rep in 1:meiosis_reps)
+		{
+			breaks = sim.chromosome.drawBreakpoints(individual);
+			p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 0;
+			p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 0;
+		}
+	}
+}
+
+reproduction(p0) //creation of sporophyte from haploids
+{
+	if (individual.tag == 1)  // females find male gametes to reproduce
+	{
+		sperm = p0.sampleIndividuals(1, tag=0);	// find a male
+		if (sperm.size() == 1)
+		{
+			child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
+			sperm.tag = 2;		
+			
+			if (runif(1) <= FtoM)
+				child.tag = 1;
+			else
+				child.tag = 0;
+		}
+	}
+}
+
+early() //executes after offspring are generated
+{
+	if (sim.generation % 2 == 0) //diploids (p1) just generated gametophytes
+	{
+		p1.fitnessScaling = 0.0; // diploids die after producing spores
+		//fitness affects gametophyte survival
+		p0.fitnessScaling = (hK / p0.individualCount);
+		sim.chromosome.setMutationRate(0.0);
+		
+	}
+	else //odd generations = gametophytes (p0) just generated sporophytes
+	{
+		p0.fitnessScaling = 0.0; //gametophytes die after producing sporophytes
+		//fitness affects sporophytes
+		p1.fitnessScaling = dK / p1.individualCount;
+		sim.chromosome.setMutationRate(MU);
+	
+	}
+}
+
+early()
+{
+	if (sim.generation % 2 == 0) //diploids (p1) just generated haploid gametophytes
+	{
+		// haploids get modified fitness, without dominance
+		s1.active = 1;
+		s2.active = 1;
+		s3.active = 1;
+		s4.active = 0;
+		s5.active = 1;
+		s6.active = 0;
+	}
+	else
+	{
+		// diploids get SLiM's standard fitness calculation, with dominance
+		s1.active = 0;
+		s2.active = 0;
+		s3.active = 0;
+		s4.active = 1;
+		s5.active = 0;
+		s6.active = 1;
+	}
+}
+
+
+s1 fitness(m3)  //even
+{
+	return 1 + mut.selectionCoeff; //gametophytes have no dominance effects
+}
+
+s2 fitness(m4) //even
+{
+	return 1 + mut.selectionCoeff;
+}
+
+s3 survival(p1) //even
+{
+	return F;
+}
+
+s4 survival(p1)  //odd
+{
+		//this code implements random death chance
+		if (Death_chance > 0)
+		{
+			deaths = 1.0 - rbinom(p1.individualCount, 1, Death_chance);
+			p1.individuals.fitnessScaling = deaths;
+		}
+
+	// maternal effect
+	maternal_effect = individual.getValue("maternal_fitness");
+	
+	if (!isNULL(maternal_effect))
+	{
+		corrected_fitness = (maternal_effect * Maternal_weight) + fitness * (1 - Maternal_weight);
+		return (draw < corrected_fitness);
+	}
+	
+	return NULL;
+}
+
+s5 survival(p0) //even
+{
+			//this code implements random death chance
+		if (Death_chance > 0)
+		{
+			deaths = 1.0 - rbinom(p0.individualCount, 1, Death_chance);
+			p0.individuals.fitnessScaling = deaths;
+		}
+}
+
+s6 survival(p0) //odd
+{
+	return F;
+}
+
+late() {
+	if (sim.generation % 2 == 0) //gametophytes have just undergone fitness selection
+	{
+		mut3 = sim.mutationsOfType(m3);
+		freq3 = sim.mutationFrequencies(NULL, mut3);
+		if (any(freq3 == 0.5))
+			sim.subpopulations.genomes.removeMutations(mut3[freq3 == 0.5], T);
+		
+		mut4 = sim.mutationsOfType(m4);
+		freq4 = sim.mutationFrequencies(NULL, mut4);
+		if (any(freq4 == 0.5))
+			sim.subpopulations.genomes.removeMutations(mut4[freq4 == 0.5], T);
+	}
+}
+
+2000 late(){
+	sim.treeSeqOutput('shadie.trees');
+	sim.outputFixedMutations();
+}
