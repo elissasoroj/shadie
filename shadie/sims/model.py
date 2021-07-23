@@ -40,7 +40,7 @@ from contextlib import AbstractContextManager
 from loguru import logger
 from shadie.base.mutations import MutationTypeBase
 from shadie.base.elements import ElementType
-from shadie.reproduction import Reproduction
+#from shadie.reproduction import Reproduction
 
 # cannot do both mutationRate and nucleotidebased 
 OLD = """
@@ -162,14 +162,14 @@ class Model(AbstractContextManager):
 
 
     def initialize(
-        self, 
-        chromosome, 
+        self,
+        chromosome,
         length:int=1000, #length of sim in # of generations
         mut:float=1e-8, 
         recomb:float=1e-9, 
         constants:Union[None, dict]=None,
         scripts:Union[None, list]=None,
-        fileout: str("shadie.trees"),
+        fileout:str="shadie.trees",
         ):
         """
         Initialize a simulation. This fills the SLIM intialize() code
@@ -222,7 +222,7 @@ class Model(AbstractContextManager):
         if isinstance(scripts, list):
             scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
 
-        # time as int or empty
+        # mutation as int or empty
         mutation_str = str(mutation) if mutation else ""
 
         # expand EARLY script block
@@ -336,6 +336,9 @@ if __name__ == "__main__":
             exon=e1,
         )
         
+        print(chrom.data.iloc[:, :6,])
+        print(chrom.to_slim_mutation_types().mutations)
+
         # init the model
         model.initialize(chromosome=chrom)
         

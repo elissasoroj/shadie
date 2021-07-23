@@ -22,6 +22,7 @@ class ChromosomeBase:
             data=None,
         )
 
+
     def inspect(self):
         """
         Visualize chromosome structure using altair interactive.
@@ -43,6 +44,7 @@ class ChromosomeBase:
         elements = np.append(elements, SYN)
         mut_lists = [i.mlist for i in elements]
         mutations = set(itertools.chain(*mut_lists))
+        self.mutations = mutations
         return "\n  ".join([i.to_slim(nuc=True) for i in mutations])
 
     def to_slim_element_types(self):
@@ -79,7 +81,7 @@ class ChromosomeBase:
                     #.format(*self.data.loc[idx, ["eltype", "start", "end"]])
                     #)
                 pass
-            if self.data.loc[idx, ["coding"]].all() == 1:
+            if self.data.loc[idx, ["coding"]].any() == 1:
             #we should really stop users from mixing in neutral and non-neutral mutations
                 commands.append(
                     "types = rep({}, {}-{});"
@@ -110,6 +112,13 @@ class Chromosome(ChromosomeBase):
             EXON.altname, 6001, 8000, EXON.name, EXON)
         self.data.loc[8001] = (
             NONCDS.altname, 8001, 10000, NONCDS.name, NONCDS)
+
+        mutations = []
+        for element in self.data.values():
+            for mutation in element.mlist:
+                if mutation.name not in mutations:
+                    mutations.append(mutation.name)
+        self.mutations = mutations
 
 
 
@@ -207,6 +216,13 @@ class ChromosomeRandom(ChromosomeBase):
                 idx += pos + 1
         self.data = self.data.sort_index()
 
+        mutations = []
+        for element in self.data.values():
+            for mutation in element.mlist:
+                if mutation.name not in mutations:
+                    mutations.append(mutation.name)
+        self.mutations = mutations
+
 
 
 class ChromosomeExplicit(ChromosomeBase):
@@ -230,6 +246,13 @@ class ChromosomeExplicit(ChromosomeBase):
             "keys of input data should be tuples of integers.")
         assert all(isinstance(i, ElementType) for i in data.values() if i), (
             "values of input data should be ElementType objects.")
+
+        mutations = []
+        for element in data.values():
+            for mutation in element.mlist:
+                if mutation.name not in mutations:
+                    mutations.append(mutation.name)
+        self.mutations = mutations
 
         # entere explicit dict into data
         for key in sorted(data, key=lambda x: x[0]):
@@ -265,5 +288,5 @@ if __name__ == "__main__":
     print(chrom.data.iloc[:, :5,])
     #elem = chrom.data.loc[500]["eltype"]
     #chrom.to_slim_mutation_types()
-    test = chrom.to_slim_elements()
+    test = chrom.mutations
     print(test)
