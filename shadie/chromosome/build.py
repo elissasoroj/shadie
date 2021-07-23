@@ -144,6 +144,14 @@ class ChromosomeRandom(ChromosomeBase):
         self.noncds = noncds if noncds is not None else NONCDS
         self.run()
 
+        elements = [intron, exon, noncds]
+
+        mutations = []
+        for elem in elements:
+            for mutation in elem.mlist:
+                if mutation.name not in mutations:
+                    mutations.append(mutation.name)
+        self.mutations = mutations
 
     def get_noncds_span(self, scale:int=5000):
         """
@@ -215,13 +223,6 @@ class ChromosomeRandom(ChromosomeBase):
                     )
                 idx += pos + 1
         self.data = self.data.sort_index()
-
-        mutations = []
-        for element in self.data.values():
-            for mutation in element.mlist:
-                if mutation.name not in mutations:
-                    mutations.append(mutation.name)
-        self.mutations = mutations
 
 
 
