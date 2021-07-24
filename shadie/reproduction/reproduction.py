@@ -4,6 +4,7 @@
 Convenience functions for constructing each reproduction mode
 """
 
+from scripts import BRYO_FIT
 from typing import Union
 
 #shadie defaults
@@ -15,49 +16,66 @@ SHADIE_POPS = """
 """
 
 
-REPRO_BRYO = """
-{reproduction(p1) {{
-    g_1 = genome1;
+REPRO_BRYO_DIO = """
+{reproduction(p1) {{	// creation of spores from sporophytes
+	g_1 = genome1;
 	g_2 = genome2;
-	//diploid undergoes meiosis exactly {meiosiscount}x
-	for (meiosisCount in 1:{meiosiscount})
-	{
-		{malebreaks}
+	
+	meiosis_reps = floor({spores}/2);
+	for (rep in 1:meiosis_reps)
+	{{
+		breaks = sim.chromosome.drawBreakpoints(individual);
+		p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = ifelse (runif(1)<FtoM, 1, 0);
+		p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = ifelse (runif(1)<FtoM, 1, 0);
+	}}
 
-		{fembreaks}
 }}
 
-{reproduction(p0) {{  //creation of sporophyte from haploids
-    if (runif(1) <= {cloning_rate})
-    	clone_parent = p0.sampleIndividuals(1, tag = {female_tag});
-
-    	child = p1.addCloned(clone_parent);
-    	child.tag = {female_tag};
-
-    if(runif(1) <= {haploid_selfing_rate})
-    	self_parent = p0.sampleIndividuals(1, tag = {female_tag});
-
-    	child = p1.addSelfed(self_parent);
-    	child.tag = {female.tag};
-
-    else
-	    egg = p0.sampleIndividuals(1, tag = {female_tag});
-	    sperm = p0.sampleIndividuals(1, tag = {male_tag});
-
-	    child = p1.addRecombinant(egg.genome1, NULL, NULL, 
-	        sperm.genome1, NULL, NULL);
-	    //egg.tag = {used_tag};
-	    //sperm.tag = {used_tag};
+{reproduction(p0) //creation of sporophyte from haploids
+{{
+	if (individual.tag == 1)	// females find male gametes to reproduce
+	{{
+		reproduction_opportunity_count = 1;
+		
+		// clones give the focal individual extra opportunities to reproduce
+		if (runif(1) <= Clone_rate)
+			reproduction_opportunity_count = reproduction_opportunity_count + Clone_num;
+		
+		for (repro in seqLen(reproduction_opportunity_count))
+		{{
+			if (runif(1) <= Self_rate)
+			{{
+				// this is selfing using two identical gametes – intragametophytic selfing
+				// intergametophytic selfing might happen below, by chance
+				p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
+			}}
+			else
+			{{
+				sperm = p0.sampleIndividuals(1, tag=0);	// find a male!
+				
+				if (sperm.size() == 1)
+				{{
+					child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
+					
+					if (Maternal_weight > 0) //Mother's fitness affects sporophyte fitness; see survival()
+						child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+					
+					sperm.tag = {usedtag};	// take out of the mating pool
+				}}
+			}}
+		}}
+	}}
 }}
+}
 """
 
-REPRO_MONO = """
+REPRO_BRYO-MONO = """
 //Hermaphroditic sporophytes
 """
 
-REPRO_DIO = """
+REPRO_ANGIO_DIO = """
 //Separate sex sporophytes
-{reproduction(p1) {{
+{reproduction(BRYO-p1) {{
     g_1 = genome1;
 	g_2 = genome2;
 	//diploid undergoes meiosis exactly {meiosiscount}x
@@ -114,15 +132,23 @@ class Reproduction:
 
 	def __init__(
 		self, 
-		mode = str(None),
-		dipftom = float.as_integer_ratio(1/1),
-		hapftom = float.as_integer_ratio(1/1),
-		meiosiscount = int(5),
 		lineage = string(None),
-		dipfitscale = float(1.0),
-		hapfitscale = float(1.0),
-		dipselfrate = float(0.0),
-		hapselfrate = float(0.0),
+		mode = str(None),
+		dNe = int(),
+		gNe =  int(),
+		ftom = float.as_integer_ratio(1/1), #F:M sporophyte
+		spores = int(100), #number of spores per sporopyte
+		ovules = int(100),
+		fertrate = int(100),
+		pollen = int(100),
+		pollencomp = bool(F),
+		pollenperstigma = int(5),
+		clonerate = float(1.0), #chance of cloning
+		clones = float(1.0), #number of clones
+		selfrate = float(0.0), #rate of intragametophytic selfing
+		maternalweight = float(0.0), #maternal contribution to fitness
+		deathchance = float(0.0), #random chance of death for both stages
+
 		):
 
 		self.meiosiscount = meiosiscount
@@ -146,7 +172,7 @@ class Reproduction:
 
 	def dioecy(  
 		self,     
-	    femtag  = "female",
+	    femtag  = int(1),
 	    maletag = int(2),
 	    hermtag  = int(3),
 	    usedtag = int(5),
@@ -228,13 +254,39 @@ class Reproduction:
 
 
 	def bryophytes(
+		self,
 		hap_pop = int(1000),
 		dip_pop = int(1000),
 		):
 		"""
 	    Reproduction mode based on mosses
 	    """
-	    #early callback:
+	    #fitness callback:
+	    idx = 0
+	    for mut in self.chromosome.mutations:
+	    	idx = idx + 1
+	    	name = string(s+str(idx))
+	    	fitndict = {(mut, name), BRYO_FIT}
+
+	    if self.mode = "d" or "dio" or "dioecy" or "dioecious" or "heterosporous":
+        	self.dioicous()
+
+        if mode = "m" or "mono" or "monoecy" or "monecious" or "homosporous":
+        	self.monoicous()
+
+        def dioicous(
+        	self,
+        	)
+
+
+        rpdndict = {(early, None), EARLY_BRYO}
+
+        def monoicous(
+        	self,
+        	)
+
+        rpdndict = {(early, None), EARLY_BRYO}
+
 
 	    rpdn_early = """
 	    if (sim.generation % 2 == 0) //diploids (p1) just generated gametophytes
