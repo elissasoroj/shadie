@@ -51,7 +51,6 @@ from shadie.sims.format import (
     CUSTOM,
 )
 
-
 # cannot do both mutationRate and nucleotidebased 
 
 
@@ -209,7 +208,8 @@ class Model(AbstractContextManager):
         self, 
         time:Union[int, None], 
         scripts:Union[str, list], 
-        comment:Union[str,None]=None):
+        comment:Union[str,None]=None,
+        ):
         """
         Add event that happens before selection every generation.
         """
@@ -289,6 +289,20 @@ class Model(AbstractContextManager):
         })
 
 
+    # def shadie(self, obj):
+    #     """
+    #     accepts shadie-formatted Lifecycle class object
+    #     """
+    #     for i in obj.rpdndict:
+    #         if i[0] == "early":
+    #             early(i) 
+    #     for i in obj.rpdndict:
+    #          if i[0] == "reproduction":
+    #             reproduction(i)
+    #     for i in obj.fitdict:
+    #         fitness(i) 
+
+
     def _check_script(self):
         """
         TODO.
@@ -353,8 +367,8 @@ if __name__ == "__main__":
             intron=e0,
             exon=e1,
         )
-
-        # print(chrom.data.head())
+        
+        # print(chrom.data.iloc[:, :4,])
         # print(chrom.mutations)
 
         # init the model

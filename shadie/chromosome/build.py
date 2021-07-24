@@ -72,8 +72,6 @@ class ChromosomeBase:
         initializeGenomicElementType("g2", c(m1,m2), c(5,1), mm);
         """
         elements = self.data.script.unique()
-        elements = np.append(elements, SYN)
-        logger.debug(f'elements: {elements}')
         return "\n  ".join([i.to_slim() for i in elements])
 
     def to_slim_elements(self):
@@ -101,13 +99,14 @@ class ChromosomeBase:
                 pass
 
             # define synonymous type at every 3rd position?
+            # TODO: we need to require exons == length multiples of 3 
             # we should really stop users from mixing in neutral and non-neutral mutations
             if self.data.loc[idx, "coding"] == 1:
                 ele = self.data.loc[idx]
                 commands.append(
                     f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
                 )
-
+                # COMMENTING OUT FOR NOW while working on reproduction.
                 # length = ele.end - ele.start
                 # commands.append(
                 #     f"types = rep({ele.eltype}, {length}); "
