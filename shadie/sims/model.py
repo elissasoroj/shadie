@@ -43,9 +43,6 @@ from shadie.base.elements import ElementType
 #from shadie.reproduction import Reproduction
 
 # cannot do both mutationRate and nucleotidebased 
-OLD = """
-initializeMutationRate({mutation_rate});
-"""
 
 INIT = """
 initialize() {{
@@ -78,29 +75,33 @@ initialize() {{
 
 #basic default
 REPRO = """
-{reproduction({population}) {{
+reproduction({population}) {{
     {scripts}
 }}
 """
 
 #basic fitness
 FITN = """
-fitness({mutation}){
+{idx} fitness({mutation}) //adjusts fitness calculation
+{{
     {scripts}
+
 }}
 """
 
 # --------------------------------------------
 
 EARLY = """
-{time} early() {{ //executes after offspring are generated
+{time} early() //executes after offspring are generated
+{{
   {scripts}
 }}
 """
 
 
 LATE = """
-{time} late() {{
+{time} late() //execuutes after selection occurs
+{{
   {scripts}
 }}
 """
@@ -149,9 +150,11 @@ class Model(AbstractContextManager):
         # order script keys
         nulls = [i for i in self.script if i[1] is None]
         ikeys = sorted([i for i in self.script if isinstance(i[1], int)])
+        lkeys = [i for i in self.script if i[1] not in nulls or ikeys]
         sorted_keys = [nulls.pop(nulls.index(("initialize", None)))]
         sorted_keys += ikeys
         sorted_keys += nulls
+        sorted_keys += lkeys
 
         # compress script to string
         self.script = "\n".join([self.script[i] for i in sorted_keys])
@@ -213,27 +216,29 @@ class Model(AbstractContextManager):
         )
 
 
-    def fitness(self, mutation:Union[int, None], scripts:Union[str, list]):
+    def fitness(self, mutation:Union[str, None], scripts:Union[str, list], idx:Union[str, None]):
         """
-        Add an event that happens before every generation (early).
+        Add an event that adjusts fitness values before fitness calculation.
         """
         # todo: validate script
         # compress list of scripts into a string
         if isinstance(scripts, list):
             scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
 
-        # mutation as int or empty
+        # idx as str or empty
+        idx_str = str(idx) if idx else ""
+        # mutation as str or empty
         mutation_str = str(mutation) if mutation else ""
 
-        # expand EARLY script block
+        # expand FITNESS script block
         self.script[("fitness", mutation)] = (
-            EARLY.format(**{'mutation': mutation_str, 'scripts': scripts})
+            FITN.format(**{'idx': idx_str, 'mutation': mutation_str, 'scripts': scripts})
         ).lstrip()
 
 
     def early(self, time:Union[int, None], scripts:Union[str, list]):
         """
-        Add an event that happens before every generation (early).
+        Add an event that happens before selection in every generation (early).
         """
         # todo: validate script
         # compress list of scripts into a string
@@ -262,8 +267,6 @@ class Model(AbstractContextManager):
         # time as int or empty
         time_str = str(time) if time else ""
 
-        end = [("late", self.length), f"sim.treeSeqOutput('{self.fileout}')"]
-
         # expand LATE script block
         self.script[("late", time)] = (
             LATE.format(**{'time': time_str, 'scripts': scripts})
@@ -285,6 +288,7 @@ class Model(AbstractContextManager):
         """
         Write SLIM script to the outname filepath.
         """
+
         with open(outname, 'w') as out:
             out.write(self.script)
 
@@ -337,12 +341,15 @@ if __name__ == "__main__":
         )
         
         print(chrom.data.iloc[:, :6,])
-        print(chrom.to_slim_mutation_types().mutations)
+        print(chrom.mutations)
 
         # init the model
         model.initialize(chromosome=chrom)
         
         # add reproduction 
         # model.reproduction()
+        model.early(1000, "sim.addSubpop('p1', 1000); //diploid sporophytes")
+        model.fitness("m4", "return 1 + mut.selectionCoeff; //gametophytes have no dominance effects", "s1" )
+
 
     print(model.script)
