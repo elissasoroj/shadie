@@ -4,8 +4,9 @@
 Convenience functions for constructing each reproduction mode
 """
 
-from scripts import .
-from model import Model
+from shadie.reproduction.scripts import (POPS, EARLY, FIT, ACTIVATE, 
+	DEACTIVATE, MATERNAL_EFFECT, SURV, LATE)
+from shadie.sims.model import Model
 from typing import Union
 
 
@@ -143,17 +144,12 @@ REPRO_HOMOSPORE = """
 //Hermaphroditic gametophytes
 """
 
-class Reproduction:
+class Lifecycle:
 
 	def __init__(
 		self, 
 		lineage = string(None),
 		mode = str(None),
-		ovules = int(100),
-		fertrate = int(100),
-		pollen = int(100),
-		pollencomp = bool(F),
-		pollenperstigma = int(5),
 		):
 
 		self.meiosiscount = meiosiscount
@@ -186,11 +182,11 @@ class Reproduction:
 	    for mut in self.chromosome.mutations:
 	    	i = i + 1
 	    	idx = string("s"+str(i))
-	    	fitdict = {(mut, idx), FIT}
+	    	self.fitdict = {(mut, idx), FIT}
 
 	    for mut in fitdict:
-	    	activdict = {mut[1], ACTIVATE}
-	    	deactivdict = {mut[1], DEACTIVATE}
+	    	self.activdict = {mut[1], ACTIVATE}
+	    	self.deactivdict = {mut[1], DEACTIVATE}
 
 	    if self.mode = ("d" or "dio" or "dioecy" or "dioecious" or 
 	    	"heterosporous" or "dioicous"):
@@ -211,9 +207,23 @@ class Reproduction:
 			selfrate = float(0.0), #chance of intragametophytic selfing
 			maternalweight = float(0.0), #maternal contribution to fitness
 			deathchance = float(0.0), #random chance of death for both stages
+			_maletag = 0,
+			_femtag = 1, 
+			_usedtag = 2,
 		):
 
-	        Model.early("early", EARLY)
+        	for i in self.activdict:
+        	activate_str = "\n  ".join([i.strip(';') + ';'])
+
+        	for i in self.deactivdict:
+        	deactivate_str = "\n  ".join([i.strip(';') + ';'])
+
+        	early_script = (
+        		EARLY.format(**{'activate': activate_str, 
+        			'deactivate': mutation_str}).lstrip())
+
+	        return(repro("early", early_script))
+	        
 	        Model.repro("p1", REPRO_BRYO_DIO_p0)
 	        Model.survival("p0", SURV)
 
@@ -228,20 +238,25 @@ class Reproduction:
 		    rpdndict = {(early, None), rpdn_early}
 
 
-	def monilophytes():
+	def pteridophyte():
 	 	"""
 	    Reproduction mode based on ferns and lycophytes
 	    """
 
-	def angiosperm(self)
-
-     
+	def spermatophyte(self)
+		"""
+	    Reproduction mode based on angiosperms and gymnosperms
+	    """
 		def dioecy(  
 			self,     
-		    femtag  = int(1),
-		    maletag = int(2),
-		    hermtag  = int(3),
-		    usedtag = int(5),
+			ovules = int(100),
+			fertrate = int(100),
+			pollen = int(100),
+			pollencomp = bool(F),
+			pollenperstigma = int(5),
+			__femtag__ = 1, 
+			__maletag__ = 0,
+			__usedtag__ = 2,
 		    ):
 		    """
 		    Sets up a dioecious reproduction mode
@@ -268,6 +283,3 @@ class Reproduction:
 		    """
 		    self.femtag = hermtag
 		    self.maletag = hermtag
-
-
-
