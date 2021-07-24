@@ -41,7 +41,6 @@ class ChromosomeBase:
         """
         elements = self.data.script.unique()
         #default SYN element  type:
-        elements = np.append(elements, SYN)
         mut_lists = [i.mlist for i in elements]
         mutations = set(itertools.chain(*mut_lists))
         self.mutations = mutations
@@ -58,7 +57,6 @@ class ChromosomeBase:
         initializeGenomicElementType("g2", c(m1,m2), c(5,1), mm);
         """
         elements = self.data.script.unique()
-        elements = np.append(elements, SYN)
         print(elements)
         return "\n  ".join([i.to_slim() for i in elements])
 
@@ -84,10 +82,10 @@ class ChromosomeBase:
             if self.data.loc[idx, ["coding"]].any() == 1:
             #we should really stop users from mixing in neutral and non-neutral mutations
                 commands.append(
-                    "types = rep({}, {}-{});"
-                    "starts = {}+seqLen(integerDiv(({}-{}),3)) * 3;"
-                    "ends = starts + 1"
-                    "initializeGenomicElement(types, starts, ends);"
+                    "types = rep({}, asInteger(floor(({}-{})/3)));\n" 
+                    "starts = {}+seqLen(integerDiv(({}-{}),3)) * 3;\n"
+                    "ends = starts + 1;\n"
+                    "initializeGenomicElement(types, starts, ends);\n"
                     .format(*self.data.loc[idx, ["eltype", "end", 
                         "start", "start", "end", "start"]]
                            )
