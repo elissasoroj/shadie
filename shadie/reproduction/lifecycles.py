@@ -6,6 +6,7 @@ Convenience functions for constructing each reproduction mode
 
 from shadie.reproduction.scripts import FIT, ACTIVATE, DEACTIVATE, EARLY
 #from shadie.chromosome.build import ChromosomeRandom, Chromosome, ChromosomeExplicit
+from shadie.sims.model import Model
 
 REPRO_BRYO_DIO_p1 = """
 {{  // creation of spores from sporophytes
@@ -194,6 +195,14 @@ class Bryophyte:
         self.lifedict = {("reproduction", "p1"), REPRO_BRYO_DIO_p1}
         self.lifedict = {("reproduction", "p0"), REPRO_BRYO_DIO_p0}
 
+        # for i in self.lifedict:
+        #     if i[0] == "early":
+        #         Model.early(i) 
+        # for i in self.lifedict:
+        #      if i[0] == "reproduction":
+        #         Model.reproduction(i)
+        # for i in self.fitdict:
+        #     Model.fitness(i) 
 
     def monoicous(
         self,
