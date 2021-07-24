@@ -4,8 +4,6 @@
 defaults shadiescripts
 """
 
-from typing import Union
-
 # 1 early()
 SHADIE_POPS = """
 	sim.addSubpop('p1', dK); //diploid sporophytes
