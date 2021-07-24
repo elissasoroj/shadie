@@ -4,10 +4,11 @@
 Generates Elements to represent chromosome structure for SLiM simulation
 """
 
-from typing import Union
+from typing import Union, List
 import itertools
 import pandas as pd
 import numpy as np
+from loguru import logger
 
 # internal imports
 from shadie.base.elements import ElementType
@@ -15,12 +16,28 @@ from shadie.base.defaults import SYN, NONCDS, INTRON, EXON, NEUT
 
 
 class ChromosomeBase:
-    def __init__(self, genome_size):
+    """
+    Base Chromosome superclass. This class contains functions that 
+    are inherited by the Chromosome classes users will initialize
+    using convenience functions, such as default, random, or explicit.
+    This superclass is used to define functions shared by all of the
+    subclasses, such as inspect, or for writing data to SLiM format.
+
+    Parameters:
+    -----------
+    genome_size: int
+        The size of the genome in bp
+    nucleotides: bool
+        Use initializeMutationTypeNuc instead of initializeMutationType
+    """
+    def __init__(self, genome_size, use_nucleotides=False):
         self.genome_size = genome_size
         self.data = pd.DataFrame(
             columns=['name', 'start', 'end', 'eltype', 'script', 'coding'],
             data=None,
         )
+        self.mutations = []
+        self.use_nuc = use_nucleotides
 
 
     def inspect(self):
@@ -40,11 +57,9 @@ class ChromosomeBase:
         initializeMutationTypeNuc("m2", 0.1, "g", -0.03, 0.2);  
         """
         elements = self.data.script.unique()
-        #default SYN element  type:
         mut_lists = [i.mlist for i in elements]
         mutations = set(itertools.chain(*mut_lists))
-        self.mutations = mutations
-        return "\n  ".join([i.to_slim(nuc=True) for i in mutations])
+        return "\n  ".join([i.to_slim(nuc=self.use_nuc) for i in mutations])
 
     def to_slim_element_types(self):
         """
@@ -57,7 +72,6 @@ class ChromosomeBase:
         initializeGenomicElementType("g2", c(m1,m2), c(5,1), mm);
         """
         elements = self.data.script.unique()
-        print(elements)
         return "\n  ".join([i.to_slim() for i in elements])
 
     def to_slim_elements(self):
@@ -72,24 +86,34 @@ class ChromosomeBase:
         """
         #Note: will need to fix the formatting on this chunk**
         commands = []
+
+        # iterate over int start positions of elements
         for idx in self.data.index:
-            if self.data.loc[idx, ["coding"]].all() == 0:
+
+            # skip non-coding regions
+            if self.data.loc[idx, "coding"] == 0:
                 #commands.append(
                     #"initializeGenomicElement({}, {}, {});"
                     #.format(*self.data.loc[idx, ["eltype", "start", "end"]])
                     #)
                 pass
-            if self.data.loc[idx, ["coding"]].any() == 1:
-            #we should really stop users from mixing in neutral and non-neutral mutations
+
+            # define synonymous type at every 3rd position?
+            # TODO: we need to require exons == length multiples of 3 
+            # we should really stop users from mixing in neutral and non-neutral mutations
+            if self.data.loc[idx, "coding"] == 1:
+                ele = self.data.loc[idx]
                 commands.append(
-                    "types = rep({}, asInteger(floor(({}-{})/3)));\n" 
-                    "starts = {}+seqLen(integerDiv(({}-{}),3)) * 3;\n"
-                    "ends = starts + 1;\n"
-                    "initializeGenomicElement(types, starts, ends);\n"
-                    .format(*self.data.loc[idx, ["eltype", "end", 
-                        "start", "start", "end", "start"]]
-                           )
+                    f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
                 )
+                # COMMENTING OUT FOR NOW while working on reproduction.
+                # length = ele.end - ele.start
+                # commands.append(
+                #     f"types = rep({ele.eltype}, {length}); "
+                #     f"starts = {ele.start} + seqLen(integerDiv({length}, 3)) * 3; "
+                #     "ends = starts + 1; "
+                #     "initializeGenomicElement(types, starts, ends); "
+                # )
         return "\n  ".join(commands)
 
 
@@ -139,10 +163,8 @@ class ChromosomeRandom(ChromosomeBase):
         self.intron = intron if intron is not None else INTRON
         self.exon = exon if exon is not None else EXON
         self.noncds = noncds if noncds is not None else NONCDS
-        self.run()
 
-        elements = [intron, exon, noncds]
-
+        elements = [self.intron, self.exon, self.noncds]
         mutations = []
         for elem in elements:
             for mutation in elem.mlist:
@@ -150,7 +172,8 @@ class ChromosomeRandom(ChromosomeBase):
                     mutations.append(mutation.name)
         self.mutations = mutations
 
-    def get_noncds_span(self, scale:int=5000):
+
+    def get_noncds_span(self, scale:int=5000) -> int:
         """
         Draws the number of bases until the next element from an 
         exponential distribution. The scale is the average waiting
@@ -159,25 +182,25 @@ class ChromosomeRandom(ChromosomeBase):
         return int(self.rng.exponential(scale=scale))
 
 
-    def get_cds_spans(self, length_scale:int=1000, intron_scale:int=1000):
+    def get_cds_spans(self, length_scale:int=1000, intron_scale:int=1000) -> List[int]:
         """
         Draws the number of exons in a fixed length space from a 
         Poisson distribution. The lam parameter is the average number
-        of events per sampled region. A value of 0.005 means one intron
-        per 200bp.
+        of events per sampled region. A value of 0.005 means one 
+        intron per 200bp.
         """
         cds_span = int(self.rng.exponential(scale=length_scale))
-        n_introns = int(self.rng.poisson(cds_span / intron_scale))
+        n_introns = int(self.rng.poisson(lam=cds_span / intron_scale))
         if n_introns:
             splits = self.rng.dirichlet(np.ones(n_introns * 2 - 1))
             splits = (splits * cds_span).astype(int)
             splits[-1] = cds_span - sum(splits[:-1])
         else:
-            splits = np.array([cds_span])
+            splits = [cds_span]
         return splits
 
 
-    def run(self, noncds_scale=5000, cds_scale=1000, intron_scale=1000):
+    def run(self, noncds_scale=5000, cds_scale=1000, intron_scale=1000) -> None:
         """
         Generates a chromosome by randomly sampling waiting times 
         between CDS regions, and the number of introns within CDS
@@ -185,42 +208,45 @@ class ChromosomeRandom(ChromosomeBase):
         """
         idx = 0
         while 1:
-            # get non-cds span
-            pos = self.get_noncds_span(noncds_scale)
+            # start with a non-cds span
+            span = self.get_noncds_span(noncds_scale)
             self.data.loc[idx] = (
                 self.noncds.altname, 
-                idx, min(idx + pos, self.genome_size), 
+                idx + 1, 
+                min(idx + 1 + span, self.genome_size), 
                 self.noncds.name, self.noncds,
                 self.noncds.coding,
             )
-            idx += pos + 1
+            idx += span + 1
             
-            # get cds span
-            posses = self.get_cds_spans(cds_scale, intron_scale)
+            # get a cds span
+            spans = self.get_cds_spans(cds_scale, intron_scale)
 
             # break if cds goes beyond the end of the genome.
-            if idx + posses.sum() > self.genome_size:
+            if idx + sum(spans) + len(spans) > self.genome_size:
                 break
 
             # enter the cds into data
-            for enum, pos in enumerate(posses):
+            for enum, span in enumerate(spans):
+                # even numbered segments are the exons (0, 2, 4)
                 if not enum % 2:
                     self.data.loc[idx] = (
                         self.exon.altname, 
-                        idx, idx + pos + 1, 
+                        idx + 1, 
+                        idx + span + 1, 
                         self.exon.name, self.exon,
                         self.exon.coding,
                     )
                 else:
                     self.data.loc[idx] = (
                         self.intron.altname,
-                        idx, idx + pos + 1,
+                        idx + 1,
+                        idx + span + 1,
                         self.intron.name, self.intron, 
                         self.intron.coding,
                     )
-                idx += pos + 1
+                idx += span + 1
         self.data = self.data.sort_index()
-
 
 
 class ChromosomeExplicit(ChromosomeBase):
@@ -274,17 +300,23 @@ if __name__ == "__main__":
     e0 = shadie.etype([m0, m1], [1, 2])
     e1 = shadie.etype([m2], [1])
 
-    # design chromosome of elements
-    # Do we want users to be able to put in a chromosome like this 
-    #and have the gaps filled with neutral portions?
-    chrom = shadie.chromosome.explicit({
-        (500, 1000): e1,
-        (2000, 3000): e0,
-        (3001, 5000): e1,
-    })
+    # print(e0.mlist)
 
-    print(chrom.data.iloc[:, :5,])
-    #elem = chrom.data.loc[500]["eltype"]
-    #chrom.to_slim_mutation_types()
-    test = chrom.mutations
-    print(test)
+    chrom = shadie.chromosome.random(100000)
+    print(chrom.data.iloc[:50, :4])
+
+    # # design chromosome of elements
+    # # Do we want users to be able to put in a chromosome like this 
+    # # and have the gaps filled with neutral portions? YES.
+    # chrom = shadie.chromosome.explicit({
+    #     (500, 1000): e1,
+    #     (2000, 3000): e0,
+    #     (3001, 5000): e1,
+    # })
+
+    # #elem = chrom.data.loc[500]["eltype"]
+    # #chrom.to_slim_mutation_types()
+    # test = chrom.mutations
+    # print(chrom.data.head())
+    # # print(test)
+    # # chrom.to_slim_elements()

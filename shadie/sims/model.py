@@ -31,7 +31,6 @@ late() {
 2000 late() {
     sim.outputFull(ages=T);
 }
-
 """
 
 import subprocess
@@ -40,92 +39,45 @@ from contextlib import AbstractContextManager
 from loguru import logger
 from shadie.base.mutations import MutationTypeBase
 from shadie.base.elements import ElementType
-#from shadie.reproduction.reproduction import Reproduction
+from shadie.reproduction.api import ReproductionApi
+from shadie.sims.format import (
+    format_event_dicts_to_strings,
+    INITIALIZE,
+    EARLY,
+    LATE,
+    FITNESS,
+    REPRODUCTION,
+    SURVIVAL,
+    CUSTOM,
+)
 
 # cannot do both mutationRate and nucleotidebased 
-
-INIT = """
-initialize() {{
-   
-  // model type
-  initializeSLiMModelType("nonWF");
-
-  // config
-  initializeRecombinationRate({recombination_rate}, {genome_size});
-  initializeMutationRate({mutation_rate});
-  initializeTreeSeq();
-
-  // MutationType init
-  {mutations}
-
-  // ElementType init
-  {elements}
-
-  // Chromosome (GenomicElement init)
-  {chromosome}
-
-  // constants (Ne)
-  {constants}
-
-  // extra scripts 
-  {scripts}
-}}
-"""
-# --------------------------------------------
-
-REPRO = """
-reproduction({population}) {{ //generates offspring
-    {scripts}
-}}
-"""
-
-FIT = """
-{idx} fitness({mutation}) //adjusts fitness calculation
-{{
-    {scripts}
-
-}}
-"""
-
-SURV = """
-{idx} survival({population}) //implements survivavl adjustments
-{{
-    {scripts}
-
-}}
-"""
-
-# --------------------------------------------
-
-EARLY = """
-{time} early() //executes after offspring are generated
-{{
-  {scripts}
-}}
-"""
-
-
-LATE = """
-{time} late() //execuutes after selection occurs
-{{
-  {scripts}
-}}
-"""
 
 
 class Model(AbstractContextManager):
     """
-    ...
-
-    Parameters
-    -----------
-    ...
-
+    The core shadie object class for creating SLiM scripts and 
+    validating input arguments using a context manager. 
     """
-    def __init__(self, ):
-        
-        # hold script components
-        self.script = {}
+    def __init__(self):       
+        # .map holds script components as a dict until converted to
+        # a string upon __exit__(). The dict maps events to lists of
+        # dicts with information for the event code block.
+        # {
+        #   'initialize': {'constants': ..., 'mutations': ...}, 
+        #   'early': {'time': 10, script: '...', comment: '...'},
+        #   'late': {'time': None, script: '...', comment: '...'},
+        # }
+        self.map = {
+            'initialize': [],
+            'early': [],
+            'late': [],
+            'fitness': [],
+            'survival': [],
+            'reproduction': [],
+            'custom': [],
+        }
+        self.script = ""
         self.stdout = ""
 
         # store chromosome (mut, ele), constants, and populations
@@ -133,6 +85,9 @@ class Model(AbstractContextManager):
         self.constants = {}
         self.populations = {}
         self.length = {} #length of simulation in generations
+
+        self.reproduction = ReproductionApi(self)
+
 
     def __repr__(self):
         return "<shadie.Model ... >"
@@ -150,19 +105,68 @@ class Model(AbstractContextManager):
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         """
-        Fills the script with context-defined content
+        Fills the script with context-defined content in a set 
+        order and runs checks on the script.
         """
-        # order script keys
-        nulls = [i for i in self.script if i[1] is None]
-        ikeys = sorted([i for i in self.script if isinstance(i[1], int)])
-        lkeys = [i for i in self.script if i[1] not in nulls or ikeys]
-        sorted_keys = [nulls.pop(nulls.index(("initialize", None)))]
-        sorted_keys += ikeys
-        sorted_keys += nulls
-        sorted_keys += lkeys
+        sorted_keys = [
+            'initialize', 'timed', 'early', 'reproduction',
+            'fitness', 'survival', 'custom',
+        ]
 
-        # compress script to string
-        self.script = "\n".join([self.script[i] for i in sorted_keys])
+        # copy map and split timed events to a new key list
+        mapped = self.map.copy()
+        mapped['timed'] = []
+        mapped_keys = list(mapped.keys())
+        for key in mapped_keys:
+            if 'time' in mapped[key]:
+                mapped['timed'].append(mapped[key].pop(key))
+
+        # visit events by ordered key type
+        script_chunks = []
+        for key in sorted_keys:
+
+            # sort events within key type
+            if key == "timed":
+                events = sorted(mapped[key], key=lambda x: x['time'])
+            elif key == "fitness":
+                events = sorted(mapped[key], key=lambda x: x['idx'])
+            elif key == "survival":
+                events = sorted(mapped[key], key=lambda x: x['idx'])
+            else:
+                events = mapped[key]
+
+            # string format each event and add to script chunks list
+            for event in events:
+                event = format_event_dicts_to_strings(event)
+
+                # string formatting for code blocks
+                if key == "initialize":
+                    script = INITIALIZE.format(**event)
+
+                elif key == "early":
+                    script = EARLY.format(**event)
+                
+                elif key == "late":
+                    script = LATE.format(**event)
+
+                elif key == 'fitness':
+                    script = FITNESS.format(**event)
+
+                elif key == 'survival':
+                    script = SURVIVAL.format(**event)
+
+                elif key == 'custom':
+                    script = CUSTOM.format(**event)
+
+                elif key == 'reproduction':
+                    script = REPRODUCTION.format(**event)
+
+                else:
+                    raise NotImplementedError(f"{key} not supported")
+                script_chunks.append(script)
+
+        # collapse into the final script string
+        self.script = "\n".join(script_chunks)
 
         # attempt to validate script
         self._check_script()
@@ -182,144 +186,121 @@ class Model(AbstractContextManager):
         """
         Initialize a simulation. This fills the SLIM intialize() code
         block with MutationType, ElementType, Element, and other init
-        type code. 
+        type code.
         """
         logger.debug("initializing Model")
         constants = {} if constants is None else constants
         scripts = [] if scripts is None else scripts
-        self.script[('initialize', None)] = (
-            INIT.format(**{
-                "mutation_rate": mut,
-                "recombination_rate": recomb,
-                "genome_size": chromosome.genome_size,
-                "mutations": chromosome.to_slim_mutation_types(),
-                "elements": chromosome.to_slim_element_types(),
-                "chromosome": chromosome.to_slim_elements(),
-                "constants": "\n  ".join([
-                    f"defineConstant('{key}', {val});" for key, val
-                    in constants.items()
-                ]),
-                "scripts": "\n  ".join([i.strip(";") + ";" for i in scripts]),
-            })
-        )
+        
+        self.map['initialize'].append({
+            'mutation_rate': mut,
+            'recombination_rate': recomb,
+            'genome_size': chromosome.genome_size,
+            'mutations': chromosome.to_slim_mutation_types(),
+            'elements': chromosome.to_slim_element_types(),
+            'chromosome': chromosome.to_slim_elements(),
+            'constants': constants,
+            'scripts': scripts,
+        })
 
 
-    def reproduction(self, population:Union[str, None], scripts:Union[str, list]
+    def early(
+        self, 
+        time:Union[int, None], 
+        scripts:Union[str, list], 
+        comment:Union[str,None]=None,
         ):
         """
-        Add reproduction block code here.
+        Add event that happens before selection every generation.
         """
-        logger.debug("Reproduction Block")
-
-        # compress list of scripts into a string
-        if isinstance(scripts, list):
-            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
-
-        # population as str or empty
-        pop_str = str(population) if population else ""
-
-        self.script[("reproduction", population)] = (
-            REPRO.format(**{'population': pop_str, 'scripts': scripts})
-        ).lstrip()
+        self.map['early'].append({
+            'time': time,
+            'scripts': scripts,
+            'comment': comment,
+        })
 
 
-    def early(self, time:Union[int, None], scripts:Union[str, list]):
+    def fitness(
+        self, 
+        mutation:Union[str, None], 
+        scripts:Union[str, list], 
+        idx:Union[str, None]=None,
+        comment:Union[str,None]=None,
+        ):
         """
-        Add an event that happens before selection in every generation (early).
+        Add event that adjusts fitness values before fitness calc.
         """
-        # todo: validate script
-        # compress list of scripts into a string
-        if isinstance(scripts, list):
-            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
-
-        # time as int or empty
-        time_str = str(time) if time else ""
-
-        # expand EARLY script block
-        self.script[("early", time)] = (
-            EARLY.format(**{'time': time_str, 'scripts': scripts})
-        ).lstrip()
+        self.map['fitness'].append({
+            'idx': idx,
+            'mutation': mutation,
+            'scripts': scripts,
+            'comment': comment,
+        })
 
 
-    def fitness(self, mutation:Union[str, None], scripts:Union[str, list], idx:Union[str, None]):
+    def survival(
+        self, 
+        population:Union[str, None], 
+        scripts:Union[str, list], 
+        idx:Union[str, None],
+        comment:Union[str,None]=None,        
+        ):
         """
-        Add an event that adjusts fitness values before fitness calculation.
+        Add event that adjusts fitness values before fitness calc.
         """
-        # todo: validate script
-        # compress list of scripts into a string
-        if isinstance(scripts, list):
-            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
-
-        # idx as str or empty
-        idx_str = str(idx) if idx else ""
-        # mutation as str or empty
-        mutation_str = str(mutation) if mutation else ""
-
-        # expand FITNESS script block
-        self.script[("fitness", mutation)] = (
-            FIT.format(**{'idx': idx_str, 'mutation': mutation_str, 'scripts': scripts})
-        ).lstrip()
+        self.map['survival'].append({
+            'idx': idx,
+            'population': population,
+            'scripts': scripts,
+            'comment': comment,
+        })
 
 
-    def survival(self, population:Union[str, None], scripts:Union[str, list], idx:Union[str, None]):
-        """
-        Add an event that adjusts fitness values before fitness calculation.
-        """
-        # todo: validate script
-        # compress list of scripts into a string
-        if isinstance(scripts, list):
-            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
-
-        # idx as str or empty
-        idx_str = str(idx) if idx else ""
-        # mutation as str or empty
-        population_str = str(population) if population else ""
-
-        # expand FITNESS script block
-        self.script[("survival", population)] = (
-            SURV.format(**{'idx': idx_str, 'population': population_str, 'scripts': scripts})
-        ).lstrip()
-
-
-    def late(self, time:Union[int, None], scripts:Union[str, list]):
+    def late(
+        self, 
+        time:Union[int, None], 
+        scripts:Union[str, list],
+        comment:Union[str,None]=None,
+        ):
         """
         Add an event that happens after every generation (late) if 
         time is None, or only after a particular generation if time
         is an integer.
         """
-        # todo: validate script
-        if isinstance(scripts, list):
-            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
-
-        # time as int or empty
-        time_str = str(time) if time else ""
-
-        # expand LATE script block
-        self.script[("late", time)] = (
-            LATE.format(**{'time': time_str, 'scripts': scripts})
-        ).lstrip()
+        self.map['late'].append({
+            'time': time,
+            'scripts': scripts,
+            'comment': comment,
+        })
 
 
-    def custom(self, scripts:str):
+    def custom(
+        self, 
+        scripts:str, 
+        comment:Union[str,None]=None,
+        ):
         """
         Add custom scripts outside without formatting by shadie. 
-        Scripts must be Eidos-formatted 
+        Scripts must be Eidos-formatted. 
         """
-        self.script[("custom", None)] = (scripts).lstrip()
+        self.map['custom'].append({
+            'scripts': scripts,
+            'comment': comment,
+        })
 
-    def shadie(self, obj):
-        """
-        accepts shadie-formatted Lifecycle class object
-        """
 
-        for i in obj.rpdndict:
-            if i[0] == "early":
-                early(i) 
-        for i in obj.rpdndict:
-             if i[0] == "reproduction":
-                reproduction(i)
-        for i in obj.fitdict:
-            fitness(i) 
+    # def shadie(self, obj):
+    #     """
+    #     accepts shadie-formatted Lifecycle class object
+    #     """
+    #     for i in obj.rpdndict:
+    #         if i[0] == "early":
+    #             early(i) 
+    #     for i in obj.rpdndict:
+    #          if i[0] == "reproduction":
+    #             reproduction(i)
+    #     for i in obj.fitdict:
+    #         fitness(i) 
 
 
     def _check_script(self):
@@ -336,7 +317,6 @@ class Model(AbstractContextManager):
         """
         Write SLIM script to the outname filepath.
         """
-
         with open(outname, 'w') as out:
             out.write(self.script)
 
@@ -388,50 +368,28 @@ if __name__ == "__main__":
             exon=e1,
         )
         
-        print(chrom.data.iloc[:, :4,])
-        print(chrom.mutations)
+        # print(chrom.data.iloc[:, :4,])
+        # print(chrom.mutations)
 
         # init the model
         model.initialize(chromosome=chrom)
         
-        # add reproduction 
+        model.early(
+            time=1000, 
+            scripts="sim.addSubpop('p1', 1000)", 
+            comment="diploid sporophytes",
+        )
+        model.fitness(
+            mutation="m4",
+            scripts="return 1 + mut.selectionCoeff",
+            comment="gametophytes have no dominance effects, s1",
+        )
 
-        # model.reproduction()
-        model.early(1000, "sim.addSubpop('p1', 1000); //diploid sporophytes")
-        model.fitness("m4", "return 1 + mut.selectionCoeff; //gametophytes have no dominance effects", "s1" )
-        model.custom("s2 fitness(m5) { return 1 + mut.selectionCoeff; //gametophytes have no dominance effects }")
+        model.custom(
+            scripts="s2 fitness(m5) {\n    return 1 + mut.selectionCoeff;\n}",
+            comment="gametophytes have no dominance effects",
+        )
 
-    print(model.script)
-
-    with shadie.Model() as model:
-        
-        # define mutation types
-        m0 = shadie.mtype(0.5, 'n', 2.0, 1.0)
-        m1 = shadie.mtype(0.5, 'g', 3.0, 1.0)
-        m2 = shadie.mtype(0.5, 'f', 0)
-        
-        # define elements types
-        e0 = shadie.etype([m0, m1], [1, 2])
-        e1 = shadie.etype([m2], [1])
-
-        # design chromosome of elements
-        # Do we want users to be able to put in a chromosome like this 
-        #and have the gaps filled with neutral portions?
-        chrom = shadie.chromosome.explicit({
-            (500, 1000): e1,
-            (2000, 3000): e0,
-            (3001, 5000): e1,
-        })
-
-        repro = shadie.reproduction.lifecycles.Bryophyte().dioicous(chromosome = chrom)
-
-        # init the model
-        model.initialize(chromosome=chrom)
-        
-        # add reproduction 
-        #model.reproduction()
-        model.early(1000, "sim.addSubpop('p1', 1000); //diploid sporophytes")
-        model.fitness("m4", "return 1 + mut.selectionCoeff; //gametophytes have no dominance effects", "s1" )
-        model.custom("s2 fitness(m5) { return 1 + mut.selectionCoeff; //gametophytes have no dominance effects }")
 
     print(model.script)
+    model.run()

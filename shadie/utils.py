@@ -5,6 +5,7 @@ Random utilities
 """
 
 import sys
+from typing import Union, List
 from loguru import logger
 
 

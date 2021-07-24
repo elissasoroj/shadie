@@ -182,6 +182,7 @@ class MutationTypeBase:
             marks.append(self._draw_means(axes))
         return canvas, axes, marks
 
+
     def inspect(self):
         """
         ...
