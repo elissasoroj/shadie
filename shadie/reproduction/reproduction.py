@@ -6,7 +6,6 @@ Convenience functions for constructing each reproduction mode
 
 from shadie.reproduction.scripts import (POPS, EARLY, FIT, ACTIVATE, 
 	DEACTIVATE, MATERNAL_EFFECT, SURV, LATE)
-from shadie.sims.model import Model
 from typing import Union
 
 
@@ -144,22 +143,39 @@ REPRO_HOMOSPORE = """
 //Hermaphroditic gametophytes
 """
 
-class Reproduction:
-
+class LifecycleBase:
 	def __init__(
-		self, 
+		self,
 		lineage = string(None),
-		mode = str(None),
+		chromosome = None,
 		):
 
-		self.mode =  mode
+		self.lineage = lineage
 
+class BryophytesBase(LifecycleBase): 
+    """
+    Generates a random chromosome from of a given length from a set of
+    intron, exon, and non-cds genomic ElementType objects. The default
+    elements are used if not entered by the user.
+    """
+    def __init__(
+    	self, 
+    	mode = str(), # 
+    	dNe = int(), #diploid Ne
+		gNe =  int(),  #haploid Ne
+		ftom = float.as_integer_ratio(1/1), #F:M sporophyte
+		spores = int(100), #number of spores per sporopyte
+		clonerate = float(1.0), #chance of cloning
+		clones = float(1.0), #number of clones
+		selfrate = float(0.0), #chance of intragametophytic selfing
+		maternalweight = float(0.0), #maternal contribution to fitness
+		deathchance = float(0.0), #random chance of death for both stages):
+		)
 
-	def bryophytes(self, mode):
-		"""
-	    Reproduction mode based on mosses, hornworts, and liverworts
-	    """
-	    #fitness callback:
+        super().__init__(chromosome)
+        self.chromosome = chromosome
+
+        #fitness callback:
 	    i = 4
 	    for mut in self.chromosome.mutations:
 	    	i = i + 1
@@ -180,15 +196,6 @@ class Reproduction:
 
         def dioicous(
         	self,
-        	dNe = int(), #diploid Ne
-			gNe =  int(),  #haploid Ne
-			ftom = float.as_integer_ratio(1/1), #F:M sporophyte
-			spores = int(100), #number of spores per sporopyte
-			clonerate = float(1.0), #chance of cloning
-			clones = float(1.0), #number of clones
-			selfrate = float(0.0), #chance of intragametophytic selfing
-			maternalweight = float(0.0), #maternal contribution to fitness
-			deathchance = float(0.0), #random chance of death for both stages
 			_maletag = 0,
 			_femtag = 1, 
 			_usedtag = 2,
@@ -204,7 +211,7 @@ class Reproduction:
         		EARLY.format(**{'activate': activate_str, 
         			'deactivate': mutation_str}).lstrip())
 
-	        return(repro("early", early_script))
+	        return("early", early_script)
 	        
 	        Model.repro("p1", REPRO_BRYO_DIO_p0)
 	        Model.survival("p0", SURV)
@@ -266,3 +273,7 @@ class Reproduction:
 		    self.femtag = hermtag
 		    self.maletag = hermtag
 
+if __name__ == "__main__":
+
+	repro = lifecycles.(bryophyte).dioicous()
+	repro = shadie.lifecycles.bryophyte.dioicous()
