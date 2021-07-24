@@ -22,14 +22,22 @@ class ChromosomeBase:
     using convenience functions, such as default, random, or explicit.
     This superclass is used to define functions shared by all of the
     subclasses, such as inspect, or for writing data to SLiM format.
+
+    Parameters:
+    -----------
+    genome_size: int
+        The size of the genome in bp
+    nucleotides: bool
+        Use initializeMutationTypeNuc instead of initializeMutationType
     """
-    def __init__(self, genome_size):
+    def __init__(self, genome_size, use_nucleotides=False):
         self.genome_size = genome_size
         self.data = pd.DataFrame(
             columns=['name', 'start', 'end', 'eltype', 'script', 'coding'],
             data=None,
         )
         self.mutations = []
+        self.use_nuc = use_nucleotides
 
 
     def inspect(self):
@@ -51,7 +59,7 @@ class ChromosomeBase:
         elements = self.data.script.unique()
         mut_lists = [i.mlist for i in elements]
         mutations = set(itertools.chain(*mut_lists))
-        return "\n  ".join([i.to_slim(nuc=True) for i in mutations])
+        return "\n  ".join([i.to_slim(nuc=self.use_nuc) for i in mutations])
 
     def to_slim_element_types(self):
         """
@@ -96,13 +104,17 @@ class ChromosomeBase:
             # we should really stop users from mixing in neutral and non-neutral mutations
             if self.data.loc[idx, "coding"] == 1:
                 ele = self.data.loc[idx]
-                length = ele.end - ele.start
                 commands.append(
-                    f"types = rep({ele.eltype}, {length}); "
-                    f"starts = {ele.start} + seqLen(integerDiv({length}, 3)) * 3; "
-                    "ends = starts + 1; "
-                    "initializeGenomicElement(types, starts, ends); "
+                    f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
                 )
+
+                # length = ele.end - ele.start
+                # commands.append(
+                #     f"types = rep({ele.eltype}, {length}); "
+                #     f"starts = {ele.start} + seqLen(integerDiv({length}, 3)) * 3; "
+                #     "ends = starts + 1; "
+                #     "initializeGenomicElement(types, starts, ends); "
+                # )
         return "\n  ".join(commands)
 
 
@@ -198,43 +210,43 @@ class ChromosomeRandom(ChromosomeBase):
         idx = 0
         while 1:
             # start with a non-cds span
-            pos = self.get_noncds_span(noncds_scale)
+            span = self.get_noncds_span(noncds_scale)
             self.data.loc[idx] = (
                 self.noncds.altname, 
-                idx, 
-                min(idx + pos, self.genome_size), 
+                idx + 1, 
+                min(idx + 1 + span, self.genome_size), 
                 self.noncds.name, self.noncds,
                 self.noncds.coding,
             )
-            idx += pos + 1
+            idx += span + 1
             
             # get a cds span
-            posses = self.get_cds_spans(cds_scale, intron_scale)
+            spans = self.get_cds_spans(cds_scale, intron_scale)
 
             # break if cds goes beyond the end of the genome.
-            if idx + sum(posses) > self.genome_size:
+            if idx + sum(spans) + len(spans) > self.genome_size:
                 break
 
             # enter the cds into data
-            for enum, pos in enumerate(posses):
+            for enum, span in enumerate(spans):
                 # even numbered segments are the exons (0, 2, 4)
                 if not enum % 2:
                     self.data.loc[idx] = (
                         self.exon.altname, 
-                        idx, 
-                        idx + pos + 1, 
+                        idx + 1, 
+                        idx + span + 1, 
                         self.exon.name, self.exon,
                         self.exon.coding,
                     )
                 else:
                     self.data.loc[idx] = (
                         self.intron.altname,
-                        idx,
-                        idx + pos + 1,
+                        idx + 1,
+                        idx + span + 1,
                         self.intron.name, self.intron, 
                         self.intron.coding,
                     )
-                idx += pos + 1
+                idx += span + 1
         self.data = self.data.sort_index()
 
 
@@ -292,7 +304,7 @@ if __name__ == "__main__":
     # print(e0.mlist)
 
     chrom = shadie.chromosome.random(100000)
-    print(chrom.data)
+    print(chrom.data.iloc[:50, :4])
 
     # # design chromosome of elements
     # # Do we want users to be able to put in a chromosome like this 
