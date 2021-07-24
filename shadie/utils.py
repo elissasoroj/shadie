@@ -9,19 +9,6 @@ from typing import Union, List
 from loguru import logger
 
 
-def clean_scripts(scripts: Union[str, List[str]]):
-    """
-    Ensures scripts end with a semi-colon
-    """
-    if isinstance(scripts, list):
-        scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
-    else:
-        scripts = (
-            scripts if scripts.endswith("}") else scripts.strip(";") + ";"
-        )
-    return scripts
-
-
 # logger will show time, function name, and message.
 LOGFORMAT = (
     "{time:hh:mm} | {level: <7} | "
