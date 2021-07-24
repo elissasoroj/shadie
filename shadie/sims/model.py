@@ -159,6 +159,7 @@ class Model(AbstractContextManager):
         logger.debug("initializing Model")
         constants = {} if constants is None else constants
         scripts = [] if scripts is None else scripts
+        
         self.script[('initialize', None)] = (
             INIT.format(**{
                 "mutation_rate": mut,
@@ -288,6 +289,6 @@ if __name__ == "__main__":
         model.initialize(chromosome=chrom)
         
         # add reproduction 
-        # model.reproduction()
+        # model.early()
 
     print(model.script)
