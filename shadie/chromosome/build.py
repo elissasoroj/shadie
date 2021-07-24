@@ -8,6 +8,7 @@ from typing import Union
 import itertools
 import pandas as pd
 import numpy as np
+from loguru import logger
 
 # internal imports
 from shadie.base.elements import ElementType
@@ -15,12 +16,20 @@ from shadie.base.defaults import SYN, NONCDS, INTRON, EXON, NEUT
 
 
 class ChromosomeBase:
+    """
+    Base Chromosome superclass. This class contains functions that 
+    are inherited by the Chromosome classes users will initialize
+    using convenience functions, such as default, random, or explicit.
+    This superclass is used to define functions shared by all of the
+    subclasses, such as inspect, or for writing data to SLiM format.
+    """
     def __init__(self, genome_size):
         self.genome_size = genome_size
         self.data = pd.DataFrame(
             columns=['name', 'start', 'end', 'eltype', 'script', 'coding'],
             data=None,
         )
+        self.mutations = []
 
 
     def inspect(self):
@@ -40,11 +49,8 @@ class ChromosomeBase:
         initializeMutationTypeNuc("m2", 0.1, "g", -0.03, 0.2);  
         """
         elements = self.data.script.unique()
-        #default SYN element  type:
-        elements = np.append(elements, SYN)
         mut_lists = [i.mlist for i in elements]
         mutations = set(itertools.chain(*mut_lists))
-        self.mutations = mutations
         return "\n  ".join([i.to_slim(nuc=True) for i in mutations])
 
     def to_slim_element_types(self):
@@ -59,7 +65,7 @@ class ChromosomeBase:
         """
         elements = self.data.script.unique()
         elements = np.append(elements, SYN)
-        print(elements)
+        logger.debug(f'elements: {elements}')
         return "\n  ".join([i.to_slim() for i in elements])
 
     def to_slim_elements(self):
@@ -74,25 +80,31 @@ class ChromosomeBase:
         """
         #Note: will need to fix the formatting on this chunk**
         commands = []
+
+        # iterate over int start positions of elements
         for idx in self.data.index:
-            if self.data.loc[idx, ["coding"]].all() == 0:
+
+            # skip non-coding regions
+            if self.data.loc[idx, "coding"] == 0:
                 #commands.append(
                     #"initializeGenomicElement({}, {}, {});"
                     #.format(*self.data.loc[idx, ["eltype", "start", "end"]])
                     #)
                 pass
-            if self.data.loc[idx, ["coding"]].any() == 1:
-            #we should really stop users from mixing in neutral and non-neutral mutations
+
+            # define synonymous type at every 3rd position?
+            # we should really stop users from mixing in neutral and non-neutral mutations
+            if self.data.loc[idx, "coding"] == 1:
+                ele = self.data.loc[idx]
+                length = ele.end - ele.start
                 commands.append(
-                    "types = rep({}, {}-{});"
-                    "starts = {}+seqLen(integerDiv(({}-{}),3)) * 3;"
-                    "ends = starts + 1"
-                    "initializeGenomicElement(types, starts, ends);"
-                    .format(*self.data.loc[idx, ["eltype", "end", 
-                        "start", "start", "end", "start"]]
-                           )
+                    f"types = rep({ele.eltype}, {length}); "
+                    f"starts = {ele.start} + seqLen(integerDiv({length}, 3)) * 3; "
+                    "ends = starts + 1; "
+                    "initializeGenomicElement(types, starts, ends); "
                 )
         return "\n  ".join(commands)
+
 
 
 class Chromosome(ChromosomeBase):
@@ -224,7 +236,6 @@ class ChromosomeRandom(ChromosomeBase):
         self.data = self.data.sort_index()
 
 
-
 class ChromosomeExplicit(ChromosomeBase):
     """
     Builds a chromosome dataframe from explicit instructions provided
@@ -278,15 +289,16 @@ if __name__ == "__main__":
 
     # design chromosome of elements
     # Do we want users to be able to put in a chromosome like this 
-    #and have the gaps filled with neutral portions?
+    # and have the gaps filled with neutral portions? YES.
     chrom = shadie.chromosome.explicit({
         (500, 1000): e1,
         (2000, 3000): e0,
         (3001, 5000): e1,
     })
 
-    print(chrom.data.iloc[:, :5,])
     #elem = chrom.data.loc[500]["eltype"]
     #chrom.to_slim_mutation_types()
     test = chrom.mutations
-    print(test)
+    print(chrom.data.head())
+    # print(test)
+    # chrom.to_slim_elements()
