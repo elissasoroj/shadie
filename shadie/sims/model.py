@@ -134,9 +134,6 @@ class Model(AbstractContextManager):
         self.populations = {}
         self.length = {} #length of simulation in generations
 
-        #self.reproduction = Reproduction()
-
-
     def __repr__(self):
         return "<shadie.Model ... >"
 
@@ -207,7 +204,7 @@ class Model(AbstractContextManager):
         )
 
 
-    def repro(self, population:Union[str, None], scripts:Union[str, list]
+    def reproduction(self, population:Union[str, None], scripts:Union[str, list]
         ):
         """
         Add reproduction block code here.
@@ -412,11 +409,13 @@ if __name__ == "__main__":
             (3001, 5000): e1,
         })
 
+        repro = shadie.reproduction.lifecycles.Bryophyte().dioicous(chromosome = chrom)
+
         # init the model
         model.initialize(chromosome=chrom)
         
         # add reproduction 
-        # model.reproduction()
+        #model.reproduction(repro)
         model.early(1000, "sim.addSubpop('p1', 1000); //diploid sporophytes")
         model.fitness("m4", "return 1 + mut.selectionCoeff; //gametophytes have no dominance effects", "s1" )
         model.custom("s2 fitness(m5) { return 1 + mut.selectionCoeff; //gametophytes have no dominance effects }")
