@@ -11,16 +11,17 @@ import numpy as np
 
 # internal imports
 from shadie.base.elements import ElementType
-from shadie.base.defaults import NONCDS, INTRON, EXON
+from shadie.base.defaults import SYN, NONCDS, INTRON, EXON, NEUT
 
 
 class ChromosomeBase:
     def __init__(self, genome_size):
         self.genome_size = genome_size
         self.data = pd.DataFrame(
-            columns=['name', 'start', 'end', 'eltype', 'script'],
+            columns=['name', 'start', 'end', 'eltype', 'script', 'coding'],
             data=None,
         )
+
 
     def inspect(self):
         """
@@ -39,8 +40,11 @@ class ChromosomeBase:
         initializeMutationTypeNuc("m2", 0.1, "g", -0.03, 0.2);  
         """
         elements = self.data.script.unique()
+        #default SYN element  type:
+        elements = np.append(elements, SYN)
         mut_lists = [i.mlist for i in elements]
         mutations = set(itertools.chain(*mut_lists))
+        self.mutations = mutations
         return "\n  ".join([i.to_slim(nuc=True) for i in mutations])
 
     def to_slim_element_types(self):
@@ -54,6 +58,8 @@ class ChromosomeBase:
         initializeGenomicElementType("g2", c(m1,m2), c(5,1), mm);
         """
         elements = self.data.script.unique()
+        elements = np.append(elements, SYN)
+        print(elements)
         return "\n  ".join([i.to_slim() for i in elements])
 
     def to_slim_elements(self):
@@ -66,14 +72,27 @@ class ChromosomeBase:
         initializeGenomicElement(g3, 0, 4684);
         initializeGenomicElement(g1, 4685, 4708);
         """
+        #Note: will need to fix the formatting on this chunk**
         commands = []
         for idx in self.data.index:
-            commands.append(
-                "initializeGenomicElement({}, {}, {});"
-                .format(*self.data.loc[idx, ["eltype", "start", "end"]])
-            )
+            if self.data.loc[idx, ["coding"]].all() == 0:
+                #commands.append(
+                    #"initializeGenomicElement({}, {}, {});"
+                    #.format(*self.data.loc[idx, ["eltype", "start", "end"]])
+                    #)
+                pass
+            if self.data.loc[idx, ["coding"]].any() == 1:
+            #we should really stop users from mixing in neutral and non-neutral mutations
+                commands.append(
+                    "types = rep({}, {}-{});"
+                    "starts = {}+seqLen(integerDiv(({}-{}),3)) * 3;"
+                    "ends = starts + 1"
+                    "initializeGenomicElement(types, starts, ends);"
+                    .format(*self.data.loc[idx, ["eltype", "end", 
+                        "start", "start", "end", "start"]]
+                           )
+                )
         return "\n  ".join(commands)
-
 
 
 class Chromosome(ChromosomeBase):
@@ -94,6 +113,12 @@ class Chromosome(ChromosomeBase):
         self.data.loc[8001] = (
             NONCDS.altname, 8001, 10000, NONCDS.name, NONCDS)
 
+        mutations = []
+        for element in self.data.values():
+            for mutation in element.mlist:
+                if mutation.name not in mutations:
+                    mutations.append(mutation.name)
+        self.mutations = mutations
 
 
 class ChromosomeRandom(ChromosomeBase): 
@@ -118,6 +143,14 @@ class ChromosomeRandom(ChromosomeBase):
         self.noncds = noncds if noncds is not None else NONCDS
         self.run()
 
+        elements = [intron, exon, noncds]
+
+        mutations = []
+        for elem in elements:
+            for mutation in elem.mlist:
+                if mutation.name not in mutations:
+                    mutations.append(mutation.name)
+        self.mutations = mutations
 
     def get_noncds_span(self, scale:int=5000):
         """
@@ -160,6 +193,7 @@ class ChromosomeRandom(ChromosomeBase):
                 self.noncds.altname, 
                 idx, min(idx + pos, self.genome_size), 
                 self.noncds.name, self.noncds,
+                self.noncds.coding,
             )
             idx += pos + 1
             
@@ -177,12 +211,14 @@ class ChromosomeRandom(ChromosomeBase):
                         self.exon.altname, 
                         idx, idx + pos + 1, 
                         self.exon.name, self.exon,
+                        self.exon.coding,
                     )
                 else:
                     self.data.loc[idx] = (
                         self.intron.altname,
                         idx, idx + pos + 1,
-                        self.intron.name, self.intron,
+                        self.intron.name, self.intron, 
+                        self.intron.coding,
                     )
                 idx += pos + 1
         self.data = self.data.sort_index()
@@ -211,12 +247,19 @@ class ChromosomeExplicit(ChromosomeBase):
         assert all(isinstance(i, ElementType) for i in data.values() if i), (
             "values of input data should be ElementType objects.")
 
+        mutations = []
+        for element in data.values():
+            for mutation in element.mlist:
+                if mutation.name not in mutations:
+                    mutations.append(mutation.name)
+        self.mutations = mutations
+
         # entere explicit dict into data
         for key in sorted(data, key=lambda x: x[0]):
             start, end = key
             if data[key] is not None:
                 self.data.loc[start] = (
-                    data[key].altname, start, end, data[key].name, data[key])
+                    data[key].altname, start, end, data[key].name, data[key], data[key].coding)
 
 
 if __name__ == "__main__":
@@ -227,15 +270,23 @@ if __name__ == "__main__":
     # define mutation types
     m0 = shadie.mtype(0.5, 'n', 2.0, 1.0)
     m1 = shadie.mtype(0.5, 'g', 3.0, 1.0)
+    m2 = shadie.mtype(0.5, 'f', 0)
     
     # define elements types
     e0 = shadie.etype([m0, m1], [1, 2])
-    e1 = shadie.etype([m1], [1])
+    e1 = shadie.etype([m2], [1])
 
     # design chromosome of elements
+    # Do we want users to be able to put in a chromosome like this 
+    #and have the gaps filled with neutral portions?
     chrom = shadie.chromosome.explicit({
         (500, 1000): e1,
         (2000, 3000): e0,
         (3001, 5000): e1,
     })
-    print(chrom.data.iloc[:, :3])
+
+    print(chrom.data.iloc[:, :5,])
+    #elem = chrom.data.loc[500]["eltype"]
+    #chrom.to_slim_mutation_types()
+    test = chrom.mutations
+    print(test)

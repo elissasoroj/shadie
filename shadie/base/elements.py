@@ -18,7 +18,6 @@ import toyplot
 from shadie.base.mutations import MutationList, MutationTypeBase
 
 
-
 class ElementType:
     """
     Makes element types for the simulation. An Element contains one or
@@ -38,8 +37,6 @@ class ElementType:
         self,
         mutations: List[MutationTypeBase],
         frequencies: List[float],
-        mutation_rate: float = 1e-9,
-        mutation_matrix: str = "mmJukesCantor",
         altname=None,
         ):
     
@@ -55,9 +52,16 @@ class ElementType:
             else mutations
         )
 
+        #store coding attribute (0 = noncoding)
+        test = 0
+        for mut in self.mlist:
+            test += mut.coding
+        if test > 0:
+            self.coding = 1
+        else:
+            self.coding = 0
+
         self.freq = frequencies
-        self.mutmatrix = f"{mutation_matrix}({mutation_rate}/3)"
-        self.mutrate = mutation_rate
 
         #check frequency formatting
         if isinstance(self.freq, float):
@@ -71,7 +75,7 @@ class ElementType:
     def __repr__(self):
         view = [
             self.altname, self.name, self.mlist.names, 
-            self.freq, self.mutmatrix
+            self.freq
         ]
         return f"<ElementType: {', '.join(map(str, view))}>"
 
@@ -92,7 +96,6 @@ class ElementType:
             "c({})".format(",".join(self.mlist.names)),
             str(self.freq[0]) if len(self.freq) == 1 else 
             "c({})".format(",".join(map(str, self.freq))),
-            self.mutmatrix,
         ])
         return f"initializeGenomicElementType({inner});"
 
@@ -170,7 +173,7 @@ class ElementList(list):
 
 
 
-# class EElementList:
+# class ElementList:
 #     """
 #     Elementlist container class for multiple ElementType objects.
 #     """   
@@ -228,9 +231,10 @@ if __name__ == "__main__":
     # create elements (a mutation list with frequencies)
     ele1 = ElementType(mlist, (1, 1), )
     ele2 = ElementType(mlist, (0.5, 1))
-    print(ele1)
+    print(ele1.mlist)
     print(ele2)
     print(ele2.to_slim())
+    print(ele2.coding)
 
     # create an ElementList ()
 

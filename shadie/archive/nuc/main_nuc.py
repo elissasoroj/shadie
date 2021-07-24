@@ -15,28 +15,9 @@ from loguru import logger
 from shadie.chromosome import Chromosome
 from shadie.demography import Demography
 
-
 class Shadie(object):
-    """
-    Builds script to run SLiM3 simulation
+    "Produces a shadie.slim script for running a simulation in SLiM3"
 
-    Parameters:
-    -----------
-    tree: (str)
-        Optional. A newick string or Toytree object of a species tree with edges in 
-        SLiM 'generation' units
-
-    Ne (int): default = 1000
-        The effective population size. This value will be set to all edges of the tree.
-
-    organism (str):
-        Options: "pteridophyte", "bryophyte", "angiosperm".
-        Defines the haploid/diploid lifecycle and how selection will act at different
-        life stages. Also defines how individuals replicate and hoow gametes are generated
-
-    recomb (float):
-        The per-site per-generation recombination rate.
-    """
     def __init__(
         self,
         tree=None,              # reads in 
@@ -46,17 +27,36 @@ class Shadie(object):
         reproduction = None,    # defines how gametes get selected and replicate
         recomb = 1e-9,          # sets rate in `initializeRecombinationRate`, also accepts map
         generations = 10000,     #required if no tree object is supplied
-        model = "WF",
-        mutation_rate = 1e-9
+        model = "WF"
         ):
+        """
+        Builds script to run SLiM3 simulation
+
+        Parameters:
+        -----------
+        tree: (str)
+            Optional. A newick string or Toytree object of a species tree with edges in 
+            SLiM 'generation' units
+
+        Ne (int): default = 1000
+            The effective population size. This value will be set to all edges of the tree.
+
+        organism (str):
+            Options: "pteridophyte", "bryophyte", "angiosperm".
+            Defines the haploid/diploid lifecycle and how selection will act at different
+            life stages. Also defines how individuals replicate and hoow gametes are generated
+
+        recomb (float):
+            The per-site per-generation recombination rate.
+
+        """
         self.model = model         # nonWF is needed for repoduction 
+        self.recomb = recomb
         self.Ne = Ne
         self.chromosome = chromosome
         self.tree = tree
         self.reproduction = reproduction
         self.gens = generations
-        self.mutrate = mutation_rate
-        self.recomb = recomb
         
         if self.tree is not None:
             initdemog = Demography(self.tree)
@@ -118,13 +118,14 @@ class Shadie(object):
         script = open(self.filename, "w") #overwrites old file
         init1 = (
             "initialize() {\ninitializeSLiMModelType('"+self.model+"');\n"
+            "initializeSLiMOptions(nucleotideBased=T);\n"
+            "initializeHotspotMap(1.0);\n"
             "initializeSex('A');\n"
             "initializeTreeSeq();\n"
-            f"initializeMutationRate({self.mutrate});\n"
             f"initializeAncestralNucleotides(randomNucleotides({int(self.gensize)}));\n")
         init2 = ""
         for key in self.mutationlist.mutationdict:
-            init2 += f"initializeMutationType({self.mutationlist.mutationdict[key]});\n"
+            init2 += f"initializeMutationTypeNuc({self.mutationlist.mutationdict[key]});\n"
             f"{key}.convertToSubstitution = T;\n"
         
         init3 = ""
@@ -153,7 +154,7 @@ class Shadie(object):
             )
         #write the reproduction callbacks
         if self.reproduction is not None:
-            rpdn1 = (
+            rep1 = (
                 "\nreproduction() {\n"
                 "g_1 = genome1;\n"
                 "g_2 = genome2;\n"
@@ -211,7 +212,7 @@ class Shadie(object):
                 "}\n"
                 )
         else:
-            rpdn1 = ""
+            rep1 = ""
 
         #write the demography
         if self.tree is not None:
@@ -318,4 +319,4 @@ if __name__ == "__main__":
         feature="Ne", 
         values={i: np.random.randint(10000, 100000) for i in tree.idx_dict}
     )
-    tree_sim = Shadie(tree=randtree)
+    tree_sim = Shadie(tree = randtree)

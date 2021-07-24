@@ -1,4 +1,4 @@
-# Installation
+<h1>Installation</h1>
 
 ## Local Install
 
@@ -7,7 +7,7 @@ Currently, the only way to install `shadie` is through a local install:
 ``` bash
 #dependencies:
 conda install pandas, numpy, toyplot, toytree, altair, msprime, pyslim, tskit, \
-	loguru, IPython -c conda-forge
+	loguru, ipython -c conda-forge
 
 #clone and install from GitHub
 git clone [https://github.com/elissasoroj/shadie.git]

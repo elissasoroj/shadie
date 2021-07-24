@@ -1,4 +1,4 @@
-# Tutorial
+<h1>Tutorial</h1>
 
 ## Notebook Tutorials
 Jupyter Notebook tutorials are available [here](https://github.com/elissasoroj/shadie/tree/main/shadie/notebooks). There is a detailed notebook for each 'step' of using `shadie` and an example full workflow. 

@@ -40,22 +40,20 @@ from contextlib import AbstractContextManager
 from loguru import logger
 from shadie.base.mutations import MutationTypeBase
 from shadie.base.elements import ElementType
+# from shadie.reproduction.reproduction import Reproduction
+#from shadie.reproduction import Reproduction
 
 # cannot do both mutationRate and nucleotidebased 
-OLD = """
-initializeMutationRate({mutation_rate});
-"""
 
 INIT = """
 initialize() {{
    
   // model type
   initializeSLiMModelType("nonWF");
-  initializeSLiMOptions(nucleotideBased=T);
 
   // config
   initializeRecombinationRate({recombination_rate});
-  initializeAncestralNucleotides(randomNucleotides({genome_size}));
+  initializeMutationRate({mutation_rate});
   initializeTreeSeq();
 
   // MutationType init
@@ -76,14 +74,41 @@ initialize() {{
 """
 # --------------------------------------------
 
-LATE = """
-{time} late() {{
+REPRO = """
+reproduction({population}) {{ //generates offspring
+    {scripts}
+}}
+"""
+
+FIT = """
+{idx} fitness({mutation}) //adjusts fitness calculation
+{{
+    {scripts}
+
+}}
+"""
+
+SURV = """
+{idx} survival({population}) //implements survivavl adjustments
+{{
+    {scripts}
+
+}}
+"""
+
+# --------------------------------------------
+
+EARLY = """
+{time} early() //executes after offspring are generated
+{{
   {scripts}
 }}
 """
 
-EARLY = """
-{time} early() {{
+
+LATE = """
+{time} late() //execuutes after selection occurs
+{{
   {scripts}
 }}
 """
@@ -100,7 +125,7 @@ class Model(AbstractContextManager):
     """
     def __init__(self, ):
         
-        # hold script components
+        # hold script components as a dict until __exit__ converts to a str
         self.script = {}
         self.stdout = ""
 
@@ -108,6 +133,9 @@ class Model(AbstractContextManager):
         self.chromosome = None
         self.constants = {}
         self.populations = {}
+        self.length = {} #length of simulation in generations
+
+        # self.reproduction = Reproduction()
 
 
     def __repr__(self):
@@ -131,9 +159,17 @@ class Model(AbstractContextManager):
         # order script keys
         nulls = [i for i in self.script if i[1] is None]
         ikeys = sorted([i for i in self.script if isinstance(i[1], int)])
+
+        # which type is not null or integer?
+        lkeys = [i for i in self.script if i not in nulls or ikeys]
+
+        # remove init from the nulls b/c it must come first
         sorted_keys = [nulls.pop(nulls.index(("initialize", None)))]
+
+        # then order keys by: sorted-integers, nulls, others
         sorted_keys += ikeys
         sorted_keys += nulls
+        sorted_keys += lkeys
 
         # compress script to string
         self.script = "\n".join([self.script[i] for i in sorted_keys])
@@ -144,17 +180,19 @@ class Model(AbstractContextManager):
 
 
     def initialize(
-        self, 
-        chromosome, 
+        self,
+        chromosome,
+        length:int=1000, #length of sim in # of generations
         mut:float=1e-8, 
         recomb:float=1e-9, 
         constants:Union[None, dict]=None,
         scripts:Union[None, list]=None,
+        fileout:str="shadie.trees",
         ):
         """
         Initialize a simulation. This fills the SLIM intialize() code
         block with MutationType, ElementType, Element, and other init
-        type code. 
+        type code.
         """
         logger.debug("initializing Model")
         constants = {} if constants is None else constants
@@ -177,15 +215,28 @@ class Model(AbstractContextManager):
         )
 
 
-    def reproduction(self, population:str, scripts:Union[str, list]):
+    def repro(self, population:Union[str, None], scripts:Union[str, list]
+        ):
         """
         Add reproduction block code here.
         """
+        logger.debug("Reproduction Block")
+
+        # compress list of scripts into a string
+        if isinstance(scripts, list):
+            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
+
+        # population as str or empty
+        pop_str = str(population) if population else ""
+
+        self.script[("reproduction", population)] = (
+            REPRO.format(**{'population': pop_str, 'scripts': scripts})
+        ).lstrip()
 
 
     def early(self, time:Union[int, None], scripts:Union[str, list]):
         """
-        Add an event that happens before every generation (early).
+        Add an event that happens before selection in every generation (early).
         """
         # todo: validate script
         # compress list of scripts into a string
@@ -197,11 +248,51 @@ class Model(AbstractContextManager):
 
         # expand EARLY script block
         self.script[("early", time)] = (
-            LATE.format(**{'time': time_str, 'scripts': scripts})
+            EARLY.format(**{'time': time_str, 'scripts': scripts})
         ).lstrip()
 
 
-    def late(self, time:Union[int, None], scripts:str):
+    def fitness(self, mutation:Union[str, None], scripts:Union[str, list], idx:Union[str, None]):
+        """
+        Add an event that adjusts fitness values before fitness calculation.
+        """
+        # todo: validate script
+        # compress list of scripts into a string
+        if isinstance(scripts, list):
+            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
+
+        # idx as str or empty
+        idx_str = str(idx) if idx else ""
+        # mutation as str or empty
+        mutation_str = str(mutation) if mutation else ""
+
+        # expand FITNESS script block
+        self.script[("fitness", mutation)] = (
+            FIT.format(**{'idx': idx_str, 'mutation': mutation_str, 'scripts': scripts})
+        ).lstrip()
+
+
+    def survival(self, population:Union[str, None], scripts:Union[str, list], idx:Union[str, None]):
+        """
+        Add an event that adjusts fitness values before fitness calculation.
+        """
+        # todo: validate script
+        # compress list of scripts into a string
+        if isinstance(scripts, list):
+            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
+
+        # idx as str or empty
+        idx_str = str(idx) if idx else ""
+        # mutation as str or empty
+        population_str = str(population) if population else ""
+
+        # expand FITNESS script block
+        self.script[("survival", population)] = (
+            SURV.format(**{'idx': idx_str, 'population': population_str, 'scripts': scripts})
+        ).lstrip()
+
+
+    def late(self, time:Union[int, None], scripts:Union[str, list]):
         """
         Add an event that happens after every generation (late) if 
         time is None, or only after a particular generation if time
@@ -214,10 +305,18 @@ class Model(AbstractContextManager):
         # time as int or empty
         time_str = str(time) if time else ""
 
-        # expand EARLY script block
+        # expand LATE script block
         self.script[("late", time)] = (
             LATE.format(**{'time': time_str, 'scripts': scripts})
         ).lstrip()
+
+
+    def custom(self, scripts:str):
+        """
+        Add custom scripts outside without formatting by shadie. 
+        Scripts must be Eidos-formatted 
+        """
+        self.script[("custom", None)] = (scripts).lstrip()
 
 
     def _check_script(self):
@@ -284,11 +383,17 @@ if __name__ == "__main__":
             intron=e0,
             exon=e1,
         )
-        
+
+        print(chrom.data.head())
+        print(chrom.mutations)
+
         # init the model
         model.initialize(chromosome=chrom)
         
         # add reproduction 
-        # model.early()
+        # model.reproduction()
+        # model.early(1000, "sim.addSubpop('p1', 1000); //diploid sporophytes")
+        # model.fitness("m4", "return 1 + mut.selectionCoeff; //gametophytes have no dominance effects", "s1" )
+        # model.custom("s2 fitness(m5) { return 1 + mut.selectionCoeff; //gametophytes have no dominance effects }")
 
     print(model.script)

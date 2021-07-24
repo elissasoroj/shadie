@@ -59,6 +59,13 @@ class MutationTypeBase:
         self.dom = dominance
         self.dist = distribution
         self.distparams = params
+        if self.dist == 'f':
+            if self.distparams == (0,):
+                self.coding = 0
+            else: 
+                self.coding = 1
+        else:
+            self.coding =  1
 
         # values overwritten by inherited classes
         self._dist = stats.norm
@@ -73,7 +80,7 @@ class MutationTypeBase:
         """
         Returns the SLIM command to Initialize the MutationType
         """
-        inner = f"{self.idx}, {self.dom}, '{self.dist}', "
+        inner = f"'{self.name}', {self.dom}, '{self.dist}', "
         inner += ", ".join(map(str, self.distparams))
         if nuc:
             return f"initializeMutationTypeNuc({inner});"
@@ -182,7 +189,6 @@ class MutationTypeBase:
         """
         self.summary()
         return self.draw()
-
 
 
 class MutationNormal(MutationTypeBase):
@@ -308,6 +314,7 @@ if __name__ == "__main__":
     import shadie
 
     mlist = shadie.mlist(
+        shadie.mtype(0.5, 'f', 0.0),
         shadie.mtype(0.5, 'f', 0.1),
         shadie.mtype(0.5, 'n', 0.5, 0.25),
         shadie.mtype(0.5, 'g', 2.0, 0.1),
@@ -315,6 +322,11 @@ if __name__ == "__main__":
     )
     for muta in mlist:
         muta.summary()
+    m2 = shadie.mtype(0.5, 'f', 0)
 
     print(mlist)
-    print(mlist[1].to_slim())
+    test= []
+    for mut in mlist:
+        test.append(mut.name)
+    print(test)
+    print(mlist[0].to_slim())
