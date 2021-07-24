@@ -155,7 +155,7 @@ class Reproduction:
 		self.mode =  mode
 
 
-	def bryophytes(self):
+	def bryophytes(self, mode):
 		"""
 	    Reproduction mode based on mosses, hornworts, and liverworts
 	    """
@@ -172,11 +172,11 @@ class Reproduction:
 
 	    if self.mode = ("d" or "dio" or "dioecy" or "dioecious" or 
 	    	"heterosporous" or "dioicous"):
-        	self.dioicous()
+	    	self.dioicous()
 
-        if self.mode = ("m" or "mono" or "monoecy" or "monecious" or 
-        	"homosporous", "monoicous"):
-        	self.monoicous()
+	    if self.mode = ("m" or "mono" or "monoecy" or "monecious" or 
+	    	"homosporous", "monoicous"):
+	    	self.monoicous()
 
         def dioicous(
         	self,
