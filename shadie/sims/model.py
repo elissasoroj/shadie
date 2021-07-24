@@ -307,6 +307,20 @@ class Model(AbstractContextManager):
         """
         self.script[("custom", None)] = (scripts).lstrip()
 
+    def shadie(self, obj):
+        """
+        accepts shadie-formatted Lifecycle class object
+        """
+
+        for i in obj.rpdndict:
+            if i[0] == "early":
+                early(i) 
+        for i in obj.rpdndict:
+             if i[0] == "reproduction":
+                reproduction(i)
+        for i in obj.fitdict:
+            fitness(i) 
+
 
     def _check_script(self):
         """
@@ -415,7 +429,7 @@ if __name__ == "__main__":
         model.initialize(chromosome=chrom)
         
         # add reproduction 
-        #model.reproduction(repro)
+        #model.reproduction()
         model.early(1000, "sim.addSubpop('p1', 1000); //diploid sporophytes")
         model.fitness("m4", "return 1 + mut.selectionCoeff; //gametophytes have no dominance effects", "s1" )
         model.custom("s2 fitness(m5) { return 1 + mut.selectionCoeff; //gametophytes have no dominance effects }")
