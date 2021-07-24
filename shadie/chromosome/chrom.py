@@ -21,6 +21,22 @@ def random(
     seed:Union[int, None]=None,
     ):
     """
+    Build a chromosome of a set length composed randomly of intron,
+    exon, and noncds element type regions.
+
+    Parameters
+    ----------
+    genome_size: int = 20000
+        The size in bp of the genome that will be generated.
+    intron: ElementType = None
+        An element type to represent introns. If None the default
+        intron type is used: ...
+    exon: ElementType = None
+        An element type to represent exons. If None the default
+        exon type is used: ...
+    noncds: ElementType = None
+        An element type to represent noncds. If None the default
+        noncds type is used: ...
     ...
     """
     # construct pandas DataFrame of ElementTypes
