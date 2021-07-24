@@ -40,8 +40,8 @@ from contextlib import AbstractContextManager
 from loguru import logger
 from shadie.base.mutations import MutationTypeBase
 from shadie.base.elements import ElementType
-# from shadie.reproduction.reproduction import Reproduction
-#from shadie.reproduction import Reproduction
+from shadie.reproduction.api import ReproductionApi
+from shadie.utils import clean_scripts
 
 # cannot do both mutationRate and nucleotidebased 
 
@@ -99,8 +99,8 @@ SURV = """
 
 EARLY = """
 // executes after offspring are generated
-{comment}{time} early() {{
-  {scripts}
+{comment}{time}early() {{
+    {scripts}
 }}
 """
 
@@ -108,7 +108,7 @@ EARLY = """
 LATE = """
 {time} late() //execuutes after selection occurs
 {{
-  {scripts}
+    {scripts}
 }}
 """
 
@@ -135,8 +135,7 @@ class Model(AbstractContextManager):
         self.populations = {}
         self.length = {} #length of simulation in generations
 
-        # self.reproduction = Reproduction()
-
+        self.reproduction = ReproductionApi(self)
 
     def __repr__(self):
         return "<shadie.Model ... >"
@@ -199,39 +198,20 @@ class Model(AbstractContextManager):
         scripts = [] if scripts is None else scripts
         
         self.script[('initialize', None)] = (
-            INIT.format(**{
-                "mutation_rate": mut,
-                "recombination_rate": recomb,
-                "genome_size": chromosome.genome_size,
-                "mutations": chromosome.to_slim_mutation_types(),
-                "elements": chromosome.to_slim_element_types(),
-                "chromosome": chromosome.to_slim_elements(),
-                "constants": "\n  ".join([
+            INIT.format(
+                mutation_rate=mut,
+                recombination_rate=recomb,
+                genome_size=chromosome.genome_size,
+                mutations=chromosome.to_slim_mutation_types(),
+                elements=chromosome.to_slim_element_types(),
+                chromosome=chromosome.to_slim_elements(),
+                constants= "\n  ".join([
                     f"defineConstant('{key}', {val});" for key, val
                     in constants.items()
                 ]),
-                "scripts": "\n  ".join([i.strip(";") + ";" for i in scripts]),
-            })
+                scripts=clean_scripts(scripts),
+            )
         )
-
-
-    def repro(self, population:Union[str, None], scripts:Union[str, list]
-        ):
-        """
-        Add reproduction block code here.
-        """
-        logger.debug("Reproduction Block")
-
-        # compress list of scripts into a string
-        if isinstance(scripts, list):
-            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
-
-        # population as str or empty
-        pop_str = str(population) if population else ""
-
-        self.script[("reproduction", population)] = (
-            REPRO.format(**{'population': pop_str, 'scripts': scripts})
-        ).lstrip()
 
 
     def early(
@@ -243,13 +223,11 @@ class Model(AbstractContextManager):
         Add an event that happens before selection in every generation
         (early).
         """
-        # todo: validate script
         # compress list of scripts into a string
-        if isinstance(scripts, list):
-            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
+        scripts = clean_scripts(scripts)
 
         # time as int or empty
-        time_str = str(time) if time else ""
+        time_str = f"{time} " if time else ""
         comm_str = "// " + comment.lstrip("//").strip() + "\n" if comment else ""
 
         # expand EARLY script block
@@ -268,12 +246,8 @@ class Model(AbstractContextManager):
         """
         Add an event that adjusts fitness values before fitness calculation.
         """
-        # todo: validate script
         # compress list of scripts into a string
-        if isinstance(scripts, list):
-            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
-
-        # idx as str or empty
+        scripts = clean_scripts(scripts)
         idx_str = f"{idx} " if idx else ""
         mut_str = str(mutation) if mutation else ""
         comm_str = "// " + comment.lstrip("//").strip() + "\n" if comment else ""        
@@ -293,14 +267,9 @@ class Model(AbstractContextManager):
         """
         Add an event that adjusts fitness values before fitness calculation.
         """
-        # todo: validate script
         # compress list of scripts into a string
-        if isinstance(scripts, list):
-            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
-
-        # idx as str or empty
+        scripts = clean_scripts(scripts)
         idx_str = str(idx) if idx else ""
-        # mutation as str or empty
         population_str = str(population) if population else ""
 
         # expand FITNESS script block
@@ -315,17 +284,13 @@ class Model(AbstractContextManager):
         time is None, or only after a particular generation if time
         is an integer.
         """
-        # todo: validate script
-        if isinstance(scripts, list):
-            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
-
-        # time as int or empty
+        scripts = clean_scripts(scripts)
         time_str = str(time) if time else ""
 
         # expand LATE script block
         self.script[("late", time)] = (
-            LATE.format(**{'time': time_str, 'scripts': scripts})
-        ).lstrip()
+            LATE.format(time=time_str, scripts=scripts).lstrip()
+        )
 
 
     def custom(self, scripts:str, comment:Union[str,None]=None):
@@ -334,8 +299,7 @@ class Model(AbstractContextManager):
         Scripts must be Eidos-formatted 
         """
         # compress list of scripts into a string
-        if isinstance(scripts, list):
-            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
+        scripts = clean_scripts(scripts)
         comm_str = "// " + comment.lstrip("//").strip() + "\n" if comment else ""        
         self.script[("custom", None)] = f"{comm_str}{scripts}"
 
@@ -405,8 +369,8 @@ if __name__ == "__main__":
             exon=e1,
         )
 
-        print(chrom.data.head())
-        print(chrom.mutations)
+        # print(chrom.data.head())
+        # print(chrom.mutations)
 
         # init the model
         model.initialize(chromosome=chrom)
@@ -423,7 +387,7 @@ if __name__ == "__main__":
         )
 
         model.custom(
-            scripts="s2 fitness(m5) { return 1 + mut.selectionCoeff }",
+            scripts="s2 fitness(m5) {\n    return 1 + mut.selectionCoeff;\n}",
             comment="gametophytes have no dominance effects",
         )
 
@@ -431,3 +395,4 @@ if __name__ == "__main__":
 
 
     print(model.script)
+    model.run()
