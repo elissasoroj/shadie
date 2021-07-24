@@ -144,7 +144,7 @@ REPRO_HOMOSPORE = """
 //Hermaphroditic gametophytes
 """
 
-class Lifecycle:
+class Reproduction:
 
 	def __init__(
 		self, 
@@ -165,11 +165,6 @@ class Lifecycle:
 		self.totoffspring = meiosiscount/(dipftom[0] + dipftom[1])
 	    self.females = dipftom[0]*totoffspring
 	    self.males = dipftom[1]*totoffspring
-
-        if mode = "d" or "dio" or "dioecy" or "dioecious" or "heterosporous":
-        	self.dioecy()
-        if mode = "m" or "mono" or "monoecy" or "monecious" or "homosporous":
-        	self.monoecy()
 
 
 	def bryophytes(
@@ -283,3 +278,4 @@ class Lifecycle:
 		    """
 		    self.femtag = hermtag
 		    self.maletag = hermtag
+
