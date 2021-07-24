@@ -14,6 +14,7 @@ from shadie.base.elements import ElementType as etype
 from shadie.base.elements import ElementList as elist
 from shadie.sims.model import Model
 from shadie import chromosome
+from shadie import reproduction
 
 from shadie.utils import set_loglevel
 set_loglevel("INFO")
