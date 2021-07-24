@@ -40,6 +40,7 @@ from contextlib import AbstractContextManager
 from loguru import logger
 from shadie.base.mutations import MutationTypeBase
 from shadie.base.elements import ElementType
+from shadie.reproduction.reproduction import Reproduction
 #from shadie.reproduction import Reproduction
 
 # cannot do both mutationRate and nucleotidebased 
@@ -74,13 +75,21 @@ initialize() {{
 # --------------------------------------------
 
 REPRO = """
-reproduction({population}) {{
+reproduction({population}) {{ //generates offspring
     {scripts}
 }}
 """
 
 FIT = """
 {idx} fitness({mutation}) //adjusts fitness calculation
+{{
+    {scripts}
+
+}}
+"""
+
+SURV = """
+{idx} survival({population}) //implements survivavl adjustments
 {{
     {scripts}
 
@@ -125,6 +134,8 @@ class Model(AbstractContextManager):
         self.constants = {}
         self.populations = {}
         self.length = {} #length of simulation in generations
+
+        self.reproduction = Reproduction()
 
 
     def __repr__(self):
@@ -197,21 +208,41 @@ class Model(AbstractContextManager):
         )
 
 
-    def reproduction(self, population:str, scripts:Union[str, list]
+    def repro(self, population:Union[str, None], scripts:Union[str, list]
         ):
         """
         Add reproduction block code here.
         """
         logger.debug("Reproduction Block")
-        self.script[('reproduction', None)] = (
-            INIT.format(**{
-                "female_tag": femtag,
-                "male_tag": maletag,
-                "hermaphrodite_tag": hermtag,
-                "used_tag": usedtag,
-                "scripts": "\n  ".join([i.strip(";") + ";" for i in scripts]),
-            })
-        )
+
+        # compress list of scripts into a string
+        if isinstance(scripts, list):
+            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
+
+        # population as str or empty
+        pop_str = str(population) if population else ""
+
+        self.script[("reproduction", population)] = (
+            REPRO.format(**{'population': pop_str, 'scripts': scripts})
+        ).lstrip()
+
+
+    def early(self, time:Union[int, None], scripts:Union[str, list]):
+        """
+        Add an event that happens before selection in every generation (early).
+        """
+        # todo: validate script
+        # compress list of scripts into a string
+        if isinstance(scripts, list):
+            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
+
+        # time as int or empty
+        time_str = str(time) if time else ""
+
+        # expand EARLY script block
+        self.script[("early", time)] = (
+            EARLY.format(**{'time': time_str, 'scripts': scripts})
+        ).lstrip()
 
 
     def fitness(self, mutation:Union[str, None], scripts:Union[str, list], idx:Union[str, None]):
@@ -234,21 +265,23 @@ class Model(AbstractContextManager):
         ).lstrip()
 
 
-    def early(self, time:Union[int, None], scripts:Union[str, list]):
+    def survival(self, population:Union[str, None], scripts:Union[str, list], idx:Union[str, None]):
         """
-        Add an event that happens before selection in every generation (early).
+        Add an event that adjusts fitness values before fitness calculation.
         """
         # todo: validate script
         # compress list of scripts into a string
         if isinstance(scripts, list):
             scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
 
-        # time as int or empty
-        time_str = str(time) if time else ""
+        # idx as str or empty
+        idx_str = str(idx) if idx else ""
+        # mutation as str or empty
+        population_str = str(population) if population else ""
 
-        # expand EARLY script block
-        self.script[("early", time)] = (
-            EARLY.format(**{'time': time_str, 'scripts': scripts})
+        # expand FITNESS script block
+        self.script[("survival", population)] = (
+            SURV.format(**{'idx': idx_str, 'population': population_str, 'scripts': scripts})
         ).lstrip()
 
 
@@ -270,12 +303,14 @@ class Model(AbstractContextManager):
             LATE.format(**{'time': time_str, 'scripts': scripts})
         ).lstrip()
 
+
     def custom(self, scripts:str):
         """
         Add custom scripts outside without formatting by shadie. 
         Scripts must be Eidos-formatted 
         """
         self.script[("custom", None)] = (scripts).lstrip()
+
 
     def _check_script(self):
         """
