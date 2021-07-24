@@ -121,7 +121,6 @@ class Chromosome(ChromosomeBase):
         self.mutations = mutations
 
 
-
 class ChromosomeRandom(ChromosomeBase): 
     """
     Generates a random chromosome from of a given length from a set of
