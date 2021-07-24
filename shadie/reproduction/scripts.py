@@ -13,7 +13,7 @@ SHADIE_POPS = """
 
 #early ()
 EARLY = """
-{early()
+early()
 {{
 	if (sim.generation % 2 == 0) //diploids (p1) just generated haploid gametophytes
 	{{
@@ -43,8 +43,6 @@ EARLY = """
 		// diploids get SLiM's standard fitness calculation, with dominance
 		{deactivate}
 }}
-
-}
 """
 
 #-----------------------------------------------
