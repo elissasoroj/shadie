@@ -73,15 +73,13 @@ initialize() {{
 """
 # --------------------------------------------
 
-#basic default
 REPRO = """
 reproduction({population}) {{
     {scripts}
 }}
 """
 
-#basic fitness
-FITN = """
+FIT = """
 {idx} fitness({mutation}) //adjusts fitness calculation
 {{
     {scripts}
@@ -232,7 +230,7 @@ class Model(AbstractContextManager):
 
         # expand FITNESS script block
         self.script[("fitness", mutation)] = (
-            FITN.format(**{'idx': idx_str, 'mutation': mutation_str, 'scripts': scripts})
+            FIT.format(**{'idx': idx_str, 'mutation': mutation_str, 'scripts': scripts})
         ).lstrip()
 
 
@@ -254,7 +252,7 @@ class Model(AbstractContextManager):
         ).lstrip()
 
 
-    def late(self, time:Union[int, None], scripts:str):
+    def late(self, time:Union[int, None], scripts:Union[str, list]):
         """
         Add an event that happens after every generation (late) if 
         time is None, or only after a particular generation if time
@@ -272,7 +270,12 @@ class Model(AbstractContextManager):
             LATE.format(**{'time': time_str, 'scripts': scripts})
         ).lstrip()
 
-
+    def custom(self, scripts:str):
+        """
+        Add custom scripts outside without formatting by shadie. 
+        Scripts must be Eidos-formatted 
+        """
+        self.script[("custom", None)] = (scripts).lstrip()
 
     def _check_script(self):
         """
@@ -350,6 +353,6 @@ if __name__ == "__main__":
         # model.reproduction()
         model.early(1000, "sim.addSubpop('p1', 1000); //diploid sporophytes")
         model.fitness("m4", "return 1 + mut.selectionCoeff; //gametophytes have no dominance effects", "s1" )
-
+        model.custom("s2 fitness(m5) { return 1 + mut.selectionCoeff; //gametophytes have no dominance effects }")
 
     print(model.script)
