@@ -152,23 +152,10 @@ class Reproduction:
 		mode = str(None),
 		):
 
-		self.meiosiscount = meiosiscount
-		self.dipftom = dipftom
-		self.dipfitscale = dipfitscale
-		self.gamfitscale = gamfitscale
-
-		if meiosiscount/(dipftom[0] + dipftom[1]) is not int:
-	    	logger.warning("female:male ratio must be compatible with meiosiscount")
-	    else:
-	    	pass
-
-		self.totoffspring = meiosiscount/(dipftom[0] + dipftom[1])
-	    self.females = dipftom[0]*totoffspring
-	    self.males = dipftom[1]*totoffspring
+		self.mode =  mode
 
 
-	def bryophytes(
-		self)
+	def bryophytes(self):
 		"""
 	    Reproduction mode based on mosses, hornworts, and liverworts
 	    """
@@ -187,7 +174,7 @@ class Reproduction:
 	    	"heterosporous" or "dioicous"):
         	self.dioicous()
 
-        if mode = ("m" or "mono" or "monoecy" or "monecious" or 
+        if self.mode = ("m" or "mono" or "monoecy" or "monecious" or 
         	"homosporous", "monoicous"):
         	self.monoicous()
 
@@ -226,7 +213,7 @@ class Reproduction:
         	self,
         	)
 
-        rpdndict = {("early", None), EARLY_BRYO}
+        	rpdndict = {("early", None), EARLY_BRYO}
 	        rpdndict = {("reproduction", "p1"), REPRO_BRYO_MONO_p1}
 
 		    #at some point this needs to be appended to scripts:
