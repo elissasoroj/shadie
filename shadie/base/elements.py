@@ -231,7 +231,7 @@ if __name__ == "__main__":
     # create elements (a mutation list with frequencies)
     ele1 = ElementType(mlist, (1, 1), )
     ele2 = ElementType(mlist, (0.5, 1))
-    print(ele1)
+    print(ele1.mlist)
     print(ele2)
     print(ele2.to_slim())
     print(ele2.coding)

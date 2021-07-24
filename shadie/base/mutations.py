@@ -324,4 +324,8 @@ if __name__ == "__main__":
     m2 = shadie.mtype(0.5, 'f', 0)
 
     print(mlist)
+    test= []
+    for mut in mlist:
+        test.append(mut.name)
+    print(test)
     print(mlist[0].to_slim())
