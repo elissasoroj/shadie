@@ -97,6 +97,9 @@ early()
 {
 	if (sim.generation % 2 == 0) //diploids (p1) just generated haploid gametophytes
 	{
+		//fitness affects gametophyte survival
+		p0.fitnessScaling = (hK / p0.individualCount);
+		
 		// haploids get modified fitness, without dominance
 		s1.active = 1;
 		s2.active = 1;
@@ -105,8 +108,9 @@ early()
 		s5.active = 1;
 		s6.active = 0;
 	}
-	else
+	else //odd generations = gametophytes (p0) just generated sporophytes
 	{
+		p1.fitnessScaling = dK / p1.individualCount; //fitness affects sporophytes
 		// diploids get SLiM's standard fitness calculation, with dominance
 		s1.active = 0;
 		s2.active = 0;

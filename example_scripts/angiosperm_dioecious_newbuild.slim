@@ -1,5 +1,5 @@
 initialize() {
-	defineConstant("hK", 2000); //haploid K
+	defineConstant("hK", 7000); //haploid K
 	defineConstant("dK", 1000); //diploids K
 	defineConstant("MU", 1e-07); //mutation rate
 	defineConstant("Death_chance", 0.05);
@@ -15,7 +15,6 @@ initialize() {
 	defineConstant("pollen_per_stigma", 5); // number of pollen grains competing for fertilization
 	
 	initializeSLiMModelType('nonWF');
-	initializeSLiMOptions(keepPedigrees=T);
 	initializeTreeSeq();
 	initializeMutationType('m3', 0.1, 'g', -0.03, 0.2);
 	m3.convertToSubstitution = T;
@@ -25,7 +24,6 @@ initialize() {
 	initializeGenomicElementType('g3', c(m3),c(1));
 	initializeGenomicElement(g1, 40001, 100000);
 	initializeGenomicElement(g3, 140000, 175000);
-	initializeGenomicElement(g1 , 199998, 199999);
 	initializeRecombinationRate(1e-09, 199999);
 	initializeMutationRate(MU);
 }
