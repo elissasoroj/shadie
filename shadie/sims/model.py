@@ -81,10 +81,9 @@ reproduction({population}) {{ //generates offspring
 """
 
 FIT = """
-{idx} fitness({mutation}) //adjusts fitness calculation
-{{
+// adjusts fitness calculation
+{comment}{idx}fitness({mutation}) {{
     {scripts}
-
 }}
 """
 
@@ -99,8 +98,8 @@ SURV = """
 # --------------------------------------------
 
 EARLY = """
-{time} early() //executes after offspring are generated
-{{
+// executes after offspring are generated
+{comment}{time} early() {{
   {scripts}
 }}
 """
@@ -112,6 +111,7 @@ LATE = """
   {scripts}
 }}
 """
+
 
 
 class Model(AbstractContextManager):
@@ -161,7 +161,7 @@ class Model(AbstractContextManager):
         ikeys = sorted([i for i in self.script if isinstance(i[1], int)])
 
         # which type is not null or integer?
-        lkeys = [i for i in self.script if i not in nulls or ikeys]
+        lkeys = [i for i in self.script if i not in nulls + ikeys]
 
         # remove init from the nulls b/c it must come first
         sorted_keys = [nulls.pop(nulls.index(("initialize", None)))]
@@ -234,9 +234,14 @@ class Model(AbstractContextManager):
         ).lstrip()
 
 
-    def early(self, time:Union[int, None], scripts:Union[str, list]):
+    def early(
+        self, 
+        time:Union[int, None], 
+        scripts:Union[str, list], 
+        comment:Union[str,None]=None):
         """
-        Add an event that happens before selection in every generation (early).
+        Add an event that happens before selection in every generation
+        (early).
         """
         # todo: validate script
         # compress list of scripts into a string
@@ -245,14 +250,21 @@ class Model(AbstractContextManager):
 
         # time as int or empty
         time_str = str(time) if time else ""
+        comm_str = "// " + comment.lstrip("//").strip() + "\n" if comment else ""
 
         # expand EARLY script block
         self.script[("early", time)] = (
-            EARLY.format(**{'time': time_str, 'scripts': scripts})
+            EARLY.format(time=time_str, scripts=scripts, comment=comm_str)
         ).lstrip()
 
 
-    def fitness(self, mutation:Union[str, None], scripts:Union[str, list], idx:Union[str, None]):
+    def fitness(
+        self, 
+        mutation:Union[str, None], 
+        scripts:Union[str, list], 
+        idx:Union[str, None]=None,
+        comment:Union[str,None]=None,
+        ):
         """
         Add an event that adjusts fitness values before fitness calculation.
         """
@@ -262,14 +274,19 @@ class Model(AbstractContextManager):
             scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
 
         # idx as str or empty
-        idx_str = str(idx) if idx else ""
-        # mutation as str or empty
-        mutation_str = str(mutation) if mutation else ""
+        idx_str = f"{idx} " if idx else ""
+        mut_str = str(mutation) if mutation else ""
+        comm_str = "// " + comment.lstrip("//").strip() + "\n" if comment else ""        
 
         # expand FITNESS script block
         self.script[("fitness", mutation)] = (
-            FIT.format(**{'idx': idx_str, 'mutation': mutation_str, 'scripts': scripts})
-        ).lstrip()
+            FIT.format(
+                idx=idx_str, 
+                mutation=mut_str, 
+                comment=comm_str, 
+                scripts=scripts,
+            )
+        )
 
 
     def survival(self, population:Union[str, None], scripts:Union[str, list], idx:Union[str, None]):
@@ -311,12 +328,16 @@ class Model(AbstractContextManager):
         ).lstrip()
 
 
-    def custom(self, scripts:str):
+    def custom(self, scripts:str, comment:Union[str,None]=None):
         """
         Add custom scripts outside without formatting by shadie. 
         Scripts must be Eidos-formatted 
         """
-        self.script[("custom", None)] = (scripts).lstrip()
+        # compress list of scripts into a string
+        if isinstance(scripts, list):
+            scripts = "\n  ".join([i.strip(';') + ';' for i in scripts])
+        comm_str = "// " + comment.lstrip("//").strip() + "\n" if comment else ""        
+        self.script[("custom", None)] = f"{comm_str}{scripts}"
 
 
     def _check_script(self):
@@ -390,10 +411,23 @@ if __name__ == "__main__":
         # init the model
         model.initialize(chromosome=chrom)
         
-        # add reproduction 
+        model.early(
+            time=1000, 
+            scripts="sim.addSubpop('p1', 1000)", 
+            comment="diploid sporophytes",
+        )
+        model.fitness(
+            mutation="m4",
+            scripts="return 1 + mut.selectionCoeff",
+            comment="gametophytes have no dominance effects, s1",
+        )
+
+        model.custom(
+            scripts="s2 fitness(m5) { return 1 + mut.selectionCoeff }",
+            comment="gametophytes have no dominance effects",
+        )
+
         # model.reproduction()
-        # model.early(1000, "sim.addSubpop('p1', 1000); //diploid sporophytes")
-        # model.fitness("m4", "return 1 + mut.selectionCoeff; //gametophytes have no dominance effects", "s1" )
-        # model.custom("s2 fitness(m5) { return 1 + mut.selectionCoeff; //gametophytes have no dominance effects }")
+
 
     print(model.script)
