@@ -40,8 +40,7 @@ from contextlib import AbstractContextManager
 from loguru import logger
 from shadie.base.mutations import MutationTypeBase
 from shadie.base.elements import ElementType
-from shadie.reproduction.reproduction import Reproduction
-#from shadie.reproduction import Reproduction
+#from shadie.reproduction.reproduction import Reproduction
 
 # cannot do both mutationRate and nucleotidebased 
 
@@ -52,7 +51,7 @@ initialize() {{
   initializeSLiMModelType("nonWF");
 
   // config
-  initializeRecombinationRate({recombination_rate});
+  initializeRecombinationRate({recombination_rate}, {genome_size});
   initializeMutationRate({mutation_rate});
   initializeTreeSeq();
 
@@ -135,7 +134,7 @@ class Model(AbstractContextManager):
         self.populations = {}
         self.length = {} #length of simulation in generations
 
-        self.reproduction = Reproduction()
+        #self.reproduction = Reproduction()
 
 
     def __repr__(self):
@@ -378,13 +377,48 @@ if __name__ == "__main__":
             exon=e1,
         )
         
-        print(chrom.data.iloc[:, :6,])
+        print(chrom.data.iloc[:, :4,])
         print(chrom.mutations)
 
         # init the model
         model.initialize(chromosome=chrom)
         
         # add reproduction 
+
+        # model.reproduction()
+        model.early(1000, "sim.addSubpop('p1', 1000); //diploid sporophytes")
+        model.fitness("m4", "return 1 + mut.selectionCoeff; //gametophytes have no dominance effects", "s1" )
+        model.custom("s2 fitness(m5) { return 1 + mut.selectionCoeff; //gametophytes have no dominance effects }")
+
+    print(model.script)
+
+    with shadie.Model() as model:
+        
+        # define mutation types
+        m0 = shadie.mtype(0.5, 'n', 2.0, 1.0)
+        m1 = shadie.mtype(0.5, 'g', 3.0, 1.0)
+        m2 = shadie.mtype(0.5, 'f', 0)
+        
+        # define elements types
+        e0 = shadie.etype([m0, m1], [1, 2])
+        e1 = shadie.etype([m2], [1])
+
+        # design chromosome of elements
+        # Do we want users to be able to put in a chromosome like this 
+        #and have the gaps filled with neutral portions?
+        chrom = shadie.chromosome.explicit({
+            (500, 1000): e1,
+            (2000, 3000): e0,
+            (3001, 5000): e1,
+        })
+
+        print(chrom.data.iloc[:, :6,])
+
+        # init the model
+        model.initialize(chromosome=chrom)
+        
+        # add reproduction 
+
         # model.reproduction()
         model.early(1000, "sim.addSubpop('p1', 1000); //diploid sporophytes")
         model.fitness("m4", "return 1 + mut.selectionCoeff; //gametophytes have no dominance effects", "s1" )
