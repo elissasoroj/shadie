@@ -185,8 +185,11 @@ if __name__ == "__main__":
     with shadie.Model() as mod:
         
         # define mutation types
-        m0 = shadie.mtype(0.5, 'n', 2.0, 1.0)
-        m1 = shadie.mtype(0.5, 'g', 3.0, 1.0)
+        m0 = shadie.mtype(0.5, 'n', 0, 0.4)
+        m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
+        #I suggest we add a checkpoint that calculates the average
+        #fitness of mutations input by the user. If fitness is too high
+        #the simuulation will lag tremendously
         
         # define elements types
         e0 = shadie.etype([m0, m1], [1, 2])
