@@ -7,6 +7,7 @@ histories into SLiM scripts using the shadie Model context.
 """
 
 from shadie.reproduction.base import Bryophyte
+from shadie.reproduction.angiobase import Angiosperm
 
 
 
@@ -70,7 +71,41 @@ class ReproductionApi:
         TODO:
         """
 
-    def angiosperm(self, ):
+    def angiosperm(
+        self, 
+        chromosome,
+        mode:str, 
+        diploid_ne: int,
+        haploid_ne: int,
+        female_to_male_ratio: float=0.5,
+        clone_rate: float=1.0,
+        ovule_count: int=30,
+        fertilization_rate: float=0.7,
+        pollen_count: int=100,
+        pollen_comp: str="F",
+        pollen_per_stigma: int=5,
+        random_death_chance: float=0,       
+        ):
         """
-        TODO:
+        Generate scripts appropriate for an angiosperm (flowering plant)
+        life history. Appropriate for gymnosperms as well.
+        This adds code to the following 
+        SLiM script blocks: reproduction, early, ...
+
+        Parameters:
+        -----------
+        mode: str
+            A life history strategy or "dio" or "mono" -ecious.
+        ...
         """
+        Angiosperm(
+            model=self.model, chromosome=chromosome, mode=mode,
+            diploid_ne=diploid_ne, haploid_ne=haploid_ne,
+            female_to_male_ratio=female_to_male_ratio,
+            clone_rate=clone_rate, ovule_count=ovule_count,
+            fertilization_rate=fertilization_rate, 
+            pollen_count=pollen_count, pollen_comp=pollen_comp,
+            pollen_per_stigma=pollen_per_stigma,
+            random_death_chance=random_death_chance,
+        ).run()
+

@@ -340,9 +340,12 @@ class Model(AbstractContextManager):
         # write tmp file and call it
         self.write("/tmp/slim.slim")
         cmd = ["slim", "/tmp/slim.slim"]
+        
+        #newbuild cmd
+        cmdnb = ["/Users/elissa/bin/slim", "/tmp/slim.slim"]
 
         # capture stdout
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = subprocess.Popen(cmdnb, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         out, _ = proc.communicate()
 
         # check for errors
