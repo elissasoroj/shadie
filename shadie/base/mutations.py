@@ -92,10 +92,12 @@ class MutationTypeBase:
     def mean(self):
         "the mean selection coefficient from the distribution"
         return self._dist.mean(**self._params) * self._neg
+
     @property
     def std(self):
         "the std of the selection coefficient from the distribution"        
         return self._dist.std(**self._params)
+
     @property
     def min(self):
         "the min value in the 99% CI of the distribution"                
@@ -103,6 +105,7 @@ class MutationTypeBase:
         if self._neg < 0:
             return interval[1] * self._neg
         return interval[0]
+
     @property
     def max(self):
         "the max value in the 99% CI of the distribution"

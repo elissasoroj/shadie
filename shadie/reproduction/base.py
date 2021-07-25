@@ -38,7 +38,7 @@ class ReproductionBase:
 class BryophyteBase(ReproductionBase):
     lineage: str = field(default="Bryophyte", init=False)
     mode: str
-    chromosome: any
+    chromosome: 'shadie.chromosome.ChromosomeBase'
 
 @dataclass
 class Bryophyte(BryophyteBase):
@@ -103,14 +103,14 @@ class Bryophyte(BryophyteBase):
         fills the script reproduction block with bryophyte-dioicous
         """
 
-        #fitness callback:
+        # fitness callback:
         i = 4
         activate = []
         deactivate = []
         substitutions = []
         for mut in self.chromosome.mutations:
             i = i + 1
-            idx = str("s"+str(i))
+            idx = str("s" + str(i))
             active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
             deactive_script = DEACTIVATE.format(**{'idx': idx}).lstrip()
             activate.append(active_script)
@@ -145,15 +145,15 @@ class Bryophyte(BryophyteBase):
         self.model.custom(SURV)
 
         self.model.repro(
-            population = "p1",
-            scripts = REPRO_BRYO_DIO_P1,
-            comment = "generates gametes from sporophytes"
+            population="p1",
+            scripts=REPRO_BRYO_DIO_P1,
+            comment="generates gametes from sporophytes"
             )
 
         self.model.repro(
-            population = "p0",
-            scripts = REPRO_BRYO_DIO_P0,
-            comment = "generates gametes from sporophytes"
+            population="p0",
+            scripts=REPRO_BRYO_DIO_P0,
+            comment="generates gametes from sporophytes"
             )
 
         substitution_str = ""
@@ -164,9 +164,9 @@ class Bryophyte(BryophyteBase):
             SUBSTITUTION.format(**{'inner': substitution_str}).lstrip())
 
         self.model.late(
-            time = None,
-            scripts = substitution_script,
-            comment = "fixes mutations in haploid gen"
+            time=None,
+            scripts=substitution_script,
+            comment="fixes mutations in haploid gen"
             )
 
 
@@ -188,7 +188,8 @@ if __name__ == "__main__":
         m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
         #I suggest we add a checkpoint that calculates the average
         #fitness of mutations input by the user. If fitness is too high
-        #the simuulation will lag tremendously
+        #the simuulation will lag tremendously. 
+        # OK: a good use case for logger.warning('fitness is too high...')
         
         # define elements types
         e0 = shadie.etype([m0, m1], [1, 2])

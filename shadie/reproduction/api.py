@@ -49,7 +49,7 @@ class ReproductionApi:
         ...
         """
         Bryophyte(
-            model=self.model, chromosome = chromosome, mode=mode,
+            model=self.model, chromosome=chromosome, mode=mode,
             diploid_ne=diploid_ne, haploid_ne=haploid_ne,
             female_to_male_ratio=female_to_male_ratio,
             spores_per_sporophyte=spores_per_sporophyte,
