@@ -103,17 +103,17 @@ class ChromosomeBase:
             # we should really stop users from mixing in neutral and non-neutral mutations
             if self.data.loc[idx, "coding"] == 1:
                 ele = self.data.loc[idx]
-                commands.append(
-                    f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
-                )
-                # COMMENTING OUT FOR NOW while working on reproduction.
-                # length = ele.end - ele.start
                 # commands.append(
-                #     f"types = rep({ele.eltype}, {length}); "
-                #     f"starts = {ele.start} + seqLen(integerDiv({length}, 3)) * 3; "
-                #     "ends = starts + 1; "
-                #     "initializeGenomicElement(types, starts, ends); "
+                #     f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
                 # )
+                # COMMENTING OUT FOR NOW while working on reproduction.
+                length = ele.end - ele.start
+                commands.append(
+                    f"types = rep({ele.eltype}, asInteger(floor({length}/3))); \n"
+                    f"starts = {ele.start} + seqLen(integerDiv({length}, 3)) * 3; \n   "
+                    "ends = starts + 1; \n"
+                    "initializeGenomicElement(types, starts, ends); \n"
+                )
         return "\n  ".join(commands)
 
 
