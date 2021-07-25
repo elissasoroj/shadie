@@ -109,6 +109,7 @@ class Model(AbstractContextManager):
         Fills the script with context-defined content in a set 
         order and runs checks on the script.
         """
+
         sorted_keys = [
             'initialize', 'timed', 'reproduction', 'early',
             'fitness', 'survival', 'late', 'custom',
@@ -194,6 +195,8 @@ class Model(AbstractContextManager):
         scripts = [] if scripts is None else scripts
 
         self.chromosome = chromosome
+        self.length = length
+        self.fileout = fileout
         
         self.map['initialize'].append({
             'mutation_rate': mut,
@@ -206,6 +209,12 @@ class Model(AbstractContextManager):
             'scripts': scripts,
         })
 
+        Model.late(
+            self = self,
+            time = self.length, 
+            scripts = f"sim.treeSeqOutput('{self.fileout}')",
+            comment = "end of sim; save .trees file",
+        )
 
     def early(
         self, 
@@ -304,20 +313,6 @@ class Model(AbstractContextManager):
             'scripts': scripts,
             'comment': comment,
         })
-
-
-    # def shadie(self, obj):
-    #     """
-    #     accepts shadie-formatted Lifecycle class object
-    #     """
-    #     for i in obj.rpdndict:
-    #         if i[0] == "early":
-    #             early(i) 
-    #     for i in obj.rpdndict:
-    #          if i[0] == "reproduction":
-    #             reproduction(i)
-    #     for i in obj.fitdict:
-    #         fitness(i) 
 
 
     def _check_script(self):
