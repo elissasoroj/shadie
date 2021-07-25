@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from shadie.reproduction.base_scripts import (
     EARLY_BRYO_DIO,
     FITNESS_BRYO_DIO_P0, FITNESS_BRYO_DIO_P1,
+    ACTIVATE, DEACTIVATE, EARLY, SURV,
+    REPRO_BRYO_DIO_P1, REPRO_BRYO_DIO_P0, SUBSTITUTION, SUB_INNER
 )
 
 DTYPES = ("d", "dio", "dioecy", "dioecious", "heterosporous", "dioicous")
@@ -32,12 +34,11 @@ class ReproductionBase:
     """
     model: 'shadie.Model'
 
-
 @dataclass
 class BryophyteBase(ReproductionBase):
     lineage: str = field(default="Bryophyte", init=False)
     mode: str
-
+    chromosome: any
 
 @dataclass
 class Bryophyte(BryophyteBase):
@@ -46,10 +47,10 @@ class Bryophyte(BryophyteBase):
     """
     diploid_ne: int
     haploid_ne: int
-    female_to_male_ratio: float=1.0
+    female_to_male_ratio: float=0.5
     spores_per_sporophyte: int=100
     clone_rate: float=1.0
-    selfing_rate: float=0.
+    selfing_rate: float=0
     maternal_effect_weight: float=0
     random_death_chance: float=0
 
@@ -99,50 +100,79 @@ class Bryophyte(BryophyteBase):
 
     def dioicous(self):
         """
-        fills the script reproduction block with bryophyte dioicous
+        fills the script reproduction block with bryophyte-dioicous
         """
+
+        #fitness callback:
+        i = 4
+        activate = []
+        deactivate = []
+        substitutions = []
+        for mut in self.chromosome.mutations:
+            i = i + 1
+            idx = str("s"+str(i))
+            active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
+            deactive_script = DEACTIVATE.format(**{'idx': idx}).lstrip()
+            activate.append(active_script)
+            deactivate.append(deactive_script)
+            sub_inner = SUB_INNER.format(**{'idx': idx, 'mut': mut}).lstrip()
+            substitutions.append(sub_inner)
+            self.model.fitness(
+                idx=idx,
+                mutation=mut,
+                scripts="return 1 + mut.selectionCoeff",
+                comment="gametophytes have no dominance effects",
+            )
+            
+        activate_str = ""
+        deactivate_str = ""
+        for i in activate:
+            activate_str += "\n  ".join([i.strip(';') + ";\n    "])
+
+        for i in deactivate:
+            deactivate_str += "\n  ".join([i.strip(';') + ";\n    "])
+
+        early_script = (
+            EARLY.format(**{'activate': activate_str, 
+                'deactivate': deactivate_str}).lstrip())
+
         self.model.early(
             time=None, 
-            scripts=EARLY_BRYO_DIO, 
+            scripts=early_script, 
             comment="alternation of generations",
         )
-        self.model.fitness(
-            idx='s1',
-            mutation="m3",
-            scripts="return 1 + mut.selectionCoeff",
-            comment="gametophytes have no dominance effects",
-        )
-        self.model.fitness(
-            idx='s2',
-            mutation="m4",
-            scripts="return 1 + mut.selectionCoeff",
-            comment="???",
-        )
-        # self.model.survival(
-        #     idx='s3',
-        #     population="p1",
-        #     scripts="return F",
-        #     comment="???",
-        # )
-        # self.model.survival(
-        #     idx='s4',
-        #     population="p1",
-        #     scripts=FITNESS_BRYO_DIO_P1,
-        #     comment="random death AND maternal effect",
-        # )
-        # self.model.survival(
-        #     idx='s5',
-        #     population="p0",
-        #     scripts=FITNESS_BRYO_DIO_P0,
-        #     comment="random death chance",
-        # )
 
+        self.model.custom(SURV)
 
+        self.model.repro(
+            population = "p1",
+            scripts = REPRO_BRYO_DIO_P1,
+            comment = "generates gametes from sporophytes"
+            )
+
+        self.model.repro(
+            population = "p0",
+            scripts = REPRO_BRYO_DIO_P0,
+            comment = "generates gametes from sporophytes"
+            )
+
+        substitution_str = ""
+        for i in substitutions:
+            substitution_str += "\n  ".join([i.strip(';') + ";\n    "])
+
+        substitution_script = (
+            SUBSTITUTION.format(**{'inner': substitution_str}).lstrip())
+
+        self.model.late(
+            time = None,
+            scripts = substitution_script,
+            comment = "fixes mutations in haploid gen"
+            )
 
 
     def monoicous(self):
         """
-        fills the script reproduction block with bryophyte dioicous
+        fills the script reproduction block with bryophyte-monoicous
         """
 
 
@@ -154,8 +184,11 @@ if __name__ == "__main__":
     with shadie.Model() as mod:
         
         # define mutation types
-        m0 = shadie.mtype(0.5, 'n', 2.0, 1.0)
-        m1 = shadie.mtype(0.5, 'g', 3.0, 1.0)
+        m0 = shadie.mtype(0.5, 'n', 0, 0.4)
+        m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
+        #I suggest we add a checkpoint that calculates the average
+        #fitness of mutations input by the user. If fitness is too high
+        #the simuulation will lag tremendously
         
         # define elements types
         e0 = shadie.etype([m0, m1], [1, 2])
@@ -173,10 +206,11 @@ if __name__ == "__main__":
         mod.initialize(chromosome=chrom)
 
         mod.reproduction.bryophyte(
-            mode='dio', 
+            mode='dio',
+            chromosome = chrom,
             diploid_ne=1000, 
             haploid_ne=1000,
         )
 
     print(mod.script)
-    mod.run()
+    #mod.run()

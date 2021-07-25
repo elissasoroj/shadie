@@ -26,10 +26,11 @@ class ReproductionApi:
 
     def bryophyte(
         self, 
+        chromosome,
         mode:str, 
         diploid_ne: int,
         haploid_ne: int,
-        female_to_male_ratio: float=1.0,
+        female_to_male_ratio: float=0.5,
         spores_per_sporophyte: int=100,
         clone_rate: float=1.0,
         selfing_rate: float=0.,
@@ -48,7 +49,7 @@ class ReproductionApi:
         ...
         """
         Bryophyte(
-            model=self.model, mode=mode, 
+            model=self.model, chromosome = chromosome, mode=mode,
             diploid_ne=diploid_ne, haploid_ne=haploid_ne,
             female_to_male_ratio=female_to_male_ratio,
             spores_per_sporophyte=spores_per_sporophyte,
