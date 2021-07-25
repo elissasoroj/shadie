@@ -37,38 +37,33 @@ initialize() {{
 # --------------------------------------------
 
 REPRODUCTION = """
-// generates offspring
-{comment}reproduction({population}) {{ 
+{comment}reproduction({population}) {{ // generates offspring
     {scripts}
 }}
 """
 
 FITNESS = """
-// adjusts fitness calculation
-{comment}{idx}fitness({mutation}) {{
+{comment}{idx}fitness({mutation}) {{ // adjusts fitness calculation
     {scripts}
 }}
 """
 
 SURVIVAL = """
-// implements survival adjustments
-{idx}survival({population}) {{
+{idx}survival({population}) {{ // implements survival adjustments
     {scripts}
 }}
 """
 
 
 EARLY = """
-// executes after offspring are generated
-{comment}{time}early() {{
+{comment}{time}early() {{ // executes after offspring are generated
     {scripts}
 }}
 """
 
 
 LATE = """
-// executes after selection occurs
-{comment}{time}late() {{
+{comment}{time}late() {{ // executes after selection occurs
     {scripts}
 }}
 """
