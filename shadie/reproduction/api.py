@@ -24,6 +24,7 @@ class ReproductionApi:
 
     def bryophyte(
         self, 
+        chromosome,
         mode:str, 
         diploid_ne: int,
         haploid_ne: int,
@@ -45,7 +46,7 @@ class ReproductionApi:
             A life history strategy or "dio" or "mono" -icous.
         """
         Bryophyte(
-            model=self.model, mode=mode, 
+            model=self.model, chromosome = chromosome, mode=mode,
             diploid_ne=diploid_ne, haploid_ne=haploid_ne,
             female_to_male_ratio=female_to_male_ratio,
             spores_per_sporophyte=spores_per_sporophyte,
