@@ -6,7 +6,7 @@ Starting an alternate implementation of Reproduction
 
 from dataclasses import dataclass, field
 from shadie.reproduction.base_scripts import (
-    EARLY_BRYO_DIO,ACTIVATE, DEACTIVATE, EARLY, SURV, MATERNAL_EFFECT
+    EARLY_BRYO_DIO,ACTIVATE, DEACTIVATE, EARLY, SURV, MATERNAL_EFFECT,
     SUBSTITUTION, SUB_INNER, REPRO_BRYO_DIO_P1, REPRO_BRYO_DIO_P0,
     REPRO_BRYO_MONO_P1, REPRO_BRYO_MONO_P0,
 )
@@ -217,7 +217,9 @@ class Bryophyte(BryophyteBase):
             comment="alternation of generations",
         )
 
-        self.model.custom(SURV)
+        survival_script = (
+            SURV.format(**{'maternal_effect': MATERNAL_EFFECT}).lstrip())
+        self.model.custom(survival_script)
 
         self.model.repro(
             population="p1",
@@ -275,7 +277,7 @@ if __name__ == "__main__":
         mod.initialize(chromosome=chrom)
 
         mod.reproduction.bryophyte(
-            mode='mono',
+            mode='dio',
             chromosome = chrom,
             diploid_ne=1000, 
             haploid_ne=1000,
