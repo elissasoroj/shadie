@@ -70,6 +70,7 @@ class Model(AbstractContextManager):
         # }
         self.map = {
             'initialize': [],
+            'reproduction': [],
             'early': [],
             'late': [],
             'fitness': [],
@@ -109,8 +110,8 @@ class Model(AbstractContextManager):
         order and runs checks on the script.
         """
         sorted_keys = [
-            'initialize', 'timed', 'early', 'reproduction',
-            'fitness', 'survival', 'custom',
+            'initialize', 'timed', 'reproduction', 'early',
+            'fitness', 'survival', 'late', 'custom',
         ]
 
         # copy map and split timed events to a new key list
@@ -191,6 +192,8 @@ class Model(AbstractContextManager):
         logger.debug("initializing Model")
         constants = {} if constants is None else constants
         scripts = [] if scripts is None else scripts
+
+        self.chromosome = chromosome
         
         self.map['initialize'].append({
             'mutation_rate': mut,
@@ -219,6 +222,20 @@ class Model(AbstractContextManager):
             'comment': comment,
         })
 
+    def repro(
+        self, 
+        population:Union[str, None], 
+        scripts:Union[str, list], 
+        comment:Union[str,None]=None,
+        ):
+        """
+        Add event that happens before selection every generation.
+        """
+        self.map['reproduction'].append({
+            'population': population,
+            'scripts': scripts,
+            'comment': comment,
+        })
 
     def fitness(
         self, 
