@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 """
-API to make reproduction functions accessible from Model object
+API to make reproduction functions accessible from Model object.
+These are the main user-facing options for implementing life 
+histories into SLiM scripts using the shadie Model context.
 """
 
 from shadie.reproduction.base import Bryophyte
@@ -44,9 +46,10 @@ class ReproductionApi:
         -----------
         mode: str
             A life history strategy or "dio" or "mono" -icous.
+        ...
         """
         Bryophyte(
-            model=self.model, chromosome = chromosome, mode=mode,
+            model=self.model, chromosome=chromosome, mode=mode,
             diploid_ne=diploid_ne, haploid_ne=haploid_ne,
             female_to_male_ratio=female_to_male_ratio,
             spores_per_sporophyte=spores_per_sporophyte,
@@ -55,3 +58,19 @@ class ReproductionApi:
             maternal_effect_weight=maternal_effect_weight,
             random_death_chance=random_death_chance,
         ).run()
+
+
+    def pteridophyte(self, ):
+        """
+        TODO:
+        """
+
+    def spermatophyte(self, ):
+        """
+        TODO:
+        """
+
+    def angiosperm(self, ):
+        """
+        TODO:
+        """
