@@ -4,7 +4,6 @@
 Starting an alternate implementation of Reproduction 
 """
 
-from typing import List
 from dataclasses import dataclass, field
 from shadie.reproduction.base_scripts import (
     EARLY_BRYO_DIO,
@@ -55,10 +54,10 @@ class Bryophyte(BryophyteBase):
     random_death_chance: float=0
 
 
-    def run(self) -> List[str]:
+    def run(self):
         """
-        Returns a script as a list of strings by running the 
-        appropriate life history functions based on input args.
+        Updates self.model.map with new component scripts for running
+        life history and reproduction based on input args.
         """
         self.add_initialize_constants()
         self.add_early_haploid_diploid_subpops()        
