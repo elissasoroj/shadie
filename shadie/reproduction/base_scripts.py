@@ -181,7 +181,7 @@ s4 survival(p0) //odd
 
 #-----------------------------------------------
 #late() **for every mut!
-LATE = """
+SUBSTITUTION = """
 {{
 if (sim.generation % 2 == 0) //gametophytes have just undergone fitness selection
 {{
@@ -192,7 +192,6 @@ if (sim.generation % 2 == 0) //gametophytes have just undergone fitness selectio
 }}
 }}
 """
-
 #--------------------------
 REPRO_BRYO_DIO_P1 = """
     g_1 = genome1;
@@ -200,16 +199,16 @@ REPRO_BRYO_DIO_P1 = """
     
     meiosis_reps = floor(Spore_num/2);
     for (rep in 1:meiosis_reps)
-    {{
+    {
         breaks = sim.chromosome.drawBreakpoints(individual);
         p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = ifelse (runif(1)<FtoM, 1, 0);
         p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = ifelse (runif(1)<FtoM, 1, 0);
-    }}
+    }
 """
 
 REPRO_BRYO_DIO_P0 = """
     if (individual.tag == 1)    // females find male gametes to reproduce
-    {{
+    {
         reproduction_opportunity_count = 1;
         
         // clones give the focal individual extra opportunities to reproduce
@@ -217,29 +216,29 @@ REPRO_BRYO_DIO_P0 = """
             reproduction_opportunity_count = reproduction_opportunity_count + Clone_num;
         
         for (repro in seqLen(reproduction_opportunity_count))
-        {{
+        {
             if (runif(1) <= Self_rate)
-            {{
+            {
                 // this is selfing using two identical gametes – intragametophytic selfing
                 // intergametophytic selfing might happen below, by chance
                 p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
-            }}
+            }
             else
-            {{
+            {
                 sperm = p0.sampleIndividuals(1, tag=0); // find a male!
                 
                 if (sperm.size() == 1)
-                {{
+                {
                     child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
                     
                     if (Maternal_weight > 0) //Mother's fitness affects sporophyte fitness; see survival()
                         child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
                     
                     sperm.tag = 2;  // take out of the mating pool
-                }}
-            }}
-        }}
-    }}
+                }
+            }
+        }
+    }
 """
 
 REPRO_BRYO_MONO = """
