@@ -83,8 +83,10 @@ class MutationTypeBase:
         inner = f"'{self.name}', {self.dom}, '{self.dist}', "
         inner += ", ".join(map(str, self.distparams))
         if nuc:
-            return f"initializeMutationTypeNuc({inner});"
-        return f"initializeMutationType({inner});"
+            return (f"initializeMutationTypeNuc({inner});\n    "
+                f"{self.name}.convertToSubstitution = T;")
+        return (f"initializeMutationType({inner});\n    "
+                f"{self.name}.convertToSubstitution = T;")
 
     @property
     def mean(self):

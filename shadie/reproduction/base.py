@@ -148,6 +148,12 @@ class Bryophyte(BryophyteBase):
             comment = "generates gametes from sporophytes"
             )
 
+        self.model.repro(
+            population = "p0",
+            scripts = REPRO_BRYO_DIO_P0,
+            comment = "generates gametes from sporophytes"
+            )
+
 
     def monoicous(self):
         """
