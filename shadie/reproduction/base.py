@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from shadie.reproduction.base_scripts import (
     EARLY_BRYO_DIO,
     FITNESS_BRYO_DIO_P0, FITNESS_BRYO_DIO_P1,
+    ACTIVATE, DEACTIVATE, EARLY, SURV,
+    REPRO_BRYO_DIO_P1, REPRO_BRYO_DIO_P0,
 )
 
 DTYPES = ("d", "dio", "dioecy", "dioecious", "heterosporous", "dioicous")
@@ -33,12 +35,11 @@ class ReproductionBase:
     """
     model: 'shadie.Model'
 
-
 @dataclass
 class BryophyteBase(ReproductionBase):
     lineage: str = field(default="Bryophyte", init=False)
     mode: str
-
+    chromosome: any
 
 @dataclass
 class Bryophyte(BryophyteBase):
@@ -50,7 +51,7 @@ class Bryophyte(BryophyteBase):
     female_to_male_ratio: float=1.0
     spores_per_sporophyte: int=100
     clone_rate: float=1.0
-    selfing_rate: float=0.
+    selfing_rate: float=0
     maternal_effect_weight: float=0
     random_death_chance: float=0
 
@@ -100,50 +101,57 @@ class Bryophyte(BryophyteBase):
 
     def dioicous(self):
         """
-        fills the script reproduction block with bryophyte dioicous
+        fills the script reproduction block with bryophyte-dioicous
         """
+
+        #fitness callback:
+        i = 4
+        activate = []
+        deactivate = []
+        for mut in self.chromosome.mutations:
+            i = i + 1
+            idx = str("s"+str(i))
+            active_script = (ACTIVATE.format(**{'idx': idx}).lstrip())
+            deactive_script = (DEACTIVATE.format(**{'idx': idx}).lstrip())
+            activate.append(active_script)
+            deactivate.append(deactive_script)
+            self.model.fitness(
+                idx=idx,
+                mutation=mut,
+                scripts="return 1 + mut.selectionCoeff",
+                comment="gametophytes have no dominance effects",
+            )
+            
+        activate_str = ""
+        deactivate_str = ""
+        for i in activate:
+            activate_str += "\n  ".join([i.strip(';') + ";\n    "])
+
+        for i in deactivate:
+            deactivate_str += "\n  ".join([i.strip(';') + ";\n    "])
+
+        early_script = (
+            EARLY.format(**{'activate': activate_str, 
+                'deactivate': deactivate_str}).lstrip())
+
         self.model.early(
             time=None, 
-            scripts=EARLY_BRYO_DIO, 
+            scripts=early_script, 
             comment="alternation of generations",
         )
-        self.model.fitness(
-            idx='s1',
-            mutation="m3",
-            scripts="return 1 + mut.selectionCoeff",
-            comment="gametophytes have no dominance effects",
-        )
-        self.model.fitness(
-            idx='s2',
-            mutation="m4",
-            scripts="return 1 + mut.selectionCoeff",
-            comment="???",
-        )
-        # self.model.survival(
-        #     idx='s3',
-        #     population="p1",
-        #     scripts="return F",
-        #     comment="???",
-        # )
-        # self.model.survival(
-        #     idx='s4',
-        #     population="p1",
-        #     scripts=FITNESS_BRYO_DIO_P1,
-        #     comment="random death AND maternal effect",
-        # )
-        # self.model.survival(
-        #     idx='s5',
-        #     population="p0",
-        #     scripts=FITNESS_BRYO_DIO_P0,
-        #     comment="random death chance",
-        # )
 
+        self.model.custom(SURV)
 
+        self.model.repro(
+            population = "p1",
+            scripts = REPRO_BRYO_DIO_P1,
+            comment = "generates gametes from sporophytes"
+            )
 
 
     def monoicous(self):
         """
-        fills the script reproduction block with bryophyte dioicous
+        fills the script reproduction block with bryophyte-monoicous
         """
 
 
@@ -174,10 +182,11 @@ if __name__ == "__main__":
         mod.initialize(chromosome=chrom)
 
         mod.reproduction.bryophyte(
-            mode='dio', 
+            mode='dio',
+            chromosome = chrom,
             diploid_ne=1000, 
             haploid_ne=1000,
         )
 
     print(mod.script)
-    mod.run()
+    #mod.run()
