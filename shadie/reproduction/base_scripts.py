@@ -181,15 +181,17 @@ s4 survival(p0) //odd
 
 #-----------------------------------------------
 #late() **for every mut!
+SUB_INNER = """
+mut{idx} = sim.mutationsOfType({mut});
+    freq{idx} = sim.mutationFrequencies(NULL, mut{idx});
+    if (any(freq{idx} == 0.5))
+        sim.subpopulations.genomes.removeMutations(mut{idx}[freq{idx} == 0.5], T);
+"""
+
 SUBSTITUTION = """
-{{
 if (sim.generation % 2 == 0) //gametophytes have just undergone fitness selection
 {{
-    mut{idx} = sim.mutationsOfType({mut});
-    freq{idx} = sim.mutationFrequencies(NULL, mut_{mut});
-    if (any(freq{idx} == 0.5))
-        sim.subpopulations.genomes.removeMutations(mut_{mut}[freq{idx} == 0.5], T);
-}}
+    {inner}
 }}
 """
 #--------------------------
@@ -213,7 +215,7 @@ REPRO_BRYO_DIO_P0 = """
         
         // clones give the focal individual extra opportunities to reproduce
         if (runif(1) <= Clone_rate)
-            reproduction_opportunity_count = reproduction_opportunity_count + Clone_num;
+            reproduction_opportunity_count = reproduction_opportunity_count + 1;
         
         for (repro in seqLen(reproduction_opportunity_count))
         {

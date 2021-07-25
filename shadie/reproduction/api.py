@@ -28,7 +28,7 @@ class ReproductionApi:
         mode:str, 
         diploid_ne: int,
         haploid_ne: int,
-        female_to_male_ratio: float=1.0,
+        female_to_male_ratio: float=0.5,
         spores_per_sporophyte: int=100,
         clone_rate: float=1.0,
         selfing_rate: float=0.,

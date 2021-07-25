@@ -10,7 +10,7 @@ from shadie.reproduction.base_scripts import (
     EARLY_BRYO_DIO,
     FITNESS_BRYO_DIO_P0, FITNESS_BRYO_DIO_P1,
     ACTIVATE, DEACTIVATE, EARLY, SURV,
-    REPRO_BRYO_DIO_P1, REPRO_BRYO_DIO_P0,
+    REPRO_BRYO_DIO_P1, REPRO_BRYO_DIO_P0, SUBSTITUTION, SUB_INNER
 )
 
 DTYPES = ("d", "dio", "dioecy", "dioecious", "heterosporous", "dioicous")
@@ -48,7 +48,7 @@ class Bryophyte(BryophyteBase):
     """
     diploid_ne: int
     haploid_ne: int
-    female_to_male_ratio: float=1.0
+    female_to_male_ratio: float=0.5
     spores_per_sporophyte: int=100
     clone_rate: float=1.0
     selfing_rate: float=0
@@ -108,13 +108,16 @@ class Bryophyte(BryophyteBase):
         i = 4
         activate = []
         deactivate = []
+        substitutions = []
         for mut in self.chromosome.mutations:
             i = i + 1
             idx = str("s"+str(i))
-            active_script = (ACTIVATE.format(**{'idx': idx}).lstrip())
-            deactive_script = (DEACTIVATE.format(**{'idx': idx}).lstrip())
+            active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
+            deactive_script = DEACTIVATE.format(**{'idx': idx}).lstrip()
             activate.append(active_script)
             deactivate.append(deactive_script)
+            sub_inner = SUB_INNER.format(**{'idx': idx, 'mut': mut}).lstrip()
+            substitutions.append(sub_inner)
             self.model.fitness(
                 idx=idx,
                 mutation=mut,
@@ -152,6 +155,19 @@ class Bryophyte(BryophyteBase):
             population = "p0",
             scripts = REPRO_BRYO_DIO_P0,
             comment = "generates gametes from sporophytes"
+            )
+
+        substitution_str = ""
+        for i in substitutions:
+            substitution_str += "\n  ".join([i.strip(';') + ";\n    "])
+
+        substitution_script = (
+            SUBSTITUTION.format(**{'inner': substitution_str}).lstrip())
+
+        self.model.late(
+            time = None,
+            scripts = substitution_script,
+            comment = "fixes mutations in haploid gen"
             )
 
 
