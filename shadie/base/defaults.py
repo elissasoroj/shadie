@@ -8,6 +8,7 @@ mutations in simulation unless the user creates additional custom
 MutationTypes.
 """
 
+from loguru import logger
 from shadie.base.mutations import mtype as MutationType
 from shadie.base.elements import ElementType
 

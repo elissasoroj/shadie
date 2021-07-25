@@ -59,13 +59,21 @@ class MutationTypeBase:
         self.dom = dominance
         self.dist = distribution
         self.distparams = params
+        self.neutralwarning = False
         if self.dist == 'f':
             if self.distparams == (0,):
                 self.coding = 0
+                self.neutralwarning = True
             else: 
                 self.coding = 1
         else:
             self.coding =  1
+
+        if self.neutralwarning == True:
+            logger.warning("shadie workflow strongly advises " 
+                    "against the use of neutral mutations in SLiM simulation "
+                    "unless Chromosome parameter NSsites = False "
+                    "(default = True)")
 
         # values overwritten by inherited classes
         self._dist = stats.norm
@@ -289,6 +297,9 @@ class MutationList(list):
             srep = f"'{mut.name}', {mut.dom}, '{mut.dist}', {params}"
             self.slim_dict[mut.name] = srep
 
+        if any(mut.neutralwarning == True for mut in self):
+            self.neutralwarning = True
+
     def __repr__(self):
         return f"<MutationList: {self.names}>"
 
@@ -319,7 +330,7 @@ if __name__ == "__main__":
     import shadie
 
     mlist = shadie.mlist(
-        shadie.mtype(0.5, 'f', 0.0),
+        #shadie.mtype(0.5, 'f', 0.0),
         shadie.mtype(0.5, 'f', 0.1),
         shadie.mtype(0.5, 'n', 0.5, 0.25),
         shadie.mtype(0.5, 'g', 2.0, 0.1),
@@ -327,7 +338,7 @@ if __name__ == "__main__":
     )
     for muta in mlist:
         muta.summary()
-    m2 = shadie.mtype(0.5, 'f', 0)
+    #m2 = shadie.mtype(0.5, 'f', 0)
 
     print(mlist)
     test= []

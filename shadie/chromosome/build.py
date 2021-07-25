@@ -30,7 +30,13 @@ class ChromosomeBase:
     nucleotides: bool
         Use initializeMutationTypeNuc instead of initializeMutationType
     """
-    def __init__(self, genome_size, use_nucleotides=False):
+    def __init__(
+        self, 
+        genome_size, 
+        use_nucleotides=False, 
+        NS_sites:bool=True, #turn off S/NS sites
+        ):
+
         self.genome_size = genome_size
         self.data = pd.DataFrame(
             columns=['name', 'start', 'end', 'eltype', 'script', 'coding'],
@@ -38,6 +44,7 @@ class ChromosomeBase:
         )
         self.mutations = []
         self.use_nuc = use_nucleotides
+        self.sites = NS_sites
 
 
     def inspect(self):
@@ -90,30 +97,41 @@ class ChromosomeBase:
         # iterate over int start positions of elements
         for idx in self.data.index:
 
-            # skip non-coding regions
-            if self.data.loc[idx, "coding"] == 0:
-                #commands.append(
-                    #"initializeGenomicElement({}, {}, {});"
-                    #.format(*self.data.loc[idx, ["eltype", "start", "end"]])
-                    #)
-                pass
+            if self.sites == True:
+                # skip non-coding regions
+                if self.data.loc[idx, "coding"] == 0:
+                    #commands.append(
+                        #"initializeGenomicElement({}, {}, {});"
+                        #.format(*self.data.loc[idx, ["eltype", "start", "end"]])
+                        #)
+                    pass
 
-            # define synonymous type at every 3rd position?
-            # TODO: we need to require exons == length multiples of 3 
-            # we should really stop users from mixing in neutral and non-neutral mutations
-            if self.data.loc[idx, "coding"] == 1:
+                # define synonymous type at every 3rd position?
+                # TODO: we need to require exons == length multiples of 3 
+                    #this is not necessary, there will just be some blank 
+                    #portions of the chromosome at the end of a coding region
+                # we should really stop users from mixing in neutral and non-neutral mutations
+                    #Yes, we should
+                if self.data.loc[idx, "coding"] == 1:
+                    ele = self.data.loc[idx]
+                    # commands.append(
+                    #     f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
+                    # )
+                    # COMMENTING OUT FOR NOW while working on reproduction.
+                    length = ele.end - ele.start
+                    commands.append(
+                        f"types = rep({ele.eltype}, asInteger(floor({length}/3))); \n"
+                        f"starts = {ele.start} + seqLen(integerDiv({length}, 3)) * 3; \n   "
+                        "ends = starts + 1; \n"
+                        "initializeGenomicElement(types, starts, ends); \n"
+                    )
+            else:
+                #does NOT skip non-coding regions
                 ele = self.data.loc[idx]
-                # commands.append(
-                #     f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
-                # )
-                # COMMENTING OUT FOR NOW while working on reproduction.
-                length = ele.end - ele.start
                 commands.append(
-                    f"types = rep({ele.eltype}, asInteger(floor({length}/3))); \n"
-                    f"starts = {ele.start} + seqLen(integerDiv({length}, 3)) * 3; \n   "
-                    "ends = starts + 1; \n"
-                    "initializeGenomicElement(types, starts, ends); \n"
+                    f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
                 )
+
         return "\n  ".join(commands)
 
 
