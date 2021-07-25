@@ -6,7 +6,7 @@ Starting an alternate implementation of Reproduction
 
 from dataclasses import dataclass, field
 from shadie.reproduction.base_scripts import (
-    EARLY_BRYO_DIO,ACTIVATE, DEACTIVATE, EARLY, SURV, MATERNAL_EFFECT,
+    ACTIVATE, DEACTIVATE, EARLY, SURV, MATERNAL_EFFECT,
     SUBSTITUTION, SUB_INNER, REPRO_BRYO_DIO_P1, REPRO_BRYO_DIO_P0,
     REPRO_BRYO_MONO_P1, REPRO_BRYO_MONO_P0,
 )

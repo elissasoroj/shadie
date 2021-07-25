@@ -7,10 +7,10 @@ Starting an alternate implementation of Reproduction
 from dataclasses import dataclass, field
 from shadie.reproduction.base import ReproductionBase
 from shadie.reproduction.base_scripts import (
-    EARLY_BRYO_DIO,ACTIVATE, DEACTIVATE, EARLY, SURV,
+    ACTIVATE, DEACTIVATE, EARLY, SURV,
     SUBSTITUTION, SUB_INNER, REPRO_BRYO_DIO_P1, REPRO_BRYO_DIO_P0,
     REPRO_BRYO_MONO_P1, REPRO_BRYO_MONO_P0, EARLY1_ANGIO,
-    REPRO_ANGIO_DIO_P1, REPRO_ANGIO_DIO_P0,
+    REPRO_ANGIO_DIO_P1, REPRO_ANGIO_DIO_P0, REPRO_ANGIO_MONO_P1
 )
 
 DTYPES = ("d", "dio", "dioecy", "dioecious", "heterosporous", "dioicous")
@@ -206,17 +206,19 @@ class Angiosperm(AngiospermBase):
             comment="alternation of generations",
         )
 
-        self.model.custom(SURV)
+        survival_script = (
+            SURV.format(**{'maternal_effect': ""}).lstrip())
+        self.model.custom(survival_script)
 
         self.model.repro(
             population="p1",
-            scripts=REPRO_BRYO_MONO_P1,
+            scripts=REPRO_ANGIO_MONO_P1,
             comment="generates gametes from sporophytes"
             )
 
         self.model.repro(
             population="p0",
-            scripts=REPRO_BRYO_MONO_P0,
+            scripts=REPRO_ANGIO_DIO_P0,
             comment="generates gametes from sporophytes"
             )
 
@@ -264,7 +266,7 @@ if __name__ == "__main__":
         mod.initialize(chromosome=chrom)
 
         mod.reproduction.angiosperm(
-            mode='dio',
+            mode='mono',
             chromosome = chrom,
             diploid_ne=1000, 
             haploid_ne=1000,
