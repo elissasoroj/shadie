@@ -48,7 +48,7 @@ class Bryophyte(BryophyteBase):
     haploid_ne: int
     female_to_male_ratio: float=0.5
     spores_per_sporophyte: int=100
-    clone_rate: float=1.0
+    clone_rate: float=0.0
     selfing_rate: float=0
     maternal_effect_weight: float=0
     random_death_chance: float=0
