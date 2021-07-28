@@ -325,24 +325,6 @@ REPRO_ANGIO_MONO_P1="""
 """
 
 REPRO_PTER_HOMOSPORE_P0 = """
-    g_1 = genome1;
-    g_2 = genome2;
-    
-    meiosis_reps = floor(Spore_num/2);
-    reproduction_opportunity_count = 1;
-    // clones give the focal individual extra opportunities to reproduce
-    if (runif(1) <= Clone_rate)
-        meiosis_reps = meiosis_reps*Clone_num;
-    
-    for (rep in 1:meiosis_reps)
-    {
-        breaks = sim.chromosome.drawBreakpoints(individual);
-        p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
-        p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-    }
-"""
-
-REPRO_PTER_HOMOSPORE_P1 = """
     if (runif(1) < gFtoM) // chance of making meristic (egg-bearing) gametophyte
     {
         reproduction_opportunity_count = 1;
@@ -369,5 +351,23 @@ REPRO_PTER_HOMOSPORE_P1 = """
             
             }
         }
+    }
+"""
+
+REPRO_PTER_HOMOSPORE_P1 = """
+    g_1 = genome1;
+    g_2 = genome2;
+    
+    meiosis_reps = floor(Spore_num/2);
+    reproduction_opportunity_count = 1;
+    // clones give the focal individual extra opportunities to reproduce
+    if (runif(1) <= Clone_rate)
+        meiosis_reps = meiosis_reps*Clone_num;
+    
+    for (rep in 1:meiosis_reps)
+    {
+        breaks = sim.chromosome.drawBreakpoints(individual);
+        p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
+        p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
     }
 """
