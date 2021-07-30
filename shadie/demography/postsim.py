@@ -13,6 +13,7 @@ import pyslim
 import tskit
 import msprime
 import altair as alt
+from loguru import logger
 
 #optional imports
 try:
@@ -21,6 +22,7 @@ except ImportError:
     pass
 
 #internal imports
+from shadie.chromosome.build import ChromosomeBase
 
 
 class PostSim:
@@ -33,14 +35,16 @@ class PostSim:
         popsize:int = None, #size of each ending population
         recomb: float = None, #recomcbination rate
         mutrate:float = None, #mutations rate
-        chromosome = 'shadie.chromosome.ChromosomeBase',
+        chromosome = None, #'shadie.chromosome.ChromosomeBase'
         ):
     
         """
         Reads in two SLiM .trees files, merges them, recapitates, 
         overlays neutral mutations and saves info.
         """
-        
+
+        self.chromosome = chromosome
+
         self.species = []
         ids = []
         species = []
@@ -96,11 +100,12 @@ class PostSim:
 
         #save mutation positions
         positions = []
+        population = []
         for mut in self.mts.mutations():
             positions.append(int(mut.position))
+            population.append(self.mts.)
         self.positions = positions
 
-    
     def simplify(
         self, 
         samplesize:int = 10, 
@@ -111,6 +116,7 @@ class PostSim:
         PostSim.sts.divergence(PostSim.sets)
         .diversity()
         """
+
         np.random.seed(random_seed)
         p1_keep_indivs = np.random.choice(self.pop1, samplesize, replace=False)
         p2_keep_indivs = np.random.choice(self.pop2, samplesize, replace=False)
@@ -154,6 +160,7 @@ class PostSim:
     
     def summary(self):
         "View selection coefficient distributions and mutation type counts"
+
         #calculate number of neutral mutations
         neutral = 0
         for mut in self.mts.mutations():
@@ -208,57 +215,45 @@ class PostSim:
             f"Non-neutral mutations: {self.mts.num_mutations - neutral}\n"
             )
 
-        # #static toyplot
-        # print("Mutation positions along chromosome:")
-        # chrom = Chromosome(genome = self.genome)
-        # chrom.toyplot()
-        # self.rectangles = chrom.rectangles
 
-        # canvas = toyplot.Canvas(width=2500, height=200)
-        # axes = canvas.cartesian()
-        # axes.show = False
+    def plot(self):
+        """
+        Plots the mutations over the chromosome as interactive altair 
+        plot - but needs to be opened in vega editor (??)
+        """
 
-        #draw the rectangles
-        # for index, row in self.rectangles.iterrows():
-        #     axes.rectangle(
-        #         row['x1'], row['x2'], row['y1'], row['y2'],
-        #         color = row['color'],
-        #         style={"opacity":0.6},
-        #     )
-        # #draw the positions
-        # lines = axes.vlines(self.positions, style={"stroke":"blue", "stroke-width":2})
+        if self.chromosome == None:
+            logger.warning("Please init Postsim object with chromosome")
+        else:
+            chrom = self.chromosome.data
+            chrom.ChromosomeBase.inspect()
+            ichrom = chrom.ichrom
 
+            brush = alt.selection_interval(
+                    encodings=['x'], 
+                    mark=alt.BrushConfig(fill='red', fillOpacity = 0.700))
 
-    def zoomplot(self):
-        "interactive altair plot - but needs to be opened in vega editor"
-        chrom = Chromosome(self.genome)
-        chrom.altair()
-        ichrom = chrom.ichrom
+            fadedchrom = ichrom.mark_rect(opacity = 0.4)
 
-        brush = alt.selection_interval(
-                encodings=['x'], 
-                mark=alt.BrushConfig(fill='red', fillOpacity = 0.700))
+            mut_pos = pd.DataFrame({'x': self.positions},
+                {'population': self.pop})
+            mut_positions = alt.Chart(mut_pos).mark_rule(color = alt.ColorName("mediumblue")).encode(
+                        x='x:Q',
+                        size=alt.value(1),
+                        tooltip=[
+                            alt.Tooltip('x', title='Position'),
+                        ])
 
-        fadedchrom = ichrom.mark_rect(opacity = 0.4)
+            layered = alt.layer(fadedchrom, mut_positions)
 
-        mut_pos = pd.DataFrame({'x': self.positions})
-        mut_positions = alt.Chart(mut_pos).mark_rule(color = alt.ColorName("mediumblue")).encode(
-                    x='x:Q',
-                    size=alt.value(1),
-                    tooltip=[
-                        alt.Tooltip('x', title='Position'),
-                    ])
+            zoomtest = alt.vconcat(
+                layered.encode(
+                alt.X('x1:Q', title=None, scale=alt.Scale(domain=brush))).properties(height = 80),
+                layered.add_selection(brush).properties(height=30))
 
-        layered = alt.layer(fadedchrom, mut_positions)
-
-        zoomtest = alt.vconcat(
-            layered.encode(
-            alt.X('x1:Q', title=None, scale=alt.Scale(domain=brush))).properties(height = 80),
-            layered.add_selection(brush).properties(height=30))
-
-        print("Note: this plot must be opened in the Vega editor for "
-            "interactive features to work")
-        IPython.display.display_html(zoomtest)
+            print("Note: this plot must be opened in the Vega editor for "
+                "interactive features to work")
+            IPython.display.display_html(zoomtest)
 
 
 
@@ -298,8 +293,11 @@ if __name__ == "__main__":
         simlength = 1000,
         popsize = 1000,
         recomb = 1e-8, 
-        mutrate = 1e-8)
+        mutrate = 1e-8,
+        chromosome = "None")
     test.individuals()
-    simplified = test.simplify()
+    test.simplify()
+    test.summary()
+    test.plot()
 
 
