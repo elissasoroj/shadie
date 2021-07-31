@@ -200,7 +200,7 @@ class Model(AbstractContextManager):
         
         self.map['initialize'].append({
             'mutation_rate': mut,
-            'recombination_rate': recomb,
+            'recombination_rate': f"{recomb}, {chromosome.genome_size}",
             'genome_size': chromosome.genome_size,
             'mutations': chromosome.to_slim_mutation_types(),
             'elements': chromosome.to_slim_element_types(),
@@ -341,7 +341,7 @@ class Model(AbstractContextManager):
         self.write("/tmp/slim.slim")
         cmd = ["slim", "/tmp/slim.slim"]
         
-        #newbuild cmd
+        #newbuild cmd 
         cmdnb = ["/Users/elissa/bin/slim", "/tmp/slim.slim"]
 
         # capture stdout
@@ -407,4 +407,4 @@ if __name__ == "__main__":
 
 
     print(model.script)
-    model.run()
+    #model.run()

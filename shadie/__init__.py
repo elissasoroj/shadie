@@ -8,6 +8,7 @@ phylogeny into SLiM3-compatible subpopulation demography
 
 __version__ = "0.1.0"
 
+from shadie.base.defaults import NONCDS, EXON, INTRON
 from shadie.base.mutations import mtype
 from shadie.base.mutations import MutationList as mlist
 from shadie.base.elements import ElementType as etype

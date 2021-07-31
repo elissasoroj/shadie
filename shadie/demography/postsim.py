@@ -264,8 +264,8 @@ class PostSim:
                     })
 
                 mut_positions = alt.Chart(mut_pos).mark_rule().encode(
-                    color=alt.Color('population:N', 
-                        scale=alt.Scale(domain=self.edge_ids, 
+                    color=alt.Color('population', 
+                        scale=alt.Scale(domain= self.edge_ids, 
                             range=["mediumblue", "crimson"])),
                     x='x:Q',
                     size=alt.value(1),

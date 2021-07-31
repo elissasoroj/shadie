@@ -121,8 +121,9 @@ class ChromosomeBase:
         nctypes = list(genome.loc[genome['category']=='noncds'].eltype.unique())
         self.intypes = intypes
 
-        ncodcolors = ['mediumvioletred', 'lightcoral','firebrick', 'crimson', 'lightpink']
-        incolors = ['lemonchiffon', 'gold', 'orange',  'yellow', 'khaki']
+        #ncodcolors = ['mediumvioletred', 'lightcoral','firebrick', 'crimson', 'lightpink']
+        incolors = ['mediumaquamarine', 'palegreen','olivedrab', 'darkgreen', 'limegreen']
+        ncodcolors = ['lemonchiffon', 'gold', 'orange',  'yellow', 'khaki']
         excolors = ['cornflowerblue', 'mediumblue','dodgerblue', 'darkslateblue', 'skyblue']
 
 
