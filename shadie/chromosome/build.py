@@ -501,8 +501,8 @@ class ChromosomeExplicit(ChromosomeBase):
         (5000, 10000): None,
     })
     """
-    def __init__(self, data):
-        super().__init__(genome_size=max([i[1] + 1 for i in data.keys()]))
+    def __init__(self, genome_size, data):
+        super().__init__(genome_size=genome_size)
 
         # check data dict for proper structure
         assert all(isinstance(i, tuple) for i in data.keys()), (
@@ -551,7 +551,7 @@ if __name__ == "__main__":
     # design chromosome of elements
     # Do we want users to be able to put in a chromosome like this 
     # and have the gaps filled with neutral portions? YES.
-    chrom = shadie.chromosome.explicit({
+    chrom = shadie.chromosome.explicit(6000, {
         (500, 1000): e1,
         (2000, 3000): e0,
         (3001, 5000): e1,

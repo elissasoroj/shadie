@@ -53,7 +53,7 @@ def default():
     return Chromosome()
 
 
-def explicit(data):
+def explicit(genome_size, data):
     """
     Returns a chromosome built from a dictionary with end positions 
     (lowest starts at 0... maybe this should change to listing start 
@@ -66,4 +66,4 @@ def explicit(data):
         (3001, 5000): e1,
     })
     """
-    return ChromosomeExplicit(data)
+    return ChromosomeExplicit(genome_size, data)
