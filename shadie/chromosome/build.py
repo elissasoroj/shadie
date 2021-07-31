@@ -47,6 +47,7 @@ class ChromosomeBase:
         self.mutations = []
         self.use_nuc = use_nucleotides
         self.sites = NS_sites
+        self.ichrom = None
 
 
     def inspect(self):
@@ -55,16 +56,30 @@ class ChromosomeBase:
         """
         
         eltype = []
+        category = []
         altname = []
         startbase = []
         endbase = []
         y1 = []
         y2 = []
         length = []
+        noncds_starts = [0]
+        noncds_stops = []
         for index, row in self.data.iterrows():
             eltype.append(row['eltype'])
+
+            if row['name'] == 'intron':
+                category.append("intron")
+            elif row['coding'] == 1:
+                category.append("exon")
+            else:
+                category.append("noncds")
+
             if pd.isna(row['name']):
-                altname.append(row['eltype'])
+                if row['coding'] == 1:
+                    altname.append("exon")
+                else:
+                    altname.append("noncds")
             else: 
                 altname.append(row['name'])
             startbase.append(row['start'])
@@ -73,19 +88,38 @@ class ChromosomeBase:
             y2.append(1)
             length.append(row['end']-row['start'])
 
-        chromcoords = list(zip(eltype, altname, startbase, endbase, y1, y2, length))
+            noncds_starts.append((row['end']+1))
+            noncds_stops.append((row['start']-1))
+
+        self.noncds_starts = noncds_starts[:-1]
+        self.noncds_stops = noncds_stops
+
+        for i in range(len(self.noncds_starts)):
+            if self.noncds_starts[i] != self.noncds_stops[i]:
+                eltype.append("None")
+                category.append("noncds")
+                altname.append("noncds")
+                startbase.append(self.noncds_starts[i])
+                endbase.append(self.noncds_stops[i])
+                y1.append(0)
+                y2.append(1)
+                length.append(self.noncds_stops[i]-self.noncds_starts[i])
+
+
+        chromcoords = list(zip(eltype, category, altname, startbase, endbase, y1, y2, length))
         genome = pd.DataFrame(chromcoords, 
-            columns = ['altname', 'eltype', 'x1', 'x2', 'y1', 'y2', 'length'])
+            columns = ['eltype', 'category', 'altname', 'x1', 'x2', 'y1', 'y2', 'length'])
+
+        self.genome = genome
 
         #set the colors
-        extypecount = genome.loc[genome['eltype']=='exon'].altname.nunique()
-        extypes = list(genome.loc[genome['eltype']=='exon'].altname.unique())
-        intypecount = genome.loc[genome['eltype']=='intron'].altname.nunique()
-        intypes = list(genome.loc[genome['eltype']=='intron'].altname.unique())
-        nctypecount = genome.loc[genome['eltype']=='noncds'].altname.nunique()
-        nctypes = list(genome.loc[genome['eltype']=='noncds'].altname.unique())
+        extypecount = genome.loc[genome['category']=='exon'].eltype.nunique()
+        extypes = list(genome.loc[genome['category']=='exon'].eltype.unique())
+        intypecount = genome.loc[genome['category']=='intron'].eltype.nunique()
+        intypes = list(genome.loc[genome['category']=='intron'].eltype.unique())
+        nctypecount = genome.loc[genome['category']=='noncds'].eltype.nunique()
+        nctypes = list(genome.loc[genome['category']=='noncds'].eltype.unique())
         self.intypes = intypes
-        self.extypes = extypes
 
         ncodcolors = ['mediumvioletred', 'lightcoral','firebrick', 'crimson', 'lightpink']
         incolors = ['lemonchiffon', 'gold', 'orange',  'yellow', 'khaki']
@@ -93,7 +127,9 @@ class ChromosomeBase:
 
 
         dom = extypes + intypes + nctypes
+        self.dom = dom
         rng = excolors[0:extypecount] + incolors[0:intypecount] + ncodcolors[0:nctypecount]
+        self.rng = rng
 
         brush = alt.selection_interval(
             encodings=['x'], 
@@ -105,7 +141,7 @@ class ChromosomeBase:
             x2='x2:Q',
             y = alt.Y('y1:Q', axis=None),
             y2='y2:Q', 
-            color=alt.Color('altname:N', 
+            color=alt.Color('eltype:N', 
                             scale=alt.Scale(domain=dom, range=rng)),
             tooltip=[
                 alt.Tooltip('eltype', title='Element Type'),
@@ -129,8 +165,6 @@ class ChromosomeBase:
         zoom.save('zoom.html')
         self.ichrom = ichrom    #for postsim
         self.zoom = zoom        #for interactive plot
-
-
 
 
     def toyplot(self):
@@ -328,21 +362,21 @@ class Chromosome(ChromosomeBase):
     """
     def __init__(self):
         super().__init__(genome_size=10001)
-
         self.data.loc[0] = (
-            NONCDS.altname, 0, 2000, NONCDS.name, NONCDS)
+            NONCDS.altname, 0, 2000, NONCDS.name, NONCDS, NONCDS.coding)
         self.data.loc[2001] = (
-            EXON.altname, 2001, 4000, EXON.name, EXON)
+            EXON.altname, 2001, 4000, EXON.name, EXON, EXON.coding)
         self.data.loc[4001] = (
-            INTRON.altname, 4001, 6000, INTRON.name, INTRON)
+            INTRON.altname, 4001, 6000, INTRON.name, INTRON, INTRON.coding)
         self.data.loc[6001] = (
-            EXON.altname, 6001, 8000, EXON.name, EXON)
+            EXON.altname, 6001, 8000, EXON.name, EXON, EXON.coding)
         self.data.loc[8001] = (
-            NONCDS.altname, 8001, 10000, NONCDS.name, NONCDS)
+            NONCDS.altname, 8001, 10000, NONCDS.name, NONCDS, NONCDS.coding)
 
         mutations = []
-        for element in self.data.values():
-            for mutation in element.mlist:
+        elements = [NONCDS, EXON, INTRON]
+        for elem in elements:
+            for mutation in elem.mlist:
                 if mutation.name not in mutations:
                     mutations.append(mutation.name)
         self.mutations = mutations
@@ -505,25 +539,27 @@ if __name__ == "__main__":
     e0 = shadie.etype([m0, m1], [1, 2])
     e1 = shadie.etype([m2], [1])
 
-    # print(e0.mlist)
+    # # print(e0.mlist)
 
-    chrom = shadie.chromosome.random(100000)
-    print(chrom.data.iloc[:50, :4])
-    chrom.review("chromosome")
+    # chrom = shadie.chromosome.random(100000)
+    # #print(chrom.data.iloc[:50, :4])
+    # #chrom.review("chromosome")
 
+    # default = shadie.chromosome.default()
+    # print(default.data)
 
-    # # design chromosome of elements
-    # # Do we want users to be able to put in a chromosome like this 
-    # # and have the gaps filled with neutral portions? YES.
-    # chrom = shadie.chromosome.explicit({
-    #     (500, 1000): e1,
-    #     (2000, 3000): e0,
-    #     (3001, 5000): e1,
-    # })
+    # design chromosome of elements
+    # Do we want users to be able to put in a chromosome like this 
+    # and have the gaps filled with neutral portions? YES.
+    chrom = shadie.chromosome.explicit({
+        (500, 1000): e1,
+        (2000, 3000): e0,
+        (3001, 5000): e1,
+    })
 
-    # #elem = chrom.data.loc[500]["eltype"]
-    # #chrom.to_slim_mutation_types()
-    # test = chrom.mutations
-    # print(chrom.data.head())
-    # # print(test)
-    # # chrom.to_slim_elements()
+    #elem = chrom.data.loc[500]["eltype"]
+    #chrom.to_slim_mutation_types()
+    test = chrom.mutations
+    print(chrom.data.head())
+    # print(test)
+    # chrom.to_slim_elements()

@@ -61,11 +61,9 @@ def explicit(data):
     as start, stop positions of ElementTypes.
 
     chromosome.explicit({
-        500: g1,
-        1000: g2,
-        1200: g1,
-        1500: g3,
-        2000: g2,
+        (500, 1000): e1,
+        (2000, 3000): e0,
+        (3001, 5000): e1,
     })
     """
     return ChromosomeExplicit(data)
