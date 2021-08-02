@@ -200,7 +200,7 @@ class Model(AbstractContextManager):
         
         self.map['initialize'].append({
             'mutation_rate': mut,
-            'recombination_rate': f"{recomb}, {chromosome.genome_size}",
+            'recombination_rate': f"{recomb}, {int(chromosome.genome_size)}",
             'genome_size': chromosome.genome_size,
             'mutations': chromosome.to_slim_mutation_types(),
             'elements': chromosome.to_slim_element_types(),
