@@ -11,6 +11,7 @@ import numpy as np
 from loguru import logger
 import altair as alt
 import toyplot
+import random
 
 # internal imports
 from shadie.base.elements import ElementType
@@ -392,8 +393,8 @@ class ChromosomeRandom(ChromosomeBase):
     def __init__(
         self, 
         genome_size:int=20000, 
-        intron:ElementType=None,
-        exon:ElementType=None,
+        intron:Union[None, ElementType, list]=None,
+        exon:Union[None, ElementType, list]=None,
         noncds:ElementType=None,
         seed:Union[int, None]=None,
         ):
@@ -404,7 +405,23 @@ class ChromosomeRandom(ChromosomeBase):
         self.exon = exon if exon is not None else EXON
         self.noncds = noncds if noncds is not None else NONCDS
 
-        elements = [self.intron, self.exon, self.noncds]
+        #save the mutation list
+        if isinstance(self.intron, list):
+            self.introns = self.intron 
+        else:
+            self.introns = []
+            self.introns.append(self.intron)
+        
+        if isinstance(self.exon, list):
+            self.exons = self.exon 
+        else:
+            self.exons = []
+            self.exons.append(self.exon)
+        
+        noncdss = []
+        noncdss.append(self.noncds)
+
+        elements = list(self.introns + self.exons + noncdss)
         mutations = []
         for elem in elements:
             for mutation in elem.mlist:
@@ -470,20 +487,22 @@ class ChromosomeRandom(ChromosomeBase):
             for enum, span in enumerate(spans):
                 # even numbered segments are the exons (0, 2, 4)
                 if not enum % 2:
+                    x = random.choice(self.exons)
                     self.data.loc[idx] = (
-                        self.exon.altname, 
+                        x.altname, 
                         idx + 1, 
                         idx + span + 1, 
-                        self.exon.name, self.exon,
-                        self.exon.coding,
+                        x.name, x,
+                        x.coding,
                     )
                 else:
+                    i = random.choice(self.introns)
                     self.data.loc[idx] = (
-                        self.intron.altname,
+                        i.altname,
                         idx + 1,
                         idx + span + 1,
-                        self.intron.name, self.intron, 
-                        self.intron.coding,
+                        i.name, i, 
+                        i,
                     )
                 idx += span + 1
         self.data = self.data.sort_index()

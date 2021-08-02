@@ -12,8 +12,8 @@ from shadie.chromosome.build import ChromosomeRandom, Chromosome, ChromosomeExpl
 
 def random(        
     genome_size:int=20000, 
-    intron:ElementType=None,
-    exon:ElementType=None,
+    intron:Union[None, ElementType, list]=None,
+    exon:Union[None, ElementType, list]=None,
     noncds:ElementType=None,
     intron_scale=1000,
     cds_scale=1000,
