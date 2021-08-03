@@ -14,6 +14,7 @@ import tskit
 import msprime
 import altair as alt
 from loguru import logger
+from typing import Union
 
 #optional imports
 try:
@@ -132,7 +133,7 @@ class PostSim:
     def simplify(
         self, 
         samplesize:int = 10, 
-        random_seed = 3):
+        random_seed:Union[int, None]=None):
         """
         Simplify merged tree sequence. PostSim.sts and PostSim.sets
         can be accessed for tskit summary statistic functions, e.g:
