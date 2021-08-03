@@ -10,7 +10,8 @@ from shadie.reproduction.base_scripts import (
     ACTIVATE, DEACTIVATE, EARLY, SURV,
     SUBSTITUTION, SUB_INNER, REPRO_BRYO_DIO_P1, REPRO_BRYO_DIO_P0,
     REPRO_BRYO_MONO_P1, REPRO_BRYO_MONO_P0, EARLY1_ANGIO,
-    REPRO_ANGIO_DIO_P1, REPRO_ANGIO_DIO_P0, REPRO_ANGIO_MONO_P1
+    REPRO_ANGIO_DIO_P1, REPRO_ANGIO_DIO_P0, REPRO_ANGIO_MONO_P1,
+    ANGIO_SURV_P0
 )
 
 DTYPES = ("d", "dio", "dioecy", "dioecious", "heterosporous", "dioicous")
@@ -132,7 +133,7 @@ class Angiosperm(AngiospermBase):
 
         survival_script = (
             SURV.format(**{'maternal_effect': "",
-                'p0survival': "T"}).lstrip())
+                'p0survival': ANGIO_SURV_P0}).lstrip())
         self.model.custom(survival_script)
 
         self.model.repro(
@@ -209,7 +210,7 @@ class Angiosperm(AngiospermBase):
 
         survival_script = (
             SURV.format(**{'maternal_effect': "",
-                'p0survival': "T"}).lstrip())
+                'p0survival': ANGIO_SURV_P0}).lstrip())
         self.model.custom(survival_script)
 
         self.model.repro(

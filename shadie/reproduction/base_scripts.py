@@ -104,7 +104,7 @@ s3 survival(p0) //even
     if (runif(1) < Death_chance)
         return F;
     else
-        return {p0survival};
+        {p0survival}
 }}
 
 s4 survival(p0) //odd
@@ -113,6 +113,14 @@ s4 survival(p0) //odd
 }}
 """
 
+ANGIO_SURV_P0= """
+    {
+        if (individual.tag == 1)
+                return T;
+        else
+            return NULL;
+    }
+"""
 #-----------------------------------------------
 #late() **for every mut!
 SUB_INNER = """
