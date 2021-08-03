@@ -30,7 +30,7 @@ class Angiosperm(AngiospermBase):
     as well
     """
     diploid_ne: int
-    haploid_ne: int
+    haploid_ne: int=50000
     female_to_male_ratio: float=0.5
     clone_rate: float=0.0
     ovule_count: int=30

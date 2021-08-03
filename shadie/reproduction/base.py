@@ -45,7 +45,7 @@ class Bryophyte(BryophyteBase):
     Reproduction mode based on mosses, hornworts, and liverworts
     """
     diploid_ne: int
-    haploid_ne: int
+    haploid_ne: int=50000
     female_to_male_ratio: float=0.5
     spores_per_sporophyte: int=100
     clone_rate: float=0.0
