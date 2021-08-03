@@ -113,7 +113,7 @@ class ReproductionApi:
         diploid_ne: int,
         haploid_ne: int,
         female_to_male_ratio: float=0.5,
-        clone_rate: float=1.0,
+        clone_rate: float=0.0,
         ovule_count: int=30,
         fertilization_rate: float=0.7,
         pollen_count: int=100,
