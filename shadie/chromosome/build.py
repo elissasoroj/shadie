@@ -69,7 +69,8 @@ class ChromosomeBase:
         for index, row in self.data.iterrows():
             eltype.append(row['eltype'])
 
-            if row['name'] == 'intron':
+            namestr = str(row['name'])
+            if "intron" in namestr == True:
                 category.append("intron")
             elif row['coding'] == 1:
                 category.append("exon")
@@ -97,14 +98,16 @@ class ChromosomeBase:
 
         for i in range(len(self.noncds_starts)):
             if self.noncds_starts[i] != self.noncds_stops[i]:
-                eltype.append("None")
-                category.append("noncds")
-                altname.append("noncds")
-                startbase.append(self.noncds_starts[i])
-                endbase.append(self.noncds_stops[i])
-                y1.append(0)
-                y2.append(1)
-                length.append(self.noncds_stops[i]-self.noncds_starts[i])
+                check = self.noncds_stops[i]-self.noncds_starts[i]
+                if check > 2:
+                    eltype.append("None")
+                    category.append("noncds")
+                    altname.append("noncds")
+                    startbase.append(self.noncds_starts[i])
+                    endbase.append(self.noncds_stops[i])
+                    y1.append(0)
+                    y2.append(1)
+                    length.append(self.noncds_stops[i]-self.noncds_starts[i])
 
 
         chromcoords = list(zip(eltype, category, altname, startbase, endbase, y1, y2, length))
@@ -114,12 +117,12 @@ class ChromosomeBase:
         self.genome = genome
 
         #set the colors
-        extypecount = genome.loc[genome['category']=='exon'].eltype.nunique()
-        extypes = list(genome.loc[genome['category']=='exon'].eltype.unique())
-        intypecount = genome.loc[genome['category']=='intron'].eltype.nunique()
-        intypes = list(genome.loc[genome['category']=='intron'].eltype.unique())
-        nctypecount = genome.loc[genome['category']=='noncds'].eltype.nunique()
-        nctypes = list(genome.loc[genome['category']=='noncds'].eltype.unique())
+        extypecount = genome.loc[genome['category']=='exon'].altname.nunique()
+        extypes = list(genome.loc[genome['category']=='exon'].altname.unique())
+        intypecount = genome.loc[genome['category']=='intron'].altname.nunique()
+        intypes = list(genome.loc[genome['category']=='intron'].altname.unique())
+        nctypecount = genome.loc[genome['category']=='noncds'].altname.nunique()
+        nctypes = list(genome.loc[genome['category']=='noncds'].altname.unique())
         self.intypes = intypes
 
         #ncodcolors = ['mediumvioletred', 'lightcoral','firebrick', 'crimson', 'lightpink']
@@ -143,7 +146,7 @@ class ChromosomeBase:
             x2='x2:Q',
             y = alt.Y('y1:Q', axis=None),
             y2='y2:Q', 
-            color=alt.Color('eltype:N', 
+            color=alt.Color('altname:N', 
                             scale=alt.Scale(domain=dom, range=rng)),
             tooltip=[
                 alt.Tooltip('eltype', title='Element Type'),
@@ -405,7 +408,8 @@ class ChromosomeRandom(ChromosomeBase):
         self.exon = exon if exon is not None else EXON
         self.noncds = noncds if noncds is not None else NONCDS
 
-        #save the mutation list
+
+        #convert everything to a list
         if isinstance(self.intron, list):
             self.introns = self.intron 
         else:
@@ -421,6 +425,7 @@ class ChromosomeRandom(ChromosomeBase):
         noncdss = []
         noncdss.append(self.noncds)
 
+        #save the mutation list
         elements = list(self.introns + self.exons + noncdss)
         mutations = []
         for elem in elements:
@@ -429,6 +434,16 @@ class ChromosomeRandom(ChromosomeBase):
                     mutations.append(mutation.name)
         self.mutations = mutations
 
+        #check the altnames
+        i = 0
+        for x in self.exons:
+            i += 1
+            x.altname = x.altname if x.altname is not None else f"exon{i}"
+
+        i = 0
+        for y in self.introns:
+            i += 1
+            y.altname = y.altname if y.altname is not None else f"intron{i}"
 
     def get_noncds_span(self, scale:int=5000) -> int:
         """
@@ -436,7 +451,13 @@ class ChromosomeRandom(ChromosomeBase):
         exponential distribution. The scale is the average waiting
         time in number of bp.
         """
-        return int(self.rng.exponential(scale=scale))
+        while True:
+            ncds_span = int(self.rng.exponential(scale=scale))
+            if ncds_span > 50:
+                break
+
+        return ncds_span
+
 
 
     def get_cds_spans(self, length_scale:int=1000, intron_scale:int=1000) -> List[int]:
@@ -446,7 +467,9 @@ class ChromosomeRandom(ChromosomeBase):
         of events per sampled region. A value of 0.005 means one 
         intron per 200bp.
         """
+        
         cds_span = int(self.rng.exponential(scale=length_scale))
+        
         n_introns = int(self.rng.poisson(lam=cds_span / intron_scale))
         if n_introns:
             splits = self.rng.dirichlet(np.ones(n_introns * 2 - 1))
@@ -502,7 +525,7 @@ class ChromosomeRandom(ChromosomeBase):
                         idx + 1,
                         idx + span + 1,
                         i.name, i, 
-                        i,
+                        i.coding,
                     )
                 idx += span + 1
         self.data = self.data.sort_index()
@@ -581,5 +604,6 @@ if __name__ == "__main__":
     #chrom.to_slim_mutation_types()
     test = chrom.mutations
     print(chrom.data.head())
+    chrom.inspect()
     # print(test)
     # chrom.to_slim_elements()
