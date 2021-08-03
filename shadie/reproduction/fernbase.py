@@ -47,6 +47,10 @@ class Pteridophyte(PteridophyteBase):
             self.female_to_male_ratio[1]/
             (self.female_to_male_ratio[0]+self.female_to_male_ratio[1]))
 
+        self.gam_female_to_male_ratio = (
+            self.gam_female_to_male_ratio[1]/
+            (self.gam_female_to_male_ratio[0]+self.gam_female_to_male_ratio[1]))
+
         self.add_initialize_constants()
         self.add_early_haploid_diploid_subpops()        
         if self.mode in DTYPES:
@@ -210,4 +214,4 @@ if __name__ == "__main__":
 
 
     print(mod.script)
-    #mod.run()
+    mod.run()
