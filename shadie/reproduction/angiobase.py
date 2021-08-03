@@ -3,7 +3,7 @@
 """
 Starting an alternate implementation of Reproduction 
 """
-
+from typing import Union
 from dataclasses import dataclass, field
 from shadie.reproduction.base import ReproductionBase
 from shadie.reproduction.base_scripts import (
@@ -31,7 +31,7 @@ class Angiosperm(AngiospermBase):
     """
     diploid_ne: int
     haploid_ne: int=50000
-    female_to_male_ratio: float=0.5
+    female_to_male_ratio: float.as_integer_ratio = (1,1)
     clone_rate: float=0.0
     ovule_count: int=30
     fertilization_rate: float=0.7
@@ -45,6 +45,11 @@ class Angiosperm(AngiospermBase):
         Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
         """
+        self.female_to_male_ratio = (
+            self.female_to_male_ratio[1]/
+            (self.female_to_male_ratio[0]+self.female_to_male_ratio[1]))
+
+
         self.add_initialize_constants()
         self.add_early_haploid_diploid_subpops()        
         if self.mode in DTYPES:

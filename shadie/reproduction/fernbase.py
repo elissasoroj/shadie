@@ -3,7 +3,7 @@
 """
 Starting an alternate implementation of Reproduction 
 """
-
+from typing import Union
 from dataclasses import dataclass, field
 from shadie.reproduction.base import ReproductionBase
 from shadie.reproduction.base_scripts import (
@@ -29,8 +29,8 @@ class Pteridophyte(PteridophyteBase):
     """
     diploid_ne: int
     haploid_ne: int
-    female_to_male_ratio: float=0.5
-    gam_female_to_male_ratio: float=0.5
+    female_to_male_ratio: float.as_integer_ratio = (1,1)
+    gam_female_to_male_ratio: float.as_integer_ratio = (1,1)
     clone_rate: float=0.0
     gam_clone_rate: float=0.0
     spores_per_sporophyte: int=100
@@ -43,6 +43,10 @@ class Pteridophyte(PteridophyteBase):
         Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
         """
+        self.female_to_male_ratio = (
+            self.female_to_male_ratio[1]/
+            (self.female_to_male_ratio[0]+self.female_to_male_ratio[1]))
+
         self.add_initialize_constants()
         self.add_early_haploid_diploid_subpops()        
         if self.mode in DTYPES:
@@ -206,4 +210,4 @@ if __name__ == "__main__":
 
 
     print(mod.script)
-    mod.run()
+    #mod.run()

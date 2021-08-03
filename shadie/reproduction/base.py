@@ -45,8 +45,8 @@ class Bryophyte(BryophyteBase):
     Reproduction mode based on mosses, hornworts, and liverworts
     """
     diploid_ne: int
-    haploid_ne: int=50000
-    female_to_male_ratio: float=0.5
+    haploid_ne: int
+    female_to_male_ratio: float.as_integer_ratio = (1,1)
     spores_per_sporophyte: int=100
     clone_rate: float=0.0
     selfing_rate: float=0
@@ -59,6 +59,10 @@ class Bryophyte(BryophyteBase):
         Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
         """
+        self.female_to_male_ratio = (
+            self.female_to_male_ratio[1]/
+            (self.female_to_male_ratio[0]+self.female_to_male_ratio[1]))
+
         self.add_initialize_constants()
         self.add_early_haploid_diploid_subpops()        
         if self.mode in DTYPES:
