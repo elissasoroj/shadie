@@ -179,7 +179,7 @@ class Model(AbstractContextManager):
         self,
         chromosome,
         length:int=1000, #length of sim in # of generations
-        mut:float=1e-8, 
+        mut:float=1e-7, 
         recomb:float=1e-9, 
         constants:Union[None, dict]=None,
         scripts:Union[None, list]=None,
