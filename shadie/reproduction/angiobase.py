@@ -131,7 +131,8 @@ class Angiosperm(AngiospermBase):
         )
 
         survival_script = (
-            SURV.format(**{'maternal_effect': ""}).lstrip())
+            SURV.format(**{'maternal_effect': "",
+                'p0survival': "T"}).lstrip())
         self.model.custom(survival_script)
 
         self.model.repro(
@@ -207,7 +208,8 @@ class Angiosperm(AngiospermBase):
         )
 
         survival_script = (
-            SURV.format(**{'maternal_effect': ""}).lstrip())
+            SURV.format(**{'maternal_effect': "",
+                'p0survival': "T"}).lstrip())
         self.model.custom(survival_script)
 
         self.model.repro(

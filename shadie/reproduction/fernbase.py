@@ -30,7 +30,9 @@ class Pteridophyte(PteridophyteBase):
     diploid_ne: int
     haploid_ne: int
     female_to_male_ratio: float=0.5
+    gam_female_to_male_ratio: float=0.5
     clone_rate: float=0.0
+    gam_clone_rate: float=0.0
     spores_per_sporophyte: int=100
     selfing_rate: float=0.0
     maternal_effect_weight: float=0
@@ -61,7 +63,9 @@ class Pteridophyte(PteridophyteBase):
         constants["hK"] = self.haploid_ne
         constants["Death_chance"] = self.random_death_chance
         constants["FtoM"] = self.female_to_male_ratio
+        constants["gFtoM"] = self.gam_female_to_male_ratio
         constants["Clone_rate"] = self.clone_rate
+        constants["gClone_rate"] = self.gam_clone_rate
         constants["Spore_num"] = self.spores_per_sporophyte
         # constants["Clone_num"] = self.clone_number
         constants["Maternal_weight"] = self.maternal_effect_weight
@@ -74,7 +78,7 @@ class Pteridophyte(PteridophyteBase):
         """
         self.model.early(
             time=1,
-            scripts= EARLY,
+            scripts= ["sim.addSubpop('p1', dK)", "sim.addSubpop('p0', hK)"],
             comment="add p1, p0",
         )
 
@@ -90,9 +94,6 @@ class Pteridophyte(PteridophyteBase):
     def homosporous(self):
         """
         fills the script reproduction block with bryophyte-monoicous
-        """
-        """
-        fills the script reproduction block with bryophyte-dioicous
         """
 
         # fitness callback:
@@ -124,6 +125,8 @@ class Pteridophyte(PteridophyteBase):
         for i in deactivate:
             deactivate_str += "\n  ".join([i.strip(';') + ";\n    "])
 
+        self.active = activate_str
+
         early_script = (
             EARLY.format(**{'activate': activate_str, 
                 'deactivate': deactivate_str}).lstrip())
@@ -135,7 +138,8 @@ class Pteridophyte(PteridophyteBase):
         )
 
         survival_script = (
-            SURV.format(**{'maternal_effect': MATERNAL_EFFECT}).lstrip())
+            SURV.format(**{'maternal_effect': MATERNAL_EFFECT,
+                'p0survival': "NULL"}).lstrip())
         self.model.custom(survival_script)
 
         self.model.repro(
@@ -200,5 +204,6 @@ if __name__ == "__main__":
             haploid_ne=1000,
         )
 
+
     print(mod.script)
-    #mod.run()
+    mod.run()

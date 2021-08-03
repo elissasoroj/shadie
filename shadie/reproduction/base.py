@@ -142,7 +142,8 @@ class Bryophyte(BryophyteBase):
         )
 
         survival_script = (
-            SURV.format(**{'maternal_effect': MATERNAL_EFFECT}).lstrip())
+            SURV.format(**{'maternal_effect': MATERNAL_EFFECT,
+                'p0survival': "NULL"}).lstrip())
         self.model.custom(survival_script)
 
         self.model.repro(
@@ -218,7 +219,8 @@ class Bryophyte(BryophyteBase):
         )
 
         survival_script = (
-            SURV.format(**{'maternal_effect': MATERNAL_EFFECT}).lstrip())
+            SURV.format(**{'maternal_effect': MATERNAL_EFFECT,
+                'p0survival': "NULL"}).lstrip())
         self.model.custom(survival_script)
 
         self.model.repro(

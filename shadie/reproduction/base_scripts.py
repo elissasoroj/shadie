@@ -104,7 +104,7 @@ s3 survival(p0) //even
     if (runif(1) < Death_chance)
         return F;
     else
-        return NULL;
+        return {p0survival};
 }}
 
 s4 survival(p0) //odd
@@ -196,7 +196,7 @@ REPRO_BRYO_MONO_P0 = """
     
     // clones give the focal individual extra opportunities to reproduce
     if (runif(1) <= Clone_rate)
-        reproduction_opportunity_count = reproduction_opportunity_count + Clone_num;
+        reproduction_opportunity_count = reproduction_opportunity_count + 1;
     
     for (repro in seqLen(reproduction_opportunity_count))
     {
@@ -234,10 +234,10 @@ REPRO_ANGIO_DIO_P1 = """
     if (individual.tag == 1)
     {
         // determine how many ovules were fertilized, out of the total
-        fertilizedOvules = rbinom(1, ovule_count, fertilization_rate);
+        fertilizedOvules = rbinom(1, Ovule_count, Fertilization_rate);
         meiosis_reps = floor(fertilizedOvules/2);
         if (runif(1) <= Clone_rate)
-            meiosis_reps = meiosis_reps*Clone_num;
+            meiosis_reps = meiosis_reps*2;
         
         for (rep in 1:meiosis_reps)
         {
@@ -249,7 +249,7 @@ REPRO_ANGIO_DIO_P1 = """
     }
     else //individual is male
     {
-        meiosis_reps = floor(pollen_count/2);
+        meiosis_reps = floor(Pollen_count/2);
         if (runif(1) <= Clone_rate)
             meiosis_reps = meiosis_reps*2;
         for (rep in 1:meiosis_reps)
@@ -264,9 +264,9 @@ REPRO_ANGIO_DIO_P1 = """
 REPRO_ANGIO_DIO_P0  = """
     if (individual.tag == 1)  // females find male gametes to reproduce
     {
-        if (pollen_comp == T)
+        if (Pollen_comp == T)
         {
-            pollen_pool = p0.sampleIndividuals(pollen_per_stigma, tag=0);   // sperm land on stigma
+            pollen_pool = p0.sampleIndividuals(Pollen_per_stigma, tag=0);   // sperm land on stigma
             for (pollen in pollen_pool)
             {
                 pollen.setValue("fitness", p0.cachedFitness(pollen.index)); //store fitness value
@@ -301,10 +301,10 @@ REPRO_ANGIO_MONO_P1="""
     g_2 = genome2;
     
         // determine how many ovules were fertilized, out of the total
-        fertilizedOvules = rbinom(1, ovule_count, fertilization_rate);
+        fertilizedOvules = rbinom(1, Ovule_count, fertilization_rate);
         meiosis_reps = floor(fertilizedOvules/2);
         if (runif(1) <= Clone_rate)
-            meiosis_reps = meiosis_reps*Clone_num;
+            meiosis_reps = meiosis_reps*2;
         
         for (rep in 1:meiosis_reps)
         {
@@ -313,7 +313,7 @@ REPRO_ANGIO_MONO_P1="""
             p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 1;
         }
     
-        meiosis_reps = floor(pollen_count/2);
+        meiosis_reps = floor(Pollen_count/2);
         if (runif(1) <= Clone_rate)
             meiosis_reps = meiosis_reps*2;
         for (rep in 1:meiosis_reps)
@@ -331,7 +331,7 @@ REPRO_PTER_HOMOSPORE_P0 = """
         
         // clones give the focal individual extra opportunities to reproduce
         if (runif(1) <= gClone_rate)
-            reproduction_opportunity_count = reproduction_opportunity_count + Clone_num;
+            reproduction_opportunity_count = reproduction_opportunity_count + 1;
         
         for (repro in seqLen(reproduction_opportunity_count))
         {
@@ -362,7 +362,7 @@ REPRO_PTER_HOMOSPORE_P1 = """
     reproduction_opportunity_count = 1;
     // clones give the focal individual extra opportunities to reproduce
     if (runif(1) <= Clone_rate)
-        meiosis_reps = meiosis_reps*Clone_num;
+        meiosis_reps = meiosis_reps*2;
     
     for (rep in 1:meiosis_reps)
     {
@@ -379,7 +379,7 @@ REPRO_PTER_HETEROSPORE_P0 = """
         
         // clones give the focal individual extra opportunities to reproduce
         if (runif(1) <= gClone_rate)
-            reproduction_opportunity_count = reproduction_opportunity_count + Clone_num;
+            reproduction_opportunity_count = reproduction_opportunity_count + 1;
         
         for (repro in seqLen(reproduction_opportunity_count))
         {
@@ -410,7 +410,7 @@ REPRO_PTER_HETEROSPORE_P1 = """
     reproduction_opportunity_count = 1;
     // clones give the focal individual extra opportunities to reproduce
     if (runif(1) <= Clone_rate)
-        meiosis_reps = meiosis_reps*Clone_num;
+        meiosis_reps = meiosis_reps*2;
     
     for (rep in 1:meiosis_reps)
     {
