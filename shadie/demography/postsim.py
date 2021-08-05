@@ -105,7 +105,7 @@ class NeutralSim:
             random_seed=4,
         )
 
-    def mutations(self):
+    def mutcount(self):
         "Returns counts of neutral and non-neutral mutations"
 
         nonneutral = []
