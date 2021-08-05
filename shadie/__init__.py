@@ -17,7 +17,7 @@ from shadie.sims.model import Model
 from shadie import chromosome
 from shadie import reproduction
 from shadie import demography
-from shadie.demography.postsim import PostSim
+from shadie.demography.postsim import PostSim, NeutralSim
 
 from shadie.utils import set_loglevel
 set_loglevel("INFO")

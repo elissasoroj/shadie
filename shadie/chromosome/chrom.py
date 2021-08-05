@@ -19,6 +19,7 @@ def random(
     cds_scale=1000,
     noncds_scale=5000,    
     seed:Union[int, None]=None,
+    NS_sites:bool=True,
     ):
     """
     Build a chromosome of a set length composed randomly of intron,
@@ -40,20 +41,20 @@ def random(
     ...
     """
     # construct pandas DataFrame of ElementTypes
-    elements = ChromosomeRandom(genome_size, intron, exon, noncds, seed)
+    elements = ChromosomeRandom(genome_size, intron, exon, noncds, seed, NS_sites)
     elements.run(noncds_scale, cds_scale, intron_scale)
     return elements
 
 
-def default():
+def default(NS_sites:bool=True,):
     """
     Returns the default 100Kb Chromosome of Elements used for simple 
     testing in shadie, and composing introns, exons, and noncds regions.
     """
-    return Chromosome()
+    return Chromosome(NS_sites)
 
 
-def explicit(genome_size, data):
+def explicit(genome_size, data, NS_sites:bool=True,):
     """
     Returns a chromosome built from a dictionary with end positions 
     (lowest starts at 0... maybe this should change to listing start 
@@ -66,4 +67,4 @@ def explicit(genome_size, data):
         (3001, 5000): e1,
     })
     """
-    return ChromosomeExplicit(genome_size, data)
+    return ChromosomeExplicit(genome_size, data, NS_sites)

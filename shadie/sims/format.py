@@ -63,7 +63,8 @@ EARLY = """
 
 
 LATE = """
-{comment}{time}late() {{ // executes after selection occurs
+{comment}
+{idx}{time}late() {{ // executes after selection occurs
     {scripts}
 }}
 """

@@ -184,6 +184,7 @@ class Model(AbstractContextManager):
         constants:Union[None, dict]=None,
         scripts:Union[None, list]=None,
         fileout:str="shadie.trees",
+        startfile:Union[None, str]=None,
         ):
         """
         Initialize a simulation. This fills the SLIM intialize() code
@@ -197,6 +198,7 @@ class Model(AbstractContextManager):
         self.chromosome = chromosome
         self.length = length
         self.fileout = fileout
+        self.startfile = startfile
         
         self.map['initialize'].append({
             'mutation_rate': mut,
@@ -209,12 +211,34 @@ class Model(AbstractContextManager):
             'scripts': scripts,
         })
 
-        Model.late(
-            self = self,
-            time = self.length, 
-            scripts = f"sim.treeSeqOutput('{self.fileout}')",
-            comment = "end of sim; save .trees file",
-        )
+        if self.startfile:
+            Model.early(
+                self = self,
+                time = 1,
+                scripts = f"sim.readFromPopulationFile('{self.startfile}')",
+                comment = "read starting populations from startfile"
+                )
+            Model.late(
+                self = self,
+                time = self.length,
+                scripts = [
+                "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
+                f"sim.treeSeqOutput('{self.fileout}')"]
+                )
+        else:
+            Model.late(
+                self = self,
+                time = self.length, 
+                scripts = f"sim.treeSeqOutput('{self.fileout}')",
+                comment = "end of sim; save .trees file",
+            )
+
+    def readfromfile(self,):
+        """
+        If a .trees file is provided, this will be the starting point
+        of the simulation
+        """
+
 
     def early(
         self, 
@@ -268,7 +292,7 @@ class Model(AbstractContextManager):
         self, 
         population:Union[str, None], 
         scripts:Union[str, list], 
-        idx:Union[str, None],
+        idx:Union[str,None]=None,
         comment:Union[str,None]=None,        
         ):
         """
@@ -286,6 +310,7 @@ class Model(AbstractContextManager):
         self, 
         time:Union[int, None], 
         scripts:Union[str, list],
+        idx:Union[str,None]=None,
         comment:Union[str,None]=None,
         ):
         """
@@ -294,6 +319,7 @@ class Model(AbstractContextManager):
         is an integer.
         """
         self.map['late'].append({
+            'idx': idx,
             'time': time,
             'scripts': scripts,
             'comment': comment,

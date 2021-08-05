@@ -81,18 +81,6 @@ reproduction(p0) //creation of sporophyte from haploids
 	}
 }
 
-early() //executes after offspring are generated
-{
-	if (sim.generation % 2 == 0) //diploids (p1) just generated gametophytes
-	{
-		//fitness affects gametophyte survival
-		p0.fitnessScaling = (hK / p0.individualCount);
-	
-	}
-	else //odd generations = gametophytes (p0) just generated sporophytes
-		p1.fitnessScaling = dK / p1.individualCount; //fitness affects sporophytes
-}
-
 early()
 {
 	if (sim.generation % 2 == 0) //diploids (p1) just generated haploid gametophytes

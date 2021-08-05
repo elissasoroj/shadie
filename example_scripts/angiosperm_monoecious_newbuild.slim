@@ -42,8 +42,6 @@ reproduction(p1) {
 	g_1 = genome1;
 	g_2 = genome2;
 	
-	if (individual.tag == 1)
-	{
 		// determine how many ovules were fertilized, out of the total
 		fertilizedOvules = rbinom(1, ovule_count, fertilization_rate);
 		meiosis_reps = floor(fertilizedOvules/2);
@@ -57,9 +55,6 @@ reproduction(p1) {
 			p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 1;
 		}
 	
-	}
-	else //individual is male
-	{
 		meiosis_reps = floor(pollen_count/2);
 		if (runif(1) <= Clone_rate)
 			meiosis_reps = meiosis_reps*2;
@@ -69,7 +64,6 @@ reproduction(p1) {
 			p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 0;
 			p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 0;
 		}
-	}
 }
 
 reproduction(p0) //creation of sporophyte from haploids

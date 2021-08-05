@@ -26,6 +26,110 @@ except ImportError:
 from shadie.chromosome.build import ChromosomeBase
 
 
+class NeutralSim:
+    "tools for a simulation in which neutral mutations "
+
+    def __init__(
+        self,
+        files:list = None, #only two files for now
+        simlength:int = None, #length in generations
+        #popsize:int = None, #size of each ending population
+        recomb: float = None, #recomcbination rate
+        mutrate:float = None, #mutations rate
+        chromosome = None, #'shadie.chromosome.ChromosomeBase'
+        ):
+
+        self.chromosome = chromosome
+        self.files = files
+        self.recomb = recomb
+        self.simlength = simlength
+        self.mutrate = mutrate/2
+
+    def read(self):
+        self.ts = pyslim.load(self.files[i])
+
+    def merge(self):
+        "Merges tree sequences"
+
+        self.species = []
+        ids = []
+        species = []
+
+        #read in all thre tree sequences
+        for i in range(0,len(self.files)):
+            ts = pyslim.load(self.files[i])
+            species.append(ts)
+
+        self.merged_ts = pyslim.SlimTreeSequence(
+            species[0].union(
+            species[1], 
+            node_mapping=[tskit.NULL for i in range(species[1].num_nodes)],
+            add_populations=True,
+            )
+        )
+
+
+    def recapitate(self):
+
+        #save pops
+        alive = self.merged_ts.individuals_alive_at(0)
+        num_alive = [0 for _ in range(self.merged_ts.num_populations)]
+        for i in alive:
+           ind = self.merged_ts.individual(i)
+           num_alive[ind.population] += 1
+
+        self.num_alive = num_alive
+
+        edge_ids = []
+        for i in range(self.merged.ts.num_populations):
+            if num_alive[i] != 0:
+                edge_ids.append(i)
+            else:
+                pass
+
+        # OLD MSPRIME METHOD
+        pop_configs = []
+        for pop in self.merged_ts.populations():
+            pop_configs.append(msprime.PopulationConfiguration(
+                initial_size = self.num_alive[pop.id]))
+        
+        # pop_configs = [msprime.PopulationConfiguration(initial_size=popsize)
+        #     for _ in range(self.merged_ts.num_populations)]
+
+        matrix = np.zeros((self.merged_ts.num_populations,self.merged_ts.num_populations))
+
+        self.rts = self.merged_ts.recapitate(
+            population_configurations=pop_configs,
+            migration_matrix= matrix,
+            recombination_rate=self.recomb,
+            random_seed=4,
+        )
+
+    def mutations(self):
+        "Returns counts of neutral and non-neutral mutations"
+
+        nonneutral = []
+        neutral = []
+        mutationcount = 0
+        neutralcount = 0
+
+        for mut in self.mutations():
+            oldest = len(mut.metadata["mutation_list"]) - 1
+            if mut.metadata["mutation_list"][oldest]["selection_coeff"] != 0.0:
+                nonneutral.append(mut)
+                mutationcount += 1
+            else:
+                neutral.append(mut)
+                neutralcount += 1
+
+        self.neutral = neutral
+        self.nonneutral =  nonneutral
+        self.mutationcount = mutationcount
+        self.neutralcount = neutralcount
+
+        print(f"The tree sequence has {self.neutralcount} neutral mutations and "
+            f"{self.mutationcount} non-neutral mutations")
+
 class PostSim:
     "Merges tree sequeces and recapitates"
 
@@ -33,7 +137,7 @@ class PostSim:
         self,
         files:list = None, #takes exactly two files (for now)
         simlength:int = None, #length in generations
-        popsize:int = None, #size of each ending population
+        popsize:int = None, #initial size of each population
         recomb: float = None, #recomcbination rate
         mutrate:float = None, #mutations rate
         chromosome = None, #'shadie.chromosome.ChromosomeBase'
@@ -64,6 +168,22 @@ class PostSim:
             )
         )
 
+        #save pops
+        alive = self.merged_ts.individuals_alive_at(0)
+        num_alive = [0 for _ in range(self.merged_ts.num_populations)]
+        for i in alive:
+           ind = self.merged_ts.individual(i)
+           num_alive[ind.population] += 1
+
+        self.num_alive = num_alive
+
+        edge_ids = []
+        for i in range(self.merged_ts.num_populations):
+            if num_alive[i] != 0:
+                edge_ids.append(i)
+            else:
+                pass
+
         ## merge all individuals into population 1
         demographic_events = []
 
@@ -73,8 +193,13 @@ class PostSim:
                 proportion = 1.0))
 
         # OLD MSPRIME METHOD
-        pop_configs = [msprime.PopulationConfiguration(initial_size=popsize)
-            for _ in range(self.merged_ts.num_populations)]
+        pop_configs = []
+        for pop in self.merged_ts.populations():
+            pop_configs.append(msprime.PopulationConfiguration(
+                initial_size = 1+self.num_alive[pop.id]))
+        
+        # pop_configs = [msprime.PopulationConfiguration(initial_size=popsize)
+        #     for _ in range(self.merged_ts.num_populations)]
 
         matrix = np.zeros((self.merged_ts.num_populations,self.merged_ts.num_populations))
 
@@ -89,21 +214,6 @@ class PostSim:
         #mutate the tree sequencce
         self.mts = pyslim.SlimTreeSequence(msprime.mutate(self.rts, rate=mutrate, keep=True))
 
-        #save pops
-        alive = self.merged_ts.individuals_alive_at(0)
-        num_alive = [0 for _ in range(self.merged_ts.num_populations)]
-        for i in alive:
-           ind = self.merged_ts.individual(i)
-           num_alive[ind.population] += 1
-
-        self.num_alive = num_alive
-
-        edge_ids = []
-        for i in range(self.mts.num_populations):
-            if num_alive[i] != 0:
-                edge_ids.append(i)
-            else:
-                pass
 
         self.edge_ids = edge_ids
 
@@ -122,11 +232,15 @@ class PostSim:
         #save mutation positions and which population they occurred in
         positions = []
         population = []
+        allpositions = []
         for mut in self.mts.mutations():
-            positions.append(int(mut.position))
+            allpositions.append(int(mut.position))
             population.append(self.mts.node(mut.node).population)
+            if mut.derived_state == '1':
+                positions.append(int(mut.position))
 
         self.positions = positions
+        self.allpositions = allpositions
         self.population = population
         
 
@@ -261,11 +375,11 @@ class PostSim:
             if len(self.edge_ids) > 1:
                 mut_pos = pd.DataFrame({
                     'x': self.positions,
-                    'population': self.population
+                    'population': str("pop" + str(self.population))
                     })
 
                 mut_positions = alt.Chart(mut_pos).mark_rule().encode(
-                    color=alt.Color('population', 
+                    color=alt.Color('population:N', 
                         scale=alt.Scale(domain= self.edge_ids, 
                             range=["mediumblue", "crimson"])),
                     x='x:Q',
@@ -300,7 +414,7 @@ class PostSim:
     def dNdS(self):
         "calculate dN/dS"
         ranges = []
-        for index, row in self.genemap.iterrows():
+        for index, row in self.chromosome.data.iterrows():
             ranges.append(range(row['exonstart'], row['exonstop']))
             
         c_syn = []
@@ -339,4 +453,10 @@ if __name__ == "__main__":
     test.summary()
     test.plot()
 
+    fullSLiM = NeutralSim(
+        files=["../notebooks/bryo_fullSLiM.trees"],
+        simlength=2000,
+        recomb= 1e-9,
+        mutrate=1e-7/2,
+    )
 

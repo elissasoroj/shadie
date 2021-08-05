@@ -36,8 +36,8 @@ class ChromosomeBase:
     def __init__(
         self, 
         genome_size, 
+        NS_sites:bool, #turn off S/NS sites
         use_nucleotides=False, 
-        NS_sites:bool=True, #turn off S/NS sites
         ):
 
         self.genome_size =int(genome_size)
@@ -47,7 +47,6 @@ class ChromosomeBase:
         )
         self.mutations = []
         self.use_nuc = use_nucleotides
-        self.sites = NS_sites
         self.ichrom = None
 
 
@@ -70,7 +69,7 @@ class ChromosomeBase:
             eltype.append(row['eltype'])
 
             namestr = str(row['name'])
-            if "intron" in namestr == True:
+            if "intron" in namestr:
                 category.append("intron")
             elif row['coding'] == 1:
                 category.append("exon")
@@ -174,31 +173,33 @@ class ChromosomeBase:
 
     def toyplot(self):
         "Makes static toyplot"
+        self.inspect()
         eltype = []
         startbase = []
         endbase = []
         y1 = []
         y2 = []
-        for index, row in self.data.iterrows():
-            eltype.append(row['name'])
-            startbase.append(row['start'])
-            endbase.append(row['end'])
+        for index, row in self.genome.iterrows():
+            eltype.append(row['category'])
+            startbase.append(row['x1'])
+            endbase.append(row['x2'])
             y1.append(0)
             y2.append(1)
 
         chromcoords = list(zip(eltype, startbase, endbase, y1, y2))
         rectangles = pd.DataFrame(chromcoords, columns = [
             'Element Type', 'x1', 'x2', 'y1', 'y2'])
+        self.rectangles = rectangles
 
         #define colors for each element
         color = []
         for index, row in rectangles.iterrows():
             if row["Element Type"] == "noncds":
-                color.append("firebrick")
+                color.append("lemonchiffon")
             elif row["Element Type"] == "exon":
-                color.append("steelblue")
+                color.append("royalblue")
             elif row["Element Type"] == "intron":
-                color.append("orange")
+                color.append("mediumaquamarine")
 
         #assign colors to rectangles dataframe
         rectangles.insert(5, "color", color)
@@ -323,7 +324,7 @@ class ChromosomeBase:
         # iterate over int start positions of elements
         for idx in self.data.index:
 
-            if self.sites == True:
+            if self.sites:
                 # skip non-coding regions
                 if self.data.loc[idx, "coding"] == 0:
                     #commands.append(
@@ -365,8 +366,9 @@ class Chromosome(ChromosomeBase):
     """
     Builds the default shadie chromosome used for testing.
     """
-    def __init__(self):
-        super().__init__(genome_size=10001)
+    def __init__(self, NS_sites:bool=True,):
+        super().__init__(genome_size=10001, NS_sites=NS_sites)
+        self.NS_sites=NS_sites
         self.data.loc[0] = (
             NONCDS.altname, 0, 2000, NONCDS.name, NONCDS, NONCDS.coding)
         self.data.loc[2001] = (
@@ -400,14 +402,15 @@ class ChromosomeRandom(ChromosomeBase):
         exon:Union[None, ElementType, list]=None,
         noncds:ElementType=None,
         seed:Union[int, None]=None,
+        NS_sites:bool=True,
         ):
 
-        super().__init__(genome_size)
+        super().__init__(genome_size, NS_sites=NS_sites)
         self.rng = np.random.default_rng(seed)
         self.intron = intron if intron is not None else INTRON
         self.exon = exon if exon is not None else EXON
         self.noncds = noncds if noncds is not None else NONCDS
-
+        self.sites = NS_sites
 
         #convert everything to a list
         if isinstance(self.intron, list):
@@ -543,9 +546,10 @@ class ChromosomeExplicit(ChromosomeBase):
         (5000, 10000): None,
     })
     """
-    def __init__(self, genome_size, data):
-        super().__init__(genome_size=genome_size)
+    def __init__(self, genome_size, data, NS_sites:bool=True,):
+        super().__init__(genome_size=genome_size, NS_sites=NS_sites)
 
+        self.sites = NS_sites
         # check data dict for proper structure
         assert all(isinstance(i, tuple) for i in data.keys()), (
             "keys of input data should be tuples of integers.")
