@@ -1,0 +1,2089 @@
+initialize() {
+	
+	// model type
+	initializeSLiMModelType("nonWF");
+	
+	// config
+	initializeRecombinationRate(1e-09, 1000000);
+	initializeMutationRate(1e-07);
+	initializeTreeSeq();
+	
+	// MutationType init
+	initializeMutationType('m9', 0.5, 'f', 0.0);
+	m9.convertToSubstitution = T;
+	initializeMutationType('m7', 0.2, 'n', -0.05, 0.015);
+	m7.convertToSubstitution = T;
+	initializeMutationType('m8', 0.7, 'e', 0.1);
+	m8.convertToSubstitution = T;
+	
+	// ElementType init
+	initializeGenomicElementType('g12', m9, 1);
+	initializeGenomicElementType('g10', m7, 1);
+	initializeGenomicElementType('g9', c(m7,m8), c(8,0.1));
+	initializeGenomicElementType('g11', m7, 1);
+	
+	// Chromosome (GenomicElement init)
+	types = rep(g10, asInteger(floor(510/3)));
+	starts = 8292 + seqLen(integerDiv(510, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(737/3)));
+	starts = 9660 + seqLen(integerDiv(737, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(420/3)));
+	starts = 10398 + seqLen(integerDiv(420, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(860/3)));
+	starts = 10819 + seqLen(integerDiv(860, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(447/3)));
+	starts = 13833 + seqLen(integerDiv(447, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(280/3)));
+	starts = 22563 + seqLen(integerDiv(280, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(263/3)));
+	starts = 26941 + seqLen(integerDiv(263, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(367/3)));
+	starts = 32482 + seqLen(integerDiv(367, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(1389/3)));
+	starts = 38730 + seqLen(integerDiv(1389, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(585/3)));
+	starts = 40810 + seqLen(integerDiv(585, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(100/3)));
+	starts = 46222 + seqLen(integerDiv(100, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(156/3)));
+	starts = 46323 + seqLen(integerDiv(156, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(800/3)));
+	starts = 46480 + seqLen(integerDiv(800, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(141/3)));
+	starts = 47281 + seqLen(integerDiv(141, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(98/3)));
+	starts = 47423 + seqLen(integerDiv(98, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(39/3)));
+	starts = 51176 + seqLen(integerDiv(39, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(750/3)));
+	starts = 52660 + seqLen(integerDiv(750, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(119/3)));
+	starts = 61069 + seqLen(integerDiv(119, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(475/3)));
+	starts = 61189 + seqLen(integerDiv(475, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(141/3)));
+	starts = 61665 + seqLen(integerDiv(141, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(222/3)));
+	starts = 63107 + seqLen(integerDiv(222, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(245/3)));
+	starts = 63330 + seqLen(integerDiv(245, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(1048/3)));
+	starts = 63576 + seqLen(integerDiv(1048, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(523/3)));
+	starts = 64625 + seqLen(integerDiv(523, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(625/3)));
+	starts = 65149 + seqLen(integerDiv(625, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(141/3)));
+	starts = 67906 + seqLen(integerDiv(141, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(673/3)));
+	starts = 68048 + seqLen(integerDiv(673, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(18/3)));
+	starts = 68722 + seqLen(integerDiv(18, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(35/3)));
+	starts = 68741 + seqLen(integerDiv(35, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(20/3)));
+	starts = 68777 + seqLen(integerDiv(20, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(616/3)));
+	starts = 76415 + seqLen(integerDiv(616, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(548/3)));
+	starts = 81217 + seqLen(integerDiv(548, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(309/3)));
+	starts = 84649 + seqLen(integerDiv(309, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(251/3)));
+	starts = 94143 + seqLen(integerDiv(251, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(939/3)));
+	starts = 94510 + seqLen(integerDiv(939, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(226/3)));
+	starts = 96085 + seqLen(integerDiv(226, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(13/3)));
+	starts = 102888 + seqLen(integerDiv(13, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(549/3)));
+	starts = 104142 + seqLen(integerDiv(549, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(418/3)));
+	starts = 108792 + seqLen(integerDiv(418, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(485/3)));
+	starts = 109211 + seqLen(integerDiv(485, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(346/3)));
+	starts = 109697 + seqLen(integerDiv(346, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(70/3)));
+	starts = 111729 + seqLen(integerDiv(70, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(947/3)));
+	starts = 113053 + seqLen(integerDiv(947, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(381/3)));
+	starts = 129969 + seqLen(integerDiv(381, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(401/3)));
+	starts = 130924 + seqLen(integerDiv(401, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(431/3)));
+	starts = 131326 + seqLen(integerDiv(431, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(37/3)));
+	starts = 131758 + seqLen(integerDiv(37, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(7/3)));
+	starts = 131796 + seqLen(integerDiv(7, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(104/3)));
+	starts = 131804 + seqLen(integerDiv(104, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(257/3)));
+	starts = 136844 + seqLen(integerDiv(257, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(178/3)));
+	starts = 152205 + seqLen(integerDiv(178, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(72/3)));
+	starts = 152384 + seqLen(integerDiv(72, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(48/3)));
+	starts = 152457 + seqLen(integerDiv(48, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(361/3)));
+	starts = 152506 + seqLen(integerDiv(361, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(339/3)));
+	starts = 152868 + seqLen(integerDiv(339, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(257/3)));
+	starts = 153208 + seqLen(integerDiv(257, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(55/3)));
+	starts = 153466 + seqLen(integerDiv(55, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(1079/3)));
+	starts = 154155 + seqLen(integerDiv(1079, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(255/3)));
+	starts = 155235 + seqLen(integerDiv(255, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(299/3)));
+	starts = 155491 + seqLen(integerDiv(299, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(405/3)));
+	starts = 161776 + seqLen(integerDiv(405, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(147/3)));
+	starts = 163460 + seqLen(integerDiv(147, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(32/3)));
+	starts = 164944 + seqLen(integerDiv(32, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(501/3)));
+	starts = 166551 + seqLen(integerDiv(501, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(278/3)));
+	starts = 167053 + seqLen(integerDiv(278, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(58/3)));
+	starts = 167332 + seqLen(integerDiv(58, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(903/3)));
+	starts = 171046 + seqLen(integerDiv(903, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(107/3)));
+	starts = 174891 + seqLen(integerDiv(107, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(19/3)));
+	starts = 174999 + seqLen(integerDiv(19, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(4348/3)));
+	starts = 175019 + seqLen(integerDiv(4348, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(1216/3)));
+	starts = 179368 + seqLen(integerDiv(1216, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(386/3)));
+	starts = 180585 + seqLen(integerDiv(386, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(156/3)));
+	starts = 183658 + seqLen(integerDiv(156, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(692/3)));
+	starts = 183815 + seqLen(integerDiv(692, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(408/3)));
+	starts = 184508 + seqLen(integerDiv(408, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(922/3)));
+	starts = 184917 + seqLen(integerDiv(922, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(366/3)));
+	starts = 185840 + seqLen(integerDiv(366, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(764/3)));
+	starts = 186207 + seqLen(integerDiv(764, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(685/3)));
+	starts = 186972 + seqLen(integerDiv(685, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(282/3)));
+	starts = 187658 + seqLen(integerDiv(282, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(139/3)));
+	starts = 187941 + seqLen(integerDiv(139, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(613/3)));
+	starts = 188195 + seqLen(integerDiv(613, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(15/3)));
+	starts = 189987 + seqLen(integerDiv(15, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(925/3)));
+	starts = 191897 + seqLen(integerDiv(925, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(70/3)));
+	starts = 192823 + seqLen(integerDiv(70, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(411/3)));
+	starts = 192894 + seqLen(integerDiv(411, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(459/3)));
+	starts = 193306 + seqLen(integerDiv(459, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(208/3)));
+	starts = 193766 + seqLen(integerDiv(208, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(117/3)));
+	starts = 194847 + seqLen(integerDiv(117, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(49/3)));
+	starts = 202191 + seqLen(integerDiv(49, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(239/3)));
+	starts = 212700 + seqLen(integerDiv(239, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(701/3)));
+	starts = 214505 + seqLen(integerDiv(701, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(453/3)));
+	starts = 215207 + seqLen(integerDiv(453, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(12/3)));
+	starts = 215661 + seqLen(integerDiv(12, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(1720/3)));
+	starts = 215674 + seqLen(integerDiv(1720, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(41/3)));
+	starts = 217395 + seqLen(integerDiv(41, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(403/3)));
+	starts = 218625 + seqLen(integerDiv(403, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(1219/3)));
+	starts = 219390 + seqLen(integerDiv(1219, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(507/3)));
+	starts = 244004 + seqLen(integerDiv(507, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(5/3)));
+	starts = 248905 + seqLen(integerDiv(5, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(59/3)));
+	starts = 250945 + seqLen(integerDiv(59, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(240/3)));
+	starts = 251005 + seqLen(integerDiv(240, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(271/3)));
+	starts = 251246 + seqLen(integerDiv(271, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(170/3)));
+	starts = 251518 + seqLen(integerDiv(170, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(23/3)));
+	starts = 251689 + seqLen(integerDiv(23, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(380/3)));
+	starts = 251713 + seqLen(integerDiv(380, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(206/3)));
+	starts = 252094 + seqLen(integerDiv(206, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(398/3)));
+	starts = 256497 + seqLen(integerDiv(398, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(612/3)));
+	starts = 261827 + seqLen(integerDiv(612, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(26/3)));
+	starts = 262440 + seqLen(integerDiv(26, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(549/3)));
+	starts = 262467 + seqLen(integerDiv(549, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(351/3)));
+	starts = 263017 + seqLen(integerDiv(351, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(324/3)));
+	starts = 263369 + seqLen(integerDiv(324, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(123/3)));
+	starts = 263694 + seqLen(integerDiv(123, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(302/3)));
+	starts = 263818 + seqLen(integerDiv(302, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(39/3)));
+	starts = 264694 + seqLen(integerDiv(39, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(86/3)));
+	starts = 264734 + seqLen(integerDiv(86, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(19/3)));
+	starts = 264821 + seqLen(integerDiv(19, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(346/3)));
+	starts = 264841 + seqLen(integerDiv(346, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(56/3)));
+	starts = 265188 + seqLen(integerDiv(56, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(549/3)));
+	starts = 267823 + seqLen(integerDiv(549, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(897/3)));
+	starts = 273211 + seqLen(integerDiv(897, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1472/3)));
+	starts = 276241 + seqLen(integerDiv(1472, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(231/3)));
+	starts = 281575 + seqLen(integerDiv(231, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(620/3)));
+	starts = 292747 + seqLen(integerDiv(620, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(798/3)));
+	starts = 294409 + seqLen(integerDiv(798, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(216/3)));
+	starts = 295344 + seqLen(integerDiv(216, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(100/3)));
+	starts = 295561 + seqLen(integerDiv(100, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(109/3)));
+	starts = 295662 + seqLen(integerDiv(109, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(65/3)));
+	starts = 295772 + seqLen(integerDiv(65, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(68/3)));
+	starts = 295838 + seqLen(integerDiv(68, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(374/3)));
+	starts = 297015 + seqLen(integerDiv(374, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(1422/3)));
+	starts = 298260 + seqLen(integerDiv(1422, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(558/3)));
+	starts = 300427 + seqLen(integerDiv(558, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(8/3)));
+	starts = 301737 + seqLen(integerDiv(8, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(934/3)));
+	starts = 305792 + seqLen(integerDiv(934, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(846/3)));
+	starts = 317785 + seqLen(integerDiv(846, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(933/3)));
+	starts = 327882 + seqLen(integerDiv(933, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(1045/3)));
+	starts = 331728 + seqLen(integerDiv(1045, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(7/3)));
+	starts = 332774 + seqLen(integerDiv(7, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(170/3)));
+	starts = 332782 + seqLen(integerDiv(170, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(83/3)));
+	starts = 334123 + seqLen(integerDiv(83, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(117/3)));
+	starts = 336859 + seqLen(integerDiv(117, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(96/3)));
+	starts = 336977 + seqLen(integerDiv(96, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(359/3)));
+	starts = 337074 + seqLen(integerDiv(359, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(422/3)));
+	starts = 337434 + seqLen(integerDiv(422, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(700/3)));
+	starts = 337857 + seqLen(integerDiv(700, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(167/3)));
+	starts = 338558 + seqLen(integerDiv(167, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(377/3)));
+	starts = 338726 + seqLen(integerDiv(377, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(213/3)));
+	starts = 344249 + seqLen(integerDiv(213, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1001/3)));
+	starts = 352224 + seqLen(integerDiv(1001, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(180/3)));
+	starts = 354555 + seqLen(integerDiv(180, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(696/3)));
+	starts = 360797 + seqLen(integerDiv(696, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(65/3)));
+	starts = 368572 + seqLen(integerDiv(65, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(13/3)));
+	starts = 379359 + seqLen(integerDiv(13, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(1390/3)));
+	starts = 379373 + seqLen(integerDiv(1390, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(391/3)));
+	starts = 380764 + seqLen(integerDiv(391, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(362/3)));
+	starts = 381156 + seqLen(integerDiv(362, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(238/3)));
+	starts = 381519 + seqLen(integerDiv(238, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(222/3)));
+	starts = 388801 + seqLen(integerDiv(222, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(634/3)));
+	starts = 389024 + seqLen(integerDiv(634, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(824/3)));
+	starts = 389659 + seqLen(integerDiv(824, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(1279/3)));
+	starts = 391672 + seqLen(integerDiv(1279, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(322/3)));
+	starts = 395279 + seqLen(integerDiv(322, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(65/3)));
+	starts = 399714 + seqLen(integerDiv(65, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(86/3)));
+	starts = 407723 + seqLen(integerDiv(86, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(824/3)));
+	starts = 407810 + seqLen(integerDiv(824, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(23/3)));
+	starts = 408635 + seqLen(integerDiv(23, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(166/3)));
+	starts = 417924 + seqLen(integerDiv(166, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(384/3)));
+	starts = 429270 + seqLen(integerDiv(384, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(327/3)));
+	starts = 429655 + seqLen(integerDiv(327, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(154/3)));
+	starts = 429983 + seqLen(integerDiv(154, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(938/3)));
+	starts = 436956 + seqLen(integerDiv(938, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(916/3)));
+	starts = 438793 + seqLen(integerDiv(916, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(498/3)));
+	starts = 440719 + seqLen(integerDiv(498, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(309/3)));
+	starts = 441218 + seqLen(integerDiv(309, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(277/3)));
+	starts = 441528 + seqLen(integerDiv(277, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(79/3)));
+	starts = 443040 + seqLen(integerDiv(79, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1058/3)));
+	starts = 449271 + seqLen(integerDiv(1058, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(83/3)));
+	starts = 450330 + seqLen(integerDiv(83, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(189/3)));
+	starts = 450414 + seqLen(integerDiv(189, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(639/3)));
+	starts = 450604 + seqLen(integerDiv(639, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(14/3)));
+	starts = 451244 + seqLen(integerDiv(14, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1431/3)));
+	starts = 455436 + seqLen(integerDiv(1431, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(174/3)));
+	starts = 469360 + seqLen(integerDiv(174, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(250/3)));
+	starts = 470385 + seqLen(integerDiv(250, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1215/3)));
+	starts = 480982 + seqLen(integerDiv(1215, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(99/3)));
+	starts = 482198 + seqLen(integerDiv(99, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(175/3)));
+	starts = 482298 + seqLen(integerDiv(175, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(66/3)));
+	starts = 482474 + seqLen(integerDiv(66, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(644/3)));
+	starts = 482541 + seqLen(integerDiv(644, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(271/3)));
+	starts = 483186 + seqLen(integerDiv(271, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1520/3)));
+	starts = 483458 + seqLen(integerDiv(1520, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(215/3)));
+	starts = 487404 + seqLen(integerDiv(215, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(196/3)));
+	starts = 490267 + seqLen(integerDiv(196, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(17/3)));
+	starts = 490464 + seqLen(integerDiv(17, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(267/3)));
+	starts = 490482 + seqLen(integerDiv(267, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(772/3)));
+	starts = 490750 + seqLen(integerDiv(772, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(96/3)));
+	starts = 491523 + seqLen(integerDiv(96, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(563/3)));
+	starts = 491620 + seqLen(integerDiv(563, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(102/3)));
+	starts = 492184 + seqLen(integerDiv(102, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(2121/3)));
+	starts = 492422 + seqLen(integerDiv(2121, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(309/3)));
+	starts = 496977 + seqLen(integerDiv(309, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(167/3)));
+	starts = 504290 + seqLen(integerDiv(167, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(716/3)));
+	starts = 511019 + seqLen(integerDiv(716, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1081/3)));
+	starts = 512448 + seqLen(integerDiv(1081, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(204/3)));
+	starts = 513530 + seqLen(integerDiv(204, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(21/3)));
+	starts = 513735 + seqLen(integerDiv(21, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(255/3)));
+	starts = 516546 + seqLen(integerDiv(255, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(69/3)));
+	starts = 519150 + seqLen(integerDiv(69, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(500/3)));
+	starts = 520068 + seqLen(integerDiv(500, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(779/3)));
+	starts = 524056 + seqLen(integerDiv(779, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(108/3)));
+	starts = 535402 + seqLen(integerDiv(108, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(169/3)));
+	starts = 540958 + seqLen(integerDiv(169, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(704/3)));
+	starts = 546980 + seqLen(integerDiv(704, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(83/3)));
+	starts = 563281 + seqLen(integerDiv(83, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(2631/3)));
+	starts = 568798 + seqLen(integerDiv(2631, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(164/3)));
+	starts = 576501 + seqLen(integerDiv(164, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(462/3)));
+	starts = 585682 + seqLen(integerDiv(462, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(466/3)));
+	starts = 592851 + seqLen(integerDiv(466, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1149/3)));
+	starts = 594959 + seqLen(integerDiv(1149, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(449/3)));
+	starts = 598959 + seqLen(integerDiv(449, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(259/3)));
+	starts = 603433 + seqLen(integerDiv(259, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1108/3)));
+	starts = 607716 + seqLen(integerDiv(1108, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(43/3)));
+	starts = 608825 + seqLen(integerDiv(43, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(255/3)));
+	starts = 608869 + seqLen(integerDiv(255, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(38/3)));
+	starts = 615370 + seqLen(integerDiv(38, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(594/3)));
+	starts = 615409 + seqLen(integerDiv(594, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(123/3)));
+	starts = 616004 + seqLen(integerDiv(123, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(623/3)));
+	starts = 616128 + seqLen(integerDiv(623, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(156/3)));
+	starts = 616752 + seqLen(integerDiv(156, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(867/3)));
+	starts = 626008 + seqLen(integerDiv(867, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(94/3)));
+	starts = 630356 + seqLen(integerDiv(94, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1217/3)));
+	starts = 632233 + seqLen(integerDiv(1217, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(266/3)));
+	starts = 637752 + seqLen(integerDiv(266, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(383/3)));
+	starts = 638019 + seqLen(integerDiv(383, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(787/3)));
+	starts = 638403 + seqLen(integerDiv(787, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(546/3)));
+	starts = 641999 + seqLen(integerDiv(546, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(155/3)));
+	starts = 642546 + seqLen(integerDiv(155, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(169/3)));
+	starts = 642702 + seqLen(integerDiv(169, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(61/3)));
+	starts = 642872 + seqLen(integerDiv(61, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(17/3)));
+	starts = 642934 + seqLen(integerDiv(17, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(160/3)));
+	starts = 642952 + seqLen(integerDiv(160, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(310/3)));
+	starts = 643113 + seqLen(integerDiv(310, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(780/3)));
+	starts = 643424 + seqLen(integerDiv(780, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(664/3)));
+	starts = 644205 + seqLen(integerDiv(664, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(683/3)));
+	starts = 647663 + seqLen(integerDiv(683, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(209/3)));
+	starts = 650608 + seqLen(integerDiv(209, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(1346/3)));
+	starts = 650818 + seqLen(integerDiv(1346, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1079/3)));
+	starts = 652165 + seqLen(integerDiv(1079, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(1893/3)));
+	starts = 653245 + seqLen(integerDiv(1893, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(737/3)));
+	starts = 655139 + seqLen(integerDiv(737, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(2387/3)));
+	starts = 658105 + seqLen(integerDiv(2387, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(35/3)));
+	starts = 662242 + seqLen(integerDiv(35, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(1115/3)));
+	starts = 662278 + seqLen(integerDiv(1115, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(366/3)));
+	starts = 663394 + seqLen(integerDiv(366, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(196/3)));
+	starts = 670241 + seqLen(integerDiv(196, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(257/3)));
+	starts = 673172 + seqLen(integerDiv(257, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(242/3)));
+	starts = 676737 + seqLen(integerDiv(242, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1668/3)));
+	starts = 686914 + seqLen(integerDiv(1668, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(96/3)));
+	starts = 690180 + seqLen(integerDiv(96, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(475/3)));
+	starts = 690277 + seqLen(integerDiv(475, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(202/3)));
+	starts = 690753 + seqLen(integerDiv(202, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(815/3)));
+	starts = 690956 + seqLen(integerDiv(815, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(607/3)));
+	starts = 691772 + seqLen(integerDiv(607, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(671/3)));
+	starts = 692380 + seqLen(integerDiv(671, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(183/3)));
+	starts = 693052 + seqLen(integerDiv(183, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(1240/3)));
+	starts = 693236 + seqLen(integerDiv(1240, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(128/3)));
+	starts = 694477 + seqLen(integerDiv(128, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(1480/3)));
+	starts = 694606 + seqLen(integerDiv(1480, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(552/3)));
+	starts = 696087 + seqLen(integerDiv(552, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(19/3)));
+	starts = 696640 + seqLen(integerDiv(19, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(15/3)));
+	starts = 696660 + seqLen(integerDiv(15, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(625/3)));
+	starts = 696676 + seqLen(integerDiv(625, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(1034/3)));
+	starts = 697302 + seqLen(integerDiv(1034, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(467/3)));
+	starts = 698337 + seqLen(integerDiv(467, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(113/3)));
+	starts = 698805 + seqLen(integerDiv(113, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(240/3)));
+	starts = 701739 + seqLen(integerDiv(240, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(320/3)));
+	starts = 705527 + seqLen(integerDiv(320, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1905/3)));
+	starts = 706910 + seqLen(integerDiv(1905, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(1041/3)));
+	starts = 708956 + seqLen(integerDiv(1041, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(317/3)));
+	starts = 711185 + seqLen(integerDiv(317, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(346/3)));
+	starts = 717397 + seqLen(integerDiv(346, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(67/3)));
+	starts = 720633 + seqLen(integerDiv(67, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(218/3)));
+	starts = 723227 + seqLen(integerDiv(218, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(65/3)));
+	starts = 723446 + seqLen(integerDiv(65, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(355/3)));
+	starts = 723512 + seqLen(integerDiv(355, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(485/3)));
+	starts = 723868 + seqLen(integerDiv(485, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(60/3)));
+	starts = 724354 + seqLen(integerDiv(60, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(29/3)));
+	starts = 724415 + seqLen(integerDiv(29, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(370/3)));
+	starts = 724445 + seqLen(integerDiv(370, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(2564/3)));
+	starts = 726103 + seqLen(integerDiv(2564, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1872/3)));
+	starts = 736503 + seqLen(integerDiv(1872, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(1100/3)));
+	starts = 746799 + seqLen(integerDiv(1100, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(136/3)));
+	starts = 748788 + seqLen(integerDiv(136, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(264/3)));
+	starts = 759002 + seqLen(integerDiv(264, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(232/3)));
+	starts = 761430 + seqLen(integerDiv(232, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(5/3)));
+	starts = 761663 + seqLen(integerDiv(5, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(110/3)));
+	starts = 761669 + seqLen(integerDiv(110, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(301/3)));
+	starts = 761780 + seqLen(integerDiv(301, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(245/3)));
+	starts = 762082 + seqLen(integerDiv(245, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(173/3)));
+	starts = 765884 + seqLen(integerDiv(173, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(367/3)));
+	starts = 771283 + seqLen(integerDiv(367, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(976/3)));
+	starts = 776448 + seqLen(integerDiv(976, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(813/3)));
+	starts = 782316 + seqLen(integerDiv(813, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(1117/3)));
+	starts = 791463 + seqLen(integerDiv(1117, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(25/3)));
+	starts = 792581 + seqLen(integerDiv(25, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(95/3)));
+	starts = 792607 + seqLen(integerDiv(95, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(749/3)));
+	starts = 794379 + seqLen(integerDiv(749, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(2234/3)));
+	starts = 796654 + seqLen(integerDiv(2234, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(913/3)));
+	starts = 799912 + seqLen(integerDiv(913, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(229/3)));
+	starts = 800826 + seqLen(integerDiv(229, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(202/3)));
+	starts = 801056 + seqLen(integerDiv(202, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(313/3)));
+	starts = 801259 + seqLen(integerDiv(313, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(554/3)));
+	starts = 801573 + seqLen(integerDiv(554, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(5/3)));
+	starts = 802128 + seqLen(integerDiv(5, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(306/3)));
+	starts = 802134 + seqLen(integerDiv(306, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(444/3)));
+	starts = 805313 + seqLen(integerDiv(444, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1795/3)));
+	starts = 813882 + seqLen(integerDiv(1795, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(963/3)));
+	starts = 819022 + seqLen(integerDiv(963, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(263/3)));
+	starts = 820063 + seqLen(integerDiv(263, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(896/3)));
+	starts = 830495 + seqLen(integerDiv(896, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(50/3)));
+	starts = 833002 + seqLen(integerDiv(50, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(221/3)));
+	starts = 839591 + seqLen(integerDiv(221, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(679/3)));
+	starts = 842114 + seqLen(integerDiv(679, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(862/3)));
+	starts = 844300 + seqLen(integerDiv(862, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(396/3)));
+	starts = 845733 + seqLen(integerDiv(396, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(81/3)));
+	starts = 846130 + seqLen(integerDiv(81, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(172/3)));
+	starts = 846212 + seqLen(integerDiv(172, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(537/3)));
+	starts = 850935 + seqLen(integerDiv(537, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(136/3)));
+	starts = 851473 + seqLen(integerDiv(136, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(131/3)));
+	starts = 851610 + seqLen(integerDiv(131, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(79/3)));
+	starts = 851742 + seqLen(integerDiv(79, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(54/3)));
+	starts = 851822 + seqLen(integerDiv(54, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(58/3)));
+	starts = 851877 + seqLen(integerDiv(58, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1023/3)));
+	starts = 851936 + seqLen(integerDiv(1023, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(608/3)));
+	starts = 852960 + seqLen(integerDiv(608, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(138/3)));
+	starts = 853569 + seqLen(integerDiv(138, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(275/3)));
+	starts = 854515 + seqLen(integerDiv(275, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(1179/3)));
+	starts = 854791 + seqLen(integerDiv(1179, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(444/3)));
+	starts = 855971 + seqLen(integerDiv(444, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(16/3)));
+	starts = 861197 + seqLen(integerDiv(16, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1741/3)));
+	starts = 868031 + seqLen(integerDiv(1741, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(95/3)));
+	starts = 869773 + seqLen(integerDiv(95, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(2715/3)));
+	starts = 869869 + seqLen(integerDiv(2715, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(304/3)));
+	starts = 872870 + seqLen(integerDiv(304, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(224/3)));
+	starts = 876402 + seqLen(integerDiv(224, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(780/3)));
+	starts = 880739 + seqLen(integerDiv(780, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(2542/3)));
+	starts = 897862 + seqLen(integerDiv(2542, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(1544/3)));
+	starts = 909354 + seqLen(integerDiv(1544, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(161/3)));
+	starts = 913966 + seqLen(integerDiv(161, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(204/3)));
+	starts = 914128 + seqLen(integerDiv(204, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(153/3)));
+	starts = 914333 + seqLen(integerDiv(153, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(1811/3)));
+	starts = 914545 + seqLen(integerDiv(1811, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(45/3)));
+	starts = 917297 + seqLen(integerDiv(45, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(422/3)));
+	starts = 917343 + seqLen(integerDiv(422, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(527/3)));
+	starts = 917766 + seqLen(integerDiv(527, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(331/3)));
+	starts = 919539 + seqLen(integerDiv(331, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(792/3)));
+	starts = 919871 + seqLen(integerDiv(792, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(843/3)));
+	starts = 920664 + seqLen(integerDiv(843, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(430/3)));
+	starts = 937932 + seqLen(integerDiv(430, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(807/3)));
+	starts = 947578 + seqLen(integerDiv(807, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(40/3)));
+	starts = 950978 + seqLen(integerDiv(40, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(513/3)));
+	starts = 951019 + seqLen(integerDiv(513, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(993/3)));
+	starts = 951533 + seqLen(integerDiv(993, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(264/3)));
+	starts = 954542 + seqLen(integerDiv(264, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g11, asInteger(floor(1534/3)));
+	starts = 954807 + seqLen(integerDiv(1534, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(441/3)));
+	starts = 956342 + seqLen(integerDiv(441, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(1124/3)));
+	starts = 962363 + seqLen(integerDiv(1124, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(883/3)));
+	starts = 967167 + seqLen(integerDiv(883, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g9, asInteger(floor(4589/3)));
+	starts = 974372 + seqLen(integerDiv(4589, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(897/3)));
+	starts = 981355 + seqLen(integerDiv(897, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	types = rep(g10, asInteger(floor(383/3)));
+	starts = 997967 + seqLen(integerDiv(383, 3)) * 3;
+	ends = starts + 1;
+	initializeGenomicElement(types, starts, ends);
+	
+	
+	// constants (Ne)
+	defineConstant('dK', 1000);
+	defineConstant('hK', 1000);
+	defineConstant('Death_chance', 0);
+	defineConstant('FtoM', 0.5);
+	defineConstant('Spore_num', 100);
+	defineConstant('Clone_rate', 0.0);
+	defineConstant('Self_rate', 0.0);
+	defineConstant('Maternal_weight', 0);
+}
+
+
+// generates gametes from sporophytes
+reproduction(p1 ) { // generates offspring
+	g_1 = genome1;
+	g_2 = genome2;
+	
+	meiosis_reps = floor(Spore_num/2);
+	for (rep in 1:meiosis_reps)
+	{
+		breaks = sim.chromosome.drawBreakpoints(individual);
+		p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = ifelse (runif(1)<FtoM, 1, 0);
+		p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = ifelse (runif(1)<FtoM, 1, 0);
+	}
+}
+
+
+// generates gametes from sporophytes
+reproduction(p0 ) {
+	if (individual.tag == 1)    // females find male gametes to reproduce
+	{
+		reproduction_opportunity_count = 1;
+		
+		// clones give the focal individual extra opportunities to reproduce
+		if (runif(1) <= Clone_rate)
+			reproduction_opportunity_count = reproduction_opportunity_count + 1;
+		
+		for (repro in seqLen(reproduction_opportunity_count))
+		{
+			if (runif(1) <= Self_rate)
+			{
+				// this is selfing using two identical gametes – intragametophytic selfing
+				// intergametophytic selfing might happen below, by chance
+				p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
+			}
+			else
+			{
+				sperm = p0.sampleIndividuals(1, tag=0); // find a male!
+				
+				if (sperm.size() == 1)
+				{
+					child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
+					
+					if (Maternal_weight > 0) //Mother's fitness affects sporophyte fitness; see survival()
+						child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+					
+					sperm.tag = 2;  // take out of the mating pool
+				}
+			}
+		}
+	}
+}
+
+
+// define Bryophyte subpops: diploid sporophytes, haploid gametophytes
+1 early() { // executes after offspring are generated
+	sim.addSubpop('p1', dK);
+	sim.addSubpop('p0', hK);
+}
+
+
+// alternation of generations
+early() { // executes after offspring are generated
+	if (sim.generation % 2 == 0) //diploids (p1) just generated haploid gametophytes
+	{
+		//fitness affects gametophyte survival
+		p0.fitnessScaling = (hK / p0.individualCount);
+		
+		//p0 and p1 survival callbacks
+		s1.active = 1;
+		s2.active = 0;
+		s3.active = 1;
+		s4.active = 0;
+		
+		// haploids get modified fitness, without dominance
+		s5.active = 1;
+		s6.active = 1;
+		s7.active = 1;
+	
+	}
+	else //odd generations = gametophytes (p0) just generated sporophytes
+	{
+		p1.fitnessScaling = dK / p1.individualCount; //fitness affects sporophytes
+		
+		//turn off p0 survival callbacks
+		//turn on p1 survival callbacks
+		s1.active = 0;
+		s2.active = 1;
+		s3.active = 0;
+		s4.active = 1;
+		
+		// diploids get SLiM's standard fitness calculation, with dominance
+		s5.active = 0;
+		s6.active = 0;
+		s7.active = 0;
+	
+	}
+}
+s1 survival(p1)
+{
+	return F;
+}
+
+s2 survival(p1)
+{
+	//this code implements random death chance
+	if (runif(1) < Death_chance)
+		return F;
+	else
+		return NULL;
+	
+	
+	// maternal effect as weighted average
+	maternal_effect = individual.getValue("maternal_fitness");
+	
+	if (!isNULL(maternal_effect))
+	{
+		corrected_fitness = (maternal_effect * Maternal_weight) + fitness * (1 - Maternal_weight);
+		return (draw < corrected_fitness);
+	}
+	
+	return NULL;
+
+}
+
+s3 survival(p0) //even
+{
+	//this code implements random death chance
+	if (runif(1) < Death_chance)
+		return F;
+	else
+		return NULL;
+}
+
+s4 survival(p0) //odd
+{
+	return F;
+}
+
+// gametophytes have no dominance effects
+s5 fitness(m7) { // adjusts fitness calculation
+	return 1 + mut.selectionCoeff;
+}
+
+
+// gametophytes have no dominance effects
+s6 fitness(m8) { // adjusts fitness calculation
+	return 1 + mut.selectionCoeff;
+}
+
+
+// gametophytes have no dominance effects
+s7 fitness(m9) { // adjusts fitness calculation
+	return 1 + mut.selectionCoeff;
+}
+
+
+// fixes mutations in haploid gen
+
+late() { // executes after selection occurs
+	if (sim.generation % 2 == 0) //gametophytes have just undergone fitness selection
+	{
+		muts5 = sim.mutationsOfType(m7);
+		freqs5 = sim.mutationFrequencies(NULL, muts5);
+		if (any(freqs5 == 0.5))
+			sim.subpopulations.genomes.removeMutations(muts5[freqs5 == 0.5], T)
+			;
+		muts6 = sim.mutationsOfType(m8);
+		freqs6 = sim.mutationFrequencies(NULL, muts6);
+		if (any(freqs6 == 0.5))
+			sim.subpopulations.genomes.removeMutations(muts6[freqs6 == 0.5], T)
+			;
+		muts7 = sim.mutationsOfType(m9);
+		freqs7 = sim.mutationFrequencies(NULL, muts7);
+		if (any(freqs7 == 0.5))
+			sim.subpopulations.genomes.removeMutations(muts7[freqs7 == 0.5], T)
+			;
+	
+	}
+}
+
+// end of sim; save individuals, save .trees file
+
+2000 late() { // executes after selection occurs
+	sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)
+		;
+	sim.treeSeqOutput('bryo_branch4.trees');
+}
