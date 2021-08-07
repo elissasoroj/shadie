@@ -52,7 +52,7 @@ class Bryophyte(BryophyteBase):
     selfing_rate: float=0
     maternal_effect_weight: float=0
     random_death_chance: float=0
-
+    startfile: str = "F"
 
     def run(self):
         """
@@ -94,11 +94,12 @@ class Bryophyte(BryophyteBase):
         """
         add haploid and diploid life stages
         """
-        self.model.early(
-            time=1,
-            scripts=["sim.addSubpop('p1', dK)", "sim.addSubpop('p0', hK)"],
-            comment="define Bryophyte subpops: diploid sporophytes, haploid gametophytes",
-        )
+        if self.startfile == "F":
+            self.model.early(
+                time=1,
+                scripts=["sim.addSubpop('p1', dK)", "sim.addSubpop('p0', hK)"],
+                comment="define Bryophyte subpops: diploid sporophytes, haploid gametophytes",
+            )
 
 
     def dioicous(self):

@@ -37,7 +37,8 @@ class ReproductionApi:
         clone_rate: float=0.0,
         selfing_rate: float=0.,
         maternal_effect_weight: float=0,
-        random_death_chance: float=0,           
+        random_death_chance: float=0, 
+        startfile: str = "F"         
         ):
         """
         Generate scripts appropriate for a bryophyte (moss, liverwort,
@@ -59,6 +60,7 @@ class ReproductionApi:
             selfing_rate=selfing_rate,
             maternal_effect_weight=maternal_effect_weight,
             random_death_chance=random_death_chance,
+            startfile=startfile
         ).run()
 
 

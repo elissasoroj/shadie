@@ -226,11 +226,14 @@ class Model(AbstractContextManager):
                 f"sim.treeSeqOutput('{self.fileout}')"]
                 )
         else:
+
             Model.late(
                 self = self,
                 time = self.length, 
-                scripts = f"sim.treeSeqOutput('{self.fileout}')",
-                comment = "end of sim; save .trees file",
+                scripts = [
+                "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
+                f"sim.treeSeqOutput('{self.fileout}')"],
+                comment = "end of sim; save individuals, save .trees file",
             )
 
     def readfromfile(self,):
