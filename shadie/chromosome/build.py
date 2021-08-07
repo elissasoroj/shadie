@@ -475,7 +475,7 @@ class ChromosomeRandom(ChromosomeBase):
                 splits = self.rng.dirichlet(np.ones(n_introns * 2 - 1))
                 splits = (splits * cds_span).astype(int)
                 splits[-1] = cds_span - sum(splits[:-1])
-                if all(i > 3 for i in splits) == True:
+                if all(i > 3 for i in splits):
                     break
         else:
             splits = [cds_span]
