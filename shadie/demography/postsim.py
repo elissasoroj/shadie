@@ -17,6 +17,7 @@ from loguru import logger
 from typing import Union
 import toytree
 import toyplot
+from IPython.utils import io
 
 #optional imports
 try:
@@ -141,6 +142,10 @@ class PostSim:
 
 
     def recapitate(self, ts):    ## merge all individuals into population 1
+        """
+        recapitate the treesequence. This function drops any empty 
+        nodes due to haploid genomes 
+        """
         
         #drop empty nodes
         nodeslist = []
@@ -181,7 +186,9 @@ class PostSim:
             random_seed=4,
         )
 
-    def mutate(self, ts):    #mutate the tree sequencce
+    def mutate(self, ts):    
+        "mutate the tree sequence"
+        
         self.mts = pyslim.SlimTreeSequence(msprime.mutate(
             ts, rate=self.mutrate, keep=True))
 
@@ -201,12 +208,14 @@ class PostSim:
 
     def simplify(
         self, 
-        ts,
+        ts=None,
         samplesize:int = 10, 
         random_seed:Union[int, None]=None):
         """
-        Simplify merged tree sequence. PostSim.sts and PostSim.sets
-        can be accessed for tskit summary statistic functions, e.g:
+        Simplify merged tree sequence. Note that this simplified tree
+        sequence cannot be recapitated.
+        PostSim.sts and PostSim.sets can be accessed for tskit summary 
+        statistic functions, e.g:
         PostSim.sts.divergence(PostSim.sets)
         .diversity()
         """
@@ -214,6 +223,7 @@ class PostSim:
         np.random.seed(random_seed)
        
         if self.pops is not None:
+            ts = self.mts
             for pop in self.pops:
                 inds = np.random.choice(pop, samplesize, replace=False)
                 for i in inds:
@@ -229,7 +239,7 @@ class PostSim:
         for i in keep_indivs:
            keep_nodes.extend(ts.individual(i).nodes)
         
-        self.sts = ts.simplify(keep_nodes, keep_input_roots=True)
+        self.sts = ts.simplify(keep_nodes)
 
         #save the sets
         set1 = []
@@ -275,29 +285,72 @@ class PostSim:
         axes.vlines(1-self.simlength, style={"stroke": "blue"});
 
 
-    def stats(self, ts=None, samplesets:list = None):
-        """View a summary of tskit statistics on the treesequence. 
-        If no tree sequence and sample sets are provided, will attempt
-        to use simplified PostSim sequence and sets.
+    def stats(
+        self, 
+        ts=None, 
+        samplesets:list = None, 
+        samplesize:int = 20,
+        sampletimes:int = 50):
+        """
+        View a summary of tskit statistics on the treesequence. 
+        If a tree sequence and samples sets are provided, stats() will
+        calculate summary statistics using sample set.
+        If only a tree sequence is provided, the tree sequence will be
+        sampled sampletimes times (Default = 50) at samplesize (Default = 20).
+        If no tree sequence and sample sets are provided, stats() will 
+        attempt to use simplified PostSim.mts sequence. 
         """
 
-        if ts is not None:
-            ts = ts
-            samplesets = samplesets
-        elif self.sts is not None:
-            ts = self.sts 
-            samplesets = self.sets
-        else:
-            logger.warning("Please input a tree sequence and list of "
-                "sample sets")
-
-        print(
+        if samplesets is not None:
+           
+            print(
             f"Divergence: {ts.divergence(samplesets)}\n"
             f"Diversity: {ts.diversity(samplesets)}\n"
             f"Fst: {ts.Fst(samplesets)}\n"
             f"Tajima's D: {ts.Tajimas_D(samplesets)}\n"
             f"Root age: {ts.max_root_time}"
             )
+
+        else:
+            if ts is not None:
+                pass
+            elif self.mts is not None:
+                ts = self.mts 
+            else:
+                logger.warning("Please input a tree sequence")
+
+            divg = []
+            divs1 = []
+            divs2 = []
+            fst = []
+            tajd1 = []
+            tajd2 = []
+
+            with io.capture_output() as captured:
+                for i in range (0, sampletimes):
+                    self.simplify(ts, samplesize)
+                    divg.append(self.sts.divergence(self.sets))
+                    divs = self.sts.diversity(self.sets)
+                    if isinstance(divs[0], float):
+                        divs1.append(divs[0]) 
+                    if isinstance(divs[1], float):
+                        divs2.append(divs[1]) 
+                    fst.append(self.sts.Fst(self.sets))
+                    tajds = self.sts.Tajimas_D(self.sets)
+                    if isinstance(tajds[0], float):
+                        tajd1.append(tajds[0]) 
+                    if isinstance(tajds[1], float):
+                        tajd2.append(tajds[1]) 
+
+            print(
+                "Sampled 20 individuals from each population "
+                f"{sampletimes} times\n"
+                f"Divergence: {np.mean(divg)}\n"
+                f"Diversity: pop1 = {np.mean(divs1)}, pop2 = {np.mean(divs2)}\n"
+                f"Fst: {np.mean(fst)}\n"
+                f"Tajima's D: pop1 = {np.mean(tajd1)}, pop2 = {np.mean(tajd2)}\n"
+                f"Root age: {ts.max_root_time}"
+                )
 
 
     def mutsummary(self):
@@ -453,7 +506,7 @@ class PostSim:
         pass
 
 class NeutralSim:
-    "tools for a simulation in which neutral mutations "
+    "tools for a SLiM simulation in which neutral mutations are included."
 
     def __init__(
         self,
@@ -546,7 +599,7 @@ class NeutralSim:
         mutationcount = 0
         neutralcount = 0
 
-        for mut in self.mutations():
+        for mut in self.mts.mutations():
             oldest = len(mut.metadata["mutation_list"]) - 1
             if mut.metadata["mutation_list"][oldest]["selection_coeff"] != 0.0:
                 nonneutral.append(mut)
@@ -573,13 +626,5 @@ if __name__ == "__main__":
         recomb = 1e-8, 
         mutrate = 1e-8)
     test.fullworkflow()
-    test.summary()
-    test.plotmuts()
-
-    fullSLiM = NeutralSim(
-        files=["../notebooks/bryo_fullSLiM.trees"],
-        simlength=2000,
-        recomb= 1e-9,
-        mutrate=1e-7/2,
-    )
+    test.stats()
 
