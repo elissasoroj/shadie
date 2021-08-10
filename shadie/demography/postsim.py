@@ -52,7 +52,7 @@ class PostSim:
         self.mutrate = mutrate/2
         self.recomb = recomb
         self.popsize = popsize
-        self.populations = None
+        self.pops = None
 
         self.species = []
         ids = []
@@ -72,12 +72,24 @@ class PostSim:
             modts = pyslim.load_tables(tables)
             mod_tslist.append(modts)
 
-        self.mod_tslist = mod_tslist
+        #remove extra population
+        onepop_tslist = []
+        for ts in mod_tslist:
+            onepop = ts.simplify(keep_input_roots=True,
+                keep_unary_in_individuals = True)
+            onepop_tslist.append(onepop)
+        
+        self.onepop_tslist = onepop_tslist
 
     def fullworkflow(self):
-        self.merge(self.mod_tslist[0], self.mod_tslist[1])
-        self.recapitate(self.merged_ts)
-        self.mutate(self.rts)
+
+        if len(self.onepop_tslist) > 1:
+            self.merge(self.onepop_tslist[0], self.onepop_tslist[1])
+            self.recapitate(self.merged_ts)
+            self.mutate(self.rts)
+        else:
+            self.recapitate(self.onepop_tslist[0])
+            self.mutate(self.rts)
 
     
     def merge(self, ts1, ts2):    #merge the tree sequences
@@ -116,7 +128,7 @@ class PostSim:
             elif inds[i].population == self.edge_ids[1]:
                 pop2.append(inds[i].id)
         
-        self.populations = [pop1, pop2]
+        self.pops = [pop1, pop2]
 
         #save starting pops
         # startalive = self.merged_ts.individuals_alive_at(self.simlength-1)
@@ -129,11 +141,24 @@ class PostSim:
 
 
     def recapitate(self, ts):    ## merge all individuals into population 1
+        
+        #drop empty nodes
+        nodeslist = []
+        for i in ts.edges():
+            nodeslist.append(ts.edge(i.id).parent)
+            nodeslist.append(ts.edge(i.id).child)
+
+        keep_nodes = []
+        [keep_nodes.append(x) for x in nodeslist if x not in keep_nodes]
+        len(keep_nodes)
+
+        ts = ts.simplify(samples = keep_nodes, keep_input_roots=True)
+
         demographic_events = []
-        if ts.num_populations < 1:
+        if ts.num_populations > 1:
             for i in range(1, ts.num_populations):
                 demographic_events.append(msprime.MassMigration(
-                    time = self.simlength+1, source = i, destination = 0,
+                    time = self.simlength+10, source = i, destination = 0,
                     proportion = 1.0))
 
         # OLD MSPRIME METHOD
@@ -142,7 +167,8 @@ class PostSim:
         #     pop_configs.append(msprime.PopulationConfiguration(
         #         initial_size = 1+self.num_startalive[pop.id]))
         
-        pop_configs = [msprime.PopulationConfiguration(initial_size=self.popsize)
+        pop_configs = [msprime.PopulationConfiguration(
+            initial_size=self.popsize)
             for _ in range(ts.num_populations)]
 
         matrix = np.zeros((ts.num_populations, ts.num_populations))
@@ -161,17 +187,17 @@ class PostSim:
 
         #save mutation positions and which population they occurred in
         positions = []
-        population = []
+        popids = []
         allpositions = []
         for mut in self.mts.mutations():
-            allpositions.append(int(mut.position))
-            population.append(self.mts.node(mut.node).population)
+            allpositions.append(int(mut.site))
+            popids.append(self.mts.node(mut.node).population)
             if mut.derived_state != '1':
-                positions.append(int(mut.position))
+                positions.append(int(mut.site))
 
         self.positions = positions
         self.allpositions = allpositions
-        
+        self.popids = popids
 
     def simplify(
         self, 
@@ -186,21 +212,23 @@ class PostSim:
         """
         keep_indivs = []
         np.random.seed(random_seed)
-        if self.populations:
-            keep_indivs = []
-            for pop in self.populations:
+       
+        if self.pops is not None:
+            for pop in self.pops:
                 inds = np.random.choice(pop, samplesize, replace=False)
-                keep_indivs.append(inds)
-        
+                for i in inds:
+                    keep_indivs.append(i)
+
         else:
             inds = []
             for i in ts.individuals():
                 inds.append(i.id)
-            np.random.choice(inds, samplesize, replace=False)
+            keep_indivs = np.random.choice(inds, samplesize, replace=False)
 
         keep_nodes = []
         for i in keep_indivs:
            keep_nodes.extend(ts.individual(i).nodes)
+        
         self.sts = ts.simplify(keep_nodes, keep_input_roots=True)
 
         #save the sets
@@ -213,8 +241,8 @@ class PostSim:
                 set2.append(i)
         self.sets = [set1, set2]
 
-        print(f"Before, there were {self.mts.num_samples} sample nodes "
-            f"(and {self.mts.num_individuals} individuals) "
+        print(f"Before, there were {ts.num_samples} sample nodes "
+            f"(and {ts.num_individuals} individuals) "
             f"in the tree sequence, and now there are {self.sts.num_samples} "
             f"(sample nodes and {self.sts.num_individuals} individuals).\n\n"
             "Use `.sts` to access simplified tree sequnce and  `.sets`"
@@ -230,14 +258,14 @@ class PostSim:
            print(f"Number of individuals in population {pop}: {num}")
 
     
-    def quickplot(self, node, size:tuple = (800,400)):
-        display(SVG(mod_sts_rts.at_index(node).draw_svg(size = size)))
+    def quickplot(self, ts, node, size:tuple = (800,400)):
+        display(SVG(ts.at_index(node).draw_svg(size = size, y_axis=True,)))
 
-    def treeplot(self, ts, node, size:tuple = (600,700)):
+    def treeplot(self, ts, node, width:int = 600, height:int = 700):
         ts_newick = ts.at_index(node).newick()
 
         modtree = toytree.tree(ts_newick)
-        canvas, axes, mark = modtree.draw(size);
+        canvas, axes, mark = modtree.draw(width=width, height=height)
 
         # show the axes coordinates
         axes.show = True
@@ -247,7 +275,32 @@ class PostSim:
         axes.vlines(1-self.simlength, style={"stroke": "blue"});
 
 
-    def summary(self):
+    def stats(self, ts=None, samplesets:list = None):
+        """View a summary of tskit statistics on the treesequence. 
+        If no tree sequence and sample sets are provided, will attempt
+        to use simplified PostSim sequence and sets.
+        """
+
+        if ts is not None:
+            ts = ts
+            samplesets = samplesets
+        elif self.sts is not None:
+            ts = self.sts 
+            samplesets = self.sets
+        else:
+            logger.warning("Please input a tree sequence and list of "
+                "sample sets")
+
+        print(
+            f"Divergence: {ts.divergence(samplesets)}\n"
+            f"Diversity: {ts.diversity(samplesets)}\n"
+            f"Fst: {ts.Fst(samplesets)}\n"
+            f"Tajima's D: {ts.Tajimas_D(samplesets)}\n"
+            f"Root age: {ts.max_root_time}"
+            )
+
+
+    def mutsummary(self):
         "View selection coefficient distributions and mutation type counts"
 
         #calculate number of neutral mutations
@@ -307,14 +360,19 @@ class PostSim:
             )
 
 
-    def plot(self):
+    def plotmuts(self, chromosome=None):
         """
         Plots the mutations over the chromosome as interactive altair 
         plot - but needs to be opened in vega editor (??)
         """
 
         if self.chromosome == None:
-            logger.warning("Please init Postsim object with chromosome")
+            if chromosome is not None:
+                self.chromosome = chromosome
+            else:
+                logger.warning("PostSim object was not initialised with"
+                    "a chromosome object - please provide one for plot"
+                    "function.")
         else:
             self.chromosome.inspect()
             ichrom = self.chromosome.ichrom
@@ -330,7 +388,7 @@ class PostSim:
             if len(self.edge_ids) > 1:
                 mut_pos = pd.DataFrame({
                     'x': self.positions,
-                    'population': str("pop" + self.population)
+                    'population': str("pop" + self.popids)
                     })
 
                 mut_positions = alt.Chart(mut_pos).mark_rule().encode(
@@ -516,7 +574,7 @@ if __name__ == "__main__":
         mutrate = 1e-8)
     test.fullworkflow()
     test.summary()
-    test.plot()
+    test.plotmuts()
 
     fullSLiM = NeutralSim(
         files=["../notebooks/bryo_fullSLiM.trees"],
