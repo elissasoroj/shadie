@@ -11,7 +11,6 @@ import numpy as np
 from loguru import logger
 import altair as alt
 import toyplot
-import random
 
 # internal imports
 from shadie.base.elements import ElementType
@@ -512,7 +511,7 @@ class ChromosomeRandom(ChromosomeBase):
             for enum, span in enumerate(spans):
                 # even numbered segments are the exons (0, 2, 4)
                 if not enum % 2:
-                    x = random.choice(self.exons)
+                    x = self.rng.choice(self.exons)
                     self.data.loc[idx] = (
                         x.altname, 
                         idx + 1, 
@@ -521,7 +520,7 @@ class ChromosomeRandom(ChromosomeBase):
                         x.coding,
                     )
                 else:
-                    i = random.choice(self.introns)
+                    i = self.rng.choice(self.introns)
                     self.data.loc[idx] = (
                         i.altname,
                         idx + 1,
