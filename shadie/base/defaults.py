@@ -14,9 +14,9 @@ from shadie.base.elements import ElementType
 
 
 # MutationTypes: selection coefficient distributions
-NEUT = MutationType(0.5, "f", 0.0)          #neutral mutation
-DEL = MutationType(0.1, "g", -3.0, 1.5)     #deleterious
-BEN = MutationType(0.8, "e", 0.04)          #beneficial
+NEUT = MutationType(0.5, "f", 0.0,)      # neutral mutation
+DEL = MutationType(0.1, "g", -3.0, 1.5)  # deleterious
+BEN = MutationType(0.8, "e", 0.04)       # beneficial
 
 # EXON has 80X more deleterious (-Gamma underdominant) than it has
 # beneficial (+E overdominant) mutations.

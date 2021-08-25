@@ -136,7 +136,6 @@ class ElementType:
         return canvas, axes, mark        
 
 
-
 class ElementList(list):
     """
     Creates a list of mutations and the mutationdict object for Shadie
@@ -170,51 +169,6 @@ class ElementList(list):
     def max(self):
         "max value in the 99% CI of all MutationType distributions"
         return max([i.mlist.max for i in self])
-
-
-
-# class ElementList:
-#     """
-#     Elementlist container class for multiple ElementType objects.
-#     """   
-    
-#     def __init__(self, *elementtypes: List[ElementType]):
-
-#         for ele in elements:
-#             mutscript = [str(a) for a in i.mutations]
-#             freqscript = [str(b) for b in i.freq]
-#             script = (
-#                 f"'{i.name}', c({', '.join(mutscript)})," 
-#                 f"c({', '.join(freqscript)}), {i.mutmatrix}"
-#                 )
-#             elementdict[i.name] = script
-#         self.elementdict = elementdict  #dictionary of script lines
-
-#         self.elementlist = elementtypes
-
-#     def __repr__(self):
-#         elnames = []
-#         for element in self.elementlist:
-#             elnames.append(element.name)
-#         return f"<ElementList: {elnames}>"
-
-#     def inspect(self):
-#         "plots mutation types fitness effect distributions"
-#         print(
-#             '\033[1m' + "Genomic Element List" + '\033[0m' + "\n"
-#             f"Element types: {self.elementlist}\n"
-#             f"Mutation types: {self.mutationlist}\n"
-#             )
-#         for element in self.elementlist:
-#             print(
-#                 '\033[1m' + "Genomic Element Type" + '\033[0m' + "\n"
-#                 f"name: {element.name}\n"
-#                 f"alternate name: {element.altname}\n"
-#                 f"mutations: {element.mutations}\n"
-#                 f"frequencies: {element.freq}\n"
-#                 )
-#             for mutation in element.muttypes:
-#                 mutation.inspect()
 
 
 if __name__ == "__main__":
