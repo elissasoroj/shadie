@@ -1,374 +1,31 @@
 #!/usr/bin/env python
 
 """
-Generates Elements to represent chromosome structure for SLiM simulation
+Superclasses of ChromosomeBase for generating Elements to represent 
+a Chromosome structure. ChromosomeBase has functions to visualize
+these chroms and to convert them to SLiM simulation commands.
+
+These classes are for internal use only. They are exposed in user-
+facing functions in :meth:`shadie.chromosome`.
 """
 
 from typing import Union, List
-import itertools
-import pandas as pd
 import numpy as np
-from loguru import logger
-import altair as alt
-import toyplot
-import random
 
 # internal imports
 from shadie.base.elements import ElementType
 from shadie.base.defaults import SYN, NONCDS, INTRON, EXON, NEUT
-
-
-class ChromosomeBase:
-    """
-    Base Chromosome superclass. This class contains functions that 
-    are inherited by the Chromosome classes users will initialize
-    using convenience functions, such as default, random, or explicit.
-    This superclass is used to define functions shared by all of the
-    subclasses, such as inspect, or for writing data to SLiM format.
-
-    Parameters:
-    -----------
-    genome_size: int
-        The size of the genome in bp
-    nucleotides: bool
-        Use initializeMutationTypeNuc instead of initializeMutationType
-    """
-    def __init__(
-        self, 
-        genome_size, 
-        NS_sites:bool, #turn off S/NS sites
-        use_nucleotides=False, 
-        ):
-
-        self.genome_size =int(genome_size)
-        self.data = pd.DataFrame(
-            columns=['name', 'start', 'end', 'eltype', 'script', 'coding'],
-            data=None,
-        )
-        self.mutations = []
-        self.use_nuc = use_nucleotides
-        self.ichrom = None
-
-
-    def inspect(self):
-        """
-        Takes ChromosomeBase class object parameter
-        """
-        
-        eltype = []
-        category = []
-        altname = []
-        startbase = []
-        endbase = []
-        y1 = []
-        y2 = []
-        length = []
-        noncds_starts = [0]
-        noncds_stops = []
-        for index, row in self.data.iterrows():
-            eltype.append(row['eltype'])
-
-            namestr = str(row['name'])
-            if "intron" in namestr:
-                category.append("intron")
-            elif row['coding'] == 1:
-                category.append("exon")
-            else:
-                category.append("noncds")
-
-            if pd.isna(row['name']):
-                if row['coding'] == 1:
-                    altname.append("exon")
-                else:
-                    altname.append("noncds")
-            else: 
-                altname.append(row['name'])
-            startbase.append(row['start'])
-            endbase.append(row['end'])
-            y1.append(0)
-            y2.append(1)
-            length.append(row['end']-row['start'])
-
-            noncds_starts.append((row['end']+1))
-            noncds_stops.append((row['start']-1))
-
-        self.noncds_starts = noncds_starts[:-1]
-        self.noncds_stops = noncds_stops
-
-        for i in range(len(self.noncds_starts)):
-            if self.noncds_starts[i] != self.noncds_stops[i]:
-                check = self.noncds_stops[i]-self.noncds_starts[i]
-                if check > 2:
-                    eltype.append("None")
-                    category.append("noncds")
-                    altname.append("noncds")
-                    startbase.append(self.noncds_starts[i])
-                    endbase.append(self.noncds_stops[i])
-                    y1.append(0)
-                    y2.append(1)
-                    length.append(self.noncds_stops[i]-self.noncds_starts[i])
-
-
-        chromcoords = list(zip(eltype, category, altname, startbase, endbase, y1, y2, length))
-        genome = pd.DataFrame(chromcoords, 
-            columns = ['eltype', 'category', 'altname', 'x1', 'x2', 'y1', 'y2', 'length'])
-
-        self.genome = genome
-
-        #set the colors
-        extypecount = genome.loc[genome['category']=='exon'].altname.nunique()
-        extypes = list(genome.loc[genome['category']=='exon'].altname.unique())
-        intypecount = genome.loc[genome['category']=='intron'].altname.nunique()
-        intypes = list(genome.loc[genome['category']=='intron'].altname.unique())
-        nctypecount = genome.loc[genome['category']=='noncds'].altname.nunique()
-        nctypes = list(genome.loc[genome['category']=='noncds'].altname.unique())
-        self.intypes = intypes
-
-        #ncodcolors = ['mediumvioletred', 'lightcoral','firebrick', 'crimson', 'lightpink']
-        incolors = ['mediumaquamarine', 'palegreen','olivedrab', 'darkgreen', 'limegreen']
-        ncodcolors = ['lemonchiffon', 'gold', 'orange',  'yellow', 'khaki']
-        excolors = ['cornflowerblue', 'mediumblue','dodgerblue', 'darkslateblue', 'skyblue']
-
-
-        dom = extypes + intypes + nctypes
-        self.dom = dom
-        rng = excolors[0:extypecount] + incolors[0:intypecount] + ncodcolors[0:nctypecount]
-        self.rng = rng
-
-        brush = alt.selection_interval(
-            encodings=['x'], 
-            mark=alt.BrushConfig(fill='red', fillOpacity = 0.700))
-
-        #make the altair plot
-        ichrom = alt.Chart(genome).mark_rect().encode(
-            x=alt.X('x1:Q', axis=alt.Axis(title='Base Pairs')),
-            x2='x2:Q',
-            y = alt.Y('y1:Q', axis=None),
-            y2='y2:Q', 
-            color=alt.Color('altname:N', 
-                            scale=alt.Scale(domain=dom, range=rng)),
-            tooltip=[
-                alt.Tooltip('eltype', title='Element Type'),
-                alt.Tooltip('altname', title='Name'),
-                #alt.Tooltip('mutations', title='Mutations'),
-                alt.Tooltip('length', title='Length'),
-                alt.Tooltip('x1', title='Start'),
-                alt.Tooltip('x2', title='Stop'),
-                    ]
-        ).properties(
-            width = 850
-        ).add_selection(brush)
-
-        zoom = alt.vconcat(
-            ichrom.encode(
-            alt.X('x1:Q', title=None, scale=alt.Scale(domain=brush))
-            ).properties(height = 80),
-            ichrom.add_selection(brush).properties(height=40),
-            data=genome)
-
-        zoom.save('zoom.html')
-        self.ichrom = ichrom    #for postsim
-        self.zoom = zoom        #for interactive plot
-
-
-    def toyplot(self):
-        "Makes static toyplot"
-        self.inspect()
-        eltype = []
-        startbase = []
-        endbase = []
-        y1 = []
-        y2 = []
-        for index, row in self.genome.iterrows():
-            eltype.append(row['category'])
-            startbase.append(row['x1'])
-            endbase.append(row['x2'])
-            y1.append(0)
-            y2.append(1)
-
-        chromcoords = list(zip(eltype, startbase, endbase, y1, y2))
-        rectangles = pd.DataFrame(chromcoords, columns = [
-            'Element Type', 'x1', 'x2', 'y1', 'y2'])
-        self.rectangles = rectangles
-
-        #define colors for each element
-        color = []
-        for index, row in rectangles.iterrows():
-            if row["Element Type"] == "noncds":
-                color.append("lemonchiffon")
-            elif row["Element Type"] == "exon":
-                color.append("royalblue")
-            elif row["Element Type"] == "intron":
-                color.append("mediumaquamarine")
-
-        #assign colors to rectangles dataframe
-        rectangles.insert(5, "color", color)
-
-        #Calculate Stats
-        self.genecount = max(1, (rectangles["Element Type"]=='noncds').sum()-1)
-        self.exoncount = (rectangles["Element Type"]=='exon').sum()
-        self.introncount = (rectangles["Element Type"]=='intron').sum()
-        self.totexonlength = 0
-        self.totintronlength = 0
-        for index, row in rectangles.iterrows():
-            if row["Element Type"]=='exon':
-                self.totexonlength += (1+row["x2"]-row["x1"]) 
-            elif row["Element Type"]=='intron':
-                self.totintronlength += (1+row["x2"]-row["x1"])
-
-        if self.introncount == 0:
-            self.avintron = 0
-        else:
-            self.avintron = self.totintronlength/self.introncount
-
-        self.rectangles = rectangles
-
-    def review(self, item = None):
-        """
-        allows user to inspect chromosome settings, including:
-        mutation rates, genomic element types, and genomic elements
-        also creates interactive plot of the chromosome, so the user can inspect it
-        """
-
-        if item == "mutations":
-            print('\033[1m' + "Mutation Types:\n" + '\033[0m', self.mutationlist, "\n")
-            #print("Mutations:\n" self.mutdict)
-        elif item == "eltypes":
-            print('\033[1m' + "Genomic Element Types:\n" + '\033[0m', self.elementlist, "\n")
-            #print("Genomic Element Types:\n" self.eldict)
-        elif item == "elements":
-            df = pd.DataFrame(self.genome)
-            print('\033[1m' + "Genomic Elements:\n" + '\033[0m')
-            display(df)
-
-        elif item == "chromosome":
-            self.toyplot()
-            
-            print(
-                '\033[1m' + "Chromosome Summary\n" + '\033[0m'
-                f"# of Genes: {self.genecount}\n"
-                f"Average # exons per gene: {self.exoncount/self.genecount}\n"
-                f"Average exon length: {self.totexonlength/self.exoncount} nt\n"
-                f"Average # introns per gene: {self.introncount/self.genecount}\n"
-                f"Average introns length: {self.avintron} nt\n"
-                )
-
-            print(f"Static Chromosome Plot:\n")
-            """
-            this is a simplified plot showing exons, coding regions, 
-            and non-codding regions collapsed, even if they consist of 
-            more that one genomic element type
-            """
-            # make the canvas and axes with toyplot
-            canvas = toyplot.Canvas(width=2400, height=200)
-            axes = canvas.cartesian()
-            axes.show = True
-
-            #draw the rectangles
-            for index, row in self.rectangles.iterrows():
-                axes.rectangle(
-                    row['x1'], row['x2'], row['y1'], row['y2'],
-                    color = row['color']
-                )
-
-        elif item == "interactive":
-            self.altair()
-            print("Interactive altair chromosome map:")
-            IPython.display.display_html(self.zoom)
-            
-        else:
-            logger.info("Please enter a valid item to review. Options include:\n"
-                "'mutations'\n'eltypes'\n'elements'\n''chromosome'\n'interractive'")
-
-    def to_slim_mutation_types(self):
-        """
-        Returns a string with newline separated SLIM commands to 
-        initialize all MutationType objects in the chromosome data.
-
-        Example:
-        --------
-        initializeMutationType("m1", 0.5, "f", 0.0);         
-        initializeMutationTypeNuc("m2", 0.1, "g", -0.03, 0.2);  
-        """
-        elements = self.data.script.unique()
-        mut_lists = [i.mlist for i in elements]
-        mutations = set(itertools.chain(*mut_lists))
-        return "\n  ".join([i.to_slim(nuc=self.use_nuc) for i in mutations])
-
-    def to_slim_element_types(self):
-        """
-        Returns a string with newline separated SLIM commands to 
-        initialize all ElementType objects in the chromosome data.
-    
-        Example:
-        --------
-        initializeGenomicElementType("g1", c(m1,m2), c(3,3), mm);
-        initializeGenomicElementType("g2", c(m1,m2), c(5,1), mm);
-        """
-        elements = self.data.script.unique()
-        return "\n  ".join([i.to_slim() for i in elements])
-
-    def to_slim_elements(self):
-        """
-        Returns a string with newline separated SLIM commands to 
-        initialize all Element objects in the chromosome data.
-    
-        Example:
-        --------
-        initializeGenomicElement(g3, 0, 4684);
-        initializeGenomicElement(g1, 4685, 4708);
-        """
-        #Note: will need to fix the formatting on this chunk**
-        commands = []
-
-        # iterate over int start positions of elements
-        for idx in self.data.index:
-
-            if self.sites:
-                # skip non-coding regions
-                if self.data.loc[idx, "coding"] == 0:
-                    #commands.append(
-                        #"initializeGenomicElement({}, {}, {});"
-                        #.format(*self.data.loc[idx, ["eltype", "start", "end"]])
-                        #)
-                    pass
-
-                # define synonymous type at every 3rd position?
-                # TODO: we need to require exons == length multiples of 3 
-                    #this is not necessary, there will just be some blank 
-                    #portions of the chromosome at the end of a coding region
-                # we should really stop users from mixing in neutral and non-neutral mutations
-                    #Yes, we should
-                if self.data.loc[idx, "coding"] == 1:
-                    ele = self.data.loc[idx]
-                    # commands.append(
-                    #     f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
-                    # )
-                    # COMMENTING OUT FOR NOW while working on reproduction.
-                    length = ele.end - ele.start
-                    commands.append(
-                        f"types = rep({ele.eltype}, asInteger(floor({length}/3))); \n"
-                        f"starts = {ele.start} + seqLen(integerDiv({length}, 3)) * 3; \n   "
-                        "ends = starts + 1; \n"
-                        "initializeGenomicElement(types, starts, ends); \n"
-                    )
-            else:
-                #does NOT skip non-coding regions
-                ele = self.data.loc[idx]
-                commands.append(
-                    f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
-                )
-
-        return "\n  ".join(commands)
+from shadie.chromosome.src.base_class import ChromosomeBase
 
 
 class Chromosome(ChromosomeBase):
+    """Builds the default shadie chromosome used for testing.
+
+    This chromosome is exposed to users in a factory function at
+    :meth:`shadie.chromosome.default`.
     """
-    Builds the default shadie chromosome used for testing.
-    """
-    def __init__(self, NS_sites:bool=True,):
-        super().__init__(genome_size=10001, NS_sites=NS_sites)
-        self.NS_sites=NS_sites
+    def __init__(self):
+        super().__init__(genome_size=10001)
         self.data.loc[0] = (
             NONCDS.altname, 0, 2000, NONCDS.name, NONCDS, NONCDS.coding)
         self.data.loc[2001] = (
@@ -390,46 +47,45 @@ class Chromosome(ChromosomeBase):
 
 
 class ChromosomeRandom(ChromosomeBase): 
-    """
-    Generates a random chromosome from of a given length from a set of
-    intron, exon, and non-cds genomic ElementType objects. The default
-    elements are used if not entered by the user.
+    """Builds a random chromosome given defined element types.
+
+    This chromosome builder is exposed to users in a factory function 
+    at :meth:`shadie.chromosome.random`. 
+
+    The chromosome will be a set length and composed randomly of 
+    intron, exon, and non-cds genomic ElementTypes with their 
+    relative weights scaled by args to the self.run() function. 
+    Default ElementTypes are used if not entered by the user.
+
+    Examples
+    --------
+    >>> chrom = ChromosomeRandom()
+    >>> chrom.run()
     """
     def __init__(
         self, 
-        genome_size:int=20000, 
-        intron:Union[None, ElementType, list]=None,
-        exon:Union[None, ElementType, list]=None,
-        noncds:ElementType=None,
-        seed:Union[int, None]=None,
-        NS_sites:bool=True,
+        genome_size: int=20000, 
+        intron: Union[None, ElementType, List[ElementType]]=None,
+        exon: Union[None, ElementType, List[ElementType]]=None,
+        noncds: ElementType=None,
+        seed: Union[int, None]=None,
         ):
 
-        super().__init__(genome_size, NS_sites=NS_sites)
+        super().__init__(genome_size)
         self.rng = np.random.default_rng(seed)
         self.intron = intron if intron is not None else INTRON
         self.exon = exon if exon is not None else EXON
         self.noncds = noncds if noncds is not None else NONCDS
-        self.sites = NS_sites
 
-        #convert everything to a list
-        if isinstance(self.intron, list):
-            self.introns = self.intron 
-        else:
-            self.introns = []
-            self.introns.append(self.intron)
-        
-        if isinstance(self.exon, list):
-            self.exons = self.exon 
-        else:
-            self.exons = []
-            self.exons.append(self.exon)
-        
-        noncdss = []
-        noncdss.append(self.noncds)
+        # combine all elements into a list
+        elements = []
+        for ele in (self.intron, self.exon, self.noncds):
+            if isinstance(ele, list):
+                elements += ele
+            else:
+                elements.append(ele)
 
-        #save the mutation list
-        elements = list(self.introns + self.exons + noncdss)
+        # extract all mutations from the elements
         mutations = []
         for elem in elements:
             for mutation in elem.mlist:
@@ -437,16 +93,13 @@ class ChromosomeRandom(ChromosomeBase):
                     mutations.append(mutation.name)
         self.mutations = mutations
 
-        #check the altnames
-        i = 0
-        for x in self.exons:
-            i += 1
-            x.altname = x.altname if x.altname is not None else f"exon{i}"
-
-        i = 0
-        for y in self.introns:
-            i += 1
-            y.altname = y.altname if y.altname is not None else f"intron{i}"
+        # check the altnames of the elements... (NOTE: what is this for?)
+        # for idx, ele in enumerate(self.exons):
+        #     if ele.altname is None:
+        #         ele.altname = f"exon-{idx + 1}"
+        # for idx, ele in enumerate(self.introns):
+        #     if ele.altname is None:
+        #         ele.altname = f"intron-{idx + 1}"
 
     def get_noncds_span(self, scale:int=5000) -> int:
         """
@@ -454,10 +107,7 @@ class ChromosomeRandom(ChromosomeBase):
         exponential distribution. The scale is the average waiting
         time in number of bp.
         """
-
         return int(self.rng.exponential(scale=scale))
-
-
 
     def get_cds_spans(self, length_scale:int=1000, intron_scale:int=1000) -> List[int]:
         """
@@ -466,9 +116,7 @@ class ChromosomeRandom(ChromosomeBase):
         of events per sampled region. A value of 0.005 means one 
         intron per 200bp.
         """
-        
         cds_span = int(self.rng.exponential(scale=length_scale))
-        
         n_introns = int(self.rng.poisson(lam=cds_span / intron_scale))
         if n_introns:
             while True:
@@ -481,12 +129,11 @@ class ChromosomeRandom(ChromosomeBase):
             splits = [cds_span]
         return splits
 
-
     def run(self, noncds_scale=5000, cds_scale=1000, intron_scale=1000) -> None:
-        """
-        Generates a chromosome by randomly sampling waiting times 
-        between CDS regions, and the number of introns within CDS
-        regions.
+        """Generates a random chromosome by sampling elements.
+
+        Waiting times are randomly sampled between CDS regions, as are
+        the number of introns within CDS regions.
         """
         idx = 0
         while 1:
@@ -512,23 +159,22 @@ class ChromosomeRandom(ChromosomeBase):
             for enum, span in enumerate(spans):
                 # even numbered segments are the exons (0, 2, 4)
                 if not enum % 2:
-                    x = random.choice(self.exons)
-                    self.data.loc[idx] = (
-                        x.altname, 
-                        idx + 1, 
-                        idx + span + 1, 
-                        x.name, x,
-                        x.coding,
-                    )
+                    if isinstance(self.exon, list):
+                        ele = self.rng.choice(self.exon)
+                    else:
+                        ele = self.exon
                 else:
-                    i = random.choice(self.introns)
-                    self.data.loc[idx] = (
-                        i.altname,
-                        idx + 1,
-                        idx + span + 1,
-                        i.name, i, 
-                        i.coding,
-                    )
+                    if isinstance(self.intron, list):                    
+                        ele = self.rng.choice(self.intron)
+                    else:
+                        ele = self.intron
+                self.data.loc[idx] = (
+                    ele.altname, 
+                    idx + 1, 
+                    idx + span + 1, 
+                    ele.name, ele,
+                    ele.coding,
+                )
                 idx += span + 1
         self.data = self.data.sort_index()
 
@@ -546,10 +192,10 @@ class ChromosomeExplicit(ChromosomeBase):
         (5000, 10000): None,
     })
     """
-    def __init__(self, genome_size, data, NS_sites:bool=True,):
-        super().__init__(genome_size=genome_size, NS_sites=NS_sites)
+    def __init__(self, data):
+        genome_size = max(i[1] for i in data.keys())
+        super().__init__(genome_size)
 
-        self.sites = NS_sites
         # check data dict for proper structure
         assert all(isinstance(i, tuple) for i in data.keys()), (
             "keys of input data should be tuples of integers.")
@@ -597,7 +243,8 @@ if __name__ == "__main__":
     # design chromosome of elements
     # Do we want users to be able to put in a chromosome like this 
     # and have the gaps filled with neutral portions? YES.
-    chrom = shadie.chromosome.explicit(6000, {
+    chrom = shadie.chromosome.explicit({
+        (0, 500): shadie.NONCDS,
         (500, 1000): e1,
         (2000, 3000): e0,
         (3001, 5000): e1,
@@ -607,6 +254,6 @@ if __name__ == "__main__":
     #chrom.to_slim_mutation_types()
     test = chrom.mutations
     print(chrom.data.head())
-    chrom.inspect()
+    # chrom.inspect()
     # print(test)
     # chrom.to_slim_elements()
