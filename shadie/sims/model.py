@@ -3,34 +3,36 @@
 """
 A context manager for wrapping the context of a simulation setup.
 
-initialize() {
-    initializeSLiMModelType("nonWF");
-    defineConstant("K", 500);
-    
-    initializeMutationType("m1", 0.5, "f", 0.0);
-    m1.convertToSubstitution = T;                      // default is T
-    
-    initializeGenomicElementType("g1", m1, 1.0);
-    initializeGenomicElement(g1, 0, 99999);
-    initializeMutationRate(1e-7);
-    initializeRecombinationRate(1e-8);
-}
-reproduction() {
-    subpop.addCrossed(individual, subpop.sampleIndividuals(1));
-}
-1 early() {
-    sim.addSubpop("p1", 10);
-}
-early() {
-    p1.fitnessScaling = K / p1.individualCount;
-}
-late() {
-    inds = p1.individuals;
-    catn(sim.generation + ": " + size(inds) + " (" + max(inds.age) + ")");
-}
-2000 late() {
-    sim.outputFull(ages=T);
-}
+Example
+-------
+>>> initialize() {
+>>>     initializeSLiMModelType("nonWF");
+>>>     defineConstant("K", 500);
+>>>     
+>>>     initializeMutationType("m1", 0.5, "f", 0.0);
+>>>     m1.convertToSubstitution = T;                      // default is T
+>>>     
+>>>     initializeGenomicElementType("g1", m1, 1.0);
+>>>     initializeGenomicElement(g1, 0, 99999);
+>>>     initializeMutationRate(1e-7);
+>>>     initializeRecombinationRate(1e-8);
+>>> }
+>>> reproduction() {
+>>>     subpop.addCrossed(individual, subpop.sampleIndividuals(1));
+>>> }
+>>> 1 early() {
+>>>     sim.addSubpop("p1", 10);
+>>> }
+>>> early() {
+>>>     p1.fitnessScaling = K / p1.individualCount;
+>>> }
+>>> late() {
+>>>     inds = p1.individuals;
+>>>     catn(sim.generation + ": " + size(inds) + " (" + max(inds.age) + ")");
+>>> }
+>>> 2000 late() {
+>>>     sim.outputFull(ages=T);
+>>> }
 """
 
 import subprocess
@@ -55,9 +57,19 @@ from shadie.sims.format import (
 
 
 class Model(AbstractContextManager):
-    """
-    The core shadie object class for creating SLiM scripts and 
-    validating input arguments using a context manager. 
+    """shadie Model class for creating and running SLiM scripts.
+
+    A Model instance must be called as a context manager using the 
+    'with' statement, which facilitates validating model arguments 
+    simultaneously.
+
+    Examples
+    --------
+    >>> with shadie.Model() as model:
+    >>>     model.initialize(
+    >>>         chromosome=shadie.chromosome.default(),
+    >>>         generations=10000)
+    >>>     model.reproduction.bryophyte("dio", 10000, 10000)
     """
     def __init__(self):       
         # .map holds script components as a dict until converted to
@@ -75,7 +87,6 @@ class Model(AbstractContextManager):
             'late': [],
             'fitness': [],
             'survival': [],
-            'reproduction': [],
             'custom': [],
         }
         self.script = ""
@@ -89,10 +100,8 @@ class Model(AbstractContextManager):
 
         self.reproduction = ReproductionApi(self)
 
-
     def __repr__(self):
         return "<shadie.Model ... >"
-
 
     def __enter__(self):
         """
@@ -103,13 +112,11 @@ class Model(AbstractContextManager):
         ElementType.idx = 0
         return self
 
-
     def __exit__(self, exc_type, exc_value, exc_traceback):
         """
         Fills the script with context-defined content in a set 
         order and runs checks on the script.
         """
-
         sorted_keys = [
             'initialize', 'timed', 'reproduction', 'early',
             'fitness', 'survival', 'late', 'custom',
@@ -178,18 +185,24 @@ class Model(AbstractContextManager):
     def initialize(
         self,
         chromosome,
-        length:int=1000, #length of sim in # of generations
-        mut:float=1e-7, 
-        recomb:float=1e-9, 
-        constants:Union[None, dict]=None,
-        scripts:Union[None, list]=None,
-        fileout:str="shadie.trees",
-        startfile:Union[None, str]=None,
+        length: int=1000, #length of sim in # of generations
+        mut: float=1e-7, 
+        recomb: float=1e-9, 
+        constants: Union[None, dict]=None,
+        scripts: Union[None, list]=None,
+        fileout: str="shadie.trees",
+        startfile: Union[None, str]=None,
         ):
-        """
-        Initialize a simulation. This fills the SLIM intialize() code
-        block with MutationType, ElementType, Element, and other init
-        type code.
+        """Sets meta info to the SLIM initialize() code block.
+
+        This includes setting the chromosome structure by initializing
+        MutationType and ElementType objects, setting mutation and 
+        recombination rates, adding other constants or scripts, and
+        the file paths for i/o operations.
+
+        Parameters
+        ----------
+        ...
         """
         logger.debug("initializing Model")
         constants = {} if constants is None else constants
@@ -226,7 +239,6 @@ class Model(AbstractContextManager):
                 f"sim.treeSeqOutput('{self.fileout}')"]
                 )
         else:
-
             Model.late(
                 self = self,
                 time = self.length-1, 
@@ -235,7 +247,6 @@ class Model(AbstractContextManager):
                 ],
                 comment = "save inds in gen before end of sim",
             )
-
             Model.late(
                 self = self,
                 time = self.length, 
@@ -380,10 +391,10 @@ class Model(AbstractContextManager):
         cmd = ["slim", "/tmp/slim.slim"]
         
         #newbuild cmd 
-        cmdnb = ["/Users/elissa/bin/slim", "/tmp/slim.slim"]
+        # cmdnb = ["/Users/elissa/bin/slim", "/tmp/slim.slim"]
 
         # capture stdout
-        proc = subprocess.Popen(cmdnb, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         out, _ = proc.communicate()
 
         # check for errors
