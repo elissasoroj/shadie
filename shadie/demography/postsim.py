@@ -343,7 +343,7 @@ class PostSim:
                         tajd2.append(tajds[1]) 
 
             print(
-                "Sampled 20 individuals from each population "
+                f"Sampled {samplesize} individuals from each population"
                 f"{sampletimes} times\n"
                 f"Divergence: {np.mean(divg)}\n"
                 f"Diversity: pop1 = {np.mean(divs1)}, pop2 = {np.mean(divs2)}\n"
