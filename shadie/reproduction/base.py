@@ -5,14 +5,6 @@ Starting an alternate implementation of Reproduction
 """
 
 from dataclasses import dataclass, field
-from shadie.reproduction.base_scripts import (
-    ACTIVATE, DEACTIVATE, EARLY, SURV, MATERNAL_EFFECT,
-    SUBSTITUTION, SUB_INNER, REPRO_BRYO_DIO_P1, REPRO_BRYO_DIO_P0,
-    REPRO_BRYO_MONO_P1, REPRO_BRYO_MONO_P0,
-)
-
-DTYPES = ("d", "dio", "dioecy", "dioecious", "heterosporous", "dioicous")
-MTYPES = ("m", "mono", "monoecy", "monecious", "homosporous", "monoicous")
 
 
 @dataclass
@@ -34,24 +26,17 @@ class ReproductionBase:
     model: 'shadie.Model'
 
 @dataclass
-class BryophyteBase(ReproductionBase):
-    lineage: str = field(default="Bryophyte", init=False)
+class nonWFBase(ReproductionBase):
+    lineage: str = field(default="Null", init=False)
     mode: str
     chromosome: 'shadie.chromosome.ChromosomeBase'
 
 @dataclass
-class Bryophyte(BryophyteBase):
+class Base(nonWFBase):
     """
     Reproduction mode based on mosses, hornworts, and liverworts
     """
-    diploid_ne: int
-    haploid_ne: int
-    female_to_male_ratio: float.as_integer_ratio = (1,1)
-    spores_per_sporophyte: int=100
-    clone_rate: float=0.0
-    selfing_rate: float=0
-    maternal_effect_weight: float=0
-    random_death_chance: float=0
+    ne: int
     startfile: str = "F"
 
     def run(self):
@@ -64,14 +49,7 @@ class Bryophyte(BryophyteBase):
             (self.female_to_male_ratio[0]+self.female_to_male_ratio[1]))
 
         self.add_initialize_constants()
-        self.add_early_haploid_diploid_subpops()        
-        if self.mode in DTYPES:
-            self.dioicous()
-        elif self.mode in MTYPES:
-            self.monoicous()
-        else:
-            raise ValueError(
-                f"'mode' not recognized, must be in {DTYPES + MTYPES}")
+        self.add_early_subpops()        
 
 
     def add_initialize_constants(self):
@@ -79,178 +57,29 @@ class Bryophyte(BryophyteBase):
         Add defineConstant calls to init for new variables
         """
         constants = self.model.map["initialize"][0]['constants']
-        constants["dK"] = self.diploid_ne
-        constants["hK"] = self.haploid_ne
-        constants["Death_chance"] = self.random_death_chance
-        constants["FtoM"] = self.female_to_male_ratio
-        constants["Spore_num"] = self.spores_per_sporophyte
-        constants["Clone_rate"] = self.clone_rate
-        # constants["Clone_num"] = self.clone_number
-        constants["Self_rate"] = self.selfing_rate
-        constants["Maternal_weight"] = self.maternal_effect_weight
+        constants["K"] = self.haploid_ne
 
-
-    def add_early_haploid_diploid_subpops(self):
+    def add_early_subpops(self):
         """
         add haploid and diploid life stages
         """
         if self.startfile == "F":
             self.model.early(
                 time=1,
-                scripts=["sim.addSubpop('p1', dK)", "sim.addSubpop('p0', hK)"],
-                comment="define Bryophyte subpops: diploid sporophytes, haploid gametophytes",
+                scripts="sim.addSubpop("p1", K);", 
+                comment="define starting population",
             )
-
-
-    def dioicous(self):
-        """
-        fills the script reproduction block with bryophyte-dioicous
-        """
-
-        # fitness callback:
-        i = 4
-        activate = []
-        deactivate = []
-        substitutions = []
-        for mut in self.chromosome.mutations:
-            i = i + 1
-            idx = str("s" + str(i))
-            active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
-            deactive_script = DEACTIVATE.format(**{'idx': idx}).lstrip()
-            activate.append(active_script)
-            deactivate.append(deactive_script)
-            sub_inner = SUB_INNER.format(**{'idx': idx, 'mut': mut}).lstrip()
-            substitutions.append(sub_inner)
-            self.model.fitness(
-                idx=idx,
-                mutation=mut,
-                scripts="return 1 + mut.selectionCoeff",
-                comment="gametophytes have no dominance effects",
-            )
-            
-        activate_str = ""
-        deactivate_str = ""
-        for i in activate:
-            activate_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        for i in deactivate:
-            deactivate_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        early_script = (
-            EARLY.format(**{'activate': activate_str, 
-                'deactivate': deactivate_str}).lstrip())
 
         self.model.early(
             time=None, 
-            scripts=early_script, 
+            scripts="p1.fitnessScaling = K / p1.individualCount;", 
             comment="alternation of generations",
         )
 
-        survival_script = (
-            SURV.format(**{'maternal_effect': MATERNAL_EFFECT,
-                'p0survival': "return NULL;"}).lstrip())
-        self.model.custom(survival_script)
-
         self.model.repro(
             population="p1",
-            scripts=REPRO_BRYO_DIO_P1,
-            comment="generates gametes from sporophytes"
-            )
-
-        self.model.repro(
-            population="p0",
-            scripts=REPRO_BRYO_DIO_P0,
-            comment="generates gametes from sporophytes"
-            )
-
-        substitution_str = ""
-        for i in substitutions:
-            substitution_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        substitution_script = (
-            SUBSTITUTION.format(**{'inner': substitution_str}).lstrip())
-
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-            )
-
-    def monoicous(self):
-        """
-        fills the script reproduction block with bryophyte-monoicous
-        """
-        """
-        fills the script reproduction block with bryophyte-dioicous
-        """
-
-        # fitness callback:
-        i = 4
-        activate = []
-        deactivate = []
-        substitutions = []
-        for mut in self.chromosome.mutations:
-            i = i + 1
-            idx = str("s" + str(i))
-            active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
-            deactive_script = DEACTIVATE.format(**{'idx': idx}).lstrip()
-            activate.append(active_script)
-            deactivate.append(deactive_script)
-            sub_inner = SUB_INNER.format(**{'idx': idx, 'mut': mut}).lstrip()
-            substitutions.append(sub_inner)
-            self.model.fitness(
-                idx=idx,
-                mutation=mut,
-                scripts="return 1 + mut.selectionCoeff",
-                comment="gametophytes have no dominance effects",
-            )
-            
-        activate_str = ""
-        deactivate_str = ""
-        for i in activate:
-            activate_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        for i in deactivate:
-            deactivate_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        early_script = (
-            EARLY.format(**{'activate': activate_str, 
-                'deactivate': deactivate_str}).lstrip())
-
-        self.model.early(
-            time=None, 
-            scripts=early_script, 
-            comment="alternation of generations",
-        )
-
-        survival_script = (
-            SURV.format(**{'maternal_effect': MATERNAL_EFFECT,
-                'p0survival': "return NULL;"}).lstrip())
-        self.model.custom(survival_script)
-
-        self.model.repro(
-            population="p1",
-            scripts=REPRO_BRYO_MONO_P1,
-            comment="generates gametes from sporophytes"
-            )
-
-        self.model.repro(
-            population="p0",
-            scripts=REPRO_BRYO_MONO_P0,
-            comment="generates gametes from sporophytes"
-            )
-
-        substitution_str = ""
-        for i in substitutions:
-            substitution_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        substitution_script = (
-            SUBSTITUTION.format(**{'inner': substitution_str}).lstrip())
-
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
+            scripts="subpop.addCrossed(individual,subpop.sampleIndividuals(1));",
+            comment="hermaphroditc crossing"
             )
 
 
@@ -281,13 +110,10 @@ if __name__ == "__main__":
         )
 
         # init the model
-        mod.initialize(chromosome=chrom)
+        mod.initialize(chromosome=chrom, length=1000)
 
-        mod.reproduction.bryophyte(
-            mode='dio',
-            chromosome = chrom,
-            diploid_ne=1000, 
-            haploid_ne=1000,
+        mod.reproduction.base(
+            ne = 1000,
         )
 
     print(mod.script)
