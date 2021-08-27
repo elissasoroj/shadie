@@ -176,7 +176,7 @@ class ReproductionApi:
         """
         Base(
             model=self.model, ne = ne, chromosome=self.model.chromosome, 
-            sexes = sexes, simtime = 2*self.model.simtime, 
+            sexes = sexes, simtime = self.model.simtime, 
             fileout = self.model.fileout,
         ).run()
 

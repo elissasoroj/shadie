@@ -13,8 +13,8 @@ from shadie.reproduction.base_scripts import (
     REPRO_PTER_HETEROSPORE_P1, REPRO_PTER_HETEROSPORE_P1
 )
 
-DTYPES = ("d", "dio", "dioecy", "dioecious", "heterosporous", "dioicous")
-MTYPES = ("m", "mono", "monoecy", "monecious", "homosporous", "monoicous")
+DTYPES = ("d", "dio", "dioicy", "heterosporous", "dioicous")
+MTYPES = ("m", "mono", "monoicy", "homosporous", "monoicous")
 
 @dataclass
 class PteridophyteBase(ReproductionBase):

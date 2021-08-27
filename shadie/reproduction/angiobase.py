@@ -14,8 +14,8 @@ from shadie.reproduction.base_scripts import (
     ANGIO_SURV_P0
 )
 
-DTYPES = ("d", "dio", "dioecy", "dioecious", "heterosporous", "dioicous")
-MTYPES = ("m", "mono", "monoecy", "monecious", "homosporous", "monoicous")
+DTYPES = ("d", "dio", "dioecy", "dioecious",)
+MTYPES = ("m", "mono", "monoecy", "monecious",)
 
 @dataclass
 class AngiospermBase(ReproductionBase):

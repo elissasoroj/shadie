@@ -41,6 +41,7 @@ class PostSim:
         recomb: float = None, #recomcbination rate
         mutrate:float = None, #mutations rate
         chromosome = None, #'shadie.chromosome.ChromosomeBase'
+        altgen: bool = True, #is model altgen or not?
         ):
     
         """
@@ -48,9 +49,13 @@ class PostSim:
         overlays neutral mutations and saves info.
         """
 
+        if altgen is True:
+            self.mutrate = mutrate/2
+        else:
+            self.mutrate = mutrate
+
         self.chromosome = chromosome
         self.simlength = simlength
-        self.mutrate = mutrate/2
         self.recomb = recomb
         self.popsize = popsize
         self.pops = None
