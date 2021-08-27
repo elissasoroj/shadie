@@ -21,6 +21,8 @@ class PteridophyteBase(ReproductionBase):
     lineage: str = field(default="Angiosperm", init=False)
     mode: str
     chromosome: 'shadie.chromosome.ChromosomeBase'
+    simtime: int
+    fileout: str
 
 @dataclass
 class Pteridophyte(PteridophyteBase):
@@ -52,7 +54,8 @@ class Pteridophyte(PteridophyteBase):
             (self.gam_female_to_male_ratio[0]+self.gam_female_to_male_ratio[1]))
 
         self.add_initialize_constants()
-        self.add_early_haploid_diploid_subpops()        
+        self.add_early_haploid_diploid_subpops() 
+        self.end_sim()       
         if self.mode in DTYPES:
             self.heterosporous()
         elif self.mode in MTYPES:
@@ -90,6 +93,20 @@ class Pteridophyte(PteridophyteBase):
             comment="add p1, p0",
         )
 
+
+    def end_sim(self):
+        """
+        adds late() call that ends the simulation and saves the .trees file
+        """
+        endtime = int(self.simtime + 1)
+
+        self.model.late(
+                time = endtime, 
+                scripts = [
+                #"sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
+                f"sim.treeSeqOutput('{self.fileout}')"],
+                comment = "end of sim; save .trees file",
+            )
 
     def heterosporous(self):
         """
@@ -214,4 +231,4 @@ if __name__ == "__main__":
 
 
     print(mod.script)
-    mod.run()
+    #mod.run()

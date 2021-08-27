@@ -29,6 +29,8 @@ class ReproductionBase:
 class nonWFBase(ReproductionBase):
     lineage: str = field(default="Null", init=False)
     chromosome: 'shadie.chromosome.ChromosomeBase'
+    simtime: int
+    fileout: str
 
 @dataclass
 class Base(nonWFBase):
@@ -46,7 +48,7 @@ class Base(nonWFBase):
         """
 
         self.add_initialize_constants()
-        self.add_early_subpops()        
+        self.add_scripts()        
 
 
     def add_initialize_constants(self):
@@ -56,7 +58,7 @@ class Base(nonWFBase):
         constants = self.model.map["initialize"][0]['constants']
         constants["K"] = self.ne
 
-    def add_early_subpops(self):
+    def add_scripts(self):
         """
         add haploid and diploid life stages
         """
@@ -77,6 +79,14 @@ class Base(nonWFBase):
             population="p1",
             scripts="subpop.addCrossed(individual,subpop.sampleIndividuals(1));",
             comment="hermaphroditc crossing"
+            )
+
+        self.model.late(
+                time = self.simtime, 
+                scripts = [
+                #"sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
+                f"sim.treeSeqOutput('{self.fileout}')"],
+                comment = "end of sim; save .trees file",
             )
 
 
@@ -107,7 +117,7 @@ if __name__ == "__main__":
         )
 
         # init the model
-        mod.initialize(chromosome=chrom, length=1000)
+        mod.initialize(chromosome=chrom, simtime=1000)
 
         mod.reproduction.base(
             ne = 1000,

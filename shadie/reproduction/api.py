@@ -39,7 +39,9 @@ class ReproductionApi:
         selfing_rate: float=0.,
         maternal_effect_weight: float=0,
         random_death_chance: float=0, 
-        startfile: str = "F"         
+        startfile: str = "F",
+        simtime = None,  
+        fileout = None,          
         ):
         """
         Generate scripts appropriate for a bryophyte (moss, liverwort,
@@ -61,7 +63,8 @@ class ReproductionApi:
             selfing_rate=selfing_rate,
             maternal_effect_weight=maternal_effect_weight,
             random_death_chance=random_death_chance,
-            startfile=startfile
+            startfile=startfile, simtime = 2*self.model.simtime, 
+            fileout = self.model.fileout,
         ).run()
 
 
@@ -78,7 +81,9 @@ class ReproductionApi:
         gam_clone_rate: float=0.0,
         selfing_rate: float=0.0,
         maternal_effect_weight: float=0,
-        random_death_chance: float=0,       
+        random_death_chance: float=0, 
+        simtime = None,  
+        fileout = None,        
         ):
         """
         Generate scripts appropriate for an angiosperm (flowering plant)
@@ -102,6 +107,7 @@ class ReproductionApi:
             selfing_rate=selfing_rate,
             maternal_effect_weight=maternal_effect_weight,
             random_death_chance=random_death_chance,
+            simtime = 2*self.model.simtime, fileout = self.model.fileout,
         ).run()
 
     def spermatophyte(self, ):
@@ -122,7 +128,9 @@ class ReproductionApi:
         pollen_count: int=100,
         pollen_comp: str="F",
         pollen_per_stigma: int=5,
-        random_death_chance: float=0,       
+        random_death_chance: float=0,  
+        simtime = None,   
+        fileout = None,  
         ):
         """
         Generate scripts appropriate for an angiosperm (flowering plant)
@@ -145,13 +153,15 @@ class ReproductionApi:
             pollen_count=pollen_count, pollen_comp=pollen_comp,
             pollen_per_stigma=pollen_per_stigma,
             random_death_chance=random_death_chance,
+            simtime = 2*self.model.simtime, fileout = self.model.fileout,
         ).run()
 
     def base(
         self,  
         ne: int,
         chromosome = None,
-        sexes = False,     
+        sexes = False, 
+        simtime = None,    
         ):
         """
         Generate scripts appropriate for basic SLiM nonWF model, set up
@@ -166,6 +176,7 @@ class ReproductionApi:
         """
         Base(
             model=self.model, ne = ne, chromosome=self.model.chromosome, 
-            sexes = sexes,
+            sexes = sexes, simtime = 2*self.model.simtime, 
+            fileout = self.model.fileout,
         ).run()
 

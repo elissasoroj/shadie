@@ -85,7 +85,7 @@ class Model(AbstractContextManager):
         self.chromosome = None
         self.constants = {}
         self.populations = {}
-        self.length = {} #length of simulation in generations
+        self.simtime = {} #length of simulation in generations
 
         self.reproduction = ReproductionApi(self)
 
@@ -178,8 +178,8 @@ class Model(AbstractContextManager):
     def initialize(
         self,
         chromosome,
-        length:int=1000, #length of sim in # of generations
-        mut:float=1e-7, 
+        simtime:int=1000, #length of sim in # of diploid generations
+        mut:float=1e-8, 
         recomb:float=1e-9, 
         constants:Union[None, dict]=None,
         scripts:Union[None, list]=None,
@@ -196,7 +196,7 @@ class Model(AbstractContextManager):
         scripts = [] if scripts is None else scripts
 
         self.chromosome = chromosome
-        self.length = length
+        self.simtime = simtime
         self.fileout = fileout
         self.startfile = startfile
         
@@ -211,39 +211,22 @@ class Model(AbstractContextManager):
             'scripts': scripts,
         })
 
-        if self.startfile:
-            Model.early(
-                self = self,
-                time = 1,
-                scripts = f"sim.readFromPopulationFile('{self.startfile}')",
-                comment = "read starting populations from startfile"
-                )
-            Model.late(
-                self = self,
-                time = self.length,
-                scripts = [
-                "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-                f"sim.treeSeqOutput('{self.fileout}')"]
-                )
-        else:
-
-            Model.late(
-                self = self,
-                time = self.length-1, 
-                scripts = [
-                "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)"
-                ],
-                comment = "save inds in gen before end of sim",
-            )
-
-            Model.late(
-                self = self,
-                time = self.length, 
-                scripts = [
-                #"sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-                f"sim.treeSeqOutput('{self.fileout}')"],
-                comment = "end of sim; save .trees file",
-            )
+        #this codeblock is for later, when we implement demography from 
+        #a phylogeny:
+        # if self.startfile:
+        #     Model.early(
+        #         self = self,
+        #         time = 1,
+        #         scripts = f"sim.readFromPopulationFile('{self.startfile}')",
+        #         comment = "read starting populations from startfile"
+        #         )
+        #     Model.late(
+        #         self = self,
+        #         time = self.length,
+        #         scripts = [
+        #         "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
+        #         f"sim.treeSeqOutput('{self.fileout}')"]
+        #         )
 
     def readfromfile(self,):
         """

@@ -38,6 +38,8 @@ class BryophyteBase(ReproductionBase):
     lineage: str = field(default="Bryophyte", init=False)
     mode: str
     chromosome: 'shadie.chromosome.ChromosomeBase'
+    simtime: int
+    fileout: str
 
 @dataclass
 class Bryophyte(BryophyteBase):
@@ -64,7 +66,8 @@ class Bryophyte(BryophyteBase):
             (self.female_to_male_ratio[0]+self.female_to_male_ratio[1]))
 
         self.add_initialize_constants()
-        self.add_early_haploid_diploid_subpops()        
+        self.add_early_haploid_diploid_subpops() 
+        self.end_sim()        
         if self.mode in DTYPES:
             self.dioicous()
         elif self.mode in MTYPES:
@@ -101,6 +104,19 @@ class Bryophyte(BryophyteBase):
                 comment="define Bryophyte subpops: diploid sporophytes, haploid gametophytes",
             )
 
+    def end_sim(self):
+        """
+        adds late() call that ends the simulation and saves the .trees file
+        """
+        endtime = int(self.simtime + 1)
+
+        self.model.late(
+                time = endtime, 
+                scripts = [
+                #"sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
+                f"sim.treeSeqOutput('{self.fileout}')"],
+                comment = "end of sim; save .trees file",
+            )
 
     def dioicous(self):
         """
