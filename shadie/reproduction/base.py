@@ -28,15 +28,15 @@ class ReproductionBase:
 @dataclass
 class nonWFBase(ReproductionBase):
     lineage: str = field(default="Null", init=False)
-    mode: str
     chromosome: 'shadie.chromosome.ChromosomeBase'
 
 @dataclass
 class Base(nonWFBase):
     """
-    Reproduction mode based on mosses, hornworts, and liverworts
+    Reproduction mode based on Wright-Fisher model
     """
     ne: int
+    sexes: bool = False
     startfile: str = "F"
 
     def run(self):
@@ -44,9 +44,6 @@ class Base(nonWFBase):
         Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
         """
-        self.female_to_male_ratio = (
-            self.female_to_male_ratio[1]/
-            (self.female_to_male_ratio[0]+self.female_to_male_ratio[1]))
 
         self.add_initialize_constants()
         self.add_early_subpops()        
@@ -57,7 +54,7 @@ class Base(nonWFBase):
         Add defineConstant calls to init for new variables
         """
         constants = self.model.map["initialize"][0]['constants']
-        constants["K"] = self.haploid_ne
+        constants["K"] = self.ne
 
     def add_early_subpops(self):
         """
@@ -66,7 +63,7 @@ class Base(nonWFBase):
         if self.startfile == "F":
             self.model.early(
                 time=1,
-                scripts="sim.addSubpop("p1", K);", 
+                scripts="sim.addSubpop('p1', K);", 
                 comment="define starting population",
             )
 

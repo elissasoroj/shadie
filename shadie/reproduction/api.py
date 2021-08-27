@@ -148,8 +148,7 @@ class ReproductionApi:
         ).run()
 
     def base(
-        self, 
-        mode:str, 
+        self,  
         ne: int,
         chromosome = None,
         sexes = False,     
@@ -166,7 +165,7 @@ class ReproductionApi:
         ...
         """
         Base(
-            model=self.model, chromosome=self.model.chromosome, 
+            model=self.model, ne = ne, chromosome=self.model.chromosome, 
             sexes = sexes,
         ).run()
 
