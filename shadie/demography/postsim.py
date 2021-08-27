@@ -251,6 +251,9 @@ class PostSim:
                 set2.append(i)
         self.sets = [set1, set2]
 
+        logger.warning("sets are not working correctly. Choose individuals"
+            "by hand for now")
+
         print(f"Before, there were {ts.num_samples} sample nodes "
             f"(and {ts.num_individuals} individuals) "
             f"in the tree sequence, and now there are {self.sts.num_samples} "
