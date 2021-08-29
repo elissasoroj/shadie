@@ -78,7 +78,7 @@ class Bryophyte(BryophyteBase):
         """
         Add defineConstant calls to init for new variables
         """
-        constants = self.model.map["initialize"][0]['constants']
+        constants = {}
         constants["dK"] = self.diploid_ne
         constants["hK"] = self.haploid_ne
         constants["Death_chance"] = self.random_death_chance
@@ -88,7 +88,7 @@ class Bryophyte(BryophyteBase):
         # constants["Clone_num"] = self.clone_number
         constants["Self_rate"] = self.selfing_rate
         constants["Maternal_weight"] = self.maternal_effect_weight
-
+        self.model.map["initialize"][0]['constants'].update(constants)
 
     def add_early_haploid_diploid_subpops(self):
         """
@@ -106,7 +106,6 @@ class Bryophyte(BryophyteBase):
         """
         fills the script reproduction block with bryophyte-dioicous
         """
-
         # fitness callback:
         i = 4
         activate = []
@@ -115,66 +114,82 @@ class Bryophyte(BryophyteBase):
         for mut in self.chromosome.mutations:
             i = i + 1
             idx = str("s" + str(i))
-            active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
-            deactive_script = DEACTIVATE.format(**{'idx': idx}).lstrip()
+            active_script = ACTIVATE.format(idx=idx).lstrip()
+            deactive_script = DEACTIVATE.format(idx=idx).lstrip()
             activate.append(active_script)
             deactivate.append(deactive_script)
-            sub_inner = SUB_INNER.format(**{'idx': idx, 'mut': mut}).lstrip()
+            sub_inner = SUB_INNER.format(idx=idx, mut=mut)
             substitutions.append(sub_inner)
+
+            # defines fitness calculations (e.g., s5 fitness(m2) {return ...})
             self.model.fitness(
                 idx=idx,
                 mutation=mut,
                 scripts="return 1 + mut.selectionCoeff",
-                comment="gametophytes have no dominance effects",
+                comment="mutation has no dominance effect in gametophyte",
             )
             
+        # create the {{activate}} {{deactivate}} blocks for early which
+        # set fitness effects to 0 or 1 (e.g., s5.active=0;)
         activate_str = ""
         deactivate_str = ""
-        for i in activate:
-            activate_str += "\n  ".join([i.strip(';') + ";\n    "])
+        for idx, fit in enumerate(activate):
+            dfit = deactivate[idx]
+            if not idx:
+                activate_str += f"{fit}"
+                deactivate_str += f"{dfit}"
+            else:
+                activate_str += f"\n        {fit}"
+                deactivate_str += f"\n        {dfit}"
 
-        for i in deactivate:
-            deactivate_str += "\n  ".join([i.strip(';') + ";\n    "])
-
+        # format the {{activate}} {{deactivate}} blocks in early
         early_script = (
-            EARLY.format(**{'activate': activate_str, 
-                'deactivate': deactivate_str}).lstrip())
+            EARLY.format(activate=activate_str, deactivate=deactivate_str,
+        ).lstrip())
 
+        # store the early script to Model.map
         self.model.early(
             time=None, 
             scripts=early_script, 
             comment="alternation of generations",
         )
 
+        # ...
         survival_script = (
-            SURV.format(**{'maternal_effect': MATERNAL_EFFECT,
-                'p0survival': "return NULL;"}).lstrip())
+            SURV.format(
+                maternal_effect=MATERNAL_EFFECT,
+                p0survival="return NULL;",
+            ).lstrip())
         self.model.custom(survival_script)
 
         self.model.repro(
             population="p1",
             scripts=REPRO_BRYO_DIO_P1,
             comment="generates gametes from sporophytes"
-            )
+        )
 
         self.model.repro(
             population="p0",
             scripts=REPRO_BRYO_DIO_P0,
-            comment="generates gametes from sporophytes"
-            )
+            comment="generates sporophytes from gametes"
+        )
 
         substitution_str = ""
-        for i in substitutions:
-            substitution_str += "\n  ".join([i.strip(';') + ";\n    "])
+        for idx, sub in enumerate(substitutions):
+            if not idx:
+                substitution_str += f"{sub}"
+            else:
+                substitution_str += f"\n        {sub}"
+            # substitution_str += "\n  ".join([i.strip(';') + ";\n    "])
 
         substitution_script = (
-            SUBSTITUTION.format(**{'inner': substitution_str}).lstrip())
+            SUBSTITUTION.format(inner=substitution_str).lstrip())
 
         self.model.late(
             time=None,
             scripts=substitution_script,
             comment="fixes mutations in haploid gen"
-            )
+        )
 
     def monoicous(self):
         """
