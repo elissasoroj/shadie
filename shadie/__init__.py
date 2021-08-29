@@ -6,7 +6,7 @@ alternating hapliod/diploid lifecycles and converts user-provided
 phylogeny into SLiM3-compatible subpopulation demography
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from shadie.base.defaults import NONCDS, EXON, INTRON
 from shadie.base.mutations import mtype
@@ -18,6 +18,7 @@ from shadie import chromosome
 from shadie import reproduction
 from shadie import demography
 from shadie.demography.postsim import PostSim, NeutralSim
+from shadie.demography.result import TwoSims
 
 from shadie.utils import set_loglevel
 set_loglevel("INFO")

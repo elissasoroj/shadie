@@ -27,7 +27,7 @@ except ImportError:
     pass
 
 #internal imports
-from shadie.chromosome.build import ChromosomeBase
+from shadie.chromosome.src.base_class import ChromosomeBase
 
 
 class PostSim:

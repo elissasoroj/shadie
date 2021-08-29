@@ -14,22 +14,24 @@ from shadie.reproduction.fernbase import Pteridophyte
 
 
 class ReproductionApi:
-    """
-    Reproduction API for accessing functions to generate organism
-    specific reproduction code blocks.
+    """API for generating organism specific reproduction code blocks.
 
-    - model.reproduction.bryophyte()
-    - model.reproduction.spermatphyte()
-    - model.reproduction....()
-
+    Methods
+    -------
+    bryophyte
+    spermatphyte
+    angiosperm
     """
     def __init__(self, model: 'shadie.Model'):
         self.model = model
 
-
     def bryophyte(
         self, 
+<<<<<<< HEAD
         mode:str, 
+=======
+        mode: str, 
+>>>>>>> a14096e91f17415116bb7447be31760b38228c56
         diploid_ne: int,
         haploid_ne: int,
         chromosome=None,
@@ -43,15 +45,16 @@ class ReproductionApi:
         simtime = None,  
         fileout = None,          
         ):
-        """
+        """Adds bryo life history to the model scripts dict.
+
         Generate scripts appropriate for a bryophyte (moss, liverwort,
         or hornwort) life history. This adds code to the following 
         SLiM script blocks: reproduction, early, ...
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         mode: str
-            A life history strategy or "dio" or "mono" -icous.
+            A life history strategy: "dio" or "mono"-icous. 
         ...
         """
         Bryophyte(

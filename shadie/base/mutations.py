@@ -49,7 +49,7 @@ class MutationTypeBase:
         self,
         dominance: float,
         distribution: str,
-        *params: float
+        *params: float,
         ):
 
         MutationTypeBase.idx += 1
@@ -69,11 +69,11 @@ class MutationTypeBase:
         else:
             self.coding =  1
 
-        if self.neutralwarning == True:
-            logger.warning("shadie workflow strongly advises " 
-                    "against the use of neutral mutations in SLiM simulation "
-                    "unless Chromosome parameter NSsites = False "
-                    "(default = True)")
+        # if self.neutralwarning is True:
+        #     logger.warning(
+        #         "shadie workflow strongly advises against the use of " 
+        #         "neutral mutations in SLiM simulation unless Chromosome "
+        #         "parameter NSsites = False (default = True)")
 
         # values overwritten by inherited classes
         self._dist = stats.norm

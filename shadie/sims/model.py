@@ -3,68 +3,95 @@
 """
 A context manager for wrapping the context of a simulation setup.
 
-initialize() {
-    initializeSLiMModelType("nonWF");
-    defineConstant("K", 500);
-    
-    initializeMutationType("m1", 0.5, "f", 0.0);
-    m1.convertToSubstitution = T;                      // default is T
-    
-    initializeGenomicElementType("g1", m1, 1.0);
-    initializeGenomicElement(g1, 0, 99999);
-    initializeMutationRate(1e-7);
-    initializeRecombinationRate(1e-8);
-}
-reproduction() {
-    subpop.addCrossed(individual, subpop.sampleIndividuals(1));
-}
-1 early() {
-    sim.addSubpop("p1", 10);
-}
-early() {
-    p1.fitnessScaling = K / p1.individualCount;
-}
-late() {
-    inds = p1.individuals;
-    catn(sim.generation + ": " + size(inds) + " (" + max(inds.age) + ")");
-}
-2000 late() {
-    sim.outputFull(ages=T);
-}
+Example
+-------
+>>> initialize() {
+>>>     initializeSLiMModelType("nonWF");
+>>>     defineConstant("K", 500);
+>>>
+>>>     initializeMutationType("m1", 0.5, "f", 0.0);
+>>>     m1.convertToSubstitution = T;                      // default is T
+>>>
+>>>     initializeGenomicElementType("g1", m1, 1.0);
+>>>     initializeGenomicElement(g1, 0, 99999);
+>>>     initializeMutationRate(1e-7);
+>>>     initializeRecombinationRate(1e-8);
+>>> }
+>>> reproduction() {
+>>>     subpop.addCrossed(individual, subpop.sampleIndividuals(1));
+>>> }
+>>> 1 early() {
+>>>     sim.addSubpop("p1", 10);
+>>> }
+>>> early() {
+>>>     p1.fitnessScaling = K / p1.individualCount;
+>>> }
+>>> late() {
+>>>     inds = p1.individuals;
+>>>     catn(sim.generation + ": " + size(inds) + " (" + max(inds.age) + ")");
+>>> }
+>>> 2000 late() {
+>>>     sim.outputFull(ages=T);
+>>> }
 """
 
+from typing import Union, Optional
+import os
+import tempfile
 import subprocess
-from typing import Union
 from contextlib import AbstractContextManager
+from concurrent.futures import ProcessPoolExecutor
 from loguru import logger
+import numpy as np
 from shadie.base.mutations import MutationTypeBase
 from shadie.base.elements import ElementType
 from shadie.reproduction.api import ReproductionApi
 from shadie.sims.format import (
     format_event_dicts_to_strings,
-    INITIALIZE,
-    EARLY,
-    LATE,
-    FITNESS,
-    REPRODUCTION,
-    SURVIVAL,
-    CUSTOM,
+    EVENT_TO_FORMATTER,
 )
 
-# cannot do both mutationRate and nucleotidebased 
+# cannot do both mutationRate and nucleotidebased
 
 
 class Model(AbstractContextManager):
+    """The core shadie Class object to create and run SLiM scripts.
+
+    A :class:`shadie.Model` class acts as a context manager using the
+    `with` statement to wrap code to define a model, ensuring that all
+    arguments are checked for compatibility and that the minimal
+    requirements are present (e.g., an initialize call).
+
+    Attributes
+    ----------
+    map: dict
+        This dictionary stores SLiM command snippets until the model
+        context closes, at which time they are converted to a string
+        and stored in :attr:`.script`.
+    script: str
+        The final built SLiM script composing all of the arguments
+        passed to the Model object. This script can be run from the
+        Model object by calling :meth:`~shadie.Model.run`.
+    stdout: str
+        The stdout from running the SLiM script in subprocess is
+        stored. If an error occurs an Exception will be raised.
+    ...
+
+    Examples
+    --------
+    >>> model = shadie.Model()
+    >>> chrom = shadie.chromosome.default()
+    >>> with shadie.Model() as model:
+    >>>     model.initialize(chromosome=chrom, simtime=10000)
+    >>>     model.reproduction.bryophyte("dio", 10000, 10000)
+    >>> model.run()
     """
-    The core shadie object class for creating SLiM scripts and 
-    validating input arguments using a context manager. 
-    """
-    def __init__(self):       
+    def __init__(self):
         # .map holds script components as a dict until converted to
         # a string upon __exit__(). The dict maps events to lists of
         # dicts with information for the event code block.
         # {
-        #   'initialize': {'constants': ..., 'mutations': ...}, 
+        #   'initialize': {'constants': ..., 'mutations': ...},
         #   'early': {'time': 10, script: '...', comment: '...'},
         #   'late': {'time': None, script: '...', comment: '...'},
         # }
@@ -75,40 +102,44 @@ class Model(AbstractContextManager):
             'late': [],
             'fitness': [],
             'survival': [],
-            'reproduction': [],
             'custom': [],
         }
+        """A dict to store SLiM script snippets until context closure."""
         self.script = ""
+        """The final SLiM script built from components in `.map`."""
         self.stdout = ""
+        """The stdout from running `slim script` if `.run()` is called."""
 
         # store chromosome (mut, ele), constants, and populations
+        self.simtime: int = 0
+        """The length of the simulation in sprorophyte generations."""
         self.chromosome = None
+        """Chromosome object with genome structure."""
+        
         self.constants = {}
         self.populations = {}
 
         self.reproduction = ReproductionApi(self)
-
+        """API to access reproduction functions."""
 
     def __repr__(self):
-        return "<shadie.Model ... >"
-
+        return "<shadie.Model generations={self.simtime}>"
 
     def __enter__(self):
         """
         On entry the Class counters of mutation and element types
-        is reset to zero.
+        is reset to zero. The .map dictionary is also cleared.
         """
         MutationTypeBase.idx = 0
         ElementType.idx = 0
+        self.map = {i: [] for i in self.map}
         return self
-
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         """
-        Fills the script with context-defined content in a set 
+        Fills the script with context-defined content in a set
         order and runs checks on the script.
         """
-
         sorted_keys = [
             'initialize', 'timed', 'reproduction', 'early',
             'fitness', 'survival', 'late', 'custom',
@@ -125,7 +156,6 @@ class Model(AbstractContextManager):
         # visit events by ordered key type
         script_chunks = []
         for key in sorted_keys:
-
             # sort events within key type
             if key == "timed":
                 events = sorted(mapped[key], key=lambda x: x['time'])
@@ -140,30 +170,12 @@ class Model(AbstractContextManager):
             for event in events:
                 event = format_event_dicts_to_strings(event)
 
-                # string formatting for code blocks
-                if key == "initialize":
-                    script = INITIALIZE.format(**event)
+                # check event key is valid
+                if key not in EVENT_TO_FORMATTER:
+                    raise ValueError(f"'{key}' not supported")
 
-                elif key == "early":
-                    script = EARLY.format(**event)
-                
-                elif key == "late":
-                    script = LATE.format(**event)
-
-                elif key == 'fitness':
-                    script = FITNESS.format(**event)
-
-                elif key == 'survival':
-                    script = SURVIVAL.format(**event)
-
-                elif key == 'custom':
-                    script = CUSTOM.format(**event)
-
-                elif key == 'reproduction':
-                    script = REPRODUCTION.format(**event)
-
-                else:
-                    raise NotImplementedError(f"{key} not supported")
+                formatter = EVENT_TO_FORMATTER[key]
+                script = formatter.format(**event)
                 script_chunks.append(script)
 
         # collapse into the final script string
@@ -184,12 +196,32 @@ class Model(AbstractContextManager):
         startfile:Union[None, str]=None,
         constants:Union[None, dict]=None,
         scripts:Union[None, list]=None,
-        fileout:str="shadie.trees",
+        trees_file: str="shadie.trees",
+
         ):
-        """
-        Initialize a simulation. This fills the SLIM intialize() code
-        block with MutationType, ElementType, Element, and other init
-        type code.
+        """Add an initialize() block to the SLiM code map.
+
+        This sets the chromosome structure by initializing MutationType
+        and ElementType objects, the length of the simulation in number
+        of generations, sets mutation and recombination rates, and can
+        add other constants or scripts, and the file paths for i/o.
+
+        Parameters
+        ----------
+        chromosome: shadie.Chromosome
+            A Chromosome object describes the Elements that compose
+            the genome, and thus where.
+        simtime: int
+            The number of *sporophyte* generations (len of simulation).
+        mut: float
+            The per-site per-*sporophyte*-generation mutation rate.
+            This is applied at stage.
+        recomb: float
+            The per-site per-*sporophyte*-generation recombination rate.
+            This is applied in the sporophyte generation during meiosis.
+        constants: dict[str,Any]
+            ...
+        ...
         """
         logger.debug("initializing Model")
         constants = {} if constants is None else constants
@@ -212,22 +244,33 @@ class Model(AbstractContextManager):
             'scripts': scripts,
         })
 
-        #this codeblock is for later, when we implement demography from 
-        #a phylogeny:
-        # if self.startfile:
-        #     Model.early(
-        #         self = self,
-        #         time = 1,
-        #         scripts = f"sim.readFromPopulationFile('{self.startfile}')",
-        #         comment = "read starting populations from startfile"
-        #         )
-        #     Model.late(
-        #         self = self,
-        #         time = self.length,
-        #         scripts = [
-        #         "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-        #         f"sim.treeSeqOutput('{self.fileout}')"]
-        #         )
+        # Standard single population simulation. Saves and writes the
+        # trees file in the final diploid generation (2X of .simtime).
+        # This means the only 'alive' individuals will be in p1, and the
+        # p0 subpopulation will be dropped by post-sim.
+        if not start_file:
+            self.late(
+                time=self.simtime * 2,
+                comment="end of sim; write .trees file",
+                scripts=[
+                    # "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)",
+                    f"sim.treeSeqOutput('{trees_file}')"
+                ],
+            )
+        # starting from another simulation starting point.
+        else:
+            raise NotImplementedError("This isn't ready to use yet.")
+            self.early(
+                time=1,
+                scripts=f"sim.readFromPopulationFile('{start_file}')",
+                comment="read starting populations from startfile"
+                )
+            self.late(
+                time=self.simtime * 2,
+                scripts=[
+                "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
+                f"sim.treeSeqOutput('{trees_file}')"]
+                )
 
     def readfromfile(self,):
         """
@@ -235,15 +278,17 @@ class Model(AbstractContextManager):
         of the simulation
         """
 
-
     def early(
-        self, 
-        time:Union[int, None], 
-        scripts:Union[str, list], 
-        comment:Union[str,None]=None,
+        self,
+        time: Union[int, None],
+        scripts: Union[str, list],
+        comment: Union[str,None]=None,
         ):
-        """
-        Add event that happens before selection every generation.
+        """Add an early() block to the SLiM code map.
+
+        Events in `early` blocks occur before selection in every
+        generation if time=None, or only in a specified generation if
+        a time arg is entered.
         """
         self.map['early'].append({
             'time': time,
@@ -252,13 +297,17 @@ class Model(AbstractContextManager):
         })
 
     def repro(
-        self, 
-        population:Union[str, None], 
-        scripts:Union[str, list], 
-        comment:Union[str,None]=None,
+        self,
+        population: Union[str, None],
+        scripts: Union[str, list],
+        comment: Union[str,None]=None,
         ):
-        """
-        Add event that happens before selection every generation.
+        """Add a custom reproduction() block to the SLiM code map.
+
+        Users will usually want to use the organism specific functions
+        in the :meth:`Model.reproduction` API rather than write custom
+        functions, since a proper reproduction cycle often involves
+        entering arguments to multiple event types.
         """
         self.map['reproduction'].append({
             'population': population,
@@ -267,9 +316,9 @@ class Model(AbstractContextManager):
         })
 
     def fitness(
-        self, 
-        mutation:Union[str, None], 
-        scripts:Union[str, list], 
+        self,
+        mutation:Union[str, None],
+        scripts:Union[str, list],
         idx:Union[str, None]=None,
         comment:Union[str,None]=None,
         ):
@@ -283,13 +332,12 @@ class Model(AbstractContextManager):
             'comment': comment,
         })
 
-
     def survival(
-        self, 
-        population:Union[str, None], 
-        scripts:Union[str, list], 
+        self,
+        population:Union[str, None],
+        scripts:Union[str, list],
         idx:Union[str,None]=None,
-        comment:Union[str,None]=None,        
+        comment:Union[str,None]=None,
         ):
         """
         Add event that adjusts fitness values before fitness calc.
@@ -301,18 +349,17 @@ class Model(AbstractContextManager):
             'comment': comment,
         })
 
-
     def late(
-        self, 
-        time:Union[int, None], 
-        scripts:Union[str, list],
-        idx:Union[str,None]=None,
-        comment:Union[str,None]=None,
+        self,
+        time: Union[int, None],
+        scripts: Union[str, list],
+        idx: Union[str,None]=None,
+        comment: Union[str,None]=None,
         ):
-        """
-        Add an event that happens after every generation (late) if 
-        time is None, or only after a particular generation if time
-        is an integer.
+        """Add a late() block to the SLiM code map.
+
+        Events in `late` blocks occur at the end of *every* generation
+        if time=None, or only a specified generation if a time is int.
         """
         self.map['late'].append({
             'idx': idx,
@@ -321,15 +368,14 @@ class Model(AbstractContextManager):
             'comment': comment,
         })
 
-
     def custom(
-        self, 
-        scripts:str, 
+        self,
+        scripts:str,
         comment:Union[str,None]=None,
         ):
         """
-        Add custom scripts outside without formatting by shadie. 
-        Scripts must be Eidos-formatted. 
+        Add custom scripts outside without formatting by shadie.
+        Scripts must be Eidos-formatted.
         """
         self.map['custom'].append({
             'scripts': scripts,
@@ -349,6 +395,7 @@ class Model(AbstractContextManager):
             logger.warning("You did not specify a reproduction mode "
                 "so a default WF model has been used for this simulation")
 
+
     def _check_script(self):
         """
         TODO.
@@ -363,39 +410,90 @@ class Model(AbstractContextManager):
             # "You must call late() from within Model context")
 
     def write(self, outname):
+        """Write SLIM script to the outname filepath or stdout."""
+        if path is None:
+            print(self.script)
+        else:
+            with open(path, 'w') as out:
+                out.write(self.script)
+
+    def run(self, seed: int=None, binary: Optional[str]=None):
+        """Run `slim script` using subprocess and store STDOUT to self.stdout.
+
+        The script is written to a tmpfile and run in subprocess using
+        the `slim` command in the user's PATH, or the path to a binary
+        passed as an argument.
+
+        Parameters
+        ----------
+        seed: Optional[int]
+            A seed for the random number generator.
+        binary: Optional[str]
+            The full path to a slim binary.
+
+        Examples
+        --------
+        >>> model = shadie.Model()
+        >>> chrom = shadie.chromosome.default()
+        >>> with model:
+        >>>     model.initialize(chromosome=chrom, simtime=1000)
+        >>> model.run()
         """
-        Write SLIM script to the outname filepath.
-        """
-        with open(outname, 'w') as out:
-            out.write(self.script)
+        # get a slim binary and random number generator
+        binary = binary if binary is not None else "slim"
 
+        # find and write to a tmpdir, run it, collect result.
+        with tempfile.TemporaryDirectory() as tmpdirname:
 
-    def run(self):
-        """
-        Run SLIM script in subprocess and store STDOUT to self.stdout.
-        """
-        # write tmp file and call it
-        self.write("/tmp/slim.slim")
-        cmd = ["slim", "/tmp/slim.slim"]
-        
-        #newbuild cmd 
-        cmdnb = ["/Users/elissa/bin/slim", "/tmp/slim.slim"]
+            # write slim script to tempfile
+            script_path = os.path.join(tmpdirname, f"slim-{seed}.slim")
+            self.write(script_path)
 
-        # capture stdout
-        proc = subprocess.Popen(cmdnb, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        out, _ = proc.communicate()
+            # build command and run in subprocess
+            cmd = [binary, '-seed', str(seed), script_path]
+            proc = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-        # check for errors
-        if proc.returncode:
-            logger.error(out.decode())
-            raise SyntaxError("SLiM3 error")
+            # capture stdout
+            out, _ = proc.communicate()
 
-        # todo: parse stdout to store, and warnings to logger
+            # check for errors
+            if proc.returncode:
+                logger.error(out.decode())
+                raise SyntaxError("SLiM3 error")
+
+        # todo: parse stdout to store, and send warnings to logger
         self.stdout = out.decode()
         # _, warnings, stdout = out.decode().split("#")
         # self.stdout = stdout
         # logger.warning(warnings.split("//")[0].strip())
         # ...
+
+        # TODO: idea: we could return it as a TreeSequence? or even
+        # as the fully recapitated TreeSequence, though that is not
+        # useful for when we want to combine two sims....
+
+
+    def run_parallel(
+        self,
+        njobs: int=2,
+        seed: Optional[int]=None,
+        binary: Optional[str]=None,
+        ):
+        """Submit jobs to run in parallel. NOT READY YET.
+
+        TODO: this needs to edit the trees file path to be different
+        for the 2-N runs.
+        """
+        rng = np.random.default_rng(seed)
+
+        rasyncs = []
+        with ProcessPoolExecutor(njobs) as pool:
+            for _ in range(njobs):
+                args = (rng.integers(2**31), binary)
+                rasync = pool.submit(self.run, *args)
+                rasyncs.append(rasync)
+
 
 
 if __name__ == "__main__":
@@ -403,15 +501,15 @@ if __name__ == "__main__":
     import shadie
 
     with shadie.Model() as model:
-        
+
         # define mutation types
         m0 = shadie.mtype(0.5, 'n', 2.0, 1.0)
         m1 = shadie.mtype(0.5, 'g', 3.0, 1.0)
-        
+
         # define elements types
         e0 = shadie.etype([m0, m1], [1, 2])
         e1 = shadie.etype([m1], [1])
-        
+
         # design chromosome of elements
         chrom = shadie.chromosome.random(
             genome_size=20000,
@@ -419,16 +517,17 @@ if __name__ == "__main__":
             intron=e0,
             exon=e1,
         )
-        
+
         # print(chrom.data.iloc[:, :4,])
         # print(chrom.mutations)
 
         # init the model
-        model.initialize(chromosome=chrom, ne= 1000)
-        
+
+        model.initialize(chromosome=chrom)
+
         model.early(
-            time=1000, 
-            scripts="sim.addSubpop('p1', 1000)", 
+            time=1000,
+            scripts="sim.addSubpop('p1', 1000)",
             comment="diploid sporophytes",
         )
         model.fitness(
