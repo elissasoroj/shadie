@@ -9,7 +9,7 @@ from typing import Dict, List, Union
 
 INITIALIZE = """
 initialize() {{
-   
+
   // model type
   initializeSLiMModelType("nonWF");
 
@@ -30,47 +30,62 @@ initialize() {{
   // constants (Ne)
   {constants}
 
-  // extra scripts 
+  // extra scripts
   {scripts}
 }}
 """
 # --------------------------------------------
 
 REPRODUCTION = """
-{comment}reproduction({population}) {{ // generates offspring
+// generates offspring
+{comment}reproduction({population}) {{
     {scripts}
 }}
 """
 
 FITNESS = """
-{comment}{idx}fitness({mutation}) {{ // adjusts fitness calculation
+// adjusts fitness calculation
+{comment}{idx}fitness({mutation}) {{
     {scripts}
 }}
 """
 
 SURVIVAL = """
-{idx}survival({population}) {{ // implements survival adjustments
+// implements survival adjustments
+{idx}survival({population}) {{
     {scripts}
 }}
 """
 
 
 EARLY = """
-{comment}{time}early() {{ // executes after offspring are generated
+// executes after offspring are generated
+{comment}{time}early() {{
     {scripts}
 }}
 """
 
 
 LATE = """
+// executes after selection occurs
 {comment}
-{idx}{time}late() {{ // executes after selection occurs
+{idx}{time}late() {{
     {scripts}
 }}
 """
 
 CUSTOM = """{comment}{scripts}"""
 
+
+EVENT_TO_FORMATTER = {
+    "initialize": INITIALIZE,
+    "early": EARLY,
+    "late": LATE,
+    'fitness': FITNESS,
+    'survival': SURVIVAL,
+    'custom': CUSTOM,
+    'reproduction': REPRODUCTION,
+}
 
 
 def clean_scripts(scripts: Union[str, List[str]]):
@@ -89,7 +104,7 @@ def clean_scripts(scripts: Union[str, List[str]]):
 
 def format_event_dicts_to_strings(event: Dict):
     """
-    Performs string formatting on the .map dictionary of the 
+    Performs string formatting on the .map dictionary of the
     Model object to write the arguments to SLiM string format
     """
     # cleanup formatting of some arguments
