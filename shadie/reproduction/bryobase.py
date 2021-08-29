@@ -48,7 +48,7 @@ class Bryophyte(BryophyteBase):
     """
     diploid_ne: int
     haploid_ne: int
-    female_to_male_ratio: float.as_integer_ratio = (1,1)
+    gam_female_to_male_ratio: float.as_integer_ratio = (1,1)
     spores_per_sporophyte: int=100
     clone_rate: float=0.0
     selfing_rate: float=0
@@ -65,7 +65,7 @@ class Bryophyte(BryophyteBase):
             self.female_to_male_ratio[1]/
             (self.female_to_male_ratio[0]+self.female_to_male_ratio[1]))
 
-        self.add_initialize_constants()
+        #self.add_initialize_constants()
         self.add_early_haploid_diploid_subpops() 
         self.end_sim()        
         if self.mode in DTYPES:
@@ -76,21 +76,24 @@ class Bryophyte(BryophyteBase):
             raise ValueError(
                 f"'mode' not recognized, must be in {DTYPES + MTYPES}")
 
+    
+    #Testing constant calls inside mode to avoid initializing 
+    #unused constants - I think this is less confusing for the use
 
-    def add_initialize_constants(self):
-        """
-        Add defineConstant calls to init for new variables
-        """
-        constants = self.model.map["initialize"][0]['constants']
-        constants["dK"] = self.diploid_ne
-        constants["hK"] = self.haploid_ne
-        constants["Death_chance"] = self.random_death_chance
-        constants["FtoM"] = self.female_to_male_ratio
-        constants["Spore_num"] = self.spores_per_sporophyte
-        constants["Clone_rate"] = self.clone_rate
-        # constants["Clone_num"] = self.clone_number
-        constants["Self_rate"] = self.selfing_rate
-        constants["Maternal_weight"] = self.maternal_effect_weight
+    # def add_initialize_constants(self):
+    #     """
+    #     Add defineConstant calls to init for new variables
+    #     """
+    #     constants = self.model.map["initialize"][0]['constants']
+    #     constants["dK"] = self.diploid_ne
+    #     constants["hK"] = self.haploid_ne
+    #     constants["Death_chance"] = self.random_death_chance
+    #     constants["FtoM"] = self.female_to_male_ratio
+    #     constants["Spore_num"] = self.spores_per_sporophyte
+    #     constants["Clone_rate"] = self.clone_rate
+    #     # constants["Clone_num"] = self.clone_number
+    #     constants["Self_rate"] = self.selfing_rate
+    #     constants["Maternal_weight"] = self.maternal_effect_weight
 
 
     def add_early_haploid_diploid_subpops(self):
@@ -122,6 +125,16 @@ class Bryophyte(BryophyteBase):
         """
         fills the script reproduction block with bryophyte-dioicous
         """
+        #Init the variables
+        constants = self.model.map["initialize"][0]['constants']
+        constants["dK"] = self.diploid_ne
+        constants["hK"] = self.haploid_ne
+        constants["Death_chance"] = self.random_death_chance
+        constants["gFtoM"] = self.gam_female_to_male_ratio
+        constants["Spore_num"] = self.spores_per_sporophyte
+        constants["Clone_rate"] = self.clone_rate
+        constants["Self_rate"] = self.selfing_rate
+        constants["Maternal_weight"] = self.maternal_effect_weight
 
         # fitness callback:
         i = 4
@@ -197,9 +210,15 @@ class Bryophyte(BryophyteBase):
         """
         fills the script reproduction block with bryophyte-monoicous
         """
-        """
-        fills the script reproduction block with bryophyte-dioicous
-        """
+        #Init the variables
+        constants = self.model.map["initialize"][0]['constants']
+        constants["dK"] = self.diploid_ne
+        constants["hK"] = self.haploid_ne
+        constants["Death_chance"] = self.random_death_chance
+        constants["Spore_num"] = self.spores_per_sporophyte
+        constants["Clone_rate"] = self.clone_rate
+        constants["Self_rate"] = self.selfing_rate
+        constants["Maternal_weight"] = self.maternal_effect_weight
 
         # fitness callback:
         i = 4
