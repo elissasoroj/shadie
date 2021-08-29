@@ -5,7 +5,6 @@ Random utilities
 """
 
 import sys
-from typing import Union, List
 from loguru import logger
 
 
@@ -15,7 +14,6 @@ LOGFORMAT = (
     "<b><red>{function: <15}</red></b> | "
     "<level>{message}</level>"
 )
-
 
 # colorize the logger if stdout is IPython/Jupyter or a terminal (TTY)
 try:
