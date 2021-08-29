@@ -112,13 +112,81 @@ class Pteridophyte(PteridophyteBase):
         """
         Model is not ready yet
         """
-
         # fitness callback:
-        pass
+        i = 4
+        activate = []
+        deactivate = []
+        substitutions = []
+        for mut in self.chromosome.mutations:
+            i = i + 1
+            idx = str("s" + str(i))
+            active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
+            deactive_script = DEACTIVATE.format(**{'idx': idx}).lstrip()
+            activate.append(active_script)
+            deactivate.append(deactive_script)
+            sub_inner = SUB_INNER.format(**{'idx': idx, 'mut': mut}).lstrip()
+            substitutions.append(sub_inner)
+            self.model.fitness(
+                idx=idx,
+                mutation=mut,
+                scripts="return 1 + mut.selectionCoeff",
+                comment="gametophytes have no dominance effects",
+            )
+            
+        activate_str = ""
+        deactivate_str = ""
+        for i in activate:
+            activate_str += "\n  ".join([i.strip(';') + ";\n    "])
+
+        for i in deactivate:
+            deactivate_str += "\n  ".join([i.strip(';') + ";\n    "])
+
+        self.active = activate_str
+
+        early_script = (
+            EARLY.format(**{'activate': activate_str, 
+                'deactivate': deactivate_str}).lstrip())
+
+        self.model.early(
+            time=None, 
+            scripts=early_script, 
+            comment="alternation of generations",
+        )
+
+        survival_script = (
+            SURV.format(**{'p0maternal_effect': MATERNAL_EFFECT,
+                'p1maternal_effect': "",
+                'p0survival': "return NULL;"}).lstrip())
+        self.model.custom(survival_script)
+
+        self.model.repro(
+            population="p1",
+            scripts=REPRO_PTER_HOMOSPORE_P1,
+            comment="generates gametes from sporophytes"
+            )
+
+        self.model.repro(
+            population="p0",
+            scripts=REPRO_PTER_HOMOSPORE_P0,
+            comment="generates gametes from sporophytes"
+            )
+
+        substitution_str = ""
+        for i in substitutions:
+            substitution_str += "\n  ".join([i.strip(';') + ";\n    "])
+
+        substitution_script = (
+            SUBSTITUTION.format(**{'inner': substitution_str}).lstrip())
+
+        self.model.late(
+            time=None,
+            scripts=substitution_script,
+            comment="fixes mutations in haploid gen"
+            )
 
     def homosporous(self):
         """
-        fills the script reproduction block with bryophyte-monoicous
+        fills the script reproduction block with pteridophyte-homosporous
         """
 
         # fitness callback:
@@ -163,7 +231,8 @@ class Pteridophyte(PteridophyteBase):
         )
 
         survival_script = (
-            SURV.format(**{'maternal_effect': MATERNAL_EFFECT,
+            SURV.format(**{'p0maternal_effect': "",
+                'p1maternal_effect': MATERNAL_EFFECT,
                 'p0survival': "return NULL;"}).lstrip())
         self.model.custom(survival_script)
 

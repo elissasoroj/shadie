@@ -95,7 +95,7 @@ s2 survival(p1)
     else
         return NULL;
     
-    {maternal_effect}
+    {p1maternal_effect}
 }}
 
 s3 survival(p0) //even
@@ -105,6 +105,8 @@ s3 survival(p0) //even
         return F;
     else
         {p0survival}
+    
+    {p0maternal_effect}
 }}
 
 s4 survival(p0) //odd
@@ -381,30 +383,18 @@ REPRO_PTER_HOMOSPORE_P1 = """
 """
 
 REPRO_PTER_HETEROSPORE_P0 = """
-    if (runif(1) < gFtoM) // chance of making meristic (egg-bearing) gametophyte
-    {
-        reproduction_opportunity_count = 1;
-        
-        // clones give the focal individual extra opportunities to reproduce
-        if (runif(1) <= gClone_rate)
-            reproduction_opportunity_count = reproduction_opportunity_count + 1;
-        
-        for (repro in seqLen(reproduction_opportunity_count))
-        {
-            if (runif(1) <= Self_rate)
-                p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
-                // this is selfing using two identical gametes – intragametophytic selfing
-                // intergametophytic selfing might happen below, by chance
-
-            else
-            {
-                sperm = p0.sampleIndividuals(1);
-                
-                child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
-                
-                if (Maternal_weight > 0) //Mother's fitness affects sporophyte fitness; see survival()
-                    child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+    g_1 = genome1;
+    g_2 = genome2;
+    if (individual.tag == 1) // reproduction callbacks for megaspores only
+    {   reproduction_opportunity_count = 1;
             
+        for (repro in seqLen(reproduction_opportunity_count))
+        {   sperm = p0.sampleIndividuals(1, tag=0); // find a male!
+                
+            if (sperm.size() == 1)
+            {// intergametophytic/sporophytic selfing might happen by chance
+                child = p1.addRecombinant(individual.genome1, NULL, NULL,
+                        sperm.genome1, NULL, NULL);
             }
         }
     }
@@ -416,6 +406,7 @@ REPRO_PTER_HETEROSPORE_P1 = """
     
     meiosis_reps = floor(Spore_num/2);
     reproduction_opportunity_count = 1;
+    
     // clones give the focal individual extra opportunities to reproduce
     if (runif(1) <= Clone_rate)
         meiosis_reps = meiosis_reps*2;
@@ -425,5 +416,14 @@ REPRO_PTER_HETEROSPORE_P1 = """
         breaks = sim.chromosome.drawBreakpoints(individual);
         p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
         p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-    }
+	}
+	
+	if (runif(1) <= FtoM)
+		child.tag = 1;
+    else
+        child.tag = 0;
+    
+    //Mother's fitness affects gametophyte fitness; see survival()
+    if (Maternal_weight > 0)
+        child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
 """
