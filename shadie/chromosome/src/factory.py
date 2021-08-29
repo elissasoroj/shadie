@@ -80,7 +80,7 @@ def explicit(data):
     >>> e1 = shadie.etype([m0], 1)
     >>> chromosome = chromosome.explicit({
     >>>     (0, 1000): shadie.NONCDS,
-    >>>     (2001, 3000): e0,
+    >>>     (1001, 3000): e0,
     >>>     (3001, 5000): e1,
     >>>     (5001, 7000): shadie.NONCDS,
     >>> })

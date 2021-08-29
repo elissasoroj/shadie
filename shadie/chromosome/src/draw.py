@@ -7,7 +7,7 @@ Inspect tools for visualizing chromosome structure with alt.
 from typing import Optional
 import pandas as pd
 import altair as alt
-# from shadie.chromosome.src.base_class import ChromosomeBase
+import toyplot
 
 
 def draw_altair_chrom_canvas(chrom: 'ChromosomeBase', width: int=700):
@@ -106,122 +106,51 @@ def draw_altair_chrom_canvas_interactive(
     return zoom
 
 
-def toyplot(self):
-    "Makes static toyplot"
-    self.inspect()
-    eltype = []
-    startbase = []
-    endbase = []
-    y1 = []
-    y2 = []
-    for index, row in self.genome.iterrows():
-        eltype.append(row['category'])
-        startbase.append(row['x1'])
-        endbase.append(row['x2'])
-        y1.append(0)
-        y2.append(1)
+def draw_toyplot_chrom(
+    chrom: 'ChromosomeBase', 
+    width: int=700,
+    axes: Optional['toyplot.coordinates.Cartesian']=None,
+    ):
+    """Return a toyplot drawing of the chromosome.
 
-    chromcoords = list(zip(eltype, startbase, endbase, y1, y2))
-    rectangles = pd.DataFrame(chromcoords, columns = [
-        'Element Type', 'x1', 'x2', 'y1', 'y2'])
-    self.rectangles = rectangles
-
-    #define colors for each element
-    color = []
-    for index, row in rectangles.iterrows():
-        if row["Element Type"] == "noncds":
-            color.append("lemonchiffon")
-        elif row["Element Type"] == "exon":
-            color.append("royalblue")
-        elif row["Element Type"] == "intron":
-            color.append("mediumaquamarine")
-
-    #assign colors to rectangles dataframe
-    rectangles.insert(5, "color", color)
-
-    #Calculate Stats
-    self.genecount = max(1, (rectangles["Element Type"]=='noncds').sum()-1)
-    self.exoncount = (rectangles["Element Type"]=='exon').sum()
-    self.introncount = (rectangles["Element Type"]=='intron').sum()
-    self.totexonlength = 0
-    self.totintronlength = 0
-    for index, row in rectangles.iterrows():
-        if row["Element Type"]=='exon':
-            self.totexonlength += (1+row["x2"]-row["x1"]) 
-        elif row["Element Type"]=='intron':
-            self.totintronlength += (1+row["x2"]-row["x1"])
-
-    if self.introncount == 0:
-        self.avintron = 0
-    else:
-        self.avintron = self.totintronlength/self.introncount
-
-    self.rectangles = rectangles
-
-
-def review(self, item=None):
-    """Return a summary and visualization of the chrosome structure.
-    
-    Select an item to review among the following options:
-        mutations: ...
-        eltypes: ...
-        elements: ...
-        chromosome: ...
-        interractive: ...
     """
-    if item == "mutations":
-        print('\033[1m' + "Mutation Types:\n" + '\033[0m', self.mutationlist, "\n")
-        #print("Mutations:\n" self.mutdict)
-    elif item == "eltypes":
-        print('\033[1m' + "Genomic Element Types:\n" + '\033[0m', self.elementlist, "\n")
-        #print("Genomic Element Types:\n" self.eldict)
-    elif item == "elements":
-        df = pd.DataFrame(self.genome)
-        print('\033[1m' + "Genomic Elements:\n" + '\033[0m')
-        display(df)
-
-    elif item == "chromosome":
-        self.toyplot()
-        
-        print(
-            '\033[1m' + "Chromosome Summary\n" + '\033[0m'
-            f"# of Genes: {self.genecount}\n"
-            f"Average # exons per gene: {self.exoncount/self.genecount}\n"
-            f"Average exon length: {self.totexonlength/self.exoncount} nt\n"
-            f"Average # introns per gene: {self.introncount/self.genecount}\n"
-            f"Average introns length: {self.avintron} nt\n"
-            )
-
-        print(f"Static Chromosome Plot:\n")
-        """
-        this is a simplified plot showing exons, coding regions, 
-        and non-codding regions collapsed, even if they consist of 
-        more that one genomic element type
-        """
-        # make the canvas and axes with toyplot
-        canvas = toyplot.Canvas(width=2400, height=200)
+    if axes is None:
+        canvas = toyplot.Canvas(width, height=150)
         axes = canvas.cartesian()
-        axes.show = True
-
-        #draw the rectangles
-        for index, row in self.rectangles.iterrows():
-            axes.rectangle(
-                row['x1'], row['x2'], row['y1'], row['y2'],
-                color = row['color']
-            )
-
-    elif item == "interactive":
-        self.alt()
-        print("Interactive alt chromosome map:")
-        IPython.display.display_html(self.zoom)
-        
     else:
-        logger.info("Please enter a valid item to review. Options include:\n"
-            "'mutations'\n'eltypes'\n'elements'\n''chromosome'\n'interractive'")
+        canvas = None
+
+    # get colors for elements types
+    elements = pd.factorize(chrom.data.eltype)[0]
+    colormap = toyplot.color.brewer.palette("Spectral", count=max(4, len(set(elements))))
+    colors = [colormap[i] for i in elements]
+
+    # plot bars for element types
+    for idx, pos in enumerate(chrom.data.index):
+        dat = chrom.data.loc[pos]
+        mark = axes.fill(
+            [dat.start, dat.end],
+            [0, 0], 
+            [1, 1],
+            color=colors[idx],
+            opacity=0.75,
+            style={"stroke": "black", "stroke-opacity": 1.0},
+            title=(
+                f"name: {chrom.data.loc[pos, 'name']}\n"
+                f"interval: ({dat.start}, {dat.end})\n"
+                f"ElementType: {dat.eltype}\n" 
+                f"coding: {bool(dat.coding)}"
+            )
+        )
+    axes.y.show = False
+    axes.x.ticks.show = True
+    axes.x.ticks.locator = toyplot.locator.Extended(only_inside=True, count=8)
+    return canvas, axes, mark
 
 
 if __name__ == "__main__":
 
     import shadie
-    test_chrom = shadie.chromosome.default()
-    print(draw_altair_chrom_canvas_interactive(test_chrom))
+    c, a, m = shadie.chromosome.default().draw()
+    c, a, m = shadie.chromosome.random().draw()    
+    iviz = shadie.chromosome.default().inspect()

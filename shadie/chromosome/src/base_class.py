@@ -9,7 +9,10 @@ code format.
 from typing import Optional
 import itertools
 import pandas as pd
-from shadie.chromosome.src.draw import draw_altair_chrom_canvas_interactive
+from shadie.chromosome.src.draw import (
+    draw_altair_chrom_canvas_interactive,
+    draw_toyplot_chrom,
+)
 
 
 class ChromosomeBase:
@@ -38,12 +41,25 @@ class ChromosomeBase:
             data=None,
         )
 
-    @property
-    def is_neutral(self):
-        """Return True if no sites in the genome are under selection"""
-        return not self.data.coding.any()
+    def is_coding(self, idx: int=None) -> bool:
+        """Return True if a genomic region is coding (includes selection).
 
-    def to_slim_mutation_types(self):
+        If idx=None this returns True/False for the whole genome.
+
+        Parameters
+        ----------
+        idx: int
+            The index of a genome element from `.data`.
+
+        Returns
+        -------
+        bool
+        """
+        if idx is None:
+            return self.data.coding.any()
+        return bool(self.data.loc[idx].coding)
+
+    def to_slim_mutation_types(self) -> str:
         """Returns a string with newline separated SLIM commands to 
         initialize all MutationType objects in the chromosome data.
 
@@ -57,7 +73,7 @@ class ChromosomeBase:
         mutations = set(itertools.chain(*mut_lists))
         return "\n  ".join([i.to_slim(nuc=self.use_nuc) for i in mutations])
 
-    def to_slim_element_types(self):
+    def to_slim_element_types(self) -> str:
         """Return a string with newline separated SLIM commands to 
         initialize all ElementType objects in the chromosome data.
     
@@ -66,12 +82,14 @@ class ChromosomeBase:
         >>> chrom.to_slim_element_types()
         'initializeGenomicElementType("g1", c(m1,m2), c(3,3), mm);\ninitia...'
         """
-        elements = self.data.script.unique()
+        elements = sorted(self.data.script.unique(), key=lambda x: x.name)
         return "\n  ".join([i.to_slim() for i in elements])
 
-    def to_slim_elements(self):
-        """Returns a string with newline separated SLIM commands to 
-        initialize all Element objects in the chromosome data.
+    def to_slim_elements(self) -> str:
+        """Return a SLIM command string to init genomic elements.
+
+        This newline separated command string defines the genomic 
+        elements that compose the chromosome structure.
 
         TODO: accommodate fully neutral simulations by skipping SLiM
         and returning a TreeSequence nicely.
@@ -84,32 +102,37 @@ class ChromosomeBase:
         #Note: will need to fix the formatting on this chunk**
         commands = []
 
+        # the entire chrom is neutral, create a HACK solution to make 
+        # SLiM run by creating an unlinked tiny region with selection
+        # that will be removed later.
+        if not self.is_coding():
+            raise NotImplementedError("fully neutral shadie sim not yet supported.")
+
         # iterate over int start positions of elements
         for idx in self.data.index:
+            ele = self.data.loc[idx]
 
-            # the entire chrom is neutral, do nothing, since nothing will
-            # be simulated by SLiM. We will simply generate a TreeSequence
-            # with metadata to return instead.
-            if self.is_neutral:
+            # do not write this region if neutral.
+            if not self.is_coding(idx):
                 pass
-
-            # some regions of the chrom are under selection. If this is
-            # one of them then add the initialize command to commands.
-            # TODO: if using a codon model then write in triplets.
-            else:
-                ele = self.data.loc[idx]
-                commands.append(
-                    f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
-                )
-                # TODO: COMMENTING OUT FOR NOW while working on reproduction.
-                # TODO: append as separate commands to look nicer.
-                # length = ele.end - ele.start
                 # commands.append(
-                #     f"types = rep({ele.eltype}, asInteger(floor({length}/3))); \n"
-                #     f"starts = {ele.start} + seqLen(integerDiv({length}, 3)) * 3; \n   "
-                #     "ends = starts + 1; \n"
-                #     "initializeGenomicElement(types, starts, ends); \n"
+                    # f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
                 # )
+
+            # one of them then add the initialize command to commands.
+            # SYN AND NONSYN SITES
+            else:
+                if 1: # if writing syn vs non-syn.
+                    length = ele.end - ele.start
+                    commands.extend([
+                        f"types = rep({ele.eltype}, asInteger(floor({length}/3)));",
+                        f"starts = {ele.start} + seqLen(integerDiv({length}, 3)) * 3;",
+                        "ends = starts + 1;",
+                        "initializeGenomicElement(types, starts, ends);\n",
+                    ])
+                else:
+                    # TODO
+                    pass
         return "\n  ".join(commands)
 
     def inspect(self, width: int=700, outfile: Optional[str]=None):
@@ -119,10 +142,8 @@ class ChromosomeBase:
         ----------
         width: int
             Width of the drawing canvas in pixels.
-        interactive: bool
-            Allow interactive selector in the visualization.
         outfile: Optional[str]
-            A file path to write the plot in HTML format.
+            An optional file path to save the plot in HTML format.
 
         Returns
         -------
@@ -130,3 +151,7 @@ class ChromosomeBase:
             An HTML element that will display in a jupyter notebook.
         """
         return draw_altair_chrom_canvas_interactive(self, width, outfile)
+
+    def draw(self, width: int=700, axes: Optional['toyplot.coordinates.Cartesian']=None):
+        """Return a toyplot drawing of the chromosome."""
+        return draw_toyplot_chrom(self, width=width, axes=axes)
