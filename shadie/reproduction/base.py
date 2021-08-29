@@ -5,6 +5,8 @@ Starting an alternate implementation of Reproduction
 """
 
 from dataclasses import dataclass, field
+from loguru import logger
+from typing import Union
 
 
 @dataclass
@@ -37,7 +39,7 @@ class Base(nonWFBase):
     """
     Reproduction mode based on Wright-Fisher model
     """
-    ne: int
+    ne: Union[None, int] = None
     sexes: bool = False
     startfile: str = "F"
 
@@ -46,6 +48,13 @@ class Base(nonWFBase):
         Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
         """
+
+        if self.ne:
+            pass
+        elif self.model.ne:
+            self.ne = self.model.ne
+        else:
+            logger.warning("Please provide a population Ne")
 
         self.add_initialize_constants()
         self.add_scripts()        
@@ -117,11 +126,7 @@ if __name__ == "__main__":
         )
 
         # init the model
-        mod.initialize(chromosome=chrom, simtime=1000)
-
-        mod.reproduction.base(
-            ne = 1000,
-        )
+        mod.initialize(chromosome=chrom, simtime=1000, ne=1000)
 
     print(mod.script)
     #mod.run()

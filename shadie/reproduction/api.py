@@ -158,10 +158,8 @@ class ReproductionApi:
 
     def base(
         self,  
-        ne: int,
-        chromosome = None,
-        sexes = False, 
-        simtime = None,    
+        ne = None,
+        sexes = False,    
         ):
         """
         Generate scripts appropriate for basic SLiM nonWF model, set up

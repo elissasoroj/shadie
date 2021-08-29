@@ -85,7 +85,6 @@ class Model(AbstractContextManager):
         self.chromosome = None
         self.constants = {}
         self.populations = {}
-        self.simtime = {} #length of simulation in generations
 
         self.reproduction = ReproductionApi(self)
 
@@ -179,12 +178,13 @@ class Model(AbstractContextManager):
         self,
         chromosome,
         simtime:int=1000, #length of sim in # of diploid generations
-        mut:float=1e-8, 
-        recomb:float=1e-9, 
+        mut:float=1e-8, #mutation rate
+        recomb:float=1e-9, #recombination rate
+        ne:Union[None, int]=None, #option ne parameter in initialize
+        startfile:Union[None, str]=None,
         constants:Union[None, dict]=None,
         scripts:Union[None, list]=None,
         fileout:str="shadie.trees",
-        startfile:Union[None, str]=None,
         ):
         """
         Initialize a simulation. This fills the SLIM intialize() code
@@ -199,6 +199,7 @@ class Model(AbstractContextManager):
         self.simtime = simtime
         self.fileout = fileout
         self.startfile = startfile
+        self.ne = ne
         
         self.map['initialize'].append({
             'mutation_rate': mut,
@@ -335,16 +336,31 @@ class Model(AbstractContextManager):
             'comment': comment,
         })
 
+    def _check_repro(self):
+        """
+        TODO.
+        """
+        #check for reproduction; if does not exist, implement WF model
+        if "reproduction" in self.script:
+            pass
+        else:
+            print(self.ne)
+            self.reproduction.base()
+            logger.warning("You did not specify a reproduction mode "
+                "so a default WF model has been used for this simulation")
 
     def _check_script(self):
         """
         TODO.
         """
+        #check for initialization
         assert "initialize" in self.script, (
             "You must call initialize() from within Model context")
+
+        assert "reproduction" in self.script, (
+            "You must specify a reproduction model to use")
         # assert "late" in self.script, (
             # "You must call late() from within Model context")
-
 
     def write(self, outname):
         """
@@ -408,7 +424,7 @@ if __name__ == "__main__":
         # print(chrom.mutations)
 
         # init the model
-        model.initialize(chromosome=chrom)
+        model.initialize(chromosome=chrom, ne= 1000)
         
         model.early(
             time=1000, 

@@ -11,8 +11,8 @@ from shadie.reproduction.base_scripts import (
     REPRO_BRYO_MONO_P1, REPRO_BRYO_MONO_P0,
 )
 
-DTYPES = ("d", "dio", "dioicy", "heterosporous", "dioicous")
-MTYPES = ("m", "mono", "monoicy", "homosporous", "monoicous")
+DTYPES = ("d", "dio", "dioicy", "dioicous", "heterosporous",)
+MTYPES = ("m", "mono", "monoicy", "monoicous", "homosporous",)
 
 
 @dataclass
