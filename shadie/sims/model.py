@@ -193,7 +193,7 @@ class Model(AbstractContextManager):
         mut:float=1e-8, #mutation rate
         recomb:float=1e-9, #recombination rate
         ne:Union[None, int]=None, #option ne parameter in initialize
-        startfile:Union[None, str]=None,
+        start_file:Union[None, str]=None,
         constants:Union[None, dict]=None,
         scripts:Union[None, list]=None,
         trees_file: str="shadie.trees",
@@ -229,8 +229,7 @@ class Model(AbstractContextManager):
 
         self.chromosome = chromosome
         self.simtime = simtime
-        self.fileout = fileout
-        self.startfile = startfile
+        self.trees_file = trees_file
         self.ne = ne
         
         self.map['initialize'].append({

@@ -30,7 +30,7 @@ class ReproductionApi:
         mode:str, 
         diploid_ne: int,
         haploid_ne: int,
-        chromosome=None,
+        _chromosome=None,
         spores_per_sporophyte: int=100,
         gam_female_to_male_ratio: float.as_integer_ratio = (1,1),
         clone_rate: float=0.0,
@@ -38,8 +38,8 @@ class ReproductionApi:
         maternal_effect_weight: float=0,
         random_death_chance: float=0, 
         startfile: str = "F",
-        simtime = None,  
-        fileout = None,          
+        _simtime = None,  
+        _fileout = None,          
         ):
         """Adds bryo life history to the model scripts dict.
 
@@ -63,7 +63,7 @@ class ReproductionApi:
             maternal_effect_weight=maternal_effect_weight,
             random_death_chance=random_death_chance,
             startfile=startfile, simtime = 2*self.model.simtime, 
-            fileout = self.model.fileout,
+            fileout = self.model.trees_file,
         ).run()
 
 
@@ -72,7 +72,7 @@ class ReproductionApi:
         mode:str, 
         diploid_ne: int,
         haploid_ne: int,
-        chromosome = None,
+        _chromosome = None,
         spores_per_sporophyte: int=100,
         female_to_male_ratio: float.as_integer_ratio = (1,1),
         gam_female_to_male_ratio: float.as_integer_ratio = (1,1),
@@ -81,8 +81,8 @@ class ReproductionApi:
         selfing_rate: float=0.0,
         maternal_effect_weight: float=0,
         random_death_chance: float=0, 
-        simtime = None,  
-        fileout = None,        
+        _simtime = None,  
+        _fileout = None,        
         ):
         """
         Generate scripts appropriate for an angiosperm (flowering plant)
@@ -106,7 +106,7 @@ class ReproductionApi:
             selfing_rate=selfing_rate,
             maternal_effect_weight=maternal_effect_weight,
             random_death_chance=random_death_chance,
-            simtime = 2*self.model.simtime, fileout = self.model.fileout,
+            simtime = 2*self.model.simtime, fileout = self.model.trees_file,
         ).run()
 
     def spermatophyte(self, ):
@@ -119,7 +119,7 @@ class ReproductionApi:
         mode:str, 
         diploid_ne: int,
         haploid_ne: int,
-        chromosome = None,
+        _chromosome = None,
         female_to_male_ratio: float.as_integer_ratio = (1,1),
         clone_rate: float=0.0,
         ovule_count: int=30,
@@ -128,8 +128,8 @@ class ReproductionApi:
         pollen_comp: str="F",
         pollen_per_stigma: int=5,
         random_death_chance: float=0,  
-        simtime = None,   
-        fileout = None,  
+        _simtime = None,   
+        _fileout = None,  
         ):
         """
         Generate scripts appropriate for an angiosperm (flowering plant)
@@ -152,7 +152,7 @@ class ReproductionApi:
             pollen_count=pollen_count, pollen_comp=pollen_comp,
             pollen_per_stigma=pollen_per_stigma,
             random_death_chance=random_death_chance,
-            simtime = 2*self.model.simtime, fileout = self.model.fileout,
+            simtime = 2*self.model.simtime, fileout = self.model.trees_file,
         ).run()
 
     def base(
