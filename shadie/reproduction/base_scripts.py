@@ -23,7 +23,7 @@ EARLY = """
         }}
 
         //set mutation rate for haploids
-        sim.overallMutationRate = {mutrate}
+        sim.overallMutationRate = g_mutrate
 
     // odd generations = gametophytes (p0) just generated sporophytes
     else {{
@@ -42,7 +42,7 @@ EARLY = """
         {deactivate}
 
         //set mutation rate for diploids
-        sim.overallMutationRate = {mutrate}
+        sim.overallMutationRate = s_mutrate
     }}
 """
 

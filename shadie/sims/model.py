@@ -231,6 +231,7 @@ class Model(AbstractContextManager):
         self.simtime = simtime
         self.trees_file = trees_file
         self.ne = ne
+        self.mutrate = mut
         
         self.map['initialize'].append({
             'mutation_rate': mut,
@@ -403,8 +404,9 @@ class Model(AbstractContextManager):
         assert "initialize" in self.script, (
             "You must call initialize() from within Model context")
 
-        assert "reproduction" in self.script, (
-            "You must specify a reproduction model to use")
+        # assert "reproduction" in self.script, (
+        #     "You must specify a reproduction model to use")
+        
         # assert "late" in self.script, (
             # "You must call late() from within Model context")
 

@@ -21,9 +21,9 @@ MTYPES = ("m", "mono", "monoecy", "monecious",)
 class AngiospermBase(ReproductionBase):
     lineage: str = field(default="Angiosperm", init=False)
     mode: str
-    chromosome: 'shadie.chromosome.ChromosomeBase'
-    simtime: int
-    fileout: str
+    _chromosome: 'shadie.chromosome.ChromosomeBase'
+    _simtime: int
+    _fileout: str
 
 @dataclass
 class Angiosperm(AngiospermBase):
@@ -40,6 +40,8 @@ class Angiosperm(AngiospermBase):
     pollen_count: int=100
     pollen_comp: str="F"
     pollen_per_stigma: int=5
+    spor_mutation_rate: Union[None, float] = None
+    gam_mutation_rate: float = 0.0
     random_death_chance: float=0
 
     def run(self):
@@ -51,6 +53,11 @@ class Angiosperm(AngiospermBase):
             self.female_to_male_ratio[1]/
             (self.female_to_male_ratio[0]+self.female_to_male_ratio[1]))
 
+        if self.spor_mutation_rate:
+            pass
+        else:
+            self.spor_mutation_rate = self.model.mutrate
+            self.gam_mutation_rate = 0.0
 
         self.add_initialize_constants()
         self.add_early_haploid_diploid_subpops()   
@@ -82,6 +89,8 @@ class Angiosperm(AngiospermBase):
         constants["Pollen_comp"] = self.pollen_comp
         constants["Pollen_count"] = self.clone_rate
         constants["Pollen_per_stigma"] = self.pollen_per_stigma
+        constants["s_mutrate"] = self.spor_mutation_rate
+        constants["g_mutrate"] = self.gam_mutation_rate
 
 
     def add_early_haploid_diploid_subpops(self):
@@ -98,13 +107,13 @@ class Angiosperm(AngiospermBase):
         """
         adds late() call that ends the simulation and saves the .trees file
         """
-        endtime = int(self.simtime + 1)
+        endtime = int(self._simtime + 1)
 
         self.model.late(
                 time = endtime, 
                 scripts = [
                 #"sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-                f"sim.treeSeqOutput('{self.fileout}')"],
+                f"sim.treeSeqOutput('{self._fileout}')"],
                 comment = "end of sim; save .trees file",
             )
 
@@ -119,7 +128,7 @@ class Angiosperm(AngiospermBase):
         activate = []
         deactivate = []
         substitutions = []
-        for mut in self.chromosome.mutations:
+        for mut in self._chromosome.mutations:
             i = i + 1
             idx = str("s" + str(i))
             active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
@@ -188,16 +197,13 @@ class Angiosperm(AngiospermBase):
         """
         fills the script reproduction block with bryophyte-monoicous
         """
-        """
-        fills the script reproduction block with bryophyte-dioicous
-        """
 
         # fitness callback:
         i = 4
         activate = []
         deactivate = []
         substitutions = []
-        for mut in self.chromosome.mutations:
+        for mut in self._chromosome.mutations:
             i = i + 1
             idx = str("s" + str(i))
             active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
@@ -294,7 +300,6 @@ if __name__ == "__main__":
 
         mod.reproduction.angiosperm(
             mode='mono',
-            chromosome = chrom,
             diploid_ne=1000, 
             haploid_ne=1000,
         )

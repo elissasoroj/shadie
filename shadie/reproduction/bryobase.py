@@ -3,7 +3,7 @@
 """
 Starting an alternate implementation of Reproduction 
 """
-
+from typing import Union
 from dataclasses import dataclass, field
 from shadie.reproduction.base_scripts import (
     ACTIVATE, DEACTIVATE, EARLY, SURV, MATERNAL_EFFECT,
@@ -36,9 +36,9 @@ class ReproductionBase:
 class BryophyteBase(ReproductionBase):
     lineage: str = field(default="Bryophyte", init=False)
     mode: str
-    chromosome: 'shadie.chromosome.ChromosomeBase'
-    simtime: int
-    fileout: str
+    _chromosome: 'shadie.chromosome.ChromosomeBase'
+    _simtime: int
+    _fileout: str
 
 @dataclass
 class Bryophyte(BryophyteBase):
@@ -52,6 +52,8 @@ class Bryophyte(BryophyteBase):
     clone_rate: float=0.0
     selfing_rate: float=0
     maternal_effect_weight: float=0
+    spor_mutation_rate: Union[None, float] = None
+    gam_mutation_rate: Union[None, float] = None
     random_death_chance: float=0
     startfile: str = "F"
 
@@ -60,9 +62,23 @@ class Bryophyte(BryophyteBase):
         Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
         """
-        self.female_to_male_ratio = (
-            self.female_to_male_ratio[1]/
-            (self.female_to_male_ratio[0]+self.female_to_male_ratio[1]))
+        
+        #calculate gFtoM
+        self.gam_female_to_male_ratio = (
+            self.gam_female_to_male_ratio[1]/
+            (self.gam_female_to_male_ratio[0]+self.gam_female_to_male_ratio[1]))
+
+        #set up sporophyte and gametophyte mutation rates
+        if self.spor_mutation_rate or self.gam_mutation_rate:
+            assert self.spor_muation_rate and self.gam_mutation_rate, (
+                "You must define a mutation rate for both sporophyte "
+                "and gametophyte generations.")
+            if self.gam_mutation_rate:
+                self.spor_mutation_rate = self.spor_mutation_rate
+                self.gam_mutation_rate = self.gam_mutation_rate
+        else:
+            self.spor_mutation_rate = 0.5*self.model.mutrate
+            self.gam_mutation_rate = 0.5*self.model.mutrate
 
         #self.add_initialize_constants()
         self.add_early_haploid_diploid_subpops() 
@@ -110,13 +126,13 @@ class Bryophyte(BryophyteBase):
         """
         adds late() call that ends the simulation and saves the .trees file
         """
-        endtime = int(self.simtime + 1)
+        endtime = int(self._simtime + 1)
 
         self.model.late(
                 time = endtime, 
                 scripts = [
                 #"sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-                f"sim.treeSeqOutput('{self.fileout}')"],
+                f"sim.treeSeqOutput('{self._fileout}')"],
                 comment = "end of sim; save .trees file",
             )
 
@@ -134,13 +150,15 @@ class Bryophyte(BryophyteBase):
         constants["Clone_rate"] = self.clone_rate
         constants["Self_rate"] = self.selfing_rate
         constants["Maternal_weight"] = self.maternal_effect_weight
+        constants["s_mutrate"] = self.spor_mutation_rate
+        constants["g_mutrate"] = self.gam_mutation_rate
 
         # fitness callback:
         i = 4
         activate = []
         deactivate = []
         substitutions = []
-        for mut in self.chromosome.mutations:
+        for mut in self._chromosome.mutations:
             i = i + 1
             idx = str("s" + str(i))
             active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
@@ -218,13 +236,15 @@ class Bryophyte(BryophyteBase):
         constants["Clone_rate"] = self.clone_rate
         constants["Self_rate"] = self.selfing_rate
         constants["Maternal_weight"] = self.maternal_effect_weight
+        constants["s_mutrate"] = self.spor_mutation_rate
+        constants["g_mutrate"] = self.gam_mutation_rate
 
         # fitness callback:
         i = 4
         activate = []
         deactivate = []
         substitutions = []
-        for mut in self.chromosome.mutations:
+        for mut in self._chromosome.mutations:
             i = i + 1
             idx = str("s" + str(i))
             active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
