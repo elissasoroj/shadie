@@ -9,6 +9,7 @@ code format.
 from typing import Optional
 import itertools
 import pandas as pd
+from shadie.base.defaults import NONCDS
 from shadie.chromosome.src.draw import (
     draw_altair_chrom_canvas_interactive,
     draw_toyplot_chrom,
@@ -27,14 +28,15 @@ class ChromosomeBase:
     Parameters
     ----------
     genome_size: int
-        The size of the genome in bp
+        The size of the genome in bp; bp count starts at 0
     nucleotides: bool
         Use initializeMutationTypeNuc instead of initializeMutationType
     """
     def __init__(self, genome_size: int, use_nucleotides: bool=False):
-        self.genome_size = int(genome_size)
+        self.genome_size = int(genome_size-1)
         self.mutations = []
         self.use_nuc = use_nucleotides
+        self.NS_sites:bool = True, #turn off S/NS sites with False
         # self.ichrom = None
         self.data = pd.DataFrame(
             columns=['name', 'start', 'end', 'eltype', 'script', 'coding'],
@@ -106,7 +108,12 @@ class ChromosomeBase:
         # SLiM run by creating an unlinked tiny region with selection
         # that will be removed later.
         if not self.is_coding():
-            raise NotImplementedError("fully neutral shadie sim not yet supported.")
+            start = int(self.genome_size + 1)
+            end = int(self.genome_size + 2)
+            commands.extend([
+                    f"initializeGenomicElement({NONCDS.name}, {self.genome_size}, end);\n",
+                ])
+            raise NotImplementedError("fully neutral shadie sim is under development.")
 
         # iterate over int start positions of elements
         for idx in self.data.index:

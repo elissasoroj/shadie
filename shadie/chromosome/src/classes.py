@@ -76,6 +76,7 @@ class ChromosomeRandom(ChromosomeBase):
         self.intron = intron if intron is not None else INTRON
         self.exon = exon if exon is not None else EXON
         self.noncds = noncds if noncds is not None else NONCDS
+        self.genome_size = int(genome_size - 1)
 
         # combine all elements into a list
         elements = []
@@ -193,7 +194,7 @@ class ChromosomeExplicit(ChromosomeBase):
     })
     """
     def __init__(self, data):
-        genome_size = max(i[1] for i in data.keys())
+        genome_size = 1+(max(i[1] for i in data.keys()))
         super().__init__(genome_size)
 
         # check data dict for proper structure
