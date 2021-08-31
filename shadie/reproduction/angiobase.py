@@ -18,7 +18,7 @@ DTYPES = ("d", "dio", "dioecy", "dioecious",)
 MTYPES = ("m", "mono", "monoecy", "monecious",)
 
 @dataclass
-class AngiospermBase(ReproductionBase):
+class SpermatophyteBase(ReproductionBase):
     lineage: str = field(default="Angiosperm", init=False)
     mode: str
     _chromosome: 'shadie.chromosome.ChromosomeBase'
@@ -26,7 +26,7 @@ class AngiospermBase(ReproductionBase):
     _fileout: str
 
 @dataclass
-class Angiosperm(AngiospermBase):
+class Spermatophyte(SpermatophyteBase):
     """
     Reproduction mode based on angiosperms; appropriate for gymnosperms
     as well
@@ -298,7 +298,7 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.angiosperm(
+        mod.reproduction.spermatophyte(
             mode='mono',
             diploid_ne=1000, 
             haploid_ne=1000,

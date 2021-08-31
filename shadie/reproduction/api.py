@@ -8,7 +8,7 @@ histories into SLiM scripts using the shadie Model context.
 
 from shadie.reproduction.base import Base
 from shadie.reproduction.bryobase import Bryophyte
-from shadie.reproduction.angiobase import Angiosperm
+from shadie.reproduction.angiobase import Spermatophyte
 from shadie.reproduction.fernbase import Pteridophyte
 from typing import Union
 
@@ -115,12 +115,8 @@ class ReproductionApi:
             _fileout = self.model.trees_file,
         ).run()
 
-    def spermatophyte(self, ):
-        """
-        TODO:
-        """
 
-    def angiosperm(
+    def spermatophyte(
         self, 
         mode:str, 
         diploid_ne: int,
@@ -148,7 +144,7 @@ class ReproductionApi:
             A life history strategy or "dio" or "mono" -ecious.
         ...
         """
-        Angiosperm(
+        Spermatophyte(
             model=self.model, _chromosome=self.model.chromosome, 
             mode=mode,diploid_ne=diploid_ne, haploid_ne=haploid_ne,
             female_to_male_ratio=female_to_male_ratio,
