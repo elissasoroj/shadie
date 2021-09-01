@@ -37,8 +37,8 @@ class BryophyteBase(ReproductionBase):
     lineage: str = field(default="Bryophyte", init=False)
     mode: str
     _chromosome: 'shadie.chromosome.ChromosomeBase'
-    _simtime: int
-    _fileout: str
+    _sim_time: int
+    _file_out: str
 
 @dataclass
 class Bryophyte(BryophyteBase):
@@ -79,8 +79,8 @@ class Bryophyte(BryophyteBase):
                 self.spo_mutation_rate = self.spo_mutation_rate
                 self.gam_mutation_rate = self.gam_mutation_rate
         else:
-            self.spo_mutation_rate = 0.5*self.model.mutrate
-            self.gam_mutation_rate = 0.5*self.model.mutrate
+            self.spo_mutation_rate = 0.5*self.model.mutation_rate
+            self.gam_mutation_rate = 0.5*self.model.mutation_rate
 
         self.add_initialize_constants()
         self.add_early_haploid_diploid_subpops() 
@@ -127,13 +127,13 @@ class Bryophyte(BryophyteBase):
         """
         adds late() call that ends the simulation and saves the .trees file
         """
-        endtime = int(self._simtime + 1)
+        endtime = int(self._sim_time + 1)
 
         self.model.late(
                 time = endtime, 
                 scripts = [
                 #"sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-                f"sim.treeSeqOutput('{self._fileout}')"],
+                f"sim.treeSeqOutput('{self._file_out}')"],
                 comment = "end of sim; save .trees file",
             )
 

@@ -40,9 +40,9 @@ class ReproductionApi:
         spo_random_death_chance:float=0,
         gam_random_death_chance: float=0, 
         start_file: Union[None, str] = None,
-         _chromosome=None,
-        _simtime = None,  
-        _fileout = None,          
+        _chromosome=None,
+        _sim_time = None,  
+        _file_out = None,          
         ):
         """Adds bryo life history to the model scripts dict.
 
@@ -81,7 +81,7 @@ class ReproductionApi:
         gam_random_death_chance: float
             Random chance a gametophyte will die before reproducing,
             regardless of fitness
-        startfile: str
+        file_in: str
             Provide a .trees file that will serve as the starting 
             point for the simulation
         ...
@@ -98,8 +98,8 @@ class ReproductionApi:
             spo_random_death_chance=spo_random_death_chance,
             gam_random_death_chance=gam_random_death_chance,
             start_file=start_file, _chromosome=self.model.chromosome, 
-            _simtime = 2*self.model.simtime, 
-            _fileout = self.model.trees_file,
+            _sim_time = 2*self.model.sim_time, 
+            _file_out = self.model.file_out,
         ).run()
 
 
@@ -115,11 +115,15 @@ class ReproductionApi:
         gam_female_to_male_ratio: float.as_integer_ratio = (1,1),
         spo_clone_rate: float=0.0,
         gam_clone_rate: float=0.0,
+        gam_clone_number: int=1,
         gam_self_rate: float=0.0,
         gam_maternal_effect: float=0,
         spo_random_death_chance: float=0, 
         gam_random_death_chance: float=0,
-        start_file: Union[None, str] = None,        
+        start_file: Union[None, str] = None,  
+        _chromosome=None,
+        _sim_time = None,  
+        _file_out = None,       
         ):
         """
         Generate scripts appropriate for an pteridophyte (lycophytes 
@@ -160,7 +164,7 @@ class ReproductionApi:
         gam_random_death_chance: float
             Random chance a gametophyte will die before reproducing,
             regardless of fitness
-        startfile: str
+        file_in: str
             Provide a .trees file that will serve as the starting 
             point for the simulation
         ...
@@ -173,14 +177,15 @@ class ReproductionApi:
             gam_female_to_male_ratio = gam_female_to_male_ratio,
             spores_per_spo=spores_per_spo,
             spo_clone_rate=spo_clone_rate, gam_clone_rate=gam_clone_rate,
+            gam_clone_number = gam_clone_number,
             gam_self_rate=gam_self_rate,
             gam_maternal_effect=gam_maternal_effect,
             spo_random_death_chance=spo_random_death_chance, 
             gam_random_death_chance=gam_random_death_chance,
             start_file = start_file,
             _chromosome=self.model.chromosome,
-            _simtime = 2*self.model.simtime, 
-            _fileout = self.model.trees_file,
+            _sim_time = 2*self.model.sim_time, 
+            _file_out = self.model.file_out,
         ).run()
 
 
@@ -201,6 +206,9 @@ class ReproductionApi:
         spo_random_death_chance: float=0,  
         gam_random_death_chance: float=0, 
         start_file: Union[None, str] = None,
+        _chromosome=None,
+        _sim_time = None,  
+        _file_out = None, 
         ):
         """
         Generate scripts appropriate for an angiosperm (flowering plant)
@@ -227,8 +235,8 @@ class ReproductionApi:
             gam_random_death_chance=gam_random_death_chance,
             start_file = start_file,
             _chromosome=self.model.chromosome, 
-            _simtime = 2*self.model.simtime, 
-            _fileout = self.model.trees_file,
+            _sim_time = 2*self.model.sim_time, 
+            _file_out = self.model.file_out,
         ).run()
 
     def base(
@@ -250,7 +258,7 @@ class ReproductionApi:
         Base(
             model=self.model, ne = ne, sexes = sexes, 
             _chromosome=self.model.chromosome, 
-            _simtime = self.model.simtime, 
-            _fileout = self.model.fileout,
+            _sim_time = self.model.sim_time, 
+            _file_out = self.model.file_out,
         ).run()
 

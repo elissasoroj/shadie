@@ -13,7 +13,7 @@ EARLY = """
         p0.fitnessScaling = (gam_ne / p0.individualCount);
 
         //set mutation rate for haploids
-        sim.overallMutationRate = gam_mutation_rate;
+        sim.chromosome.setMutationRate(gam_mutation_rate);
 
         // p0 and p1 survival callbacks
         s1.active = 1;
@@ -33,7 +33,7 @@ EARLY = """
         p1.fitnessScaling = spo_ne / p1.individualCount;
 
         //set mutation rate for diploids
-        sim.overallMutationRate = spo_mutation_rate;
+        sim.chromosome.setMutationRate(spo_mutation_rate);
 
         // turn off p0 survival callbacks
         // turn on p1 survival callbacks
@@ -127,7 +127,8 @@ s4 survival(p0) {{
 """
 
 ANGIO_SURV_P0 = """
-    {
+    {//All ovules survive; this is a way of implementing maternal effect
+    //if mother died, they would not be produced
         if (individual.tag == 1)
                 return T;
         else
@@ -172,7 +173,7 @@ REPRO_BRYO_DIO_P0 = """
         reproduction_opportunity_count = 1;
 
         // clones give the focal individual extra opportunities to reproduce
-        if (runif(1) <= Clone_rate)
+        if (runif(1) <= gam_clone_rate)
             reproduction_opportunity_count = reproduction_opportunity_count + 1;
 
         for (repro in seqLen(reproduction_opportunity_count)) {
@@ -217,7 +218,7 @@ REPRO_BRYO_MONO_P0 = """
     reproduction_opportunity_count = 1;
 
     // clones give the focal individual extra opportunities to reproduce
-    if (runif(1) <= Clone_rate)
+    if (runif(1) <= gam_clone_rate)
         reproduction_opportunity_count = reproduction_opportunity_count + 1;
 
     for (repro in seqLen(reproduction_opportunity_count))

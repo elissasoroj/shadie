@@ -21,8 +21,8 @@ class PteridophyteBase(ReproductionBase):
     lineage: str = field(default="Angiosperm", init=False)
     mode: str
     _chromosome: 'shadie.chromosome.ChromosomeBase'
-    _simtime: int
-    _fileout: str
+    _sim_time: int
+    _file_out: str
 
 @dataclass
 class Pteridophyte(PteridophyteBase):
@@ -38,10 +38,13 @@ class Pteridophyte(PteridophyteBase):
     spores_per_spo: int=100
     spo_clone_rate: float=0.0
     gam_clone_rate: float=0.0
+    gam_clone_number: int=1
     gam_self_rate: float=0.0
     gam_maternal_effect: float=0
     spo_random_death_chance: float=0
     gam_random_death_chance: float=0
+    start_file: Union[None, str]=None
+
 
     def run(self):
         """
@@ -52,7 +55,7 @@ class Pteridophyte(PteridophyteBase):
         #calculate FtoM
         self.spo_female_to_male_ratio = (
             self.spo_female_to_male_ratio[1]/
-            (self.spo_female_to_male_ratio[0]+self.female_to_male_ratio[1]))
+            (self.spo_female_to_male_ratio[0]+self.spo_female_to_male_ratio[1]))
 
         #calculate gFtoM
         self.gam_female_to_male_ratio = (
@@ -61,15 +64,15 @@ class Pteridophyte(PteridophyteBase):
 
         #set up sporophyte and gametophyte mutation rates
         if self.spo_mutation_rate or self.gam_mutation_rate:
-            assert self.spo_muation_rate and self.gam_mutation_rate, (
+            assert self.spo_mutation_rate and self.gam_mutation_rate, (
                 "You must define a mutation rate for both sporophyte "
                 "and gametophyte generations.")
             if self.gam_mutation_rate:
                 self.spo_mutation_rate = self.spo_mutation_rate
                 self.gam_mutation_rate = self.gam_mutation_rate
         else:
-            self.spo_mutation_rate = 0.5*self.model.mutrate
-            self.gam_mutation_rate = 0.5*self.model.mutrate
+            self.spo_mutation_rate = 0.5*self.model.mutation_rate
+            self.gam_mutation_rate = 0.5*self.model.mutation_rate
 
         self.add_initialize_constants()
         self.add_early_haploid_diploid_subpops() 
@@ -99,7 +102,7 @@ class Pteridophyte(PteridophyteBase):
         constants["gam_self_rate"] = self.gam_self_rate
         constants["gam_clone_rate"] = self.gam_clone_rate
         constants["gam_clone_num"] = self.gam_clone_number
-        constants["gam_maternal_effect"] = self.maternal_effect
+        constants["gam_maternal_effect"] = self.gam_maternal_effect
         constants["spo_random_death_chance"] = self.spo_random_death_chance
         constants["gam_random_death_chance"] = self.gam_random_death_chance
 
@@ -119,13 +122,13 @@ class Pteridophyte(PteridophyteBase):
         """
         adds late() call that ends the simulation and saves the .trees file
         """
-        endtime = int(self._simtime + 1)
+        endtime = int(self._sim_time + 1)
 
         self.model.late(
                 time = endtime, 
                 scripts = [
                 #"sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-                f"sim.treeSeqOutput('{self._fileout}')"],
+                f"sim.treeSeqOutput('{self._file_out}')"],
                 comment = "end of sim; save .trees file",
             )
 
@@ -314,8 +317,8 @@ if __name__ == "__main__":
 
         mod.reproduction.pteridophyte(
             mode='mono',
-            diploid_ne=1000, 
-            haploid_ne=1000,
+            spo_ne=1000, 
+            gam_ne=1000,
         )
 
 

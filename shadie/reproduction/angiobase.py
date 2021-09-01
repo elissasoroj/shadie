@@ -22,8 +22,8 @@ class SpermatophyteBase(ReproductionBase):
     lineage: str = field(default="Angiosperm", init=False)
     mode: str
     _chromosome: 'shadie.chromosome.ChromosomeBase'
-    _simtime: int
-    _fileout: str
+    _sim_time: int
+    _file_out: str
 
 @dataclass
 class Spermatophyte(SpermatophyteBase):
@@ -37,6 +37,7 @@ class Spermatophyte(SpermatophyteBase):
     gam_mutation_rate: float = 0.0
     spo_female_to_male_ratio: float.as_integer_ratio = (1,1)
     spo_clone_rate: float=0.0
+    spo_clone_number:int = 1
     ovule_count: int=30
     fertilization_rate: float=0.7
     pollen_count: int=100
@@ -44,6 +45,7 @@ class Spermatophyte(SpermatophyteBase):
     pollen_per_stigma: int=5
     spo_random_death_chance: float=0
     gam_random_death_chance: float=0
+    start_file: Union[None, str]=None
 
     def run(self):
         """
@@ -57,7 +59,7 @@ class Spermatophyte(SpermatophyteBase):
         if self.spo_mutation_rate:
             pass
         else:
-            self.spo_mutation_rate = self.model.mutrate
+            self.spo_mutation_rate = self.model.mutation_rate
             self.gam_mutation_rate = 0.0
 
         self.add_initialize_constants()
@@ -83,13 +85,12 @@ class Spermatophyte(SpermatophyteBase):
         constants["gam_mutation_rate"] = self.gam_mutation_rate
         constants["spo_female_to_male_ratio"] = self.spo_female_to_male_ratio
         constants["spo_clone_rate"] = self.spo_clone_rate
-        constants["spo_clone_num"] = self.spo_clone_number
+        constants["spo_clone_number"] = self.spo_clone_number
         # constants["Self_rate"] = self.selfing_rate
         constants["ovule_count"] = self.ovule_count
         constants["fertilization_rate"] = self.fertilization_rate
         constants["pollen_count"] = self.pollen_count
         constants["pollen_comp"] = self.pollen_comp
-        constants["pollen_count"] = self.clone_rate
         constants["pollen_per_stigma"] = self.pollen_per_stigma
         constants["spo_random_death_chance"] = self.spo_random_death_chance
         constants["gam_random_death_chance"] = self.gam_random_death_chance
@@ -109,13 +110,13 @@ class Spermatophyte(SpermatophyteBase):
         """
         adds late() call that ends the simulation and saves the .trees file
         """
-        endtime = int(self._simtime + 1)
+        endtime = int(self._sim_time + 1)
 
         self.model.late(
                 time = endtime, 
                 scripts = [
                 #"sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-                f"sim.treeSeqOutput('{self._fileout}')"],
+                f"sim.treeSeqOutput('{self._file_out}')"],
                 comment = "end of sim; save .trees file",
             )
 
@@ -302,8 +303,8 @@ if __name__ == "__main__":
 
         mod.reproduction.spermatophyte(
             mode='mono',
-            diploid_ne=1000, 
-            haploid_ne=1000,
+            spo_ne=1000, 
+            gam_ne=1000,
         )
 
     print(mod.script)
