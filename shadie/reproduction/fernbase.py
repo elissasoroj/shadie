@@ -29,18 +29,19 @@ class Pteridophyte(PteridophyteBase):
     """
     Reproduction mode based on ferns and lycophytes
     """
-    diploid_ne: int
-    haploid_ne: int
-    female_to_male_ratio: float.as_integer_ratio = (1,1)
-    gam_female_to_male_ratio: float.as_integer_ratio = (1,1)
-    clone_rate: float=0.0
-    selfing_rate: float=0.0
-    gam_clone_rate: float=0.0
-    spores_per_sporophyte: int=100
-    maternal_effect_weight: float=0
-    spor_mutation_rate: Union[None, float] = None
+    spo_ne: int
+    gam_ne: int
+    spo_mutation_rate: Union[None, float] = None
     gam_mutation_rate: Union[None, float] = None
-    random_death_chance: float=0
+    spo_female_to_male_ratio: float.as_integer_ratio = (1,1)
+    gam_female_to_male_ratio: float.as_integer_ratio = (1,1)
+    spores_per_spo: int=100
+    spo_clone_rate: float=0.0
+    gam_clone_rate: float=0.0
+    gam_self_rate: float=0.0
+    gam_maternal_effect: float=0
+    spo_random_death_chance: float=0
+    gam_random_death_chance: float=0
 
     def run(self):
         """
@@ -49,9 +50,9 @@ class Pteridophyte(PteridophyteBase):
         """
         
         #calculate FtoM
-        self.female_to_male_ratio = (
-            self.female_to_male_ratio[1]/
-            (self.female_to_male_ratio[0]+self.female_to_male_ratio[1]))
+        self.spo_female_to_male_ratio = (
+            self.spo_female_to_male_ratio[1]/
+            (self.spo_female_to_male_ratio[0]+self.female_to_male_ratio[1]))
 
         #calculate gFtoM
         self.gam_female_to_male_ratio = (
@@ -59,15 +60,15 @@ class Pteridophyte(PteridophyteBase):
             (self.gam_female_to_male_ratio[0]+self.gam_female_to_male_ratio[1]))
 
         #set up sporophyte and gametophyte mutation rates
-        if self.spor_mutation_rate or self.gam_mutation_rate:
-            assert self.spor_muation_rate and self.gam_mutation_rate, (
+        if self.spo_mutation_rate or self.gam_mutation_rate:
+            assert self.spo_muation_rate and self.gam_mutation_rate, (
                 "You must define a mutation rate for both sporophyte "
                 "and gametophyte generations.")
             if self.gam_mutation_rate:
-                self.spor_mutation_rate = self.spor_mutation_rate
+                self.spo_mutation_rate = self.spo_mutation_rate
                 self.gam_mutation_rate = self.gam_mutation_rate
         else:
-            self.spor_mutation_rate = 0.5*self.model.mutrate
+            self.spo_mutation_rate = 0.5*self.model.mutrate
             self.gam_mutation_rate = 0.5*self.model.mutrate
 
         self.add_initialize_constants()
@@ -87,19 +88,20 @@ class Pteridophyte(PteridophyteBase):
         Add defineConstant calls to init for new variables
         """
         constants = self.model.map["initialize"][0]['constants']
-        constants["dK"] = self.diploid_ne
-        constants["hK"] = self.haploid_ne
-        constants["Death_chance"] = self.random_death_chance
-        constants["FtoM"] = self.female_to_male_ratio
-        constants["gFtoM"] = self.gam_female_to_male_ratio
-        constants["Clone_rate"] = self.clone_rate
-        constants["Self_rate"] = self.selfing_rate
-        constants["gClone_rate"] = self.gam_clone_rate
-        constants["Spore_num"] = self.spores_per_sporophyte
-        # constants["Clone_num"] = self.clone_number
-        constants["Maternal_weight"] = self.maternal_effect_weight
-        constants["s_mutrate"] = self.spor_mutation_rate
-        constants["g_mutrate"] = self.gam_mutation_rate
+        constants["spo_ne"] = self.spo_ne
+        constants["gam_ne"] = self.gam_ne
+        constants["spo_mutation_rate"] = self.spo_mutation_rate
+        constants["gam_mutation_rate"] = self.gam_mutation_rate
+        constants["spores_per_spo"] = self.spores_per_spo
+        constants["spo_femalte_to_male_ratio"] = self.spo_female_to_male_ratio
+        constants["gam_female_to_male_ratio"] = self.gam_female_to_male_ratio
+        constants["spo_clone_rate"] = self.spo_clone_rate
+        constants["gam_self_rate"] = self.gam_self_rate
+        constants["gam_clone_rate"] = self.gam_clone_rate
+        constants["gam_clone_num"] = self.gam_clone_number
+        constants["gam_maternal_effect"] = self.maternal_effect
+        constants["spo_random_death_chance"] = self.spo_random_death_chance
+        constants["gam_random_death_chance"] = self.gam_random_death_chance
 
 
     def add_early_haploid_diploid_subpops(self):

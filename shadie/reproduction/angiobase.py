@@ -31,32 +31,33 @@ class Spermatophyte(SpermatophyteBase):
     Reproduction mode based on angiosperms; appropriate for gymnosperms
     as well
     """
-    diploid_ne: int
-    haploid_ne: int=50000
-    female_to_male_ratio: float.as_integer_ratio = (1,1)
-    clone_rate: float=0.0
+    spo_ne: int
+    gam_ne: int=50000
+    spo_mutation_rate: Union[None, float] = None
+    gam_mutation_rate: float = 0.0
+    spo_female_to_male_ratio: float.as_integer_ratio = (1,1)
+    spo_clone_rate: float=0.0
     ovule_count: int=30
     fertilization_rate: float=0.7
     pollen_count: int=100
     pollen_comp: str="F"
     pollen_per_stigma: int=5
-    spor_mutation_rate: Union[None, float] = None
-    gam_mutation_rate: float = 0.0
-    random_death_chance: float=0
+    spo_random_death_chance: float=0
+    gam_random_death_chance: float=0
 
     def run(self):
         """
         Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
         """
-        self.female_to_male_ratio = (
-            self.female_to_male_ratio[1]/
-            (self.female_to_male_ratio[0]+self.female_to_male_ratio[1]))
+        self.spo_female_to_male_ratio = (
+            self.spo_female_to_male_ratio[1]/
+            (self.spo_female_to_male_ratio[0]+self.spo_female_to_male_ratio[1]))
 
-        if self.spor_mutation_rate:
+        if self.spo_mutation_rate:
             pass
         else:
-            self.spor_mutation_rate = self.model.mutrate
+            self.spo_mutation_rate = self.model.mutrate
             self.gam_mutation_rate = 0.0
 
         self.add_initialize_constants()
@@ -76,21 +77,22 @@ class Spermatophyte(SpermatophyteBase):
         Add defineConstant calls to init for new variables
         """
         constants = self.model.map["initialize"][0]['constants']
-        constants["dK"] = self.diploid_ne
-        constants["hK"] = self.haploid_ne
-        constants["Death_chance"] = self.random_death_chance
-        constants["FtoM"] = self.female_to_male_ratio
-        constants["Clone_rate"] = self.clone_rate
-        # constants["Clone_num"] = self.clone_number
+        constants["spo_ne"] = self.spo_ne
+        constants["gam_ne"] = self.gam_ne
+        constants["spo_mutation_rate"] = self.spo_mutation_rate
+        constants["gam_mutation_rate"] = self.gam_mutation_rate
+        constants["spo_female_to_male_ratio"] = self.spo_female_to_male_ratio
+        constants["spo_clone_rate"] = self.spo_clone_rate
+        constants["spo_clone_num"] = self.spo_clone_number
         # constants["Self_rate"] = self.selfing_rate
-        constants["Ovule_count"] = self.ovule_count
-        constants["Fertilization_rate"] = self.fertilization_rate
-        constants["Pollen_count"] = self.pollen_count
-        constants["Pollen_comp"] = self.pollen_comp
-        constants["Pollen_count"] = self.clone_rate
-        constants["Pollen_per_stigma"] = self.pollen_per_stigma
-        constants["s_mutrate"] = self.spor_mutation_rate
-        constants["g_mutrate"] = self.gam_mutation_rate
+        constants["ovule_count"] = self.ovule_count
+        constants["fertilization_rate"] = self.fertilization_rate
+        constants["pollen_count"] = self.pollen_count
+        constants["pollen_comp"] = self.pollen_comp
+        constants["pollen_count"] = self.clone_rate
+        constants["pollen_per_stigma"] = self.pollen_per_stigma
+        constants["spo_random_death_chance"] = self.spo_random_death_chance
+        constants["gam_random_death_chance"] = self.gam_random_death_chance
 
 
     def add_early_haploid_diploid_subpops(self):
