@@ -219,6 +219,9 @@ class Model(AbstractContextManager):
         recomb_rate: float
             The per-site per-*sporophyte*-generation recombination rate.
             This is applied in the sporophyte generation during meiosis.
+        ne: int
+            Optional, for WF (base) model ONLY - user can define ne here
+            if they are not going to call .reproduction
         file_in: str
             Optional starting .trees file used to initialize the starting
             population

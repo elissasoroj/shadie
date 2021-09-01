@@ -20,6 +20,7 @@ MTYPES = ("m", "mono", "monoicy", "monoicous", "homosporous",)
 class PteridophyteBase(ReproductionBase):
     lineage: str = field(default="Angiosperm", init=False)
     mode: str
+    _file_in: str
     _chromosome: 'shadie.chromosome.ChromosomeBase'
     _sim_time: int
     _file_out: str
@@ -43,7 +44,6 @@ class Pteridophyte(PteridophyteBase):
     gam_maternal_effect: float=0
     spo_random_death_chance: float=0
     gam_random_death_chance: float=0
-    start_file: Union[None, str]=None
 
 
     def run(self):

@@ -21,6 +21,7 @@ MTYPES = ("m", "mono", "monoecy", "monecious",)
 class SpermatophyteBase(ReproductionBase):
     lineage: str = field(default="Angiosperm", init=False)
     mode: str
+    _file_in: str
     _chromosome: 'shadie.chromosome.ChromosomeBase'
     _sim_time: int
     _file_out: str
@@ -32,7 +33,7 @@ class Spermatophyte(SpermatophyteBase):
     as well
     """
     spo_ne: int
-    gam_ne: int=50000
+    gam_ne: int
     spo_mutation_rate: Union[None, float] = None
     gam_mutation_rate: float = 0.0
     spo_female_to_male_ratio: float.as_integer_ratio = (1,1)
@@ -45,7 +46,6 @@ class Spermatophyte(SpermatophyteBase):
     pollen_per_stigma: int=5
     spo_random_death_chance: float=0
     gam_random_death_chance: float=0
-    start_file: Union[None, str]=None
 
     def run(self):
         """
