@@ -70,7 +70,11 @@ class ChromosomeBase:
         >>> chrom.to_slim_mutation_types()
         'initializeMutationType("m1", 0.5, "f", 0.0);\ninitializeMut...'
         """
-        elements = self.data.script.unique()
+        if self.is_coding() == 0:
+            elements = []
+            elements.append(NONCDS)
+        else:
+             elements = self.data.script.unique()
         mut_lists = [i.mlist for i in elements]
         mutations = set(itertools.chain(*mut_lists))
         return "\n  ".join([i.to_slim(nuc=self.use_nuc) for i in mutations])
@@ -84,7 +88,11 @@ class ChromosomeBase:
         >>> chrom.to_slim_element_types()
         'initializeGenomicElementType("g1", c(m1,m2), c(3,3), mm);\ninitia...'
         """
-        elements = sorted(self.data.script.unique(), key=lambda x: x.name)
+        if self.is_coding() == 0:
+            elements = []
+            elements.append(NONCDS)
+        else:
+            elements = sorted(self.data.script.unique(), key=lambda x: x.name)
         return "\n  ".join([i.to_slim() for i in elements])
 
     def to_slim_elements(self) -> str:
@@ -107,13 +115,13 @@ class ChromosomeBase:
         # the entire chrom is neutral, create a HACK solution to make 
         # SLiM run by creating an unlinked tiny region with selection
         # that will be removed later.
-        if not self.is_coding():
-            start = int(self.genome_size + 1)
-            end = int(self.genome_size + 2)
+        if self.is_coding() == 0:
+            start = int(self.genome_size-1)
+            end = int(self.genome_size)
             commands.extend([
-                    f"initializeGenomicElement({NONCDS.name}, {self.genome_size}, end);\n",
+                    f"initializeGenomicElement({NONCDS.name}, {start}, {end});\n",
                 ])
-            raise NotImplementedError("fully neutral shadie sim is under development.")
+            #raise NotImplementedError("fully neutral shadie sim is under development.")
 
         # iterate over int start positions of elements
         for idx in self.data.index:
