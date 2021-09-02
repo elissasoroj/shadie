@@ -38,6 +38,7 @@ class Pteridophyte(PteridophyteBase):
     gam_female_to_male_ratio: float.as_integer_ratio = (1,1)
     spores_per_spo: int=100
     spo_clone_rate: float=0.0
+    spo_clone_number: float=1
     gam_clone_rate: float=0.0
     gam_clone_number: int=1
     gam_self_rate: float=0.0
@@ -99,9 +100,10 @@ class Pteridophyte(PteridophyteBase):
         constants["spo_femalte_to_male_ratio"] = self.spo_female_to_male_ratio
         constants["gam_female_to_male_ratio"] = self.gam_female_to_male_ratio
         constants["spo_clone_rate"] = self.spo_clone_rate
+        constants["spo_clone_number"] = self.spo_clone_number
         constants["gam_self_rate"] = self.gam_self_rate
         constants["gam_clone_rate"] = self.gam_clone_rate
-        constants["gam_clone_num"] = self.gam_clone_number
+        constants["gam_clone_number"] = self.gam_clone_number
         constants["gam_maternal_effect"] = self.gam_maternal_effect
         constants["spo_random_death_chance"] = self.spo_random_death_chance
         constants["gam_random_death_chance"] = self.gam_random_death_chance

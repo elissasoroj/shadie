@@ -174,7 +174,7 @@ REPRO_BRYO_DIO_P0 = """
 
         // clones give the focal individual extra opportunities to reproduce
         if (runif(1) <= gam_clone_rate)
-            reproduction_opportunity_count = reproduction_opportunity_count + 1;
+            reproduction_opportunity_count = reproduction_opportunity_count + gam_clone_number;
 
         for (repro in seqLen(reproduction_opportunity_count)) {
             if (runif(1) <= gam_self_rate) {
@@ -219,7 +219,7 @@ REPRO_BRYO_MONO_P0 = """
 
     // clones give the focal individual extra opportunities to reproduce
     if (runif(1) <= gam_clone_rate)
-        reproduction_opportunity_count = reproduction_opportunity_count + 1;
+        reproduction_opportunity_count = reproduction_opportunity_count + gam_clone_number;
 
     for (repro in seqLen(reproduction_opportunity_count))
     {
@@ -262,7 +262,7 @@ REPRO_ANGIO_DIO_P1 = """
         fertilized_ovules = rbinom(1, ovule_count, fertilization_rate);
         meiosis_reps = floor(fertilize_ovules/2);
         if (runif(1) <= spo_clone_rate)
-            meiosis_reps = meiosis_reps*2;
+            meiosis_reps = spo_clone_number*meiosis_reps*2;
 
         for (rep in 1:meiosis_reps) {
             breaks = sim.chromosome.drawBreakpoints(individual);
@@ -275,7 +275,7 @@ REPRO_ANGIO_DIO_P1 = """
     else {
         meiosis_reps = floor(pollen_count/2);
         if (runif(1) <= spo_clone_rate)
-            meiosis_reps = meiosis_reps*2;
+            meiosis_reps = spo_clone_number*meiosis_reps*2;
         for (rep in 1:meiosis_reps) {
             breaks = sim.chromosome.drawBreakpoints(individual);
             p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 0;
@@ -330,7 +330,7 @@ REPRO_ANGIO_MONO_P1="""
     fertilized_ovules = rbinom(1, ovule_count, fertilization_rate);
     meiosis_reps = floor(fertilized_ovules/2);
     if (runif(1) <= spo_clone_rate)
-        meiosis_reps = meiosis_reps*2;
+        meiosis_reps = spo_clone_number*meiosis_reps*2;
 
     for (rep in 1:meiosis_reps) {
         breaks = sim.chromosome.drawBreakpoints(individual);
@@ -340,7 +340,7 @@ REPRO_ANGIO_MONO_P1="""
 
     meiosis_reps = floor(pollen_count/2);
     if (runif(1) <= spo_clone_rate)
-        meiosis_reps = meiosis_reps*2;
+        meiosis_reps = spo_clone_number*meiosis_reps*2;
     for (rep in 1:meiosis_reps) {
         breaks = sim.chromosome.drawBreakpoints(individual);
         p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 0;
@@ -355,7 +355,7 @@ REPRO_PTER_HOMOSPORE_P0 = """
 
         // clones give the focal individual extra opportunities to reproduce
         if (runif(1) <= gam_clone_rate)
-            reproduction_opportunity_count = reproduction_opportunity_count + 1;
+            reproduction_opportunity_count = reproduction_opportunity_count + gam_clone_number;
 
         for (repro in seqLen(reproduction_opportunity_count)) {
             if (runif(1) <= gam_self_rate)
@@ -386,7 +386,7 @@ REPRO_PTER_HOMOSPORE_P1 = """
 
     // clones give the focal individual extra opportunities to reproduce
     if (runif(1) <= spo_clone_rate)
-        meiosis_reps = meiosis_reps*2;
+        meiosis_reps = spo_clone_number*meiosis_reps*2;
 
     for (rep in 1:meiosis_reps) {
         breaks = sim.chromosome.drawBreakpoints(individual);
@@ -422,7 +422,7 @@ REPRO_PTER_HETEROSPORE_P1 = """
     
     // clones give the focal individual extra opportunities to reproduce
     if (runif(1) <= spo_clone_rate)
-        meiosis_reps = meiosis_reps*2;
+        meiosis_reps = spo_clone_number*meiosis_reps*2;
 
     for (rep in 1:meiosis_reps)
     {
