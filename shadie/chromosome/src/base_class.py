@@ -32,11 +32,16 @@ class ChromosomeBase:
     nucleotides: bool
         Use initializeMutationTypeNuc instead of initializeMutationType
     """
-    def __init__(self, genome_size: int, use_nucleotides: bool=False):
+    def __init__(self, 
+        genome_size: int, 
+        use_nucleotides: bool=False,
+        ns_sites: bool =True,
+        ):
+
         self.genome_size = int(genome_size-1)
         self.mutations = []
         self.use_nuc = use_nucleotides
-        self.NS_sites:bool = True, #turn off S/NS sites with False
+        self.ns_sites = ns_sites, #turn off S/NS sites with False
         # self.ichrom = None
         self.data = pd.DataFrame(
             columns=['name', 'start', 'end', 'eltype', 'script', 'coding'],
@@ -111,6 +116,13 @@ class ChromosomeBase:
         """
         #Note: will need to fix the formatting on this chunk**
         commands = []
+
+        if not self.ns_sites:
+            for idx in self.data.index:
+                ele = self.data.loc[idx]
+                commands.append("initializeGenomicElement("
+                    f"{ele.eltype}, {ele.start}, {ele.end});")
+            return "\n  ".join(commands)
 
         # the entire chrom is neutral; last bp is filled with a neutral
         #genomic element, so that SLiM doesn't complain
