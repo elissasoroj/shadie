@@ -121,28 +121,17 @@ class Bryophyte(BryophyteBase):
         if self._file_in:
             self.model.readfromfile()
         else:
-        self.model.early(
-            time=1,
-            scripts=["sim.addSubpop('p1', spo_ne)", "sim.addSubpop('p0', 0)"],
-            comment="define Bryophyte subpops: diploid sporophytes, haploid gametophytes",
-        )
+            self.model.early(
+                time=1,
+                scripts=["sim.addSubpop('p1', spo_ne)", "sim.addSubpop('p0', 0)"],
+                comment="define Bryophyte subpops: diploid sporophytes, haploid gametophytes",
+            )
 
     def end_sim(self):
         """
         adds late() call that ends the simulation and saves the .trees file
         """
         endtime = int(self._sim_time + 1)
-
-        # if self._file_in:
-        #     self.model.late(
-        #         idx = "s0",
-        #         time = 1e9, 
-        #         scripts = [
-        #         "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-        #         f"sim.treeSeqOutput('{self._file_out}')"],
-        #         comment = "end of sim; save .trees file",
-        #     )
-        # else:
         self.model.late(
                 time = endtime, 
                 scripts = [
