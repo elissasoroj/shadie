@@ -263,7 +263,7 @@ EARLY1_ANGIO = """
     fems = spo_female_to_male_ratio*spo_ne;
     spo_sex_starts = c(rep(1, asInteger(fems)), 
         rep(0, asInteger(spo_ne-fems)));
-    p1.individuals.tag = dsex_starts;
+    p1.individuals.tag = spo_sex_starts;
 """
 
 REPRO_ANGIO_DIO_P1 = """
