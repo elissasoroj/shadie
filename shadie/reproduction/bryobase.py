@@ -69,8 +69,9 @@ class Bryophyte(BryophyteBase):
         
         #calculate gFtoM
         self.gam_female_to_male_ratio = (
-            self.gam_female_to_male_ratio[1]/
-            (self.gam_female_to_male_ratio[0]+self.gam_female_to_male_ratio[1]))
+            self.gam_female_to_male_ratio[0]/
+            (self.gam_female_to_male_ratio[0]+self.gam_female_to_male_ratio[1])
+            )
 
         #set up sporophyte and gametophyte mutation rates
         if self.spo_mutation_rate or self.gam_mutation_rate:
