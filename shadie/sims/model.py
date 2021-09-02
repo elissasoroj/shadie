@@ -403,7 +403,7 @@ class Model(AbstractContextManager):
         # assert "late" in self.script, (
             # "You must call late() from within Model context")
 
-    def write(self, outname):
+    def write(self, path: Optional[str]=None):
         """Write SLIM script to the outname filepath or stdout."""
         if path is None:
             print(self.script)
