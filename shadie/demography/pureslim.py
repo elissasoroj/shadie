@@ -21,8 +21,8 @@ from shadie.chromosome.src.classes import ChromosomeBase
 class PureSlim:
     """"Loads and merges two TreeSequence files with ancestral burn-in
     from a pure SLiM simulation
-	
-	Two runs were initiated from an ancestral SLiM burn-in .trees file
+    
+    Two runs were initiated from an ancestral SLiM burn-in .trees file
 
     SliM has been run for two populations with the same genome type
     for T generations starting from different seeds and perhaps
@@ -90,7 +90,7 @@ class PureSlim:
         self._merge_ts_pops()
         self._report_ninds()
 
-	def _remove_null_population_and_nodes(self):
+    def _remove_null_population_and_nodes(self):
         """Call tskit simplify function to remove null pop.
 
         There is a null population in shadie simulations because we
@@ -129,7 +129,7 @@ class PureSlim:
                 keep_unary_in_individuals=True
             )
 
-	def _merge_ts_pops(self):
+    def _merge_ts_pops(self):
         """Merge two separate sims into a single ts with 2 pops.
 
         Merges with union and re-loads the ts as a SlimTreeSequence.
@@ -142,11 +142,11 @@ class PureSlim:
             raise ValueError("you cannot enter >2 tree sequences.") 
         
         node_map= self._match_nodes(other=self._tree_sequences[0],
-        	ts=self._tree_sequences[1],
-        	split_time= int(1+(2*self.generations)))
+            ts=self._tree_sequences[1],
+            split_time= int(1+(2*self.generations)))
 
         tsu = self._tree_sequences[1].union(self._tree_sequences[0],
-        	node_map, check_shared_equality=True)
+            node_map, check_shared_equality=True)
 
         self.tree_sequence = tsu
 
@@ -163,29 +163,221 @@ class PureSlim:
         logger.info(f"inds alive at time=0; simpop0={npop0}, simpop1={npop1}")
 
     def _match_nodes(self, other, ts, split_time):
-	    """
-	    Given SLiM tree sequences `other` and `ts`, builds a numpy array with length
-	    `other.num_nodes` in which the indexes represent the node id in `other` and the
-	    entries represent the equivalent node id in `ts`. If a node in `other` has no
-	    equivalent in `ts`, then the entry takes the value `tskit.NULL`. The matching
-	    is done by comparing the IDs assigned by SLiM which are kept in the NodeTable
-	     metadata. Further, this matching of SLiM IDs is done for times (going 
-	     backward-in-time) greater than the specified `split_time`.
-	    """
+        """
+        Given SLiM tree sequences `other` and `ts`, builds a numpy array with length
+        `other.num_nodes` in which the indexes represent the node id in `other` and the
+        entries represent the equivalent node id in `ts`. If a node in `other` has no
+        equivalent in `ts`, then the entry takes the value `tskit.NULL`. The matching
+        is done by comparing the IDs assigned by SLiM which are kept in the NodeTable
+         metadata. Further, this matching of SLiM IDs is done for times (going 
+         backward-in-time) greater than the specified `split_time`.
+        """
 
-	    node_mapping = np.full(other.num_nodes, tskit.NULL)
-	    sids0 = np.array([n.metadata["slim_id"] for n in ts.nodes()])
-	    sids1 = np.array([n.metadata["slim_id"] for n in other.nodes()])
-	    alive_before_split1 = (other.tables.nodes.time >= split_time)
-	    is_1in0 = np.isin(sids1, sids0)
-	    both = np.logical_and(alive_before_split1, is_1in0)
-	    sorted_ids0 = np.argsort(sids0)
-	    matches = np.searchsorted(
-	        sids0,
-	        sids1[both],
-	        side='left',
-	        sorter=sorted_ids0)
-	    node_mapping[both] = sorted_ids0[matches]
-	    
-	    return node_mapping
-	    
+        node_mapping = np.full(other.num_nodes, tskit.NULL)
+        sids0 = np.array([n.metadata["slim_id"] for n in ts.nodes()])
+        sids1 = np.array([n.metadata["slim_id"] for n in other.nodes()])
+        alive_before_split1 = (other.tables.nodes.time >= split_time)
+        is_1in0 = np.isin(sids1, sids0)
+        both = np.logical_and(alive_before_split1, is_1in0)
+        sorted_ids0 = np.argsort(sids0)
+        matches = np.searchsorted(
+            sids0,
+            sids1[both],
+            side='left',
+            sorter=sorted_ids0)
+        node_mapping[both] = sorted_ids0[matches]
+        
+        return node_mapping
+
+    def stats(
+        self,
+        sample: Union[int, Iterable[int]]=10,
+        seed: Optional[int]=None,
+        reps: int=10
+        ):
+        """Calculate statistics summary on mutated TreeSequence.
+        
+        Returns a dataframe with several statistics calculated and
+        summarized from replicate random sampling.
+
+        Parameters
+        ----------
+        sample: int or Iterable of ints
+            The number of tips to randomly sample from each population.
+        seed: int
+            A seed for random sampling.
+        reps: int
+            Number of replicate times to random sample tips and 
+            calculate statistics.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A dataframe with mean and 95% confidence intervals.
+        """
+        rng = np.random.default_rng(seed)
+        data = []
+
+        # get a list of Series
+        for rep in range(reps):
+            seed = rng.integers(2**31)
+            tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
+            samples = np.arange(tts.sample[0] + tts.sample[1])
+            sample_0 = samples[:tts.sample[0]]
+            sample_1 = samples[tts.sample[0]:]
+            stats = pd.Series(
+                index=["theta_0", "theta_1", "Fst_01", "Dist_01", "D_Taj_0", "D_Taj_1"],
+                name=str(rep),
+                data=[
+                    tts.tree_sequence.diversity(sample_0),
+                    tts.tree_sequence.diversity(sample_1),
+                    tts.tree_sequence.Fst([sample_0, sample_1]),
+                    tts.tree_sequence.divergence([sample_0, sample_1]),
+                    tts.tree_sequence.Tajimas_D(sample_0),
+                    tts.tree_sequence.Tajimas_D(sample_1),
+                ],
+                dtype=float,
+            )
+            data.append(stats)
+
+        # concat to a dataframe
+        data = pd.concat(data, axis=1).T
+
+        # get 95% confidence intervals
+        confs = []
+        for stat in data.columns:
+            mean_val = np.mean(data[stat])
+            low, high = scipy.stats.t.interval(
+                alpha=0.95,
+                df=len(data[stat]) - 1,
+                loc=mean_val,
+                scale=scipy.stats.sem(data[stat]),
+            )
+            confs.append((mean_val, low, high))
+
+        # reshape into a dataframe
+        data = pd.DataFrame(
+            columns=["mean", "CI_5%", "CI_95%"],
+            index=data.columns,
+            data=np.vstack(confs),
+        )
+        return data
+
+
+    def draw_tree(
+        self,
+        idx: int=None,
+        site: int=None,
+        sample: Union[int, Iterable[int]]=10,
+        seed=None,
+        show_label=True,
+        show_generation_line=True,
+        **kwargs):
+        """Returns a toytree drawing for a random sample of tips.
+
+        The tree drawing will include mutations as marks on edges
+        with mutationTypes colored differently. The tips are re-labeled
+        indicating {population-id}-{random-sample-id}.
+
+        Parameters
+        ----------
+        ...
+        """
+        # load as a ToyTreeSequence
+        tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
+
+        # draw tree and mutations with a pre-set style
+        base_style = {
+            'scale_bar': True,
+            'width': 400,
+            'height': 400,
+        }
+        base_style.update(kwargs)
+        canvas, axes, marks = tts.draw_tree(
+            idx=idx, site=site, show_label=show_label, **base_style)
+
+        # add fill to show the SLiM portion of the simulation.
+        if show_generation_line:
+            style = {"stroke-dasharray": "4,2", "stroke-width": 2, "stroke": "grey"}
+            if marks[0].layout == "u":
+                axes.hlines(-self.generations, style=style)
+            elif marks[0].layout == "d":
+                axes.hlines(self.generations, style=style)
+            elif marks[0].layout == "r":
+                axes.vlines(-self.generations, style=style)
+            elif marks[0].layout == "l":
+                axes.vlines(self.generations, style=style)
+        return canvas, axes, marks
+
+
+    def draw_tree_sequence(
+        self,
+        start: int=0,
+        max_trees: int=10,
+        sample: Union[int,Iterable[int]]=10,
+        seed: Optional[int]=None,
+        height: Optional[int]=None,
+        width: Optional[int]=None,
+        show_generation_line: bool=True,
+        scrollable: bool=True,
+        axes: Optional['toyplot.coordinates.Cartesian']=None,
+        **kwargs,
+        ):
+        """Return a ToyTreeSequence drawing.
+
+        """
+        # load as a ToyTreeSequence
+        tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
+
+        # get auto-dimensions from tree size
+        height = height if height is not None else 325
+        height += 100
+        width = max(300, (
+            width if width is not None else 
+            15 * tts.at_index(0).ntips * min(max_trees, len(tts))
+        ))        
+
+        # create an axis for the chromosome. +100 height for chrom.
+        canvas = ScrollableCanvas(height=height, width=width)
+        ax0 = canvas.cartesian(bounds=(50, -50, 50, 75), padding=5)
+        ax1 = canvas.cartesian(bounds=(50, -50, 100, -50))        
+
+        # draw tree sequence
+        canvas, axes, mark = tts.draw_tree_sequence(
+            start=start,
+            max_trees=max_trees,
+            axes=ax1,
+            **kwargs,
+        )
+
+        # add chromosome to top axis
+        self.chromosome.draw(axes=ax0)
+        # ax0.y.show = False
+        # ax0.x.ticks.show = True
+        ax0.x.ticks.near = 5
+        ax0.x.ticks.far = 0
+        # ax0.fill(
+            # [0, 1], [0, 0], [1, 1], 
+            # color='green',
+        # )
+        # ax0.x.ticks.locator = toyplot.locator.Extended(count=8)
+
+
+        # ntrees = len(tts)
+        # tmax = start + min(ntrees, max_trees)
+        # breaks = tts.tree_sequence.breakpoints(True)[start: tmax + 1]
+        # cend = breaks[-1]
+        # print(cend)
+
+        # cdat = self.chromosome.data.loc[start:tmax]
+
+
+
+        # add generation line showing where SLiM simulation ended.
+        if show_generation_line:
+            axes.hlines(
+                self.generations,
+                style={"stroke-dasharray": "4,2", "stroke-opacity": 0.4}
+            )
+
+        return canvas, axes, mark
