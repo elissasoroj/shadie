@@ -52,6 +52,7 @@ class Bryophyte(BryophyteBase):
     gam_mutation_rate: Union[None, float] = None
     gam_female_to_male_ratio: float.as_integer_ratio = (1,1)
     spores_per_spo: int=100
+    spo_per_gam: int=10
     gam_clone_rate: float=0.0
     gam_clone_number: int=1
     gam_self_rate: float=0
@@ -104,6 +105,7 @@ class Bryophyte(BryophyteBase):
         constants["gam_mutation_rate"] = self.gam_mutation_rate
         constants["gam_female_to_male_ratio"] = self.gam_female_to_male_ratio
         constants["spores_per_spo"] = self.spores_per_spo
+        constants["spo_per_gam"] = self.spo_per_gam
         constants["gam_clone_rate"] = self.gam_clone_rate
         constants["gam_clone_number"] = self.gam_clone_number
         constants["gam_self_rate"] = self.gam_self_rate

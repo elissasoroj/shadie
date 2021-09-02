@@ -170,11 +170,14 @@ REPRO_BRYO_DIO_P1 = """
 REPRO_BRYO_DIO_P0 = """
     // females find male gametes to reproduce
     if (individual.tag == 1) {
-        reproduction_opportunity_count = 1;
+        reproduction_opportunity_count = spo_per_gam;
 
         // clones give the focal individual extra opportunities to reproduce
         if (runif(1) <= gam_clone_rate)
-            reproduction_opportunity_count = reproduction_opportunity_count + gam_clone_number;
+        {
+            reproduction_opportunity_count = reproduction_opportunity_count 
+                + (gam_clone_number*spo_per_gam);
+        }
 
         for (repro in seqLen(reproduction_opportunity_count)) {
             if (runif(1) <= gam_self_rate) {
@@ -215,11 +218,13 @@ REPRO_BRYO_MONO_P1 = """
 """
 
 REPRO_BRYO_MONO_P0 = """
-    reproduction_opportunity_count = 1;
+    reproduction_opportunity_count = spo_per_gam;
 
     // clones give the focal individual extra opportunities to reproduce
     if (runif(1) <= gam_clone_rate)
-        reproduction_opportunity_count = reproduction_opportunity_count + gam_clone_number;
+        {
+        reproduction_opportunity_count = reproduction_opportunity_count 
+        + (gam_clone_number*spo_per_gam);}
 
     for (repro in seqLen(reproduction_opportunity_count))
     {
