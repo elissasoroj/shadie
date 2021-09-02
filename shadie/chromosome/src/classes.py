@@ -248,12 +248,14 @@ if __name__ == "__main__":
     # design chromosome of elements
     # Do we want users to be able to put in a chromosome like this 
     # and have the gaps filled with neutral portions? YES.
-    chrom = shadie.chromosome.explicit(data = {
+    chrom = shadie.chromosome.explicit(
+        data = {
         (0, 500): shadie.NONCDS,
         (500, 1000): e1,
         (2000, 3000): e0,
         (3001, 5000): e1,
-    }, ns_sites=False)
+        }, 
+        ns_sites=False)
 
     #elem = chrom.data.loc[500]["eltype"]
     #chrom.to_slim_mutation_types()

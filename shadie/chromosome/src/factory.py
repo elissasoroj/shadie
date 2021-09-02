@@ -11,7 +11,7 @@ from shadie.chromosome.src.classes import (
 )
 
 
-def default():
+def default(ns_sites: bool=True,):
     """Return the default 100Kb Chromosome (nonCDS-exon-intron-exon-nonCDS).
     This chromosome type is typically used for testing purposes.
     """
@@ -27,6 +27,7 @@ def random(
     cds_scale: int=1000,
     noncds_scale: int=5000,
     seed: Union[int, None]=None,
+    ns_sites: bool=True,
     ):
     """
     Build a chromosome of a set length composed randomly of intron,
@@ -57,7 +58,7 @@ def random(
     return elements
 
 
-def explicit(data):
+def explicit(data, ns_sites: bool=True,):
     """Return a chromosome built from a dictionary.
 
     The dict should contain tuples of (start,end) positions as keys
