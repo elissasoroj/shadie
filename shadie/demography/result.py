@@ -166,9 +166,10 @@ class TwoSims:
         """
         # recapitate: ts is passed to sim_ancestry as 'initial_state'.
         # this automatically merges everyone into new ancestral pop.
-        self.tree_sequence = self.tree_sequence.recapitate(
-            ancestral_Ne=self.popsize,
+        self.tree_sequence = pyslim.recapitate(
+            ts = self.tree_sequence,
             recombination_rate = self.recomb,
+            ancestral_Ne=self.popsize,
             random_seed=self.rng.integers(2**31),
         )
 
