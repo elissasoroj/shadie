@@ -314,7 +314,7 @@ REPRO_ANGIO_DIO_P0  = """
 
             if (length(pollen_pool)>0) {
                 //sort pollens by fitness
-                sorted_pool = sort(pollen_pool, ascending=F);
+                sorted_pool = sortBy(pollen_pool, pollen_pool.getValue("fitness"), ascending=F);
                                 
                 //calculate how many pollens attempt to fertilize
                 attempts = 0;
