@@ -168,6 +168,7 @@ class TwoSims:
         # this automatically merges everyone into new ancestral pop.
         self.tree_sequence = self.tree_sequence.recapitate(
             ancestral_Ne=self.popsize,
+            recombination_rate = self.recomb,
             random_seed=self.rng.integers(2**31),
         )
 
