@@ -3,7 +3,7 @@
 """
 Starting an alternate implementation of Reproduction 
 """
-impot pyslim
+import pyslim
 from typing import Union
 from dataclasses import dataclass, field
 from shadie.reproduction.base import ReproductionBase
