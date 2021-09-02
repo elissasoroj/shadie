@@ -256,7 +256,7 @@ class Model(AbstractContextManager):
 
         # Standard single population simulation.
     
-    def readfromfile(self, reschedule_block):
+    def readfromfile(self):
         """
         If a .trees file is provided, this will be the starting point
         of the simulation
@@ -266,11 +266,13 @@ class Model(AbstractContextManager):
             #raise NotImplementedError("This isn't ready to use yet.")
             self.early(
                 time=1,
-                scripts=[f"sim.readFromPopulationFile('{self.file_in}')",
-                "p1.setSubpopulationSize(spo_ne)\n",
-                "p0.setSubpopulationSize(0)",],
+                scripts=[f"sim.readFromPopulationFile('{self.file_in}')"],
                 comment="read starting populations from file_in"
                 )
+            # self.late(
+            #     time=1,
+            #     scripts=["sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n"],
+            #     comment="save starting pop")
 
     def early(
         self,

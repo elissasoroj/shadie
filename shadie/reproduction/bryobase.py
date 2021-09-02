@@ -3,6 +3,7 @@
 """
 Starting an alternate implementation of Reproduction 
 """
+import pyslim
 from typing import Union
 from dataclasses import dataclass, field
 from shadie.reproduction.base_scripts import (
@@ -132,13 +133,26 @@ class Bryophyte(BryophyteBase):
         adds late() call that ends the simulation and saves the .trees file
         """
         endtime = int(self._sim_time + 1)
-        self.model.late(
-                time = endtime, 
-                scripts = [
-                "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-                f"sim.treeSeqOutput('{self._file_out}')"],
-                comment = "end of sim; save .trees file",
-            )
+
+        if self._file_in:
+            ts_start = pyslim.load(self._file_in)
+            sim_start = ts_start.max_root_time
+            resched_end = int(endtime + sim_start)
+            self.model.late(
+                    time = resched_end, 
+                    scripts = [
+                    "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
+                    f"sim.treeSeqOutput('{self._file_out}')"],
+                    comment = "end of sim; save .trees file",
+                )
+        else:
+            self.model.late(
+                    time = endtime, 
+                    scripts = [
+                    "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
+                    f"sim.treeSeqOutput('{self._file_out}')"],
+                    comment = "end of sim; save .trees file",
+                )
 
     def dioicous(self):
         """
