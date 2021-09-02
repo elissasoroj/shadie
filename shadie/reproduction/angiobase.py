@@ -118,7 +118,7 @@ class Spermatophyte(SpermatophyteBase):
         self.model.late(
                 time = endtime, 
                 scripts = [
-                #"sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
+                "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
                 f"sim.treeSeqOutput('{self._file_out}')"],
                 comment = "end of sim; save .trees file",
             )

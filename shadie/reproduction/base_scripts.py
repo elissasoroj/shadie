@@ -3,6 +3,15 @@
 """
 String scripts for reproduction blocks
 """
+
+#----------------------------------------
+#for reading from population file
+READIN_RESCHEDULE = """
+finalgen = {sim_time} + sim.generation - 1;
+// scheduling the end of the simulation
+sim.rescheduleScriptBlock(s0, generations=finalgen);
+"""
+
 #----------------------------------------
 #early ()
 EARLY = """

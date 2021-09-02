@@ -92,14 +92,22 @@ class Base(nonWFBase):
             comment="hermaphroditc crossing"
             )
 
-        self.model.late(
+        if self._file_in:
+            self.model.late(
                 time = self._sim_time, 
                 scripts = [
-                #"sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-                f"sim.treeSeqOutput('{self._file_out}')"],
+                    "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
+                    f"sim.treeSeqOutput('{self._file_out}')"],
                 comment = "end of sim; save .trees file",
             )
-
+        else:
+            self.model.late(
+                    time = self._sim_time, 
+                    scripts = [
+                    "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
+                    f"sim.treeSeqOutput('{self._file_out}')"],
+                    comment = "end of sim; save .trees file",
+                )
 
 if __name__ == "__main__":
 

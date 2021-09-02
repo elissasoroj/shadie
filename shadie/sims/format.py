@@ -76,7 +76,6 @@ LATE = """
 
 CUSTOM = """{comment}{scripts}"""
 
-
 EVENT_TO_FORMATTER = {
     "initialize": INITIALIZE,
     "early": EARLY,
