@@ -260,7 +260,7 @@ EARLY1_ANGIO = """
     sim.addSubpop('p1', spo_ne); // diploid sporophyte pop
     sim.addSubpop('p0', 0); // haploid gametophyte pop
 
-    fems = spo_female_to_male_ratio*spo_ne
+    fems = spo_female_to_male_ratio*spo_ne;
     spo_sex_starts = c(rep(1, asInteger(fems)), 
         rep(0, asInteger(spo_ne-fems);
     p1.individuals.tag = dsex_starts;
