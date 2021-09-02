@@ -55,12 +55,12 @@ class Pteridophyte(PteridophyteBase):
         
         #calculate FtoM
         self.spo_female_to_male_ratio = (
-            self.spo_female_to_male_ratio[1]/
+            self.spo_female_to_male_ratio[0]/
             (self.spo_female_to_male_ratio[0]+self.spo_female_to_male_ratio[1]))
 
         #calculate gFtoM
         self.gam_female_to_male_ratio = (
-            self.gam_female_to_male_ratio[1]/
+            self.gam_female_to_male_ratio[0]/
             (self.gam_female_to_male_ratio[0]+self.gam_female_to_male_ratio[1]))
 
         #set up sporophyte and gametophyte mutation rates

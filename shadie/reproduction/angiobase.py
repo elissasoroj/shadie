@@ -3,6 +3,7 @@
 """
 Starting an alternate implementation of Reproduction 
 """
+impot pyslim
 from typing import Union
 from dataclasses import dataclass, field
 from shadie.reproduction.base import ReproductionBase
@@ -54,7 +55,7 @@ class Spermatophyte(SpermatophyteBase):
         life history and reproduction based on input args.
         """
         self.spo_female_to_male_ratio = (
-            self.spo_female_to_male_ratio[1]/
+            self.spo_female_to_male_ratio[0]/
             (self.spo_female_to_male_ratio[0]+self.spo_female_to_male_ratio[1]))
 
         if self.spo_mutation_rate:
