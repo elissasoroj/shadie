@@ -275,7 +275,7 @@ REPRO_ANGIO_DIO_P1 = """
 
         // determine how many ovules were fertilized, out of the total
         fertilized_ovules = rbinom(1, ovule_count, ovule_fertilization_rate);
-        meiosis_reps = floor(fertilize_ovules/2);
+        meiosis_reps = floor(fertilized_ovules/2);
         if (runif(1) <= spo_clone_rate)
             meiosis_reps = spo_clone_number*meiosis_reps*2;
 
