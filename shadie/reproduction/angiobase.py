@@ -40,7 +40,8 @@ class Spermatophyte(SpermatophyteBase):
     spo_clone_rate: float=0.0
     spo_clone_number:int = 1
     ovule_count: int=30
-    fertilization_rate: float=0.7
+    ovule_fertilization_rate: float=0.7
+    pollen_success_rate: float=0.7
     pollen_count: int=100
     pollen_comp: str="F"
     pollen_per_stigma: int=5
@@ -88,7 +89,8 @@ class Spermatophyte(SpermatophyteBase):
         constants["spo_clone_number"] = self.spo_clone_number
         # constants["Self_rate"] = self.selfing_rate
         constants["ovule_count"] = self.ovule_count
-        constants["fertilization_rate"] = self.fertilization_rate
+        constants["ovule_fertilization_rate"] = self.ovule_fertilization_rate
+        constants["pollen_success_rate"] = self.pollen_success_rate
         constants["pollen_count"] = self.pollen_count
         constants["pollen_comp"] = self.pollen_comp
         constants["pollen_per_stigma"] = self.pollen_per_stigma
@@ -115,13 +117,25 @@ class Spermatophyte(SpermatophyteBase):
         """
         endtime = int(self._sim_time + 1)
 
-        self.model.late(
-                time = endtime, 
-                scripts = [
-                "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-                f"sim.treeSeqOutput('{self._file_out}')"],
-                comment = "end of sim; save .trees file",
-            )
+        if self._file_in:
+            ts_start = pyslim.load(self._file_in)
+            sim_start = ts_start.max_root_time
+            resched_end = int(endtime + sim_start)
+            self.model.late(
+                    time = resched_end, 
+                    scripts = [
+                    "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
+                    f"sim.treeSeqOutput('{self._file_out}')"],
+                    comment = "end of sim; save .trees file",
+                )
+        else:
+            self.model.late(
+                    time = endtime, 
+                    scripts = [
+                    "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
+                    f"sim.treeSeqOutput('{self._file_out}')"],
+                    comment = "end of sim; save .trees file",
+                )
 
 
     def dioecious(self):

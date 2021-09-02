@@ -273,7 +273,7 @@ REPRO_ANGIO_DIO_P1 = """
     if (individual.tag == 1) {
 
         // determine how many ovules were fertilized, out of the total
-        fertilized_ovules = rbinom(1, ovule_count, fertilization_rate);
+        fertilized_ovules = rbinom(1, ovule_count, ovule_fertilization_rate);
         meiosis_reps = floor(fertilize_ovules/2);
         if (runif(1) <= spo_clone_rate)
             meiosis_reps = spo_clone_number*meiosis_reps*2;
@@ -311,10 +311,20 @@ REPRO_ANGIO_DIO_P0  = """
                 pollen.tag = 2;
             }
 
-            if (pollen_pool.length()>0) {
-                target_fitness = max(pollen_pool.getValue("fitness"));
-                winners = pollen_pool[pollen_pool.getValue("fitness") == target_fitness];
-                sperm = winners[0];
+            if (length(pollen_pool)>0) {
+                //sort pollens by fitness
+                sorted_pool = sort(pollen_pool, ascending=F);
+                                
+                //calculate how many pollens attempt to fertilize
+                attempts = 0;
+
+                for (i in range(1:length(pollen_pool)))
+                    {attempts = attempts + 1;
+                    if (runif(1)<pollen_fertilization_rate)
+                        break;
+                    }
+                winner = attempts-1;    
+                sperm = sorted_pool[winner];
             }
             // find a male
             else sperm = p0.sampleIndividuals(1, tag=0);
@@ -341,7 +351,7 @@ REPRO_ANGIO_MONO_P1="""
     g_2 = genome2;
 
     // determine how many ovules were fertilized, out of the total
-    fertilized_ovules = rbinom(1, ovule_count, fertilization_rate);
+    fertilized_ovules = rbinom(1, ovule_count, ovule_fertilization_rate);
     meiosis_reps = floor(fertilized_ovules/2);
     if (runif(1) <= spo_clone_rate)
         meiosis_reps = spo_clone_number*meiosis_reps*2;

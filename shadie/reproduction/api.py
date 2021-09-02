@@ -207,7 +207,8 @@ class ReproductionApi:
         spo_clone_rate: float=0.0,
         spo_clone_number:  int =1,
         ovule_count: int=30,
-        fertilization_rate: float=0.7,
+        ovule_fertilization_rate: float=0.7,
+        pollen_success_rate: float=1.0,
         pollen_count: int=100,
         pollen_comp: str="F",
         pollen_per_stigma: int=5,
@@ -228,6 +229,48 @@ class ReproductionApi:
         -----------
         mode: str
             A life history strategy or "dio" or "mono" -ecious.
+        spo_ne: int
+            Sporophyte (diploid) effective population size.
+        gam_ne: int
+            Gametophyte (haploid) effective population size.
+        spo_mutation_rate: float
+            Sporophyte mutation rate; chance mutations will arise during
+            the sporophyte generation
+        gam_mutation_rate: float
+            Gametophyte mutation rate; chance mutations will arise during
+            the gametophyte generation. Default = 0
+        spo_female_to_male_ratio: tuple
+            Sporophyte female:male ratio; e.g. (1,1) 
+        gam_female_to_male_ratio: tuple
+            Gametophyte female:male ratio; e.g. (1,1)
+        spo_clone_rate: float
+            Chance a sporophyte will clone
+        spo_clone_number: int
+            Number of clones produced by each clonal sporophyte
+        ovule_count: int
+            Number of ovules per sporophyte (remmeber to multiply number
+            of flowers on each individual by number of ovules)
+        ovule_fertilization_rate: float
+            chance an ovule will be viable and set seed
+        pollen_succcess_rate: float
+            chance a give pollen will succcessfully fertilize an ovule
+        pollen_count: int
+            number of pollen produced by each sporophyte
+        pollen_comp: str="F" or "T"
+            turn pollen competition on or off
+        pollen_per_stigma: int
+            number of pollen that will compete to fertilize a single 
+            ovule *TODO: update code so that they compete for ALL the
+            ovules in a given flower
+        spo_maternal_effect_weight: float
+            Maternal contribution to haploid offspring fitness (as
+            weighted average)
+        spo_random_death_chance:float
+            Random chance a sporophyte will die before reproducing, 
+            regardless of fitness. 
+        gam_random_death_chance: float
+            Random chance a gametophyte will die before reproducing,
+            regardless of fitness
         ...
         """
         Spermatophyte(
@@ -237,7 +280,8 @@ class ReproductionApi:
             spo_female_to_male_ratio = spo_female_to_male_ratio,
             spo_clone_rate=spo_clone_rate, 
             spo_clone_number = spo_clone_number, ovule_count=ovule_count,
-            fertilization_rate=fertilization_rate, 
+            ovule_fertilization_rate=ovule_fertilization_rate, 
+            pollen_success_rate=pollen_success_rate,
             pollen_count=pollen_count, pollen_comp=pollen_comp,
             pollen_per_stigma=pollen_per_stigma,
             spo_random_death_chance=spo_random_death_chance,

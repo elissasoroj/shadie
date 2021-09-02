@@ -148,7 +148,7 @@ class PureSlim:
         tsu = self._tree_sequences[1].union(self._tree_sequences[0],
             node_map, check_shared_equality=True)
 
-        self.tree_sequence = tsu
+        self.tree_sequence = pyslim.SlimTreeSequence(tsu)
 
     def _report_ninds(self):
         """Report number of inds in each population."""
