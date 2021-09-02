@@ -125,9 +125,9 @@ class ReproductionApi:
         gam_maternal_effect: float=0,
         spo_random_death_chance: float=0, 
         gam_random_death_chance: float=0,
-        _file_in = None,
         _chromosome=None,
-        _sim_time = None,  
+        _sim_time = None, 
+        _file_in = None, 
         _file_out = None,       
         ):
         """
@@ -189,9 +189,9 @@ class ReproductionApi:
             gam_maternal_effect=gam_maternal_effect,
             spo_random_death_chance=spo_random_death_chance, 
             gam_random_death_chance=gam_random_death_chance,
-           _file_in=self.model.file_in,
             _chromosome=self.model.chromosome,
             _sim_time = 2*self.model.sim_time, 
+            _file_in=self.model.file_in,
             _file_out = self.model.file_out,
         ).run()
 
@@ -213,9 +213,9 @@ class ReproductionApi:
         pollen_per_stigma: int=5,
         spo_random_death_chance: float=0,  
         gam_random_death_chance: float=0, 
-        _file_in = None,
         _chromosome=None,
-        _sim_time = None,  
+        _sim_time = None, 
+        _file_in = None, 
         _file_out = None, 
         ):
         """
@@ -242,9 +242,9 @@ class ReproductionApi:
             pollen_per_stigma=pollen_per_stigma,
             spo_random_death_chance=spo_random_death_chance,
             gam_random_death_chance=gam_random_death_chance,
-            _file_in=self.model.file_in,
             _chromosome=self.model.chromosome, 
             _sim_time = 2*self.model.sim_time, 
+            _file_in=self.model.file_in,
             _file_out = self.model.file_out,
         ).run()
 
@@ -252,6 +252,10 @@ class ReproductionApi:
         self,  
         ne = None,
         sexes = False,    
+        _chromosome=None,
+        _sim_time = None, 
+        _file_in = None, 
+        _file_out = None, 
         ):
         """
         Generate scripts appropriate for basic SLiM nonWF model, set up
@@ -268,6 +272,7 @@ class ReproductionApi:
             model=self.model, ne = ne, sexes = sexes, 
             _chromosome=self.model.chromosome, 
             _sim_time = self.model.sim_time, 
+            _file_in= self.mode.file_in,
             _file_out = self.model.file_out,
         ).run()
 

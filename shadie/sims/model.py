@@ -197,7 +197,6 @@ class Model(AbstractContextManager):
         constants:Union[None, dict]=None,
         scripts:Union[None, list]=None,
         file_out: str="shadie.trees",
-
         ):
         """Add an initialize() block to the SLiM code map.
 
@@ -264,7 +263,7 @@ class Model(AbstractContextManager):
         """
         if self.file_in:
         # starting from another simulation starting point.
-            raise NotImplementedError("This isn't ready to use yet.")
+            #raise NotImplementedError("This isn't ready to use yet.")
             self.early(
                 time=1,
                 scripts=f"sim.readFromPopulationFile('{self.file_in}')",

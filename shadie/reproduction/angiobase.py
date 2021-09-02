@@ -100,11 +100,14 @@ class Spermatophyte(SpermatophyteBase):
         """
         add haploid and diploid life stages
         """
-        self.model.early(
-            time=1,
-            scripts= EARLY1_ANGIO,
-            comment="define Angiosperm subpops: diploid sporophytes, haploid gametophytes",
-        )
+        if self._file_in:
+            self.model.readfromfile()
+        else:
+            self.model.early(
+                time=1,
+                scripts= EARLY1_ANGIO,
+                comment="define Angiosperm subpops: diploid sporophytes, haploid gametophytes",
+            )
 
     def end_sim(self):
         """

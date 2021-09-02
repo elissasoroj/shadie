@@ -31,8 +31,9 @@ class ReproductionBase:
 class nonWFBase(ReproductionBase):
     lineage: str = field(default="Null", init=False)
     chromosome: 'shadie.chromosome.ChromosomeBase'
-    simtime: int
-    fileout: str
+    _file_in: Union[None, str]
+    _sim_time: int
+    _file_out: str
 
 @dataclass
 class Base(nonWFBase):
@@ -41,7 +42,6 @@ class Base(nonWFBase):
     """
     ne: Union[None, int] = None
     sexes: bool = False
-    startfile: str = "F"
 
     def run(self):
         """
@@ -71,7 +71,9 @@ class Base(nonWFBase):
         """
         add haploid and diploid life stages
         """
-        if self.startfile == "F":
+        if self._file_in:
+            self.model.readfromfile()
+        else:
             self.model.early(
                 time=1,
                 scripts="sim.addSubpop('p1', K);", 
@@ -91,10 +93,10 @@ class Base(nonWFBase):
             )
 
         self.model.late(
-                time = self.simtime, 
+                time = self._sim_time, 
                 scripts = [
                 #"sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-                f"sim.treeSeqOutput('{self.fileout}')"],
+                f"sim.treeSeqOutput('{self._file_out}')"],
                 comment = "end of sim; save .trees file",
             )
 

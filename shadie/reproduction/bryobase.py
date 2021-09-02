@@ -118,7 +118,9 @@ class Bryophyte(BryophyteBase):
         """
         add haploid and diploid life stages
         """
-        if not self._file_in:
+        if self._file_in:
+            self.model.readfromfile()
+        else:
             self.model.early(
                 time=1,
                 scripts=["sim.addSubpop('p1', spo_ne)", "sim.addSubpop('p0', gam_ne)"],

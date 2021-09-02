@@ -113,11 +113,14 @@ class Pteridophyte(PteridophyteBase):
         """
         add haploid and diploid life stages
         """
-        self.model.early(
-            time=1,
-            scripts= ["sim.addSubpop('p1', dK)", "sim.addSubpop('p0', hK)"],
-            comment="add p1, p0",
-        )
+        if self._file_in:
+            self.model.readfromfile()
+        else:
+            self.model.early(
+                time=1,
+                scripts= ["sim.addSubpop('p1', spo_ne)", "sim.addSubpop('p0', gam_ne)"],
+                comment="add p1, p0",
+            )
 
 
     def end_sim(self):
