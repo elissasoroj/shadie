@@ -304,7 +304,7 @@ REPRO_ANGIO_DIO_P0  = """
         if (pollen_comp == T) {
 
             // sperm land on stigma
-            pollen_pool = p0.sampleIndividuals(pollen_per_stigma, tag=0);
+            pollen_pool = p0.sampleIndividuals(pollen_per_ovule, tag=0);
             for (pollen in pollen_pool) {
                 // store fitness value
                 pollen.setValue("fitness", p0.cachedFitness(pollen.index));
@@ -320,7 +320,7 @@ REPRO_ANGIO_DIO_P0  = """
 
                 for (i in range(1:length(pollen_pool)))
                     {attempts = attempts + 1;
-                    if (runif(1)<pollen_fertilization_rate)
+                    if (runif(1)<pollen_success_rate)
                         break;
                     }
                 winner = attempts-1;    

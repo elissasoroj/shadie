@@ -211,7 +211,7 @@ class ReproductionApi:
         pollen_success_rate: float=1.0,
         pollen_count: int=100,
         pollen_comp: str="F",
-        pollen_per_stigma: int=5,
+        pollen_per_ovule: int=5,
         spo_random_death_chance: float=0,  
         gam_random_death_chance: float=0, 
         _chromosome=None,
@@ -258,7 +258,7 @@ class ReproductionApi:
             number of pollen produced by each sporophyte
         pollen_comp: str="F" or "T"
             turn pollen competition on or off
-        pollen_per_stigma: int
+        pollen_per_ovule: int
             number of pollen that will compete to fertilize a single 
             ovule *TODO: update code so that they compete for ALL the
             ovules in a given flower
@@ -283,7 +283,7 @@ class ReproductionApi:
             ovule_fertilization_rate=ovule_fertilization_rate, 
             pollen_success_rate=pollen_success_rate,
             pollen_count=pollen_count, pollen_comp=pollen_comp,
-            pollen_per_stigma=pollen_per_stigma,
+            pollen_per_ovule=pollen_per_ovule,
             spo_random_death_chance=spo_random_death_chance,
             gam_random_death_chance=gam_random_death_chance,
             _chromosome=self.model.chromosome, 

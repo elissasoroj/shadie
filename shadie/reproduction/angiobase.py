@@ -44,7 +44,7 @@ class Spermatophyte(SpermatophyteBase):
     pollen_success_rate: float=0.7
     pollen_count: int=100
     pollen_comp: str="F"
-    pollen_per_stigma: int=5
+    pollen_per_ovule: int=5
     spo_random_death_chance: float=0
     gam_random_death_chance: float=0
 
@@ -93,7 +93,7 @@ class Spermatophyte(SpermatophyteBase):
         constants["pollen_success_rate"] = self.pollen_success_rate
         constants["pollen_count"] = self.pollen_count
         constants["pollen_comp"] = self.pollen_comp
-        constants["pollen_per_stigma"] = self.pollen_per_stigma
+        constants["pollen_per_ovule"] = self.pollen_per_ovule
         constants["spo_random_death_chance"] = self.spo_random_death_chance
         constants["gam_random_death_chance"] = self.gam_random_death_chance
 
