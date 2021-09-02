@@ -206,10 +206,11 @@ class ChromosomeExplicit(ChromosomeBase):
         mutations = []
         if self.is_coding() == 0:
             mutations.append(NEUT.name)
-        for element in data.values():
-            for mutation in element.mlist:
-                if mutation.name not in mutations:
-                    mutations.append(mutation.name)
+        else:
+            for element in data.values():
+                for mutation in element.mlist:
+                    if mutation.name not in mutations:
+                        mutations.append(mutation.name)
         self.mutations = mutations
 
         # entere explicit dict into data
