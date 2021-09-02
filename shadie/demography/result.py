@@ -135,20 +135,19 @@ class TwoSims:
         """
         # check the number of simulations for what to do.
         if self._nts == 1:
-            self.tree_sequence = pyslim.SlimTreeSequence(self.tree_sequence)
+            self.tree_sequence = pyslim.SlimTreeSequence(self._tree_sequences[0])
             return
-        elif self._nts > 2:
-            raise ValueError("you cannot enter >2 tree sequences.")
-        else: 
-            # Merge two tree sequences
-            ts0 = self._tree_sequences[0]
-            ts1 = self._tree_sequences[1]
-            merged_ts = ts0.union(
-                ts1,
-                node_mapping=[tskit.NULL for i in range(ts1.num_nodes)],
-                add_populations=True,
-            )
-            self.tree_sequence = pyslim.SlimTreeSequence(merged_ts)
+        if self._nts > 2:
+            raise ValueError("you cannot enter >2 tree sequences.") 
+        # Merge two tree sequences
+        ts0 = self._tree_sequences[0]
+        ts1 = self._tree_sequences[1]
+        merged_ts = ts0.union(
+            ts1,
+            node_mapping=[tskit.NULL for i in range(ts1.num_nodes)],
+            add_populations=True,
+        )
+        self.tree_sequence = pyslim.SlimTreeSequence(merged_ts)
 
     def _report_ninds(self):
         """Report number of inds in each population."""
