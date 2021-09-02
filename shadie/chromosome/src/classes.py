@@ -204,6 +204,8 @@ class ChromosomeExplicit(ChromosomeBase):
             "values of input data should be ElementType objects.")
 
         mutations = []
+        if self.is_coding() == 0:
+            mutations.append(NEUT.name)
         for element in data.values():
             for mutation in element.mlist:
                 if mutation.name not in mutations:

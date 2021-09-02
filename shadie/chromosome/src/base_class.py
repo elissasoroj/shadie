@@ -112,16 +112,14 @@ class ChromosomeBase:
         #Note: will need to fix the formatting on this chunk**
         commands = []
 
-        # the entire chrom is neutral, create a HACK solution to make 
-        # SLiM run by creating an unlinked tiny region with selection
-        # that will be removed later.
+        # the entire chrom is neutral; last bp is filled with a neutral
+        #genomic element, so that SLiM doesn't complain
         if self.is_coding() == 0:
             start = int(self.genome_size-1)
             end = int(self.genome_size)
             commands.extend([
                     f"initializeGenomicElement({NONCDS.name}, {start}, {end});\n",
                 ])
-            #raise NotImplementedError("fully neutral shadie sim is under development.")
 
         # iterate over int start positions of elements
         for idx in self.data.index:
