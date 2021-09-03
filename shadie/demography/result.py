@@ -272,12 +272,12 @@ class TwoSims:
             sample_0 = samples[:tts.sample[0]]
             sample_0_nodes = []
             for i in sample_0:
-               sample_0_nodes.extend(self.tree_sequence.individual(i).nodes)
+               sample_0_nodes.extend(tts.tree_sequence.individual(i).nodes)
             
             sample_1 = samples[tts.sample[0]:]
             sample_1_nodes = []
             for i in sample_1:
-               sample_1_nodes.extend(self.tree_sequence.individual(i).nodes)
+               sample_1_nodes.extend(tts.tree_sequence.individual(i).nodes)
 
             stats = pd.Series(
                 index=["theta_0", "theta_1", "Fst_01", "Dist_01", "D_Taj_0", "D_Taj_1"],
