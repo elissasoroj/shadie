@@ -63,6 +63,12 @@ class ChromosomeBase:
         """Returns a string with newline separated SLIM commands to 
         initialize all MutationType objects in the chromosome data.
 
+        TODO
+        ----
+        Recognize when to not add neutral mutation type, which will 
+        be most of the time, to avoid the warning, since we do not 
+        simulation neutral mutations unless (not supported yet.).
+
         Example
         -------
         >>> chrom.to_slim_mutation_types()
@@ -102,9 +108,9 @@ class ChromosomeBase:
         #Note: will need to fix the formatting on this chunk**
         commands = []
 
-        # the entire chrom is neutral, create a HACK solution to make 
-        # SLiM run by creating an unlinked tiny region with selection
-        # that will be removed later.
+        # the entire chrom is neutral, allow SLiM to drop neutral mutations,
+        # and record this is done (TODO) to ensure we don't msprime mutate
+        # them again later.
         if not self.is_coding():
             raise NotImplementedError("fully neutral shadie sim not yet supported.")
 
@@ -112,17 +118,14 @@ class ChromosomeBase:
         for idx in self.data.index:
             ele = self.data.loc[idx]
 
-            # do not write this region if neutral.
+            # neutral region: do not write.
             if not self.is_coding(idx):
                 pass
-                # commands.append(
-                    # f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
-                # )
 
-            # one of them then add the initialize command to commands.
-            # SYN AND NONSYN SITES
+            # coding region: write it.
             else:
-                if 1: # if writing syn vs non-syn.
+                # write block as 2/3 repeating NONSYN/SYN (current default)?
+                if 1:
                     length = ele.end - ele.start
                     commands.extend([
                         f"types = rep({ele.eltype}, asInteger(floor({length}/3)));",
@@ -130,9 +133,11 @@ class ChromosomeBase:
                         "ends = starts + 1;",
                         "initializeGenomicElement(types, starts, ends);\n",
                     ])
+                # write whole block as a single genomic element.
                 else:
-                    # TODO
-                    pass
+                    commands.append(
+                        f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
+                    )
         return "\n  ".join(commands)
 
     def inspect(self, width: int=700, outfile: Optional[str]=None):
