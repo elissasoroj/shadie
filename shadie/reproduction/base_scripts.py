@@ -89,7 +89,7 @@ MATERNAL_EFFECT = """
     maternal_effect = individual.getValue("maternal_fitness");
 
     if (!isNULL(maternal_effect)) {
-        corrected_fitness = (maternal_effect * Maternal_weight) + fitness * (1 - Maternal_weight);
+        corrected_fitness = (maternal_effect * gam_maternal_effect) + fitness * (1 - gam_maternal_effect);
         return (draw < corrected_fitness);
     }
 
@@ -189,24 +189,18 @@ REPRO_BRYO_DIO_P0 = """
         }
 
         for (repro in seqLen(reproduction_opportunity_count)) {
-            if (runif(1) <= gam_self_rate) {
-                // this is selfing using two identical gametes – intragametophytic selfing
-                // intergametophytic (sporophytic) selfing might happen below, by chance
-                p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
-            }
-            else {
-                // find a male!
-                sperm = p0.sampleIndividuals(1, tag=0);
+            // find a male!
+            sperm = p0.sampleIndividuals(1, tag=0);
 
-                if (sperm.size() == 1) {
-                    child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
-                    // Mother's fitness affects sporophyte fitness; see survival()
-                    if (gam_maternal_effect > 0)
-                        child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+            if (sperm.size() == 1) {
+                child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
+                // Mother's fitness affects sporophyte fitness; see survival()
+                if (gam_maternal_effect > 0)
+                    child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
 
-                    // take out of the mating pool
-                    sperm.tag = 2;
-                }
+                // take out of the mating pool
+                sperm.tag = 2;
+        
             }
         }
     }
@@ -249,7 +243,7 @@ REPRO_BRYO_MONO_P0 = """
 
             child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
 
-            if (Maternal_weight > 0) //Mother's fitness affects sporophyte fitness; see survival()
+            if (gam_maternal_effect > 0) //Mother's fitness affects sporophyte fitness; see survival()
                 child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
 
         }
