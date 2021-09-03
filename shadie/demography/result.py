@@ -135,7 +135,9 @@ class TwoSims:
         """
         # check the number of simulations for what to do.
         if self._nts == 1:
-            self.tree_sequence = pyslim.SlimTreeSequence(self._tree_sequences[0])
+            #simplify to remove empty population
+            self.tree_sequence = pyslim.SlimTreeSequence(
+                self._tree_sequences[0]).simplify(keep_input_roots=True)
             return
         if self._nts > 2:
             raise ValueError("you cannot enter >2 tree sequences.") 
@@ -264,20 +266,14 @@ class TwoSims:
         rng = np.random.default_rng(seed)
         data = []
 
+        if self.tree_sequence.
         # get a list of Series
         for rep in range(reps):
             seed = rng.integers(2**31)
             tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
             samples = np.arange(tts.sample[0] + tts.sample[1])
             sample_0 = samples[:tts.sample[0]]
-            sample_0_nodes = []
-            for i in sample_0:
-               sample_0_nodes.extend(tts.tree_sequence.individual(i).nodes)
-            
             sample_1 = samples[tts.sample[0]:]
-            sample_1_nodes = []
-            for i in sample_1:
-               sample_1_nodes.extend(tts.tree_sequence.individual(i).nodes)
 
             stats = pd.Series(
                 index=["theta_0", "theta_1", "Fst_01", "Dist_01", "D_Taj_0", "D_Taj_1"],
