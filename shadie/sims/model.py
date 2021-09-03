@@ -109,15 +109,16 @@ class Model(AbstractContextManager):
         """The final SLiM script built from components in `.map`."""
         self.stdout = ""
         """The stdout from running `slim script` if `.run()` is called."""
-
-        # store chromosome (mut, ele), constants, and populations
         self.sim_time: int = 0
-        """The length of the simulation in sprorophyte generations."""
+        """The length of the simulation in sporophyte generations."""
         self.chromosome = None
         """Chromosome object with genome structure."""
         
-        self.constants = {}
-        self.populations = {}
+        # hidden attributes set by .initialize()
+        self._file_in: str = None
+        self._file_out: str = None
+        self._pop_size: int = None
+        self._mutation_rate: float = None
 
         self.reproduction = ReproductionApi(self)
         """API to access reproduction functions."""
@@ -189,13 +190,12 @@ class Model(AbstractContextManager):
     def initialize(
         self,
         chromosome,
-        sim_time:int=1000, #length of sim in # of diploid generations
-        mutation_rate:float=1e-8, #mutation rate
-        recomb_rate:float=1e-9, #recombination rate
-        ne:Union[None, int]=None, #option ne parameter in initialize
-        file_in:Union[None, str]=None, #optional starting file
-        constants:Union[None, dict]=None,
-        scripts:Union[None, list]=None,
+        sim_time: int=1000,
+        mutation_rate: float=1e-8,
+        recomb_rate: float=1e-9,
+        constants: Union[None, dict]=None,
+        scripts: Union[None, list]=None,
+        file_in: Union[None, str]=None,
         file_out: str="shadie.trees",
         ):
         """Add an initialize() block to the SLiM code map.
@@ -218,19 +218,15 @@ class Model(AbstractContextManager):
         recomb_rate: float
             The per-site per-*sporophyte*-generation recombination rate.
             This is applied in the sporophyte generation during meiosis.
-        ne: int
-            Optional, for WF (base) model ONLY - user can define ne here
-            if they are not going to call .reproduction
-        file_in: str
-            Optional starting .trees file used to initialize the starting
-            population
         constants: dict[str,Any]
             Custom constants defined by user
         scripts: list[str]
             Customo scripts provided by the user
+        file_in: str
+            Optional starting .trees file used to initialize the 
+            starting population
         file_out: str
             Filepath to save output
-        ...
         """
         logger.debug("initializing Model")
         constants = {} if constants is None else constants
@@ -238,10 +234,9 @@ class Model(AbstractContextManager):
 
         self.chromosome = chromosome
         self.sim_time = sim_time
-        self.file_in = file_in
-        self.file_out = file_out
-        self.ne = ne
-        self.mutation_rate = mutation_rate
+        self._file_in = file_in
+        self._file_out = file_out
+        self._mutation_rate = mutation_rate
         
         self.map['initialize'].append({
             'mutation_rate': mutation_rate,
@@ -253,26 +248,18 @@ class Model(AbstractContextManager):
             'constants': constants,
             'scripts': scripts,
         })
-
-        # Standard single population simulation.
     
-    def readfromfile(self):
+    def _read_from_file(self):
+        """Set an existing .trees file as starting state of simulation.
+
+        If the trees file is not a shadie trees file (e.g., with 
+        subpops defined as p0 and p1) this will cause problems.
         """
-        If a .trees file is provided, this will be the starting point
-        of the simulation
-        """
-        if self.file_in:
-        # starting from another simulation starting point.
-            #raise NotImplementedError("This isn't ready to use yet.")
-            self.early(
-                time=1,
-                scripts=[f"sim.readFromPopulationFile('{self.file_in}')"],
-                comment="read starting populations from file_in"
-                )
-            # self.late(
-            #     time=1,
-            #     scripts=["sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n"],
-            #     comment="save starting pop")
+        self.early(
+            time=1,
+            scripts=[f"sim.readFromPopulationFile('{self._file_in}')"],
+            comment="read starting populations from file_in"
+        )
 
     def early(
         self,
@@ -380,33 +367,14 @@ class Model(AbstractContextManager):
             'comment': comment,
         })
 
-    def _check_repro(self):
-        """
-        TODO.
-        """
-        #check for reproduction; if does not exist, implement WF model
-        if "reproduction" in self.script:
-            pass
-        else:
-            print(self.ne)
-            self.reproduction.base()
-            logger.warning("You did not specify a reproduction mode "
-                "so a default WF model has been used for this simulation")
-
-
     def _check_script(self):
+        """Checks that the model contains the minimal requirements.
         """
-        TODO.
-        """
-        #check for initialization
         assert "initialize" in self.script, (
             "You must call initialize() from within Model context")
-
-        # assert "reproduction" in self.script, (
-        #     "You must specify a reproduction model to use")
-
-        # assert "late" in self.script, (
-            # "You must call late() from within Model context")
+        print("reproduction" in self.script)
+        assert "reproduction" in self.script, (
+            "You must call reproduction() from within Model context")
 
     def write(self, path: Optional[str]=None):
         """Write SLIM script to the outname filepath or stdout."""
@@ -523,6 +491,7 @@ if __name__ == "__main__":
         # init the model
 
         model.initialize(chromosome=chrom)
+        model.reproduction.wright_fisher(pop_size=1000)
 
         model.early(
             time=1000,
