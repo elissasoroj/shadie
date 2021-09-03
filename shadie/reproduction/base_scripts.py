@@ -3,6 +3,15 @@
 """
 String scripts for reproduction blocks
 """
+
+#----------------------------------------
+#for reading from population file
+READIN_RESCHEDULE = """
+finalgen = {sim_time} + sim.generation - 1;
+// scheduling the end of the simulation
+sim.rescheduleScriptBlock(s0, generations=finalgen);
+"""
+
 #----------------------------------------
 #early ()
 EARLY = """
@@ -10,7 +19,10 @@ EARLY = """
     if (sim.generation % 2 == 0) {{
 
         // fitness affects gametophyte survival
-        p0.fitnessScaling = (hK / p0.individualCount);
+        p0.fitnessScaling = (gam_popsize / p0.individualCount);
+
+        //set mutation rate for haploids
+        sim.chromosome.setMutationRate(gam_mutation_rate);
 
         // p0 and p1 survival callbacks
         s1.active = 1;
@@ -20,13 +32,17 @@ EARLY = """
 
         // haploids get modified fitness, without dominance
         {activate}
-        }}
+    }}
+
 
     // odd generations = gametophytes (p0) just generated sporophytes
     else {{
 
         // fitness affects sporophytes
-        p1.fitnessScaling = dK / p1.individualCount;
+        p1.fitnessScaling = spo_popsize / p1.individualCount;
+
+        //set mutation rate for diploids
+        sim.chromosome.setMutationRate(spo_mutation_rate);
 
         // turn off p0 survival callbacks
         // turn on p1 survival callbacks
@@ -52,9 +68,17 @@ DEACTIVATE = "{idx}.active = 0;"
 #SURVIVAL CALLBACKS
 #standard defaults
 
-DEATH_CHANCE = """
-//this code implements random death chance
-    if (runif(1) < Death_chance)
+SPO_DEATH_CHANCE = """
+//this code implements random chance of death in sporophytes
+    if (runif(1) < spo_random_death_chance)
+        return F;
+    else
+        return NULL;
+"""
+
+GAM_DEATH_CHANCE = """
+//this code implements random chance of death in gametophytes
+    if (runif(1) < gam_random_death_chance)
         return F;
     else
         return NULL;
@@ -85,23 +109,24 @@ s1 survival(p1) {{
 }}
 
 s2 survival(p1) {{
-    // this code implements random death chance
-    if (runif(1) < Death_chance)
+    // this code implements random chance of death in sporophytes
+    if (runif(1) < spo_random_death_chance)
         return F;
     else
         return NULL;
-
-    // maternal effect
-    {maternal_effect}
+    
+    {p1maternal_effect}
 }}
 
 // even
 s3 survival(p0) {{
-    //this code implements random death chance
-    if (runif(1) < Death_chance)
+    //this code implements random chance of death in gametophytes
+    if (runif(1) < gam_random_death_chance)
         return F;
     else
         {p0survival}
+    
+    {p0maternal_effect}
 }}
 
 // odd
@@ -111,7 +136,8 @@ s4 survival(p0) {{
 """
 
 ANGIO_SURV_P0 = """
-    {
+    {//All ovules survive; this is a way of implementing maternal effect
+    //if mother died, they would not be produced
         if (individual.tag == 1)
                 return T;
         else
@@ -140,27 +166,32 @@ REPRO_BRYO_DIO_P1 = """
     g_1 = genome1;
     g_2 = genome2;
 
-    meiosis_reps = floor(Spore_num/2);
+    meiosis_reps = floor(spores_per_spo/2);
     for (rep in 1:meiosis_reps) {
         breaks = sim.chromosome.drawBreakpoints(individual);
-        p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = ifelse (runif(1)<FtoM, 1, 0);
-        p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = ifelse (runif(1)<FtoM, 1, 0);
+        p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 
+            ifelse (runif(1)<gam_female_to_male_ratio, 1, 0);
+        p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 
+            ifelse (runif(1)<gam_female_to_male_ratio, 1, 0);
     }
 """
 
 REPRO_BRYO_DIO_P0 = """
     // females find male gametes to reproduce
     if (individual.tag == 1) {
-        reproduction_opportunity_count = 1;
+        reproduction_opportunity_count = spo_per_gam;
 
         // clones give the focal individual extra opportunities to reproduce
-        if (runif(1) <= Clone_rate)
-            reproduction_opportunity_count = reproduction_opportunity_count + 1;
+        if (runif(1) <= gam_clone_rate)
+        {
+            reproduction_opportunity_count = reproduction_opportunity_count 
+                + (gam_clone_number*spo_per_gam);
+        }
 
         for (repro in seqLen(reproduction_opportunity_count)) {
-            if (runif(1) <= Self_rate) {
+            if (runif(1) <= gam_self_rate) {
                 // this is selfing using two identical gametes – intragametophytic selfing
-                // intergametophytic selfing might happen below, by chance
+                // intergametophytic (sporophytic) selfing might happen below, by chance
                 p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
             }
             else {
@@ -170,7 +201,7 @@ REPRO_BRYO_DIO_P0 = """
                 if (sperm.size() == 1) {
                     child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
                     // Mother's fitness affects sporophyte fitness; see survival()
-                    if (Maternal_weight > 0)
+                    if (gam_maternal_effect > 0)
                         child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
 
                     // take out of the mating pool
@@ -186,7 +217,7 @@ REPRO_BRYO_MONO_P1 = """
     g_1 = genome1;
     g_2 = genome2;
 
-    meiosis_reps = floor(Spore_num/2);
+    meiosis_reps = floor(spores_per_spo/2);
     for (rep in 1:meiosis_reps)
     {
         breaks = sim.chromosome.drawBreakpoints(individual);
@@ -196,15 +227,17 @@ REPRO_BRYO_MONO_P1 = """
 """
 
 REPRO_BRYO_MONO_P0 = """
-    reproduction_opportunity_count = 1;
+    reproduction_opportunity_count = spo_per_gam;
 
     // clones give the focal individual extra opportunities to reproduce
-    if (runif(1) <= Clone_rate)
-        reproduction_opportunity_count = reproduction_opportunity_count + 1;
+    if (runif(1) <= gam_clone_rate)
+        {
+        reproduction_opportunity_count = reproduction_opportunity_count 
+        + (gam_clone_number*spo_per_gam);}
 
     for (repro in seqLen(reproduction_opportunity_count))
     {
-        if (runif(1) <= Self_rate)
+        if (runif(1) <= gam_self_rate)
         {
             // this is selfing using two identical gametes – intragametophytic selfing
             p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
@@ -224,11 +257,13 @@ REPRO_BRYO_MONO_P0 = """
 """
 
 EARLY1_ANGIO = """
-    sim.addSubpop('p1', dK); // diploid sporophyte pop
+    sim.addSubpop('p1', spo_popsize); // diploid sporophyte pop
     sim.addSubpop('p0', 0); // haploid gametophyte pop
 
-    dsex_starts = c(rep(1, asInteger(FtoM*dK)), rep(0, asInteger((1-FtoM)*dK)));
-    p1.individuals.tag = dsex_starts;
+    fems = spo_female_to_male_ratio*spo_popsize;
+    spo_sex_starts = c(rep(1, asInteger(fems)), 
+        rep(0, asInteger(spo_popsize-fems)));
+    p1.individuals.tag = spo_sex_starts;
 """
 
 REPRO_ANGIO_DIO_P1 = """
@@ -239,10 +274,10 @@ REPRO_ANGIO_DIO_P1 = """
     if (individual.tag == 1) {
 
         // determine how many ovules were fertilized, out of the total
-        fertilizedOvules = rbinom(1, Ovule_count, Fertilization_rate);
-        meiosis_reps = floor(fertilizedOvules/2);
-        if (runif(1) <= Clone_rate)
-            meiosis_reps = meiosis_reps*2;
+        fertilized_ovules = rbinom(1, ovule_count, ovule_fertilization_rate);
+        meiosis_reps = floor(fertilized_ovules/2);
+        if (runif(1) <= spo_clone_rate)
+            meiosis_reps = spo_clone_number*meiosis_reps*2;
 
         for (rep in 1:meiosis_reps) {
             breaks = sim.chromosome.drawBreakpoints(individual);
@@ -253,9 +288,9 @@ REPRO_ANGIO_DIO_P1 = """
 
     // individual is male
     else {
-        meiosis_reps = floor(Pollen_count/2);
-        if (runif(1) <= Clone_rate)
-            meiosis_reps = meiosis_reps*2;
+        meiosis_reps = floor(pollen_count/2);
+        if (runif(1) <= spo_clone_rate)
+            meiosis_reps = spo_clone_number*meiosis_reps*2;
         for (rep in 1:meiosis_reps) {
             breaks = sim.chromosome.drawBreakpoints(individual);
             p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 0;
@@ -267,18 +302,31 @@ REPRO_ANGIO_DIO_P1 = """
 REPRO_ANGIO_DIO_P0  = """
     // females find male gametes to reproduce
     if (individual.tag == 1) {
-        if (Pollen_comp == T) {
+        if (pollen_comp == T) {
 
             // sperm land on stigma
-            pollen_pool = p0.sampleIndividuals(Pollen_per_stigma, tag=0);
+            pollen_pool = p0.sampleIndividuals(pollen_per_ovule, tag=0);
             for (pollen in pollen_pool) {
                 // store fitness value
                 pollen.setValue("fitness", p0.cachedFitness(pollen.index));
                 pollen.tag = 2;
             }
 
-            if (pollen_pool.length()>0) {
-                target_fitness = max(pollen_pool.getValue("fitness"));
+            if (length(pollen_pool)>0) {
+                //sort pollens by fitness
+                fitness_vector = pollen_pool.getValue("fitness");
+                sorted_fitness_vector = sort(fitness_vector, ascending=F);
+                                
+                //calculate how many pollens attempt to fertilize
+                attempts = 0;
+
+                for (i in range(1:length(pollen_pool)))
+                    {attempts = attempts + 1;
+                    if (runif(1)<pollen_success_rate)
+                        break;
+                    }
+                idx = attempts-1;    
+                target_fitness = sorted_fitness_vector[idx];
                 winners = pollen_pool[pollen_pool.getValue("fitness") == target_fitness];
                 sperm = winners[0];
             }
@@ -294,7 +342,7 @@ REPRO_ANGIO_DIO_P0  = """
             child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
             sperm.tag = 2;
 
-            if (runif(1) <= FtoM)
+            if (runif(1) <= spo_female_to_male_ratio)
                 child.tag = 1;
             else
                 child.tag = 0;
@@ -307,10 +355,10 @@ REPRO_ANGIO_MONO_P1="""
     g_2 = genome2;
 
     // determine how many ovules were fertilized, out of the total
-    fertilizedOvules = rbinom(1, Ovule_count, fertilization_rate);
-    meiosis_reps = floor(fertilizedOvules/2);
-    if (runif(1) <= Clone_rate)
-        meiosis_reps = meiosis_reps*2;
+    fertilized_ovules = rbinom(1, ovule_count, ovule_fertilization_rate);
+    meiosis_reps = floor(fertilized_ovules/2);
+    if (runif(1) <= spo_clone_rate)
+        meiosis_reps = spo_clone_number*meiosis_reps*2;
 
     for (rep in 1:meiosis_reps) {
         breaks = sim.chromosome.drawBreakpoints(individual);
@@ -318,9 +366,9 @@ REPRO_ANGIO_MONO_P1="""
         p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 1;
     }
 
-    meiosis_reps = floor(Pollen_count/2);
-    if (runif(1) <= Clone_rate)
-        meiosis_reps = meiosis_reps*2;
+    meiosis_reps = floor(pollen_count/2);
+    if (runif(1) <= spo_clone_rate)
+        meiosis_reps = spo_clone_number*meiosis_reps*2;
     for (rep in 1:meiosis_reps) {
         breaks = sim.chromosome.drawBreakpoints(individual);
         p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 0;
@@ -330,18 +378,18 @@ REPRO_ANGIO_MONO_P1="""
 
 REPRO_PTER_HOMOSPORE_P0 = """
     // chance of making meristic (egg-bearing) gametophyte
-    if (runif(1) < gFtoM) {
+    if (runif(1) < gam_female_to_male_ratio) {
         reproduction_opportunity_count = 1;
 
         // clones give the focal individual extra opportunities to reproduce
-        if (runif(1) <= gClone_rate)
-            reproduction_opportunity_count = reproduction_opportunity_count + 1;
+        if (runif(1) <= gam_clone_rate)
+            reproduction_opportunity_count = reproduction_opportunity_count + gam_clone_number;
 
         for (repro in seqLen(reproduction_opportunity_count)) {
-            if (runif(1) <= Self_rate)
+            if (runif(1) <= gam_self_rate)
                 p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
                 // this is selfing using two identical gametes – intragametophytic selfing
-                // intergametophytic selfing might happen below, by chance
+                // intergametophytic (sporophytic) selfing might happen below, by chance
 
             else {
                 sperm = p0.sampleIndividuals(1);
@@ -349,7 +397,7 @@ REPRO_PTER_HOMOSPORE_P0 = """
                 child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
 
                 //Mother's fitness affects sporophyte fitness; see survival()
-                if (Maternal_weight > 0)
+                if (gam_maternal_effect > 0)
                     child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
 
             }
@@ -361,12 +409,12 @@ REPRO_PTER_HOMOSPORE_P1 = """
     g_1 = genome1;
     g_2 = genome2;
 
-    meiosis_reps = floor(Spore_num/2);
+    meiosis_reps = floor(spores_per_spo/2);
     reproduction_opportunity_count = 1;
 
     // clones give the focal individual extra opportunities to reproduce
-    if (runif(1) <= Clone_rate)
-        meiosis_reps = meiosis_reps*2;
+    if (runif(1) <= spo_clone_rate)
+        meiosis_reps = spo_clone_number*meiosis_reps*2;
 
     for (rep in 1:meiosis_reps) {
         breaks = sim.chromosome.drawBreakpoints(individual);
@@ -376,30 +424,18 @@ REPRO_PTER_HOMOSPORE_P1 = """
 """
 
 REPRO_PTER_HETEROSPORE_P0 = """
-    if (runif(1) < gFtoM) // chance of making meristic (egg-bearing) gametophyte
-    {
-        reproduction_opportunity_count = 1;
-
-        // clones give the focal individual extra opportunities to reproduce
-        if (runif(1) <= gClone_rate)
-            reproduction_opportunity_count = reproduction_opportunity_count + 1;
-
+    g_1 = genome1;
+    g_2 = genome2;
+    if (individual.tag == 1) // reproduction callbacks for megaspores only
+    {   reproduction_opportunity_count = 1;
+            
         for (repro in seqLen(reproduction_opportunity_count))
-        {
-            if (runif(1) <= Self_rate)
-                p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
-                // this is selfing using two identical gametes – intragametophytic selfing
-                // intergametophytic selfing might happen below, by chance
-
-            else
-            {
-                sperm = p0.sampleIndividuals(1);
-
-                child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
-
-                if (Maternal_weight > 0) //Mother's fitness affects sporophyte fitness; see survival()
-                    child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
-
+        {   sperm = p0.sampleIndividuals(1, tag=0); // find a male!
+                
+            if (sperm.size() == 1)
+            {// intergametophytic/sporophytic selfing might happen by chance
+                child = p1.addRecombinant(individual.genome1, NULL, NULL,
+                        sperm.genome1, NULL, NULL);
             }
         }
     }
@@ -409,16 +445,26 @@ REPRO_PTER_HETEROSPORE_P1 = """
     g_1 = genome1;
     g_2 = genome2;
 
-    meiosis_reps = floor(Spore_num/2);
+    meiosis_reps = floor(spores_per_spo/2);
     reproduction_opportunity_count = 1;
+    
     // clones give the focal individual extra opportunities to reproduce
-    if (runif(1) <= Clone_rate)
-        meiosis_reps = meiosis_reps*2;
+    if (runif(1) <= spo_clone_rate)
+        meiosis_reps = spo_clone_number*meiosis_reps*2;
 
     for (rep in 1:meiosis_reps)
     {
         breaks = sim.chromosome.drawBreakpoints(individual);
         p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
         p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-    }
+	}
+	
+	if (runif(1) <= gam_female_to_male_ratio)
+		child.tag = 1;
+    else
+        child.tag = 0;
+    
+    //Mother's fitness affects gametophyte fitness; see survival()
+    if (gam_maternal_effect > 0)
+        child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
 """

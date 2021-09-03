@@ -82,7 +82,7 @@ class Model(AbstractContextManager):
     >>> model = shadie.Model()
     >>> chrom = shadie.chromosome.default()
     >>> with shadie.Model() as model:
-    >>>     model.initialize(chromosome=chrom, generations=10000)
+    >>>     model.initialize(chromosome=chrom, sim_time=10000)
     >>>     model.reproduction.bryophyte("dio", 10000, 10000)
     >>> model.run()
     """
@@ -111,15 +111,19 @@ class Model(AbstractContextManager):
         """The stdout from running `slim script` if `.run()` is called."""
 
         # store chromosome (mut, ele), constants, and populations
-        self.generations: int = 0
+        self.sim_time: int = 0
         """The length of the simulation in sprorophyte generations."""
         self.chromosome = None
         """Chromosome object with genome structure."""
+        
+        self.constants = {}
+        self.populations = {}
+
         self.reproduction = ReproductionApi(self)
         """API to access reproduction functions."""
 
     def __repr__(self):
-        return "<shadie.Model generations={self.generations}>"
+        return "<shadie.Model generations={self.sim_time}>"
 
     def __enter__(self):
         """
@@ -185,13 +189,14 @@ class Model(AbstractContextManager):
     def initialize(
         self,
         chromosome,
-        generations: int=1000,
-        mut: float=1e-8,
-        recomb: float=1e-9,
-        constants: Union[None, dict]=None,
-        scripts: Union[None, list]=None,
-        trees_file: str="shadie.trees",
-        start_file: Union[None, str]=None,
+        sim_time:int=1000, #length of sim in # of diploid generations
+        mutation_rate:float=1e-8, #mutation rate
+        recomb_rate:float=1e-9, #recombination rate
+        ne:Union[None, int]=None, #option ne parameter in initialize
+        file_in:Union[None, str]=None, #optional starting file
+        constants:Union[None, dict]=None,
+        scripts:Union[None, list]=None,
+        file_out: str="shadie.trees",
         ):
         """Add an initialize() block to the SLiM code map.
 
@@ -205,16 +210,26 @@ class Model(AbstractContextManager):
         chromosome: shadie.Chromosome
             A Chromosome object describes the Elements that compose
             the genome, and thus where.
-        generations: int
+        sim_time: int
             The number of *sporophyte* generations (len of simulation).
-        mut: float
+        mutation_rate: float
             The per-site per-*sporophyte*-generation mutation rate.
             This is applied at stage.
-        recomb: float
+        recomb_rate: float
             The per-site per-*sporophyte*-generation recombination rate.
             This is applied in the sporophyte generation during meiosis.
+        ne: int
+            Optional, for WF (base) model ONLY - user can define ne here
+            if they are not going to call .reproduction
+        file_in: str
+            Optional starting .trees file used to initialize the starting
+            population
         constants: dict[str,Any]
-            ...
+            Custom constants defined by user
+        scripts: list[str]
+            Customo scripts provided by the user
+        file_out: str
+            Filepath to save output
         ...
         """
         logger.debug("initializing Model")
@@ -222,11 +237,15 @@ class Model(AbstractContextManager):
         scripts = [] if scripts is None else scripts
 
         self.chromosome = chromosome
-        self.generations = generations
-
+        self.sim_time = sim_time
+        self.file_in = file_in
+        self.file_out = file_out
+        self.ne = ne
+        self.mutation_rate = mutation_rate
+        
         self.map['initialize'].append({
-            'mutation_rate': mut,
-            'recombination_rate': f"{recomb}, {int(chromosome.genome_size)}",
+            'mutation_rate': mutation_rate,
+            'recombination_rate': f"{recomb_rate}, {int(chromosome.genome_size)}",
             'genome_size': chromosome.genome_size,
             'mutations': chromosome.to_slim_mutation_types(),
             'elements': chromosome.to_slim_element_types(),
@@ -235,44 +254,31 @@ class Model(AbstractContextManager):
             'scripts': scripts,
         })
 
-        # Standard single population simulation. Saves and writes the
-        # trees file in the final diploid generation (2X of .generations).
-        # This means the only 'alive' individuals will be in p1, and the
-        # p0 subpopulation will be dropped by post-sim.
-        if not start_file:
-            self.late(
-                time=self.generations * 2,
-                comment="end of sim; write .trees file",
-                scripts=[
-                    # "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)",
-                    f"sim.treeSeqOutput('{trees_file}')"
-                ],
-            )
-        # starting from another simulation starting point.
-        else:
-            raise NotImplementedError("This isn't ready to use yet.")
-            self.early(
-                time=1,
-                scripts=f"sim.readFromPopulationFile('{start_file}')",
-                comment="read starting populations from startfile"
-                )
-            self.late(
-                time=self.generations * 2,
-                scripts=[
-                "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-                f"sim.treeSeqOutput('{trees_file}')"]
-                )
-
-    def readfromfile(self,):
+        # Standard single population simulation.
+    
+    def readfromfile(self):
         """
         If a .trees file is provided, this will be the starting point
         of the simulation
         """
+        if self.file_in:
+        # starting from another simulation starting point.
+            #raise NotImplementedError("This isn't ready to use yet.")
+            self.early(
+                time=1,
+                scripts=[f"sim.readFromPopulationFile('{self.file_in}')"],
+                comment="read starting populations from file_in"
+                )
+            # self.late(
+            #     time=1,
+            #     scripts=["sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n"],
+            #     comment="save starting pop")
 
     def early(
         self,
         time: Union[int, None],
         scripts: Union[str, list],
+        idx: Union[str,None]= None,
         comment: Union[str,None]=None,
         ):
         """Add an early() block to the SLiM code map.
@@ -284,6 +290,7 @@ class Model(AbstractContextManager):
         self.map['early'].append({
             'time': time,
             'scripts': scripts,
+            'idx': idx,
             'comment': comment,
         })
 
@@ -373,12 +380,31 @@ class Model(AbstractContextManager):
             'comment': comment,
         })
 
+    def _check_repro(self):
+        """
+        TODO.
+        """
+        #check for reproduction; if does not exist, implement WF model
+        if "reproduction" in self.script:
+            pass
+        else:
+            print(self.ne)
+            self.reproduction.base()
+            logger.warning("You did not specify a reproduction mode "
+                "so a default WF model has been used for this simulation")
+
+
     def _check_script(self):
         """
         TODO.
         """
+        #check for initialization
         assert "initialize" in self.script, (
             "You must call initialize() from within Model context")
+
+        # assert "reproduction" in self.script, (
+        #     "You must specify a reproduction model to use")
+
         # assert "late" in self.script, (
             # "You must call late() from within Model context")
 
@@ -409,7 +435,7 @@ class Model(AbstractContextManager):
         >>> model = shadie.Model()
         >>> chrom = shadie.chromosome.default()
         >>> with model:
-        >>>     model.initialize(chromosome=chrom, generations=1000)
+        >>>     model.initialize(chromosome=chrom, sim_time=1000)
         >>> model.run()
         """
         # get a slim binary and random number generator
@@ -495,6 +521,7 @@ if __name__ == "__main__":
         # print(chrom.mutations)
 
         # init the model
+
         model.initialize(chromosome=chrom)
 
         model.early(

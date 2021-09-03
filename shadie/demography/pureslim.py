@@ -9,18 +9,20 @@ import numpy as np
 import pyslim
 import tskit
 import msprime
-import toyplot
 import pandas as pd
 import scipy.stats
 from loguru import logger
 
-from toytree.utils.tree_sequence import ToyTreeSequence
+from toytree.utils.tree_sequence.src.toytree_sequence import ToyTreeSequence
 from toytree.utils.utils import ScrollableCanvas
 from shadie.chromosome.src.classes import ChromosomeBase
 
 
-class TwoSims:
-    """"Loads and merges two TreeSequence files from SLiM.
+class PureSlim:
+    """"Loads and merges two TreeSequence files with ancestral burn-in
+    from a pure SLiM simulation
+    
+    Two runs were initiated from an ancestral SLiM burn-in .trees file
 
     SliM has been run for two populations with the same genome type
     for T generations starting from different seeds and perhaps
@@ -34,6 +36,7 @@ class TwoSims:
     def __init__(
         self,
         tree_files: List[str],
+        ancestral_burnin: str,
         seed: Optional[int]=None,
         **kwargs,
         ):
@@ -43,9 +46,12 @@ class TwoSims:
         self._tree_sequences = [pyslim.load(i) for i in self._tree_files]
         self._nts: int = len(self._tree_files)
 
+        self._burnin= pyslim.load(ancestral_burnin)
+
         # attributes to be parsed from the slim metadata
         self.generations: int=0
-        """The SLiM simulated length of time in diploid generations."""
+        """The SLiM simulated length of time in diploid generations AFTER
+        the ancestral burn in (branch gens only)"""
         self.popsize: int=kwargs.get("popsize")
         """The SLiM simulated diploid carrying capacity"""
         self.recomb: float=kwargs.get("recomb")
@@ -62,7 +68,7 @@ class TwoSims:
 
         # try to fill attributes by extracting metadata from the tree files.
         self._extract_metadata()
-        self._tskit_complete()
+        self._union_all()
 
     def _extract_metadata(self):
         """Extract self attributes from shadie .trees file metadata.
@@ -71,64 +77,18 @@ class TwoSims:
         """
         gens = [i.metadata["SLiM"]["generation"] for i in self._tree_sequences]
         assert len(set(gens)) == 1, ("simulations must be same length (gens).")
-        self.generations = gens[0] #/ 2.
+        self.generations = gens[0]
         assert self.popsize, "popsize not found in metadata; must enter a popsize arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
         assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
 
-    def _tskit_complete(self):
+    def _union_all(self):
         """Calls tskit union, simplify, mutate to complete neutral sim.
+        ...
         """
         self._remove_null_population_and_nodes()
-        # self._update_tables()
         self._merge_ts_pops()
         self._report_ninds()
-        # self._divide_tree_height()
-        self._recapitate()
-        self._mutate()
-
-    def _update_tables(self):
-        """DEPRECATED.
-
-        Alternative approach to remove nulll pop and divide time.
-        This didn't work, still squishes edges...
-
-        Try this stuff next...
-        https://github.com/tskit-dev/pyslim/blob/625295ba6b4ae8e8400953be65b03b3630c1430f/docs/vignette_continuing.md#continuing-the-simulation
-        """
-        for idx, treeseq in enumerate(self._tree_sequences):
-            
-            # get mutable tskit.TableCollection
-            tables = treeseq.dump_tables()
-            nnodes = tables.nodes.time.size
-
-            # there is a null SLiM population (0) that doesnt really exist
-            # and the actual poulation (1). So we set all to 0.
-            tables.nodes.population = np.zeros(nnodes, dtype=np.int32)
-            meta = tables.metadata
-            meta["SLiM"]["generation"] = int(meta["SLiM"]["generation"] / 2.)
-            tables.metadata = meta
-            tables.nodes.time /= 2
-            tables.mutations.time /= 2.
-
-            # turn it back into a treesequence
-            treeseq = pyslim.load_tables(tables)#.tree_sequence()
-
-            # drop nodes that are not connected to anything. This includes
-            # the pseudo-nodes representing half of the haploid populations.
-            nodes_in_edge_table = list(
-                set(tables.edges.parent).union(tables.edges.child)
-            )
-            
-            # remove the empty population nodes by using simplify, which 
-            # will remove unconnected nodes (those not in samples). This 
-            # does not remove any Nodes, but it does remove a population.
-            # https://tskit.dev/tskit/docs/stable/_modules/tskit/tables.html
-            self._tree_sequences[idx] = treeseq.simplify(
-                samples=nodes_in_edge_table,
-                keep_input_roots=True,
-                keep_unary_in_individuals=True
-            )
 
     def _remove_null_population_and_nodes(self):
         """Call tskit simplify function to remove null pop.
@@ -149,12 +109,6 @@ class TwoSims:
             # modify the tables to set population to 0 for all
             nnodes = tables.nodes.num_rows
             tables.nodes.population = np.zeros(nnodes, dtype=np.int32)
-
-            # modify table metadata for SLiM sim length
-            # tables.metadata["SLiM"]["generation"] = int(
-            #     tables.metadata["SLiM"]["generation"] / 2)
-            # tables.mutations.time = tables.mutations.time / 2.
-            # tables.nodes.time = tables.nodes.time / 2.
 
             # drop nodes that are not connected to anything. This includes
             # the pseudo-nodes representing half of the haploid populations.
@@ -184,22 +138,17 @@ class TwoSims:
         add_population True sets new nodes to a new population.
         """
         # check the number of simulations for what to do.
-        if self._nts == 1:
-            #simplify to remove empty population
-            self.tree_sequence = pyslim.SlimTreeSequence(
-                self._tree_sequences[0]).simplify(keep_input_roots=True)
-            return
         if self._nts > 2:
             raise ValueError("you cannot enter >2 tree sequences.") 
-        # Merge two tree sequences
-        ts0 = self._tree_sequences[0]
-        ts1 = self._tree_sequences[1]
-        merged_ts = ts0.union(
-            ts1,
-            node_mapping=[tskit.NULL for i in range(ts1.num_nodes)],
-            add_populations=True,
-        )
-        self.tree_sequence = pyslim.SlimTreeSequence(merged_ts)
+        
+        node_map= self._match_nodes(other=self._tree_sequences[0],
+            ts=self._tree_sequences[1],
+            split_time= int(1+(2*self.generations)))
+
+        tsu = self._tree_sequences[1].union(self._tree_sequences[0],
+            node_map, check_shared_equality=True)
+
+        self.tree_sequence = pyslim.SlimTreeSequence(tsu)
 
     def _report_ninds(self):
         """Report number of inds in each population."""
@@ -213,82 +162,32 @@ class TwoSims:
         npop1 = len(inds_alive_in_pop1)
         logger.info(f"inds alive at time=0; simpop0={npop0}, simpop1={npop1}")
 
-    def _divide_tree_height(self):
-        """Divide all time measurements by half in ts tables.
-
-        The number of generations in a shadie simulation is 2X that of
-        a normal simulations since a single generation represents just
-        the haploid or diploid phase of a normal generation. To make
-        the trees normal again we divide time by 2X.
-
-        Mutation and recombination rates are handled separately.
-
-        Moved code to _remove_null_population_and_nodes() since it 
-        seems that it needs to be done before any simplify calls.
+    def _match_nodes(self, other, ts, split_time):
         """
-        # set metadata
-        # self.tree_sequence.metadata["SLiM"]["generation"] = int(
-            # self.tree_sequence.metadata["SLiM"]["generation"] / 2)
-
-        # tskit tables are immutable, get a copy
-        # tables = self.tree_sequence.tables
-        # tables.mutations.time = tables.mutations.time / 2.
-        # tables.nodes.time = tables.nodes.time / 2.
-
-        # # reload treeseq from modified tables
-        # self.tree_sequence = pyslim.load_tables(tables)
-
-    def _recapitate(self):
-        """Merge pops backwards in time and simulate ancestry.
+        Given SLiM tree sequences `other` and `ts`, builds a numpy array with length
+        `other.num_nodes` in which the indexes represent the node id in `other` and the
+        entries represent the equivalent node id in `ts`. If a node in `other` has no
+        equivalent in `ts`, then the entry takes the value `tskit.NULL`. The matching
+        is done by comparing the IDs assigned by SLiM which are kept in the NodeTable
+         metadata. Further, this matching of SLiM IDs is done for times (going 
+         backward-in-time) greater than the specified `split_time`.
         """
-        # recapitate: ts is passed to sim_ancestry as 'initial_state'.
-        # this automatically merges everyone into new ancestral pop.
-        self.tree_sequence = pyslim.recapitate(
-            ts=self.tree_sequence,
-            ancestral_Ne=self.popsize,
-            random_seed=self.rng.integers(2**31),
-            recombination_rate=self.recomb,
-        )
 
-    def _mutate(self):
-        """Mutatates the recapitated TreeSequence.
-
-        This applies a mutation model to edges of the tree sequence.
-        Does it know which regions to mutate or not mutate? For example,
-        all recapitated edges should be mutated, but also the neutral
-        genomic regions of the SLiM time frame should be mutated.
-        """
-        # logger report before adding mutations
-        self._report_mutations(allow_m0=False)
-
-        # add mutations
-        self.tree_sequence = msprime.sim_mutations(
-            self.tree_sequence,
-            rate=self.mut,
-            random_seed=self.rng.integers(2**31),
-            keep=True,  # whether to keep existing mutations.
-            model=msprime.SLiMMutationModel(type=0),
-        )
-        self.tree_sequence = pyslim.SlimTreeSequence(self.tree_sequence)
-
-        # logger report after adding mutations
-        self._report_mutations(allow_m0=True)
-
-    def _report_mutations(self, allow_m0: bool=True):
-        """Report to logger nmutations, mtypes, and check for m0 type."""
-        # check type m0 is not used
-        mut_types = set(
-            mutlist['mutation_type']
-            for mut in self.tree_sequence.mutations()
-            for mutlist in mut.metadata['mutation_list']
-        )
-        if not allow_m0:
-            assert 0 not in mut_types, "m0 mutation types already present."
-
-        # report to logger the existing mutations
-        logger.info(
-            f"Keeping {self.tree_sequence.num_mutations} existing "
-            f"mutations of type(s) {mut_types}.")
+        node_mapping = np.full(other.num_nodes, tskit.NULL)
+        sids0 = np.array([n.metadata["slim_id"] for n in ts.nodes()])
+        sids1 = np.array([n.metadata["slim_id"] for n in other.nodes()])
+        alive_before_split1 = (other.tables.nodes.time >= split_time)
+        is_1in0 = np.isin(sids1, sids0)
+        both = np.logical_and(alive_before_split1, is_1in0)
+        sorted_ids0 = np.argsort(sids0)
+        matches = np.searchsorted(
+            sids0,
+            sids1[both],
+            side='left',
+            sorter=sorted_ids0)
+        node_mapping[both] = sorted_ids0[matches]
+        
+        return node_mapping
 
     def stats(
         self,
@@ -319,24 +218,32 @@ class TwoSims:
         rng = np.random.default_rng(seed)
         data = []
 
+        if self.tree_sequence.
         # get a list of Series
         for rep in range(reps):
             seed = rng.integers(2**31)
             tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
             samples = np.arange(tts.sample[0] + tts.sample[1])
             sample_0 = samples[:tts.sample[0]]
+            sample_0_nodes = []
+            for i in sample_0:
+               sample_0_nodes.extend(tts.tree_sequence.individual(i).nodes)
+            
             sample_1 = samples[tts.sample[0]:]
+            sample_1_nodes = []
+            for i in sample_1:
+               sample_1_nodes.extend(tts.tree_sequence.individual(i).nodes)
 
             stats = pd.Series(
                 index=["theta_0", "theta_1", "Fst_01", "Dist_01", "D_Taj_0", "D_Taj_1"],
                 name=str(rep),
                 data=[
-                    tts.tree_sequence.diversity(sample_0_),
-                    tts.tree_sequence.diversity(sample_1),
-                    tts.tree_sequence.Fst([sample_0, sample_1]),
-                    tts.tree_sequence.divergence([sample_0, sample_1]),
-                    tts.tree_sequence.Tajimas_D(sample_0),
-                    tts.tree_sequence.Tajimas_D(sample_1),
+                    tts.tree_sequence.diversity(sample_0_nodes),
+                    tts.tree_sequence.diversity(sample_1_nodes),
+                    tts.tree_sequence.Fst([sample_0_nodes, sample_1_nodes]),
+                    tts.tree_sequence.divergence([sample_0_nodes, sample_1_nodes]),
+                    tts.tree_sequence.Tajimas_D(sample_0_nodes),
+                    tts.tree_sequence.Tajimas_D(sample_1_nodes),
                 ],
                 dtype=float,
             )
@@ -364,6 +271,7 @@ class TwoSims:
             data=np.vstack(confs),
         )
         return data
+
 
     def draw_tree(
         self,
@@ -409,6 +317,7 @@ class TwoSims:
             elif marks[0].layout == "l":
                 axes.vlines(self.generations, style=style)
         return canvas, axes, marks
+
 
     def draw_tree_sequence(
         self,
@@ -456,6 +365,22 @@ class TwoSims:
         # ax0.x.ticks.show = True
         ax0.x.ticks.near = 5
         ax0.x.ticks.far = 0
+        # ax0.fill(
+            # [0, 1], [0, 0], [1, 1], 
+            # color='green',
+        # )
+        # ax0.x.ticks.locator = toyplot.locator.Extended(count=8)
+
+
+        # ntrees = len(tts)
+        # tmax = start + min(ntrees, max_trees)
+        # breaks = tts.tree_sequence.breakpoints(True)[start: tmax + 1]
+        # cend = breaks[-1]
+        # print(cend)
+
+        # cdat = self.chromosome.data.loc[start:tmax]
+
+
 
         # add generation line showing where SLiM simulation ended.
         if show_generation_line:
@@ -464,34 +389,4 @@ class TwoSims:
                 style={"stroke-dasharray": "4,2", "stroke-opacity": 0.4}
             )
 
-        return canvas, axes, mark
-
-    def draw_stats(
-        self,
-        stat: str="diversity",
-        window_size: int=20_000,
-        sample: Union[int, Iterable[int]]=6,
-        ):
-        """Return a toyplot drawing of a statistic across the genome.
-
-        """
-        if stat == "diversity":
-            values = self.tree_sequence.diversity(
-                sample_sets=self.tree_sequence.samples()[:sample], 
-                windows=np.linspace(0, self.tree_sequence.sequence_length, 20)
-            )           
-        
-        # draw canvas...
-        canvas, axes, mark  = toyplot.fill(
-            values, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80)
-        )
-
-        # style axes
-        axes.x.ticks.show = True
-        axes.x.ticks.locator = toyplot.locator.Extended(only_inside=True)
-        axes.y.ticks.labels.angle = -90
-        axes.y.ticks.show = True
-        axes.y.ticks.locator = toyplot.locator.Extended(only_inside=True, count=5)        
-        axes.label.offset = 20
-        axes.label.text = f"{stat} in {int(window_size / 1000)}kb windows"
         return canvas, axes, mark

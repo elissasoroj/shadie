@@ -16,7 +16,7 @@ initialize() {{
   // config
   initializeRecombinationRate({recombination_rate});
   initializeMutationRate({mutation_rate});
-  initializeTreeSeq();
+  initializeTreeSeq(checkCoalescence=T);
 
   // MutationType init
   {mutations}
@@ -60,7 +60,8 @@ SURVIVAL = """
 
 EARLY = """
 // executes after offspring are generated
-{comment}{time}early() {{
+{comment}
+{idx}{time}early() {{
     {scripts}
 }}
 """
@@ -75,7 +76,6 @@ LATE = """
 """
 
 CUSTOM = """{comment}{scripts}"""
-
 
 EVENT_TO_FORMATTER = {
     "initialize": INITIALIZE,

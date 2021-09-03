@@ -9,6 +9,7 @@ code format.
 from typing import Optional
 import itertools
 import pandas as pd
+from shadie.base.defaults import NONCDS
 from shadie.chromosome.src.draw import (
     draw_altair_chrom_canvas_interactive,
     draw_toyplot_chrom,
@@ -27,15 +28,29 @@ class ChromosomeBase:
     Parameters
     ----------
     genome_size: int
-        The size of the genome in bp
-    nucleotides: bool
-        Use initializeMutationTypeNuc instead of initializeMutationType
+        The size of the genome in bp; bp count starts at 0.
+    use_nucleotides: bool
+        Use initializeMutationTypeNuc instead of initializeMutationType.
+    use_synonymous_sites_in_coding: bool
+        For every three bases in a coding regions the first two will be
+        of the MutationType of the coding region, but the third will be
+        of a NONCODING MutationType to emulate synonmyous codon sites.
+    skip_neutral_mutations: bool
+        Do not simulation neutral mutations. This should be used if you
+        plan to combine forward and backward simulations.
     """
-    def __init__(self, genome_size: int, use_nucleotides: bool=False):
-        self.genome_size = int(genome_size)
+    def __init__(self, 
+        genome_size: int, 
+        use_nucleotides: bool=False,
+        use_synonymous_sites_in_coding: bool=True,
+        skip_neutral_mutations: bool=False,
+        ):
+
+        self.genome_size = int(genome_size-1)
         self.mutations = []
-        self.use_nuc = use_nucleotides
-        # self.ichrom = None
+        self.use_nucleotides = use_nucleotides
+        self.use_synonymous_sites_in_coding = use_synonymous_sites_in_coding
+        self.skip_neutral_mutations = skip_neutral_mutations
         self.data = pd.DataFrame(
             columns=['name', 'start', 'end', 'eltype', 'script', 'coding'],
             data=None,
@@ -74,10 +89,14 @@ class ChromosomeBase:
         >>> chrom.to_slim_mutation_types()
         'initializeMutationType("m1", 0.5, "f", 0.0);\ninitializeMut...'
         """
-        elements = self.data.script.unique()
+        # the whole simulation is neutral, write neutral MutationType
+        if not self.is_coding():
+            elements = [NONCDS]
+        else:
+            elements = self.data.script.unique()
         mut_lists = [i.mlist for i in elements]
         mutations = set(itertools.chain(*mut_lists))
-        return "\n  ".join([i.to_slim(nuc=self.use_nuc) for i in mutations])
+        return "\n  ".join([i.to_slim(nuc=self.use_nucleotides) for i in mutations])
 
     def to_slim_element_types(self) -> str:
         """Return a string with newline separated SLIM commands to 
@@ -88,7 +107,11 @@ class ChromosomeBase:
         >>> chrom.to_slim_element_types()
         'initializeGenomicElementType("g1", c(m1,m2), c(3,3), mm);\ninitia...'
         """
-        elements = sorted(self.data.script.unique(), key=lambda x: x.name)
+        # entire chrom is nuetral, add NONCDS element type
+        if not self.is_coding():
+            elements = [NONCDS]
+        else:
+            elements = sorted(self.data.script.unique(), key=lambda x: x.name)
         return "\n  ".join([i.to_slim() for i in elements])
 
     def to_slim_elements(self) -> str:
@@ -112,32 +135,35 @@ class ChromosomeBase:
         # and record this is done (TODO) to ensure we don't msprime mutate
         # them again later.
         if not self.is_coding():
-            raise NotImplementedError("fully neutral shadie sim not yet supported.")
+            commands.extend(
+                f"initializeGenomicElement({NONCDS}, 0, {self.genome_size});")
 
-        # iterate over int start positions of elements
-        for idx in self.data.index:
-            ele = self.data.loc[idx]
+        # entire chrom is not neutral, insert coding elements.
+        else:
+            # iterate over int start positions of elements
+            for idx in self.data.index:
+                ele = self.data.loc[idx]
 
-            # neutral region: do not write.
-            if not self.is_coding(idx):
-                pass
+                # neutral region: do not write.
+                if not self.is_coding(idx):
+                    pass
 
-            # coding region: write it.
-            else:
-                # write block as 2/3 repeating NONSYN/SYN (current default)?
-                if 1:
-                    length = ele.end - ele.start
-                    commands.extend([
-                        f"types = rep({ele.eltype}, asInteger(floor({length}/3)));",
-                        f"starts = {ele.start} + seqLen(integerDiv({length}, 3)) * 3;",
-                        "ends = starts + 1;",
-                        "initializeGenomicElement(types, starts, ends);\n",
-                    ])
-                # write whole block as a single genomic element.
+                # coding region: write it.
                 else:
-                    commands.append(
-                        f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
-                    )
+                    # write block as 2/3 repeating NONSYN/SYN (current default)?
+                    if self.use_synonymous_sites_in_coding:
+                        length = ele.end - ele.start
+                        commands.extend([
+                            f"types = rep({ele.eltype}, asInteger(floor({length}/3)));",
+                            f"starts = {ele.start} + seqLen(integerDiv({length}, 3)) * 3;",
+                            "ends = starts + 1;",
+                            "initializeGenomicElement(types, starts, ends);\n",
+                        ])
+                    # write whole block as a single genomic element.
+                    else:
+                        commands.append(
+                            f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
+                        )
         return "\n  ".join(commands)
 
     def inspect(self, width: int=700, outfile: Optional[str]=None):

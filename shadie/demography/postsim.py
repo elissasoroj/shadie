@@ -41,6 +41,7 @@ class PostSim:
         recomb: float = None, #recomcbination rate
         mutrate:float = None, #mutations rate
         chromosome = None, #'shadie.chromosome.ChromosomeBase'
+        altgen: bool = True, #is model altgen or not?
         ):
     
         """
@@ -48,9 +49,13 @@ class PostSim:
         overlays neutral mutations and saves info.
         """
 
+        if altgen is True:
+            self.mutrate = mutrate/2
+        else:
+            self.mutrate = mutrate
+
         self.chromosome = chromosome
         self.simlength = simlength
-        self.mutrate = mutrate/2
         self.recomb = recomb
         self.popsize = popsize
         self.pops = None
@@ -251,6 +256,9 @@ class PostSim:
                 set2.append(i)
         self.sets = [set1, set2]
 
+        logger.warning("sets are not working correctly. Choose individuals"
+            "by hand for now")
+
         print(f"Before, there were {ts.num_samples} sample nodes "
             f"(and {ts.num_individuals} individuals) "
             f"in the tree sequence, and now there are {self.sts.num_samples} "
@@ -343,7 +351,7 @@ class PostSim:
                         tajd2.append(tajds[1]) 
 
             print(
-                "Sampled 20 individuals from each population "
+                f"Sampled {samplesize} individuals from each population"
                 f"{sampletimes} times\n"
                 f"Divergence: {np.mean(divg)}\n"
                 f"Diversity: pop1 = {np.mean(divs1)}, pop2 = {np.mean(divs2)}\n"

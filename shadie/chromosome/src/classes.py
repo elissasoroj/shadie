@@ -69,13 +69,15 @@ class ChromosomeRandom(ChromosomeBase):
         exon: Union[None, ElementType, List[ElementType]]=None,
         noncds: ElementType=None,
         seed: Union[int, None]=None,
+        ns_sites:bool =True,
         ):
 
-        super().__init__(genome_size)
+        super().__init__(genome_size, ns_sites = ns_sites)
         self.rng = np.random.default_rng(seed)
         self.intron = intron if intron is not None else INTRON
         self.exon = exon if exon is not None else EXON
         self.noncds = noncds if noncds is not None else NONCDS
+        self.genome_size = int(genome_size - 1)
 
         # combine all elements into a list
         elements = []
@@ -192,9 +194,9 @@ class ChromosomeExplicit(ChromosomeBase):
         (5000, 10000): None,
     })
     """
-    def __init__(self, data):
-        genome_size = max(i[1] for i in data.keys())
-        super().__init__(genome_size)
+    def __init__(self, data, ns_sites:bool=True):
+        genome_size = 1+(max(i[1] for i in data.keys()))
+        super().__init__(genome_size, ns_sites = ns_sites)
 
         # check data dict for proper structure
         assert all(isinstance(i, tuple) for i in data.keys()), (
@@ -203,10 +205,13 @@ class ChromosomeExplicit(ChromosomeBase):
             "values of input data should be ElementType objects.")
 
         mutations = []
-        for element in data.values():
-            for mutation in element.mlist:
-                if mutation.name not in mutations:
-                    mutations.append(mutation.name)
+        if self.is_coding() == 0:
+            mutations.append(NEUT.name)
+        else:
+            for element in data.values():
+                for mutation in element.mlist:
+                    if mutation.name not in mutations:
+                        mutations.append(mutation.name)
         self.mutations = mutations
 
         # entere explicit dict into data
@@ -243,12 +248,14 @@ if __name__ == "__main__":
     # design chromosome of elements
     # Do we want users to be able to put in a chromosome like this 
     # and have the gaps filled with neutral portions? YES.
-    chrom = shadie.chromosome.explicit({
+    chrom = shadie.chromosome.explicit(
+        data = {
         (0, 500): shadie.NONCDS,
         (500, 1000): e1,
         (2000, 3000): e0,
         (3001, 5000): e1,
-    })
+        }, 
+        ns_sites=False)
 
     #elem = chrom.data.loc[500]["eltype"]
     #chrom.to_slim_mutation_types()
