@@ -28,8 +28,8 @@ class ReproductionApi:
     def bryophyte(
         self, 
         mode:str, 
-        spo_ne: int,
-        gam_ne: int,
+        spo_popsize: int,
+        gam_popsize: int,
         spo_mutation_rate: Union[None, float]=None,
         gam_mutation_rate: Union[None, float]=None,
         spores_per_spo: int=100,
@@ -56,9 +56,9 @@ class ReproductionApi:
         ----------
         mode: str
             A life history strategy: "dio" or "mono"-icous. 
-        spo_ne: int
+        spo_popsize: int
             Sporophyte (diploid) effective population size.
-        gam_ne: int
+        gam_popsize: int
             Gametophyte (haploid) effective population size.
         spo_mutation_rate: float
             Sporophyte mutation rate; chance mutations will arise during
@@ -90,7 +90,7 @@ class ReproductionApi:
         """
         Bryophyte(
             model=self.model,
-            mode=mode, spo_ne=spo_ne, gam_ne=gam_ne,
+            mode=mode, spo_popsize=spo_popsize, gam_popsize=gam_popsize,
             spo_mutation_rate=spo_mutation_rate,
             gam_mutation_rate=gam_mutation_rate, 
             gam_female_to_male_ratio=gam_female_to_male_ratio,
@@ -110,8 +110,8 @@ class ReproductionApi:
     def pteridophyte(
         self, 
         mode:str, 
-        spo_ne: int,
-        gam_ne: int,
+        spo_popsize: int,
+        gam_popsize: int,
         spo_mutation_rate: Union[None, float]=None,
         gam_mutation_rate: Union[None, float]=None,
         spores_per_spo: int=100,
@@ -138,9 +138,9 @@ class ReproductionApi:
         -----------
         mode: str
             A life history strategy or "homo" or "hetero" -sporous.
-        spo_ne: int
+        spo_popsize: int
             Sporophyte (diploid) effective population size.
-        gam_ne: int
+        gam_popsize: int
             Gametophyte (haploid) effective population size.
         spo_mutation_rate: float
             Sporophyte mutation rate; chance mutations will arise during
@@ -175,7 +175,7 @@ class ReproductionApi:
         ...
         """
         Pteridophyte(
-            model=self.model, mode=mode, spo_ne=spo_ne, gam_ne=gam_ne,
+            model=self.model, mode=mode, spo_popsize=spo_popsize, gam_popsize=gam_popsize,
             spo_mutation_rate = spo_mutation_rate,
             gam_mutation_rate = gam_mutation_rate, 
             spo_female_to_male_ratio = spo_female_to_male_ratio,
@@ -199,8 +199,8 @@ class ReproductionApi:
     def spermatophyte(
         self, 
         mode:str, 
-        spo_ne: int,
-        gam_ne: int,
+        spo_popsize: int,
+        gam_popsize: int,
         spo_mutation_rate: Union[None, float]=None,
         gam_mutation_rate: Union[None, float]=None,
         spo_female_to_male_ratio: float.as_integer_ratio = (1,1),
@@ -229,9 +229,9 @@ class ReproductionApi:
         -----------
         mode: str
             A life history strategy or "dio" or "mono" -ecious.
-        spo_ne: int
+        spo_popsize: int
             Sporophyte (diploid) effective population size.
-        gam_ne: int
+        gam_popsize: int
             Gametophyte (haploid) effective population size.
         spo_mutation_rate: float
             Sporophyte mutation rate; chance mutations will arise during
@@ -274,7 +274,7 @@ class ReproductionApi:
         ...
         """
         Spermatophyte(
-            model=self.model, mode=mode,spo_ne=spo_ne, gam_ne=gam_ne,
+            model=self.model, mode=mode,spo_popsize=spo_popsize, gam_popsize=gam_popsize,
             spo_mutation_rate = spo_mutation_rate,
             gam_mutation_rate = gam_mutation_rate, 
             spo_female_to_male_ratio = spo_female_to_male_ratio,

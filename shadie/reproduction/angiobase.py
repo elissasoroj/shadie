@@ -33,8 +33,8 @@ class Spermatophyte(SpermatophyteBase):
     Reproduction mode based on angiosperms; appropriate for gymnosperms
     as well
     """
-    spo_ne: int
-    gam_ne: int
+    spo_popsize: int
+    gam_popsize: int
     spo_mutation_rate: Union[None, float] = None
     gam_mutation_rate: float = 0.0
     spo_female_to_male_ratio: float.as_integer_ratio = (1,1)
@@ -81,8 +81,8 @@ class Spermatophyte(SpermatophyteBase):
         Add defineConstant calls to init for new variables
         """
         constants = self.model.map["initialize"][0]['constants']
-        constants["spo_ne"] = self.spo_ne
-        constants["gam_ne"] = self.gam_ne
+        constants["spo_popsize"] = self.spo_popsize
+        constants["gam_popsize"] = self.gam_popsize
         constants["spo_mutation_rate"] = self.spo_mutation_rate
         constants["gam_mutation_rate"] = self.gam_mutation_rate
         constants["spo_female_to_male_ratio"] = self.spo_female_to_male_ratio
@@ -321,8 +321,8 @@ if __name__ == "__main__":
 
         mod.reproduction.spermatophyte(
             mode='mono',
-            spo_ne=1000, 
-            gam_ne=1000,
+            spo_popsize=1000, 
+            gam_popsize=1000,
         )
 
     print(mod.script)

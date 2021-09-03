@@ -19,7 +19,7 @@ EARLY = """
     if (sim.generation % 2 == 0) {{
 
         // fitness affects gametophyte survival
-        p0.fitnessScaling = (gam_ne / p0.individualCount);
+        p0.fitnessScaling = (gam_popsize / p0.individualCount);
 
         //set mutation rate for haploids
         sim.chromosome.setMutationRate(gam_mutation_rate);
@@ -39,7 +39,7 @@ EARLY = """
     else {{
 
         // fitness affects sporophytes
-        p1.fitnessScaling = spo_ne / p1.individualCount;
+        p1.fitnessScaling = spo_popsize / p1.individualCount;
 
         //set mutation rate for diploids
         sim.chromosome.setMutationRate(spo_mutation_rate);
@@ -257,12 +257,12 @@ REPRO_BRYO_MONO_P0 = """
 """
 
 EARLY1_ANGIO = """
-    sim.addSubpop('p1', spo_ne); // diploid sporophyte pop
+    sim.addSubpop('p1', spo_popsize); // diploid sporophyte pop
     sim.addSubpop('p0', 0); // haploid gametophyte pop
 
-    fems = spo_female_to_male_ratio*spo_ne;
+    fems = spo_female_to_male_ratio*spo_popsize;
     spo_sex_starts = c(rep(1, asInteger(fems)), 
-        rep(0, asInteger(spo_ne-fems)));
+        rep(0, asInteger(spo_popsize-fems)));
     p1.individuals.tag = spo_sex_starts;
 """
 
