@@ -19,7 +19,7 @@ EARLY = """
     if (sim.generation % 2 == 0) {{
 
         // fitness affects gametophyte survival
-        p0.fitnessScaling = (gam_popsize / p0.individualCount);
+        p0.fitnessScaling = (gam_pop_size / p0.individualCount);
 
         //set mutation rate for haploids
         sim.chromosome.setMutationRate(gam_mutation_rate);
@@ -39,7 +39,7 @@ EARLY = """
     else {{
 
         // fitness affects sporophytes
-        p1.fitnessScaling = spo_popsize / p1.individualCount;
+        p1.fitnessScaling = spo_pop_size / p1.individualCount;
 
         //set mutation rate for diploids
         sim.chromosome.setMutationRate(spo_mutation_rate);
@@ -166,7 +166,7 @@ REPRO_BRYO_DIO_P1 = """
     g_1 = genome1;
     g_2 = genome2;
 
-    meiosis_reps = floor(spores_per_spo/2);
+    meiosis_reps = floor(spo_spores_per/2);
     for (rep in 1:meiosis_reps) {
         breaks = sim.chromosome.drawBreakpoints(individual);
         p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 
@@ -179,13 +179,13 @@ REPRO_BRYO_DIO_P1 = """
 REPRO_BRYO_DIO_P0 = """
     // females find male gametes to reproduce
     if (individual.tag == 1) {
-        reproduction_opportunity_count = spo_per_gam;
+        reproduction_opportunity_count = gam_sporophytes_per;
 
         // clones give the focal individual extra opportunities to reproduce
         if (runif(1) <= gam_clone_rate)
         {
             reproduction_opportunity_count = reproduction_opportunity_count 
-                + (gam_clone_number*spo_per_gam);
+                + (gam_clone_number * gam_sporophytes_per);
         }
 
         for (repro in seqLen(reproduction_opportunity_count)) {
@@ -200,6 +200,7 @@ REPRO_BRYO_DIO_P0 = """
 
                 if (sperm.size() == 1) {
                     child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
+                    
                     // Mother's fitness affects sporophyte fitness; see survival()
                     if (gam_maternal_effect > 0)
                         child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
@@ -217,9 +218,8 @@ REPRO_BRYO_MONO_P1 = """
     g_1 = genome1;
     g_2 = genome2;
 
-    meiosis_reps = floor(spores_per_spo/2);
-    for (rep in 1:meiosis_reps)
-    {
+    meiosis_reps = floor(spo_spores_per/2);
+    for (rep in 1:meiosis_reps) {
         breaks = sim.chromosome.drawBreakpoints(individual);
         p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
         p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
@@ -230,39 +230,34 @@ REPRO_BRYO_MONO_P0 = """
     reproduction_opportunity_count = spo_per_gam;
 
     // clones give the focal individual extra opportunities to reproduce
-    if (runif(1) <= gam_clone_rate)
-        {
+    if (runif(1) <= gam_clone_rate) {
         reproduction_opportunity_count = reproduction_opportunity_count 
-        + (gam_clone_number*spo_per_gam);}
+        + (gam_clone_number * spo_per_gam);
+    }
 
-    for (repro in seqLen(reproduction_opportunity_count))
-    {
-        if (runif(1) <= gam_self_rate)
-        {
+    for (repro in seqLen(reproduction_opportunity_count)) {
+        if (runif(1) <= gam_self_rate) {
             // this is selfing using two identical gametes – intragametophytic selfing
             p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
             // intergametophytic selfing might happen below, by chance
         }
-        else
-        {
+        else {
             sperm = p0.sampleIndividuals(1);
-
             child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
-
-            if (Maternal_weight > 0) //Mother's fitness affects sporophyte fitness; see survival()
+            // Mother's fitness affects sporophyte fitness; see survival()
+            if (Maternal_weight > 0)
                 child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
-
         }
     }
 """
 
 EARLY1_ANGIO = """
-    sim.addSubpop('p1', spo_popsize); // diploid sporophyte pop
+    sim.addSubpop('p1', spo_pop_size); // diploid sporophyte pop
     sim.addSubpop('p0', 0); // haploid gametophyte pop
 
-    fems = spo_female_to_male_ratio*spo_popsize;
+    fems = spo_female_to_male_ratio * spo_pop_size;
     spo_sex_starts = c(rep(1, asInteger(fems)), 
-        rep(0, asInteger(spo_popsize-fems)));
+        rep(0, asInteger(spo_pop_size-fems)));
     p1.individuals.tag = spo_sex_starts;
 """
 
