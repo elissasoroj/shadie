@@ -278,6 +278,7 @@ class Model(AbstractContextManager):
         self,
         time: Union[int, None],
         scripts: Union[str, list],
+        idx: Union[str,None]= None,
         comment: Union[str,None]=None,
         ):
         """Add an early() block to the SLiM code map.
@@ -289,6 +290,7 @@ class Model(AbstractContextManager):
         self.map['early'].append({
             'time': time,
             'scripts': scripts,
+            'idx': idx,
             'comment': comment,
         })
 

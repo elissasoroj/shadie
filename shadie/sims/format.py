@@ -60,7 +60,8 @@ SURVIVAL = """
 
 EARLY = """
 // executes after offspring are generated
-{comment}{time}early() {{
+{comment}
+{idx}{time}early() {{
     {scripts}
 }}
 """
