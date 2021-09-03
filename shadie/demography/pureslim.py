@@ -218,23 +218,32 @@ class PureSlim:
         rng = np.random.default_rng(seed)
         data = []
 
+        if self.tree_sequence.
         # get a list of Series
         for rep in range(reps):
             seed = rng.integers(2**31)
             tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
             samples = np.arange(tts.sample[0] + tts.sample[1])
             sample_0 = samples[:tts.sample[0]]
+            sample_0_nodes = []
+            for i in sample_0:
+               sample_0_nodes.extend(tts.tree_sequence.individual(i).nodes)
+            
             sample_1 = samples[tts.sample[0]:]
+            sample_1_nodes = []
+            for i in sample_1:
+               sample_1_nodes.extend(tts.tree_sequence.individual(i).nodes)
+
             stats = pd.Series(
                 index=["theta_0", "theta_1", "Fst_01", "Dist_01", "D_Taj_0", "D_Taj_1"],
                 name=str(rep),
                 data=[
-                    tts.tree_sequence.diversity(sample_0),
-                    tts.tree_sequence.diversity(sample_1),
-                    tts.tree_sequence.Fst([sample_0, sample_1]),
-                    tts.tree_sequence.divergence([sample_0, sample_1]),
-                    tts.tree_sequence.Tajimas_D(sample_0),
-                    tts.tree_sequence.Tajimas_D(sample_1),
+                    tts.tree_sequence.diversity(sample_0_nodes),
+                    tts.tree_sequence.diversity(sample_1_nodes),
+                    tts.tree_sequence.Fst([sample_0_nodes, sample_1_nodes]),
+                    tts.tree_sequence.divergence([sample_0_nodes, sample_1_nodes]),
+                    tts.tree_sequence.Tajimas_D(sample_0_nodes),
+                    tts.tree_sequence.Tajimas_D(sample_1_nodes),
                 ],
                 dtype=float,
             )
