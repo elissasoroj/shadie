@@ -314,7 +314,8 @@ REPRO_ANGIO_DIO_P0  = """
 
             if (length(pollen_pool)>0) {
                 //sort pollens by fitness
-                sorted_pool = sortBy(pollen_pool, pollen_pool.getValue("fitness"), ascending=F);
+                fitness_vector = pollen_pool.getValue("fitness");
+                sorted_fitness_vector = sort(fitness_vector, ascending=F);
                                 
                 //calculate how many pollens attempt to fertilize
                 attempts = 0;
@@ -324,8 +325,10 @@ REPRO_ANGIO_DIO_P0  = """
                     if (runif(1)<pollen_success_rate)
                         break;
                     }
-                winner = attempts-1;    
-                sperm = sorted_pool[winner];
+                idx = attempts-1;    
+                target_fitness = sorted_fitness_vector[idx];
+                winners = pollen_pool[pollen_pool.getValue("fitness") == target_fitness];
+                sperm = winners[0];
             }
             // find a male
             else sperm = p0.sampleIndividuals(1, tag=0);
