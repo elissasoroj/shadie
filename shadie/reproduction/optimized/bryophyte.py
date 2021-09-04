@@ -104,8 +104,8 @@ class Bryophyte(BryophyteBase):
             f"{eggs_alive > self.spo_pop_size}\n"
             )
         if not eggs_alive > self.spo_pop_size:
-            self.sperm_pool = eggs_per_gen
             new_eggs_alive = self.gam_pop_size*(eggs_per_gen/self.sperm_pool)
+            self.sperm_pool = new_eggs_alive
 
             logger.info("your egg:sperm ratio is too low given "
                 "gam_pop_size. \nYour expected egg suvival is "
