@@ -92,8 +92,8 @@ MATERNAL_EFFECT = """
         corrected_fitness = (maternal_effect * gam_maternal_effect) + fitness * (1 - gam_maternal_effect);
         return (draw < corrected_fitness);
     }
-
-    return NULL;
+    else
+        return NULL;
 """
 
 DEATH = """
