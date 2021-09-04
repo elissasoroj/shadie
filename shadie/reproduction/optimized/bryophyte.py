@@ -34,6 +34,7 @@ class Bryophyte(BryophyteBase):
     """
     spo_pop_size: int
     gam_pop_size: int
+    sperm_pool: Union[None, int]=None,
     spo_mutation_rate: Union[None, float] = None
     gam_mutation_rate: Union[None, float] = None
     gam_female_to_male_ratio: float.as_integer_ratio = (1,1)
@@ -83,6 +84,11 @@ class Bryophyte(BryophyteBase):
             (1-self.gam_female_to_male_ratio)*self.spo_microspores_per*
             (1-self.gam_random_death_chance)*self.gam_sperm_per_microspore)
 
+        if not self.sperm_pool:
+            excess_eggs = ((eggs_per_gen/self.spo_pop_size)-1)*eggs_per_gen
+            sperm_pool = eggs_per_gen+(excess_eggs/2)
+            self.sperm_pool = sperm_pool
+
         fertilization_chance = sperm_per_gen/eggs_per_gen
 
         eggs_alive = self.gam_pop_size*(eggs_per_gen/sperm_per_gen)
@@ -98,10 +104,21 @@ class Bryophyte(BryophyteBase):
             f"{eggs_alive > self.spo_pop_size}\n"
             )
         if not eggs_alive > self.spo_pop_size:
+            self.sperm_pool = eggs_per_gen
+            new_eggs_alive = self.gam_pop_size*(eggs_per_gen/self.sperm_pool)
+
             logger.info("your egg:sperm ratio is too low given "
                 "gam_pop_size. \nYour expected egg suvival is "
-                f"{int(eggs_alive)} eggs per gen"
+                f"{int(eggs_alive)} eggs per generation.\n"
+                f"Using `sperm_pool` = {self.sperm_pool} to produce "
+                f"approximately {new_eggs_alive} eggs and "
+                f"{sperm_pool} sperm per generation "
+                "instead."
                 )
+        check_eggs = (self.gam_pop_size*self.gam_female_to_male_ratio)>new_eggs_alive
+        if not check_eggs:
+            logger.info("your gam_pop_size is too low to maintain a "
+                f"spo_pop_size of {self.spo_pop_size}")
 
         self.eggs_per_gen = eggs_per_gen
         self.sperm_per_gen = sperm_per_gen
@@ -125,6 +142,7 @@ class Bryophyte(BryophyteBase):
         constants = self.model.map["initialize"][0]['constants']
         constants["spo_pop_size"] = self.spo_pop_size
         constants["gam_pop_size"] = self.gam_pop_size
+        constants["sperm_pool"] = self.sperm_pool
         constants["spo_mutation_rate"] = self.spo_mutation_rate
         constants["gam_mutation_rate"] = self.gam_mutation_rate
         constants["gam_female_to_male_ratio"] = self.gam_female_to_male_ratio
@@ -303,7 +321,7 @@ class Bryophyte(BryophyteBase):
         )
 
         survival_script = (
-            SURV.format(**{'p0maternal_effect': MATERNAL_EFFECT,
+            SURV.format(**{'p0maternal_effect': MATERNAL_EFFECT_P0,
                 'p1maternal_effect': "",
                 'p0survival': "return NULL;"}).lstrip())
         self.model.custom(survival_script)

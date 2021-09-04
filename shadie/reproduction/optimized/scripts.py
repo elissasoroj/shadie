@@ -19,7 +19,14 @@ EARLY = """
     if (sim.generation % 2 == 0) {{
 
         // fitness affects gametophyte survival
-        p0.fitnessScaling = (gam_pop_size / p0.individualCount);
+        megaspores = p0.individuals[p0.individuals.tag==1];
+        megaspores.fitnessScaling = (gam_pop_size*(gam_female_to_male_ratio)
+                /length(megaspores));
+        
+        //extra pressure applied to sperm to reduce sim size
+        microspores = p0.individuals[p0.individuals.tag==2];
+        microspore_pool = 2*sperm_pool/gam_sperm_per_microspore;
+        microspores.fitnessScaling = (microspore_pool/length(microspores));
 
         //set mutation rate for haploids
         sim.chromosome.setMutationRate(gam_mutation_rate);

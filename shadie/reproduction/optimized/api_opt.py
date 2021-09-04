@@ -31,6 +31,7 @@ class ReproductionApi:
         mode:str, 
         spo_pop_size: int,
         gam_pop_size: int,
+        sperm_pool: Union[None, int]=None,
         spo_mutation_rate: Union[None, float]=None,
         gam_mutation_rate: Union[None, float]=None,
         gam_female_to_male_ratio: float.as_integer_ratio = (1,1),
@@ -97,6 +98,7 @@ class ReproductionApi:
         Bryophyte(
             model=self.model,
             mode=mode, spo_pop_size=spo_pop_size, gam_pop_size=gam_pop_size,
+            sperm_pool = sperm_pool,
             spo_mutation_rate=spo_mutation_rate,
             gam_mutation_rate=gam_mutation_rate, 
             gam_female_to_male_ratio=gam_female_to_male_ratio,
