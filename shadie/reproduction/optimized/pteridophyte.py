@@ -9,7 +9,8 @@ from dataclasses import dataclass, field
 from shadie.reproduction.base import ReproductionBase
 from shadie.reproduction.optimized.scripts import (
     ACTIVATE, DEACTIVATE, EARLY, SURV,
-    SUBSTITUTION, SUB_MUTS, MATERNAL_EFFECT,
+    SUBSTITUTION, SUB_MUTS, 
+    MATERNAL_EFFECT_P0, MATERNAL_EFFECT_P1,
     REPRO_PTER_HOMOSPORE_P1, REPRO_PTER_HOMOSPORE_P0,
     REPRO_PTER_HETEROSPORE_P1, REPRO_PTER_HETEROSPORE_P0,
     LATE_PTER_HOMOSPORE, LATE_PTER_HETEROSPORE
@@ -191,7 +192,7 @@ class Pteridophyte(PteridophyteBase):
 
         survival_script = (
             SURV.format(**{'p0maternal_effect': "",
-                'p1maternal_effect': MATERNAL_EFFECT,
+                'p1maternal_effect': MATERNAL_EFFECT_P1,
                 'p0survival': ""}).lstrip())
         self.model.custom(survival_script)
 
@@ -268,8 +269,8 @@ class Pteridophyte(PteridophyteBase):
         )
 
         survival_script = (
-            SURV.format(**{'p0maternal_effect': "",
-                'p1maternal_effect': MATERNAL_EFFECT,
+            SURV.format(**{'p0maternal_effect': MATERNAL_EFFECT_P0,
+                'p1maternal_effect': MATERNAL_EFFECT_P1,
                 'p0survival': ""}).lstrip())
         self.model.custom(survival_script)
 

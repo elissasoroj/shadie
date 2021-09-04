@@ -7,9 +7,10 @@ import pyslim
 from typing import Union
 from dataclasses import dataclass, field
 from shadie.reproduction.optimized.scripts import (
-    ACTIVATE, DEACTIVATE, EARLY, SURV, MATERNAL_EFFECT,
-    SUBSTITUTION, SUB_MUTS, REPRO_BRYO_DIO_P1, REPRO_BRYO_DIO_P0,
-    REPRO_BRYO_MONO_P1, REPRO_BRYO_MONO_P0, LATE_BRYO_DIO, LATE_BRYO_MONO
+    ACTIVATE, DEACTIVATE, EARLY, SURV, MATERNAL_EFFECT_P0,
+    MATERNAL_EFFECT_P1, SUBSTITUTION, SUB_MUTS, REPRO_BRYO_DIO_P1, 
+    REPRO_BRYO_DIO_P0, REPRO_BRYO_MONO_P1, REPRO_BRYO_MONO_P0,
+    LATE_BRYO_DIO, LATE_BRYO_MONO
 )
 
 DTYPES = ("d", "dio", "dioicy", "dioicous", "heterosporous",)
@@ -204,8 +205,8 @@ class Bryophyte(BryophyteBase):
         )
 
         survival_script = (
-            SURV.format(**{'p0maternal_effect': "",
-                'p1maternal_effect': MATERNAL_EFFECT,
+            SURV.format(**{'p0maternal_effect': "MATERNAL_EFFECT_P0", #affects p1
+                'p1maternal_effect': "", #affects p0
                 'p0survival': ""}).lstrip())
         self.model.custom(survival_script)
 
@@ -280,8 +281,8 @@ class Bryophyte(BryophyteBase):
         )
 
         survival_script = (
-            SURV.format(**{'p0maternal_effect': "",
-                'p1maternal_effect': MATERNAL_EFFECT,
+            SURV.format(**{'p0maternal_effect': "MATERNAL_EFFECT",
+                'p1maternal_effect': "",
                 'p0survival': "return NULL;"}).lstrip())
         self.model.custom(survival_script)
 

@@ -84,11 +84,20 @@ GAM_DEATH_CHANCE = """
         return NULL;
 """
 
-MATERNAL_EFFECT = """
+MATERNAL_EFFECT_P0 = """
     // maternal effect as weighted average
     maternal_effect = individual.getValue("maternal_fitness");
-    if (!isNULL(maternal_effect)) {
+    if (!isNULL(gam_maternal_effect)) {
         corrected_fitness = (maternal_effect * gam_maternal_effect) + fitness * (1 - gam_maternal_effect);
+        return (draw < corrected_fitness);
+    }
+"""
+
+MATERNAL_EFFECT_P1 = """
+    // maternal effect as weighted average
+    maternal_effect = individual.getValue("maternal_fitness");
+    if (!isNULL(spo_maternal_effect)) {
+        corrected_fitness = (maternal_effect * spo_maternal_effect) + fitness * (1 - spo_maternal_effect);
         return (draw < corrected_fitness);
     }
 """
@@ -110,7 +119,7 @@ s2 survival(p1) {{
     if (runif(1) < spo_random_death_chance)
         return F;
     
-    {p1maternal_effect}
+    {p0maternal_effect}
     else
         return NULL;
 }}
@@ -121,7 +130,7 @@ s3 survival(p0) {{
     if (runif(1) < gam_random_death_chance)
         return F;   
     {p0survival} 
-    {p0maternal_effect}
+    {p1maternal_effect}
     else
         return NULL;
 }}
