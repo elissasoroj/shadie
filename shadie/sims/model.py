@@ -145,7 +145,7 @@ class Model(AbstractContextManager):
         """
         sorted_keys = [
             'initialize', 'timed', 'reproduction', 'early',
-            'fitness', 'custom', 'survival', 'late',
+            'custom', 'survival', 'fitness', 'late',
         ]
 
         # copy map and split timed events to a new key list
