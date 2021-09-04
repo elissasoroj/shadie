@@ -151,15 +151,12 @@ class ChromosomeBase:
         for idx in self.data.index:
             ele = self.data.loc[idx]
 
-            # neutral region is not written
-            if not self.is_coding(idx) and self._skip_neutral_mutations:
-                pass
-
-            # nuetral region is written
-            elif not self.is_coding(idx):
-                commands.append(
-                    f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
-                )
+            # nuetral region is written depending on toggle.
+            if not self.is_coding(idx):
+                if not self._skip_neutral_mutations:
+                    commands.append(
+                        f"initializeGenomicElement({ele.eltype}, {ele.start}, {ele.end});"
+                    )
 
             # coding region is written
             else:
