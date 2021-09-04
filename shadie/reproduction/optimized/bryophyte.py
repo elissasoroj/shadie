@@ -93,7 +93,7 @@ class Bryophyte(BryophyteBase):
         self.sperm_pool = sperm_pool
         eggs_alive = self.gam_pop_size*(eggs_per_gen/sperm_per_gen)
         
-        logger.info("With these simulation parameters, you will "
+        logger.info("\nWith these simulation parameters, you will "
             f"generate {int(eggs_per_gen)} eggs and {int(sperm_per_gen)} "
             "sperm each generation. Likelihood of fertilization is "
             f"{min(int(fertilization_chance*100), 100)}%. Use `.optimize()` to choose "
@@ -107,7 +107,7 @@ class Bryophyte(BryophyteBase):
             new_eggs_alive = self.gam_pop_size*(eggs_per_gen/self.sperm_pool)
             self.sperm_pool = new_eggs_alive
 
-            logger.info("your egg:sperm ratio is too low given "
+            logger.info("\nYour egg:sperm ratio is too low given "
                 "gam_pop_size. \nYour expected egg suvival is "
                 f"{int(eggs_alive)} eggs per generation.\n"
                 f"Using `sperm_pool` = {self.sperm_pool} to produce "
@@ -115,9 +115,9 @@ class Bryophyte(BryophyteBase):
                 f"{self.sperm_pool} sperm per generation "
                 "instead."
                 )
-        check_eggs = (self.spo_pop_size*self.gam_female_to_male_ratio)>new_eggs_alive
+        check_eggs = new_eggs_alive>(self.spo_pop_size*self.gam_female_to_male_ratio)
         if not check_eggs:
-            logger.info("your gam_pop_size is too low to maintain a "
+            logger.info("\nYour gam_pop_size is too low to maintain a "
                 f"spo_pop_size of {self.spo_pop_size}")
 
         self.eggs_per_gen = eggs_per_gen
