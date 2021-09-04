@@ -10,7 +10,7 @@ from typing import Union, Tuple, Optional
 
 from shadie.reproduction.base import WrightFisher
 from shadie.reproduction.bryobase import BryophyteMonoicous, BryophyteDioicous
-from shadie.reproduction.angiobase import Spermatophyte
+from shadie.reproduction.angiobase import AngiospermMonoecious, AngiospermDioecious
 from shadie.reproduction.fernbase import Pteridophyte
 
 
@@ -173,6 +173,27 @@ class ReproductionApi:
             gam_random_death_chance=gam_random_death_chance,
         ).run()        
 
+    def angiosperm_monoecious(
+        self,
+        spo_pop_size: int,
+        gam_pop_size: int,
+        spo_mutation_rate: Optional[float]=None,
+        gam_mutation_rate: Optional[float]=None,
+        spo_flowers_per_individual: int=None,
+        spo_ovules_per_flower: int=None,
+        spo_ovule_success_rate: float=None,
+        spo_pollen_per_flower: int=None,
+        spo_pollen_success_rate: float=None,
+        spo_pistils_per_flower: int=None,
+        spo_pistils_pollen_comp: bool=None,
+        spo_clone_rate: float=None,
+        spo_clone_number: int=None,
+        spo_self_rate: float=None,
+        spo_maternal_effect: float=None,
+        spo_random_death_chance: float=None,
+        gam_random_death_chance: float=None,
+        ):
+        pass
 
     def pteridophyte(
         self,

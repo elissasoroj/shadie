@@ -3,291 +3,153 @@
 """
 Starting an alternate implementation of Reproduction 
 """
-import pyslim
-from typing import Union
+
+from typing import Tuple, Optional
 from dataclasses import dataclass, field
-from shadie.reproduction.base import ReproductionBase
-from shadie.reproduction.base_scripts import (
-    ACTIVATE, DEACTIVATE, EARLY, SURV,
-    SUBSTITUTION, SUB_INNER, REPRO_BRYO_DIO_P1, REPRO_BRYO_DIO_P0,
-    REPRO_BRYO_MONO_P1, REPRO_BRYO_MONO_P0, EARLY1_ANGIO,
-    REPRO_ANGIO_DIO_P1, REPRO_ANGIO_DIO_P0, REPRO_ANGIO_MONO_P1,
+from shadie.reproduction.base import NonWrightFisher
+from shadie.reproduction.base_scripts import SURV
+from shadie.reproduction.angio_scripts import (
+    EARLY1_ANGIO,
+    REPRO_ANGIO_DIO_P1, 
+    REPRO_ANGIO_DIO_P0, 
+    REPRO_ANGIO_MONO_P1,
     ANGIO_SURV_P0
 )
+
 
 DTYPES = ("d", "dio", "dioecy", "dioecious",)
 MTYPES = ("m", "mono", "monoecy", "monecious",)
 
-@dataclass
-class SpermatophyteBase(ReproductionBase):
-    lineage: str = field(default="Angiosperm", init=False)
-    mode: str
-    _file_in: str
-    _chromosome: 'shadie.chromosome.ChromosomeBase'
-    _sim_time: int
-    _file_out: str
 
 @dataclass
-class Spermatophyte(SpermatophyteBase):
-    """
-    Reproduction mode based on angiosperms; appropriate for gymnosperms
-    as well
-    """
-    spo_popsize: int
-    gam_popsize: int
-    spo_mutation_rate: Union[None, float] = None
-    gam_mutation_rate: float = 0.0
-    spo_female_to_male_ratio: float.as_integer_ratio = (1,1)
-    spo_clone_rate: float=0.0
-    spo_clone_number:int = 1
-    ovule_count: int=30
-    ovule_fertilization_rate: float=0.7
-    pollen_success_rate: float=0.7
-    pollen_count: int=100
-    pollen_comp: str="F"
-    pollen_per_ovule: int=5
-    spo_random_death_chance: float=0
-    gam_random_death_chance: float=0
+class AngiospermBase(NonWrightFisher):
+    lineage: str = field(default="Angiosperm", init=False)
+    spo_pop_size: int
+    gam_pop_size: int
+    spo_mutation_rate: Optional[float]
+    gam_mutation_rate: Optional[float]
+    spo_flowers_per_individual: int
+    spo_ovules_per_flower: int
+    spo_ovule_success_rate: float
+    spo_pollen_per_flower: int
+    spo_pollen_success_rate: float
+    spo_pistils_per_flower: int
+    spo_pistils_pollen_comp: bool
+    spo_clone_rate: float
+    spo_clone_number: int
+    spo_self_rate: float
+    spo_maternal_effect: float
+    spo_random_death_chance: float
+    gam_random_death_chance: float
+
+    def __post_init__(self):
+        """Checks parameters after init."""
+        # Set mutation rates for both, or use Model rate / 2 for both.
+        if self.spo_mutation_rate or self.gam_mutation_rate:
+            require_spo = self.spo_mutation_rate is not None
+            require_gam = self.gam_mutation_rate is not None
+            assert require_gam and require_spo, (
+                "You must define a mutation rate for both sporophyte "
+                "and gametophyte generations.")
+        else:
+            self.spo_mutation_rate = 0.5 * self.model._mutation_rate
+            self.gam_mutation_rate = 0.5 * self.model._mutation_rate
+
+    def _add_shared_mode_scripts(self):
+        """Survival and maternal effects shared by spermatophytes."""
+        survival_script = SURV.format(
+            p0maternal_effect="",
+            p1maternal_effect="",
+            p0survival=ANGIO_SURV_P0,
+        )
+        self.model.custom(survival_script) 
+
+
+@dataclass
+class AngiospermDioecious(AngiospermBase):
+    """Superclass of Spermatophyte base with dioecious functions."""
+    spo_female_to_male_ratio: Tuple[float,float]
+
+    def __post_init__(self):
+        """set ratio as a float."""
+        ratio_sum = sum(self.spo_female_to_male_ratio)
+        self.spo_female_to_male_ratio = (
+            self.spo_female_to_male_ratio[0] / ratio_sum)
 
     def run(self):
-        """
-        Updates self.model.map with new component scripts for running
-        life history and reproduction based on input args.
-        """
-        self.spo_female_to_male_ratio = (
-            self.spo_female_to_male_ratio[0]/
-            (self.spo_female_to_male_ratio[0]+self.spo_female_to_male_ratio[1]))
+        """Fill self.model.map with SLiM script snippets."""
+        # methods inherited from parent NonWrightFisher class
+        self._add_initialize_constants()
+        self._add_alternation_of_generations()
+        self._write_trees_file()
 
-        if self.spo_mutation_rate:
-            pass
-        else:
-            self.spo_mutation_rate = self.model.mutation_rate
-            self.gam_mutation_rate = 0.0
+        # methods inherited from AngiospermBase
+        self._add_shared_mode_scripts()
 
-        self.add_initialize_constants()
-        self.add_early_haploid_diploid_subpops()   
-        self.end_sim()     
-        if self.mode in DTYPES:
-            self.dioecious()
-        elif self.mode in MTYPES:
-            self.monoecious()
-        else:
-            raise ValueError(
-                f"'mode' not recognized, must be in {DTYPES + MTYPES}")
+        # specific organism functions
+        self._define_subpopulations()
+        self._add_mode_scripts()
 
-
-    def add_initialize_constants(self):
+    def _define_subpopulations(self):
+        """Defines the subpopulations and males/females.
+        This overrides the NonWrightFisher class function of same name.
         """
-        Add defineConstant calls to init for new variables
-        """
-        constants = self.model.map["initialize"][0]['constants']
-        constants["spo_popsize"] = self.spo_popsize
-        constants["gam_popsize"] = self.gam_popsize
-        constants["spo_mutation_rate"] = self.spo_mutation_rate
-        constants["gam_mutation_rate"] = self.gam_mutation_rate
-        constants["spo_female_to_male_ratio"] = self.spo_female_to_male_ratio
-        constants["spo_clone_rate"] = self.spo_clone_rate
-        constants["spo_clone_number"] = self.spo_clone_number
-        # constants["Self_rate"] = self.selfing_rate
-        constants["ovule_count"] = self.ovule_count
-        constants["ovule_fertilization_rate"] = self.ovule_fertilization_rate
-        constants["pollen_success_rate"] = self.pollen_success_rate
-        constants["pollen_count"] = self.pollen_count
-        constants["pollen_comp"] = self.pollen_comp
-        constants["pollen_per_ovule"] = self.pollen_per_ovule
-        constants["spo_random_death_chance"] = self.spo_random_death_chance
-        constants["gam_random_death_chance"] = self.gam_random_death_chance
-
-
-    def add_early_haploid_diploid_subpops(self):
-        """
-        add haploid and diploid life stages
-        """
-        if self._file_in:
-            self.model.readfromfile()
+        if self.model._file_in:
+            self.model.read_from_file()
         else:
             self.model.early(
                 time=1,
-                scripts= EARLY1_ANGIO,
-                comment="define Angiosperm subpops: diploid sporophytes, haploid gametophytes",
+                scripts=EARLY1_ANGIO,
+                comment="define subpops and initial sex ratio",
             )
 
-    def end_sim(self):
-        """
-        adds late() call that ends the simulation and saves the .trees file
-        """
-        endtime = int(self._sim_time + 1)
-
-        if self._file_in:
-            ts_start = pyslim.load(self._file_in)
-            sim_start = ts_start.max_root_time
-            resched_end = int(endtime + sim_start)
-            self.model.late(
-                    time = resched_end, 
-                    scripts = [
-                    "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-                    f"sim.treeSeqOutput('{self._file_out}')"],
-                    comment = "end of sim; save .trees file",
-                )
-        else:
-            self.model.late(
-                    time = endtime, 
-                    scripts = [
-                    "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n",
-                    f"sim.treeSeqOutput('{self._file_out}')"],
-                    comment = "end of sim; save .trees file",
-                )
-
-
-    def dioecious(self):
-        """
-        fills the script reproduction block with bryophyte-dioicous
-        """
-
-        # fitness callback:
-        i = 4
-        activate = []
-        deactivate = []
-        substitutions = []
-        for mut in self._chromosome.mutations:
-            i = i + 1
-            idx = str("s" + str(i))
-            active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
-            deactive_script = DEACTIVATE.format(**{'idx': idx}).lstrip()
-            activate.append(active_script)
-            deactivate.append(deactive_script)
-            sub_inner = SUB_INNER.format(**{'idx': idx, 'mut': mut}).lstrip()
-            substitutions.append(sub_inner)
-            self.model.fitness(
-                idx=idx,
-                mutation=mut,
-                scripts="return 1 + mut.selectionCoeff",
-                comment="gametophytes have no dominance effects",
-            )
-            
-        activate_str = ""
-        deactivate_str = ""
-        for i in activate:
-            activate_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        for i in deactivate:
-            deactivate_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        early_script = (
-            EARLY.format(**{'activate': activate_str, 
-                'deactivate': deactivate_str}).lstrip())
-
-        self.model.early(
-            time=None, 
-            scripts=early_script, 
-            comment="alternation of generations",
-        )
-
-        survival_script = (
-            SURV.format(**{'p0maternal_effect': "",
-                'p1maternal_effect': "",
-                'p0survival': ANGIO_SURV_P0}).lstrip())
-        self.model.custom(survival_script)
-
+    def _add_mode_scripts(self):
+        """scripts specific to this organism."""
         self.model.repro(
             population="p1",
             scripts=REPRO_ANGIO_DIO_P1,
             comment="generates gametes from sporophytes"
-            )
+        )
 
         self.model.repro(
             population="p0",
             scripts=REPRO_ANGIO_DIO_P0,
             comment="generates gametes from sporophytes"
-            )
-
-        substitution_str = ""
-        for i in substitutions:
-            substitution_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        substitution_script = (
-            SUBSTITUTION.format(**{'inner': substitution_str}).lstrip())
-
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-            )
-
-    def monoecious(self):
-        """
-        fills the script reproduction block with bryophyte-monoicous
-        """
-
-        # fitness callback:
-        i = 4
-        activate = []
-        deactivate = []
-        substitutions = []
-        for mut in self._chromosome.mutations:
-            i = i + 1
-            idx = str("s" + str(i))
-            active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
-            deactive_script = DEACTIVATE.format(**{'idx': idx}).lstrip()
-            activate.append(active_script)
-            deactivate.append(deactive_script)
-            sub_inner = SUB_INNER.format(**{'idx': idx, 'mut': mut}).lstrip()
-            substitutions.append(sub_inner)
-            self.model.fitness(
-                idx=idx,
-                mutation=mut,
-                scripts="return 1 + mut.selectionCoeff",
-                comment="gametophytes have no dominance effects",
-            )
-            
-        activate_str = ""
-        deactivate_str = ""
-        for i in activate:
-            activate_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        for i in deactivate:
-            deactivate_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        early_script = (
-            EARLY.format(**{'activate': activate_str, 
-                'deactivate': deactivate_str}).lstrip())
-
-        self.model.early(
-            time=None, 
-            scripts=early_script, 
-            comment="alternation of generations",
         )
 
-        survival_script = (
-            SURV.format(**{'p0maternal_effect': "",
-                'p1maternal_effect': "",
-                'p0survival': ANGIO_SURV_P0}).lstrip())
-        self.model.custom(survival_script)
 
+@dataclass
+class AngiospermMonoecious(AngiospermBase):
+    """Superclass of Spermatophyte base with dioecious functions."""
+
+    def run(self):
+        """Fill self.model.map with SLiM script snippets."""
+        # methods inherited from parent NonWrightFisher class
+        self._define_subpopulations()
+        self._add_initialize_constants()
+        self._add_alternation_of_generations()
+        self._write_trees_file()
+
+        # methods inherited from AngiospermBase
+        self._add_shared_mode_scripts()
+
+        # specific organism functions
+        self._add_mode_scripts()
+
+    def _add_mode_scripts(self):
+        """scripts specific to this organism."""
         self.model.repro(
             population="p1",
             scripts=REPRO_ANGIO_MONO_P1,
             comment="generates gametes from sporophytes"
-            )
-
+        )
+        # TODO: seems like this should say MONO not DIO, right? 
+        # or are they the same in this case?
         self.model.repro(
             population="p0",
             scripts=REPRO_ANGIO_DIO_P0,
             comment="generates gametes from sporophytes"
-            )
-
-        substitution_str = ""
-        for i in substitutions:
-            substitution_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        substitution_script = (
-            SUBSTITUTION.format(**{'inner': substitution_str}).lstrip())
-
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-            )
+        )
 
 
 if __name__ == "__main__":
@@ -319,8 +181,7 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.spermatophyte(
-            mode='mono',
+        mod.reproduction.angiosperm_monoecious(
             spo_popsize=1000, 
             gam_popsize=1000,
         )
