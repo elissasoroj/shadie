@@ -10,6 +10,11 @@ ReproductionBase -> NonWrightFisher -> BryophyteBase
 
 from dataclasses import dataclass
 import pyslim
+from shadie.reproduction.base_scripts import (
+    EARLY,
+    SUBSTITUTION,
+    SUB_INNER,
+)
 
 
 @dataclass
@@ -41,7 +46,7 @@ class ReproductionBase:
         call, but the time at which to write it varies depending on
         whether the start point was loaded from a previous file.
         """
-        # get time AFTER the last generation fully simulated.
+        # get time AFTER the last even generation.
         endtime = int(self.model.sim_time + 1)
 
         # calculate end based on this sim AND the loaded parent sim.
@@ -76,6 +81,7 @@ class NonWrightFisher(ReproductionBase):
     include alternation of generations (p0 and p1 subpops). The
     alternative is to implement a WF model.
     """
+
     def _define_subpopulations(self):
         """add haploid and diploid life stages as subpopulations."""
         if self.model._file_in:
@@ -88,6 +94,89 @@ class NonWrightFisher(ReproductionBase):
                     "sim.addSubpop('p0', 0)"],
                 comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
             )
+
+    def _add_initialize_constants(self):
+        """Add defineConstant calls to init variables.
+
+        When this is called by different superclasses that have
+        different attributes unique to each it stores only their
+        unique set of attributes. Excludes parent attrs like model.
+        """
+        # exclude parent class attributes
+        exclude = ["lineage", "mode", "model"]
+        asdict = {
+            i: j for (i, j) in self.__dict__.items()
+            if i not in exclude
+        }
+        self.model.map["initialize"][0]['constants'].update(asdict)
+
+    def _add_alternation_of_generations(self):
+        """Alternation of generations scripts.
+
+        This writes fitness, early, and late functions that activate
+        or deactivate fitness effects of mutations in alternating
+        generations.
+        """
+
+        # add fitness callback for gametophytes based on MutationTypes
+        # in the model.chromosome.
+        # this will map to sx-sy survival callbacks.
+        idx = 4
+        activate_scripts = []
+        deactivate_scripts = []
+        substitutions = []
+
+        # iterate over MutationTypes
+        for mut in self.model.chromosome.mutations:
+
+            # refer to mutations by s{idx}
+            idx += 1
+            sidx = str("s" + str(idx))
+
+            # add fitness callback function (e.g., s5 fitness(m1) {...})
+            # for each MutationType. This callback will be activated or
+            # deactivated (below) by early scripts based on whether
+            # it is the haploid or diploid subpopulation's generation.
+            self.model.fitness(
+                idx=sidx,
+                mutation=mut.name,
+                scripts="return 1 + mut.selectionCoeff",
+                comment="gametophytes have no dominance effects",
+            )
+
+            # store script to activate or deactivate this mutationtype
+            activate_scripts.append(f"{sidx}.active = 1;")
+            deactivate_scripts.append(f"{sidx}.active = 0;")
+
+            # add reference to this mutation to be added to a late call
+            # for checking whether a mutation has become a substitution.
+            sub_inner = SUB_INNER.format(idx=sidx, mut=mut.name).lstrip()
+            substitutions.append(sub_inner)
+
+        # insert references to fitness callbacks into an early script
+        # that will alternately activate or deactivate them on
+        # alternating generations to only apply to gameto or sporo.
+        activate_str = "\n        ".join(activate_scripts)
+        deactivate_str = "\n        ".join(deactivate_scripts)
+        early_script = (
+            EARLY.format(activate=activate_str, deactivate=deactivate_str)
+        )
+        self.model.early(
+            time=None,
+            scripts=early_script,
+            comment="alternation of generations",
+        )
+
+        # insert the substitution-checking scripts into larger context
+        # and add as a late call.
+        substitution_str = "\n    ".join(substitutions)
+        substitution_script = (
+            SUBSTITUTION.format(inner=substitution_str))
+        self.model.late(
+            time=None,
+            scripts=substitution_script,
+            comment="fixes mutations in haploid gen"
+        )
 
 
 @dataclass
