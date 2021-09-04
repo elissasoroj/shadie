@@ -12,7 +12,7 @@ from shadie.reproduction.optimized.scripts import (
     SUBSTITUTION, SUB_MUTS, MATERNAL_EFFECT,
     REPRO_PTER_HOMOSPORE_P1, REPRO_PTER_HOMOSPORE_P0,
     REPRO_PTER_HETEROSPORE_P1, REPRO_PTER_HETEROSPORE_P0,
-    LATE_PTER_HETEROSPORE
+    LATE_PTER_HOMOSPORE, LATE_PTER_HETEROSPORE
 )
 
 DTYPES = ("d", "dio", "dioicy", "dioicous", "heterosporous",)
@@ -291,7 +291,7 @@ class Pteridophyte(PteridophyteBase):
 
         substitution_script = (
             SUBSTITUTION.format(**{'muts': substitution_str,
-                'late': LATE_PTER_HETEROSPORE}).lstrip())
+                'late': LATE_PTER_HOMOSPORE}).lstrip())
 
         self.model.late(
             time=None,
@@ -330,7 +330,7 @@ if __name__ == "__main__":
         mod.initialize(chromosome=chrom)
 
         mod.reproduction.pteridophyte(
-            mode='dio',
+            mode='homosporous',
             spo_pop_size=1000, 
             gam_pop_size=1000,
         )

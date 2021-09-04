@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from shadie.reproduction.optimized.scripts import (
     ACTIVATE, DEACTIVATE, EARLY, SURV, MATERNAL_EFFECT,
     SUBSTITUTION, SUB_MUTS, REPRO_BRYO_DIO_P1, REPRO_BRYO_DIO_P0,
-    REPRO_BRYO_MONO_P1, REPRO_BRYO_MONO_P0, LATE_BRYO_DIO
+    REPRO_BRYO_MONO_P1, REPRO_BRYO_MONO_P0, LATE_BRYO_DIO, LATE_BRYO_MONO
 )
 
 DTYPES = ("d", "dio", "dioicy", "dioicous", "heterosporous",)
@@ -206,7 +206,7 @@ class Bryophyte(BryophyteBase):
         survival_script = (
             SURV.format(**{'p0maternal_effect': "",
                 'p1maternal_effect': MATERNAL_EFFECT,
-                'p0survival': "return NULL;"}).lstrip())
+                'p0survival': ""}).lstrip())
         self.model.custom(survival_script)
 
         self.model.repro(
@@ -302,14 +302,14 @@ class Bryophyte(BryophyteBase):
             substitution_str += "\n  ".join([i.strip(';') + ";\n    "])
 
         substitution_script = (
-            SUBSTITUTION.format(**{'muts': substitution_str}).lstrip())
+            SUBSTITUTION.format(**{'muts': substitution_str,
+                'late': LATE_BRYO_MONO}).lstrip())
 
         self.model.late(
             time=None,
             scripts=substitution_script,
             comment="fixes mutations in haploid gen"
             )
-
 
 if __name__ == "__main__":
 
