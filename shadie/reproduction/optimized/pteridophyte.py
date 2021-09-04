@@ -6,7 +6,7 @@ Starting an alternate implementation of Reproduction
 import pyslim
 from typing import Union
 from dataclasses import dataclass, field
-from shadie.reproduction.base import ReproductionBase
+from shadie.reproduction.optimized.base_wf import ReproductionBase
 from shadie.reproduction.optimized.scripts import (
     ACTIVATE, DEACTIVATE, EARLY, SURV,
     SUBSTITUTION, SUB_MUTS, 

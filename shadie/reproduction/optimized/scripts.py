@@ -87,7 +87,7 @@ GAM_DEATH_CHANCE = """
 MATERNAL_EFFECT_P0 = """
     // maternal effect as weighted average
     maternal_effect = individual.getValue("maternal_fitness");
-    if (!isNULL(gam_maternal_effect)) {
+    if (!isNULL(maternal_effect)) {
         corrected_fitness = (maternal_effect * gam_maternal_effect) + fitness * (1 - gam_maternal_effect);
         return (draw < corrected_fitness);
     }
@@ -174,18 +174,19 @@ REPRO_BRYO_DIO_P1 = """
             meiosis_reps = asInteger(spo_megaspores_per/2);
             for (rep in 1:meiosis_reps){
                 breaks = sim.chromosome.drawBreakpoints(individual);
-                for (egg in 1:gam_eggs_per_megaspore)
-                    p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 1
-                    p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 1
+                for (egg in 1:gam_eggs_per_megaspore){
+                    p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 1;
+                    p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 1;
+                }
             }
         }
-        else //it is male
+        else { //it is male
             meiosis_reps = asInteger(spo_microspores_per/2);
             for (rep in 1:meiosis_reps){
                 breaks = sim.chromosome.drawBreakpoints(individual);
-                for (sperm in 1;gam_sperm_per_microspore){
-                    p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 2
-                    p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 2
+                for (sperm in 1:gam_sperm_per_microspore){
+                    p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 2;
+                    p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 2;
                 }
             }
         }
@@ -207,12 +208,13 @@ REPRO_BRYO_DIO_P1 = """
             p0.addRecombinant(g_1, g_2, breaks, g_2, g_1, breaks2).tag = 5; //add the diploid selfed
         }
         //make the rest of the sperm
-        male_meiosis_reps = asInteger(spo_microspores_per/2) - meiosis_reps
+        male_meiosis_reps = asInteger(spo_microspores_per/2) - meiosis_reps;
         for (rep in 1:male_meiosis_reps){
-             breaks = sim.chromosome.drawBreakpoints(individual);
-            for (sperm in 1;gam_sperm_per_microspore){
-                p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 2
-                p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 2
+            breaks = sim.chromosome.drawBreakpoints(individual);
+            for (sperm in 1:gam_sperm_per_microspore){
+                p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 2;
+                p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 2;
+            }
         }
     }
 """
