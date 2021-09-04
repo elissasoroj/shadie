@@ -27,7 +27,7 @@ REPRO_BRYO_DIO_P1 = """
 # gam_sporophytes_per
 # gam_clone_rate
 # gam_clone_number
-# gam_self_rate
+# gam_self_rate     <----- needs fixing...
 # 
 REPRO_BRYO_DIO_P0 = """
     // females find male gametes to reproduce
@@ -91,7 +91,7 @@ REPRO_BRYO_MONO_P1 = """
 # gam_clone_rate
 # gam_clone_number
 # gam_self_rate
-# spo_maternal_effect (was Maternal_weight; should it be gam_maternal_effect?)
+# gam_maternal_effect (was Maternal_weight)
 # 
 REPRO_BRYO_MONO_P0 = """
     reproduction_opportunity_count = gam_sporophytes_per;
@@ -115,7 +115,7 @@ REPRO_BRYO_MONO_P0 = """
             child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
             
             // Mother's fitness affects sporophyte fitness; see survival()
-            if (spo_maternal_effect > 0)
+            if (gam_maternal_effect > 0)
                 child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
         }
     }
