@@ -110,16 +110,17 @@ class Model(AbstractContextManager):
         """The final SLiM script built from components in `.map`."""
         self.stdout = ""
         """The stdout from running `slim script` if `.run()` is called."""
-        self.sim_time: int = 0
+        self.sim_time: int=0
         """The length of the simulation in sporophyte generations."""
         self.chromosome = None
         """Chromosome object with genome structure."""
         
         # hidden attributes set by .initialize()
-        self._file_in: str = None
-        self._file_out: str = None
-        self._pop_size: int = None
-        self._mutation_rate: float = None
+        self._file_in: str=None
+        self._file_out: str=None
+        self._pop_size: int=None
+        self._mutation_rate: float=None
+        self._recomb_rate: float=None
 
         self.reproduction = ReproductionApi(self)
         """API to access reproduction functions."""
@@ -244,6 +245,7 @@ class Model(AbstractContextManager):
         self._file_in = file_in
         self._file_out = file_out
         self._mutation_rate = mutation_rate
+        self._recomb_rate = recomb_rate
 
         self.map['initialize'].append({
             'mutation_rate': mutation_rate,
@@ -435,7 +437,8 @@ class Model(AbstractContextManager):
             # check for errors
             if proc.returncode:
                 logger.error(out.decode())
-                raise SyntaxError("SLiM3 error")
+                self.write("/tmp/slim.slim")
+                raise SyntaxError("SLiM3 error, see script at /tmp/slim.slim")
 
         # todo: parse stdout to store, and send warnings to logger
         self.stdout = out.decode()
