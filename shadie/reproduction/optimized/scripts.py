@@ -219,7 +219,7 @@ REPRO_BRYO_DIO_P0 = """
     }
     
     if (individual.tag == 4) { //add gametophyte clones to p1
-        for (i in 1:spo_clone_number){
+        for (i in 1:gam_clone_number){
             p1.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 4;
         }
     }
