@@ -218,7 +218,7 @@ class PureSlim:
         rng = np.random.default_rng(seed)
         data = []
 
-        if self.tree_sequence.
+        # if self.tree_sequence.
         # get a list of Series
         for rep in range(reps):
             seed = rng.integers(2**31)
