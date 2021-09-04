@@ -84,13 +84,13 @@ class Bryophyte(BryophyteBase):
             (1-self.gam_female_to_male_ratio)*self.spo_microspores_per*
             (1-self.gam_random_death_chance)*self.gam_sperm_per_microspore)
 
-        if not self.sperm_pool:
+        if self.sperm_pool is None:
             # excess_eggs = ((eggs_per_gen/self.spo_pop_size)-1)*eggs_per_gen
             # sperm_pool = eggs_per_gen+(excess_eggs/2)
-            self.sperm_pool = eggs_per_gen
+            sperm_pool = eggs_per_gen
 
         fertilization_chance = sperm_per_gen/eggs_per_gen
-
+        self.sperm_pool = sperm_pool
         eggs_alive = self.gam_pop_size*(eggs_per_gen/sperm_per_gen)
         
         logger.info("With these simulation parameters, you will "
