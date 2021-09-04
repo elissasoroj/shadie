@@ -169,13 +169,25 @@ REPRO_BRYO_DIO_P1 = """
     g_1 = genome1;
     g_2 = genome2;
     if (individual.tag == 0) { //normal sporophyte makes female and male spores
-        meiosis_reps = asInteger(spo_spores_per/2);
-        for (rep in 1:meiosis_reps){
-            breaks = sim.chromosome.drawBreakpoints(individual);
-            p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag =
-                ifelse (runif(1)<gam_female_to_male_ratio, 1, 2);
-            p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag =
-                ifelse (runif(1)<gam_female_to_male_ratio, 1, 2);
+        // is it a female gametophyte?
+        if (runif(1)<gam_female_to_male_ratio){
+            meiosis_reps = asInteger(spo_megaspores_per/2);
+            for (rep in 1:meiosis_reps){
+                breaks = sim.chromosome.drawBreakpoints(individual);
+                for (egg in 1:gam_eggs_per_megaspore)
+                    p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 1
+                    p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 1
+            }
+        }
+        else //it is male
+            meiosis_reps = asInteger(spo_microspores_per/2);
+            for (rep in 1:meiosis_reps){
+                breaks = sim.chromosome.drawBreakpoints(individual);
+                for (sperm in 1;gam_sperm_per_microspore){
+                    p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 2
+                    p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 2
+                }
+            }
         }
     }
     
@@ -184,33 +196,31 @@ REPRO_BRYO_DIO_P1 = """
     }
     
     if (individual.tag ==5){
-        meiosis_count = max(asInteger(spo_spores_per/4), 1);
-        for (i in 1:meiosis_count)
+        meiosis_reps = asInteger(spo_megaspores_per/2);
+        for (rep in 1:meiosis_reps){
             //generate 4 spores (2 rounds of meiosis) with their own breakpoints
-            breaks = sim.chromosome.drawBreakpoints(individual);
-        breaks2 = sim.chromosome.drawBreakpoints(individual);
-        p0.addRecombinant(NULL, NULL, NULL, g_2, g_1, breaks).tag =
-            ifelse (runif(1)<gam_female_to_male_ratio, 1, 2); //outcross
-        p0.addRecombinant(g_1, g_2, breaks2, NULL, NULL, NULL).tag =
-            ifelse (runif(1)<gam_female_to_male_ratio, 1, 2); //outcross
-        
-        p0.addRecombinant(g_1, g_2, breaks, g_2, g_1, breaks2).tag = 5; //add the diploid selfed
-    }
-    
-    if (individual.tag == 6){ //gametophytic selfing
-        meiosis_count = asInteger(spo_spores_per/2);
-        for (i in 1:meiosis_count)
-            breaks = sim.chromosome.drawBreakpoints(individual);
-        p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 6; //one egg will undergo selfing
-        p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag =
-            ifelse (runif(1)<gam_female_to_male_ratio, 1, 2); //the other will outcross
+            breaks = sim.chromosome.drawBreakpoints(individual); //male
+            breaks2 = sim.chromosome.drawBreakpoints(individual); //female
+            p0.addRecombinant(NULL, NULL, NULL, g_2, g_1, breaks).tag = 1; // male outcross
+            p0.addRecombinant(g_1, g_2, breaks2, NULL, NULL, NULL).tag = 2; //female outcross
+            
+            p0.addRecombinant(g_1, g_2, breaks, g_2, g_1, breaks2).tag = 5; //add the diploid selfed
+        }
+        //make the rest of the sperm
+        male_meiosis_reps = asInteger(spo_microspores_per/2) - meiosis_reps
+        for (rep in 1:male_meiosis_reps){
+             breaks = sim.chromosome.drawBreakpoints(individual);
+            for (sperm in 1;gam_sperm_per_microspore){
+                p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 2
+                p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 2
+        }
     }
 """
 
 REPRO_BRYO_DIO_P0 = """
     // females find male gametes to reproduce
     if (individual.tag == 1) {
-        reproduction_opportunity_count = gam_sporophytes_per;
+        reproduction_opportunity_count = gam_eggs_per_megaspore;
         for (repro in seqLen(reproduction_opportunity_count)) {
             sperm = p0.sampleIndividuals(1, tag=2);
             
@@ -235,10 +245,6 @@ REPRO_BRYO_DIO_P0 = """
     
     //move sporophytic selfed into p1
     if (individual.tag == 5) {p1.addCloned(individual).tag=0;}
-    
-    if (individual.tag == 6) { //performed gametophytic selfing
-        p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL,  NULL).tag=0;
-    }
 """
 
 LATE_BRYO_DIO = """
@@ -257,6 +263,22 @@ LATE_BRYO_DIO = """
         gam_selfed = p1.sampleIndividuals(num_gam_self);
         gam_selfed.tag = 6; //tag gametophytic selfing
 	}
+"""
+
+GAMETOPHYTIC_SELFING = """
+    //P1
+    if (individual.tag == 6){ //gametophytic selfing
+        meiosis_count = asInteger(spo_spores_per/2);
+        for (i in 1:meiosis_count)
+            breaks = sim.chromosome.drawBreakpoints(individual);
+        p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 6; //one egg will undergo selfing
+        p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag =
+            ifelse (runif(1)<gam_female_to_male_ratio, 1, 2); //the other will outcross
+    }
+    //P0
+    if (individual.tag == 6) { //performed gametophytic selfing
+    p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL,  NULL).tag=0;
+    }
 """
 
 REPRO_BRYO_MONO_P1 = """

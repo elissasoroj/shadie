@@ -54,8 +54,10 @@ class Bryophyte(BryophyteBase):
     spo_mutation_rate: Union[None, float] = None
     gam_mutation_rate: Union[None, float] = None
     gam_female_to_male_ratio: float.as_integer_ratio = (1,1)
-    spo_spores_per: int=100
-    gam_sporophytes_per: int=10
+    spo_megaspores_per: int =1
+    spo_microspores_per: int=100
+    gam_eggs_per_megaspore: int=1 
+    gam_sperm_per_microspore: int=10
     gam_clone_rate: float=0.0
     gam_clone_number: int=1
     spo_self_rate: float=0
@@ -89,19 +91,22 @@ class Bryophyte(BryophyteBase):
             self.gam_mutation_rate = 0.5*self.model.mutation_rate
 
         #optimize spore numbers
-        eggs_per_gen = self.gam_pop_size*self.gam_sporophytes_per*(
-                    self.spo_spores_per*self.gam_female_to_male_ratio)*(1-
-                    self.gam_random_death_chance)
-        sperm_per_gen = self.gam_pop_size*self.gam_sporophytes_per*(
-                    self.spo_spores_per*(1-self.gam_female_to_male_ratio))*(1-
-                    self.gam_random_death_chance)
+        eggs_per_gen = (self.gam_pop_size*self.gam_female_to_male_ratio*
+                    (1-self.gam_random_death_chance)*
+                    self.spo_megaspores_per*self.gam_eggs_per_megaspore)
+        
+        sperm_per_gen = (self.gam_pop_size*
+            (1-self.gam_female_to_male_ratio)*self.spo_microspores_per*
+            (1-self.gam_random_death_chance)*self.gam_sperm_per_microspore)
+
         fertilization_chance = sperm_per_gen/eggs_per_gen
         
         logger.info("With these simulation parameters, you will "
-            f"generate {eggs_per_gen} eggs and {sperm_per_gen} sperm "
-            "each generation. Likelihood of fertilization is "
-            f"{fertilization_chance}. Use `.optimize()` to choose"
+            f"generate {int(eggs_per_gen)} eggs and {int(sperm_per_gen)} "
+            "sperm each generation. Likelihood of fertilization is "
+            f"{fertilization_chance}. Use `.optimize()` to choose "
             "optimized parameter values.")
+
         self.eggs_per_gen = eggs_per_gen
         self.sperm_per_gen = sperm_per_gen
         self.fertilization_chance = fertilization_chance
@@ -127,8 +132,10 @@ class Bryophyte(BryophyteBase):
         constants["spo_mutation_rate"] = self.spo_mutation_rate
         constants["gam_mutation_rate"] = self.gam_mutation_rate
         constants["gam_female_to_male_ratio"] = self.gam_female_to_male_ratio
-        constants["spo_spores_per"] = self.spo_spores_per
-        constants["gam_sporophytes_per"] = self.gam_sporophytes_per
+        constants["spo_megaspores_per"] = self.spo_megaspores_per
+        constants["spo_microspores_per"] = self.spo_microspores_per
+        constants["gam_eggs_per_megaspore"] = self.gam_eggs_per_megaspore
+        constants["gam_sperm_per_microspore"] = self.gam_sperm_per_microspore
         constants["gam_clone_rate"] = self.gam_clone_rate
         constants["gam_clone_number"] = self.gam_clone_number
         constants["spo_self_rate"] = self.spo_self_rate
