@@ -4,6 +4,7 @@
 Starting an alternate implementation of Reproduction 
 """
 import pyslim
+from loguru import logger
 from typing import Union
 from dataclasses import dataclass, field
 from shadie.reproduction.optimized.scripts import (
@@ -86,6 +87,24 @@ class Bryophyte(BryophyteBase):
         else:
             self.spo_mutation_rate = 0.5*self.model.mutation_rate
             self.gam_mutation_rate = 0.5*self.model.mutation_rate
+
+        #optimize spore numbers
+        eggs_per_gen = self.gam_pop_size*self.gam_sporophytes_per*(
+                    self.spo_spores_per*self.gam_female_to_male_ratio)*(1-
+                    self.gam_random_death_chance)
+        sperm_per_gen = self.gam_pop_size*self.gam_sporophytes_per*(
+                    self.spo_spores_per*(1-self.gam_female_to_male_ratio))*(1-
+                    self.gam_random_death_chance)
+        fertilization_chance = sperm_per_gen/eggs_per_gen
+        
+        logger.info("With these simulation parameters, you will "
+            f"generate {eggs_per_gen} eggs and {sperm_per_gen} sperm "
+            "each generation. Likelihood of fertilization is "
+            f"{fertilization_chance}. Use `.optimize()` to choose"
+            "optimized parameter values.")
+        self.eggs_per_gen = eggs_per_gen
+        self.sperm_per_gen = sperm_per_gen
+        self.fertilization_chance = fertilization_chance
 
         self.add_initialize_constants()
         self.add_early_haploid_diploid_subpops() 
@@ -312,10 +331,37 @@ class Bryophyte(BryophyteBase):
             comment="fixes mutations in haploid gen"
             )
 
+    def optimize(
+        self, 
+        desired_eggs_per_gen = None):
+        """
+        Convenience function to choose optimized params
+        """
+        gam_sporophytes_per = self.gam_sporophytes_per, 
+        gam_female_to_male_ratio = self.gam_female_to_male_ratio,
+        gam_random_death_chance = self.gam_random_death_chance,
+        spo_spores_per = self.spo_spores_per,
+        fertilization_chance = self.fertilization_chance,
+        gam_pop_size = self.gam_pop_size
+        
+        if not desired_eggs_per_gen:
+            desired_eggs_per_gen = gam_pop_size*gam_sporophytes_per*(
+                    spo_spores_per*gam_female_to_male_ratio)*(1-
+                    gam_random_death_chance)
+
+        minimum_sperm_needed = desired_eggs_per_gen
+        minimum_spores_per_gen = desired_eggs_per_gen+minimum_sperm_needed
+        minimum_spo_spores_per = minimum_spores_per_gen/gam_sporophytes_per
+
+        self.minimum_spo_spores_per = minimum_spo_spores_per
+
+        logger.info(f"Optimized `spo_spores_per` is {minimum_spo_spores_per}.")
+
 if __name__ == "__main__":
 
 
     import shadie
+
     with shadie.Model() as mod:
         
         # define mutation types
@@ -346,5 +392,5 @@ if __name__ == "__main__":
             spo_pop_size=1000, 
             gam_pop_size=1000,
         )
-
     print(mod.script)
+

@@ -111,7 +111,6 @@ class ReproductionApi:
             _file_out = self.model.file_out,
         ).run()
 
-
     def pteridophyte(
         self, 
         mode:str, 
@@ -333,4 +332,15 @@ class ReproductionApi:
             _file_in= self.model.file_in,
             _file_out = self.model.file_out,
         ).run()
+
+    # def optimize(
+    #         self, 
+    #         desired_eggs_per_gen = None):
+    #     """
+    #     Convenience function to choose optimized params
+    #     """
+    #     Bryophyte(model).optimize(
+    #         self,
+    #         desired_eggs_per_gen = None,
+    #     ).run()
 
