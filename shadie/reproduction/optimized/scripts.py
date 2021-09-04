@@ -593,8 +593,6 @@ REPRO_PTER_HETEROSPORE_P0 = """
     
     //move sporophytic selfed into p1
     if (individual.tag == 5) {p1.addCloned(individual).tag=0;}
-
-}
 """
 
 LATE_PTER_HETEROSPORE = """

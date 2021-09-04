@@ -11,7 +11,7 @@ from shadie.reproduction.optimized.scripts import (
     ACTIVATE, DEACTIVATE, EARLY, SURV,
     SUBSTITUTION, SUB_MUTS, MATERNAL_EFFECT,
     REPRO_PTER_HOMOSPORE_P1, REPRO_PTER_HOMOSPORE_P0,
-    REPRO_PTER_HETEROSPORE_P1, REPRO_PTER_HETEROSPORE_P1,
+    REPRO_PTER_HETEROSPORE_P1, REPRO_PTER_HETEROSPORE_P0,
     LATE_PTER_HETEROSPORE
 )
 
@@ -124,7 +124,9 @@ class Pteridophyte(PteridophyteBase):
         else:
             self.model.early(
                 time=1,
-                scripts= ["sim.addSubpop('p1', spo_pop_size)", "sim.addSubpop('p0', 0)"],
+                scripts= ["sim.addSubpop('p1', spo_pop_size)", 
+                		"sim.addSubpop('p0', 0)",
+                        "p1.individuals.tag=0"],
                 comment="add p1, p0",
             )
 
@@ -195,13 +197,13 @@ class Pteridophyte(PteridophyteBase):
 
         self.model.repro(
             population="p1",
-            scripts=REPRO_PTER_HOMOSPORE_P1,
+            scripts=REPRO_PTER_HETEROSPORE_P1,
             comment="generates gametes from sporophytes"
             )
 
         self.model.repro(
             population="p0",
-            scripts=REPRO_PTER_HOMOSPORE_P0,
+            scripts=REPRO_PTER_HETEROSPORE_P0,
             comment="generates gametes from sporophytes"
             )
 
