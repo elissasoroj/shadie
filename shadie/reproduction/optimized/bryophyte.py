@@ -112,10 +112,10 @@ class Bryophyte(BryophyteBase):
                 f"{int(eggs_alive)} eggs per generation.\n"
                 f"Using `sperm_pool` = {self.sperm_pool} to produce "
                 f"approximately {new_eggs_alive} eggs and "
-                f"{sperm_pool} sperm per generation "
+                f"{self.sperm_pool} sperm per generation "
                 "instead."
                 )
-        check_eggs = (self.gam_pop_size*self.gam_female_to_male_ratio)>new_eggs_alive
+        check_eggs = (self.spo_pop_size*self.gam_female_to_male_ratio)>new_eggs_alive
         if not check_eggs:
             logger.info("your gam_pop_size is too low to maintain a "
                 f"spo_pop_size of {self.spo_pop_size}")
