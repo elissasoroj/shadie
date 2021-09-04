@@ -45,7 +45,7 @@ from loguru import logger
 import numpy as np
 from shadie.base.mutations import MutationTypeBase
 from shadie.base.elements import ElementType
-from shadie.reproduction.api import ReproductionApi
+from shadie.reproduction.optimized.api_opt import ReproductionApi
 from shadie.sims.format import (
     format_event_dicts_to_strings,
     EVENT_TO_FORMATTER,
