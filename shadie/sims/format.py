@@ -27,10 +27,10 @@ initialize() {{
   // Chromosome (GenomicElement init)
   {chromosome}
 
-  // constants (Ne)
+  // constants (Population sizes and others)
   {constants}
 
-  // extra scripts
+  // extra scripts (Optional)
   {scripts}
 }}
 """
