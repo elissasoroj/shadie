@@ -39,6 +39,7 @@ from typing import Union, Optional
 import os
 import tempfile
 import subprocess
+from copy import deepcopy
 from contextlib import AbstractContextManager
 from concurrent.futures import ProcessPoolExecutor
 from loguru import logger
@@ -143,7 +144,7 @@ class Model(AbstractContextManager):
         """
         sorted_keys = [
             'initialize', 'timed', 'reproduction', 'early',
-            'fitness', 'survival', 'late', 'custom',
+            'fitness', 'custom', 'survival', 'late',
         ]
 
         # copy map and split timed events to a new key list
@@ -186,7 +187,6 @@ class Model(AbstractContextManager):
         self._check_script()
         logger.debug("exiting Model")
 
-
     def initialize(
         self,
         chromosome,
@@ -197,6 +197,7 @@ class Model(AbstractContextManager):
         scripts: Union[None, list]=None,
         file_in: Union[None, str]=None,
         file_out: str="shadie.trees",
+        skip_neutral_mutations: bool=False,
         ):
         """Add an initialize() block to the SLiM code map.
 
@@ -227,24 +228,30 @@ class Model(AbstractContextManager):
             starting population
         file_out: str
             Filepath to save output
+        skip_neutral_mutations: bool
+            If True then mutations are not added to neutral genomic 
+            regions. This should be used if you plan to add coalescent
+            recapitated ancestry and mutations. Default=False.
         """
         logger.debug("initializing Model")
         constants = {} if constants is None else constants
         scripts = [] if scripts is None else scripts
 
-        self.chromosome = chromosome
+        # store a copy of the chromosome and set to keep or exclude neutral.
+        self.chromosome = deepcopy(chromosome)
+        self.chromosome._skip_neutral_mutations = skip_neutral_mutations
         self.sim_time = sim_time
         self._file_in = file_in
         self._file_out = file_out
         self._mutation_rate = mutation_rate
-        
+
         self.map['initialize'].append({
             'mutation_rate': mutation_rate,
-            'recombination_rate': f"{recomb_rate}, {int(chromosome.genome_size)}",
-            'genome_size': chromosome.genome_size,
-            'mutations': chromosome.to_slim_mutation_types(),
-            'elements': chromosome.to_slim_element_types(),
-            'chromosome': chromosome.to_slim_elements(),
+            'recombination_rate': f"{recomb_rate}, {int(self.chromosome.genome_size)}",
+            'genome_size': self.chromosome.genome_size,
+            'mutations': self.chromosome.to_slim_mutation_types(),
+            'elements': self.chromosome.to_slim_element_types(),
+            'chromosome': self.chromosome.to_slim_elements(),
             'constants': constants,
             'scripts': scripts,
         })
@@ -371,10 +378,11 @@ class Model(AbstractContextManager):
         """Checks that the model contains the minimal requirements.
         """
         assert "initialize" in self.script, (
-            "You must call initialize() from within Model context")
-        print("reproduction" in self.script)
+            "You must call initialize() from within Model context.")
         assert "reproduction" in self.script, (
-            "You must call reproduction() from within Model context")
+            "You must call reproduction() from within Model context "
+            "to implement either an organism specific reproduction "
+            "or a standard wright_fisher model.")
 
     def write(self, path: Optional[str]=None):
         """Write SLIM script to the outname filepath or stdout."""

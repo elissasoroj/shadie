@@ -24,8 +24,16 @@ class Chromosome(ChromosomeBase):
     This chromosome is exposed to users in a factory function at
     :meth:`shadie.chromosome.default`.
     """
-    def __init__(self):
-        super().__init__(genome_size=10001)
+    def __init__(
+        self,
+        use_nucleotides: bool=False,
+        use_synonymous_sites_in_coding: bool=True,
+        ):
+        super().__init__(
+            genome_size=10001,
+            use_nucleotides=use_nucleotides,
+            use_synonymous_sites_in_coding=use_synonymous_sites_in_coding,
+        )
         self.data.loc[0] = (
             NONCDS.altname, 0, 2000, NONCDS.name, NONCDS, NONCDS.coding)
         self.data.loc[2001] = (
@@ -36,14 +44,6 @@ class Chromosome(ChromosomeBase):
             EXON.altname, 6001, 8000, EXON.name, EXON, EXON.coding)
         self.data.loc[8001] = (
             NONCDS.altname, 8001, 10000, NONCDS.name, NONCDS, NONCDS.coding)
-
-        mutations = []
-        elements = [NONCDS, EXON, INTRON]
-        for elem in elements:
-            for mutation in elem.mlist:
-                if mutation.name not in mutations:
-                    mutations.append(mutation.name)
-        self.mutations = mutations
 
 
 class ChromosomeRandom(ChromosomeBase): 
@@ -69,39 +69,20 @@ class ChromosomeRandom(ChromosomeBase):
         exon: Union[None, ElementType, List[ElementType]]=None,
         noncds: ElementType=None,
         seed: Union[int, None]=None,
-        ns_sites:bool =True,
+        use_nucleotides: bool=False,
+        use_synonymous_sites_in_coding: bool=True,
         ):
 
-        super().__init__(genome_size, ns_sites = ns_sites)
+        super().__init__(
+            genome_size=genome_size,
+            use_nucleotides=use_nucleotides,
+            use_synonymous_sites_in_coding=use_synonymous_sites_in_coding,
+        )
         self.rng = np.random.default_rng(seed)
         self.intron = intron if intron is not None else INTRON
         self.exon = exon if exon is not None else EXON
         self.noncds = noncds if noncds is not None else NONCDS
         self.genome_size = int(genome_size - 1)
-
-        # combine all elements into a list
-        elements = []
-        for ele in (self.intron, self.exon, self.noncds):
-            if isinstance(ele, list):
-                elements += ele
-            else:
-                elements.append(ele)
-
-        # extract all mutations from the elements
-        mutations = []
-        for elem in elements:
-            for mutation in elem.mlist:
-                if mutation.name not in mutations:
-                    mutations.append(mutation.name)
-        self.mutations = mutations
-
-        # check the altnames of the elements... (NOTE: what is this for?)
-        # for idx, ele in enumerate(self.exons):
-        #     if ele.altname is None:
-        #         ele.altname = f"exon-{idx + 1}"
-        # for idx, ele in enumerate(self.introns):
-        #     if ele.altname is None:
-        #         ele.altname = f"intron-{idx + 1}"
 
     def get_noncds_span(self, scale:int=5000) -> int:
         """
@@ -182,11 +163,13 @@ class ChromosomeRandom(ChromosomeBase):
 
 
 class ChromosomeExplicit(ChromosomeBase):
-    """
-    Builds a chromosome dataframe from explicit instructions provided
-    as start, stop positions mapped to ElementTypes. To add a regions
-    without an assigned element...
+    """Builds a chromosome from a dict of explicit intervals.
 
+    Instructions provided as start, stop positions mapped to 
+    ElementTypes. 
+
+    Example
+    -------
     chromosome.explicit({
         (500, 1000): g1,
         (2000, 3000): g2,
@@ -194,9 +177,18 @@ class ChromosomeExplicit(ChromosomeBase):
         (5000, 10000): None,
     })
     """
-    def __init__(self, data, ns_sites:bool=True):
-        genome_size = 1+(max(i[1] for i in data.keys()))
-        super().__init__(genome_size, ns_sites = ns_sites)
+    def __init__(
+        self, 
+        data, 
+        use_nucleotides: bool=False,
+        use_synonymous_sites_in_coding: bool=True,
+        ):
+        genome_size = 1 + (max(i[1] for i in data.keys()))
+        super().__init__(
+            genome_size, 
+            use_nucleotides,
+            use_synonymous_sites_in_coding,
+        )
 
         # check data dict for proper structure
         assert all(isinstance(i, tuple) for i in data.keys()), (
@@ -204,26 +196,21 @@ class ChromosomeExplicit(ChromosomeBase):
         assert all(isinstance(i, ElementType) for i in data.values() if i), (
             "values of input data should be ElementType objects.")
 
-        mutations = []
-        if self.is_coding() == 0:
-            mutations.append(NEUT.name)
-        else:
-            for element in data.values():
-                for mutation in element.mlist:
-                    if mutation.name not in mutations:
-                        mutations.append(mutation.name)
-        self.mutations = mutations
-
-        # entere explicit dict into data
+        # enter explicit dict into data
         for key in sorted(data, key=lambda x: x[0]):
             start, end = key
             if data[key] is not None:
                 self.data.loc[start] = (
-                    data[key].altname, start, end, data[key].name, data[key], data[key].coding)
+                    data[key].altname, 
+                    start, 
+                    end, 
+                    data[key].name, 
+                    data[key], 
+                    data[key].coding,
+                )
 
 
 if __name__ == "__main__":
-
 
     import shadie
 
@@ -255,7 +242,9 @@ if __name__ == "__main__":
         (2000, 3000): e0,
         (3001, 5000): e1,
         }, 
-        ns_sites=False)
+        use_synonymous_sites_in_coding=True,
+        use_nucleotides=False,
+    )
 
     #elem = chrom.data.loc[500]["eltype"]
     #chrom.to_slim_mutation_types()

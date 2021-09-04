@@ -11,11 +11,22 @@ from shadie.chromosome.src.classes import (
 )
 
 
-def default(ns_sites: bool=True,):
+def default(
+    use_nucleotides: bool=False,
+    use_synonymous_sites_in_coding: bool=True,
+    ):
     """Return the default 100Kb Chromosome (nonCDS-exon-intron-exon-nonCDS).
+
     This chromosome type is typically used for testing purposes.
+
+    Parameters
+    ----------
+    ...
     """
-    return Chromosome()
+    return Chromosome(
+        use_nucleotides, 
+        use_synonymous_sites_in_coding, 
+    )
 
 
 def random(
@@ -27,7 +38,8 @@ def random(
     cds_scale: int=1000,
     noncds_scale: int=5000,
     seed: Union[int, None]=None,
-    ns_sites: bool=True,
+    use_nucleotides: bool=False,
+    use_synonymous_sites_in_coding: bool=True,
     ):
     """
     Build a chromosome of a set length composed randomly of intron,
@@ -53,12 +65,24 @@ def random(
     >>> chromosome = shadie.chromosom.random(genome_size=1e6)
     """
     # construct pandas DataFrame of ElementTypes
-    elements = ChromosomeRandom(genome_size, intron, exon, noncds, seed)
+    elements = ChromosomeRandom(
+        genome_size=genome_size, 
+        intron=intron, 
+        exon=exon, 
+        noncds=noncds, 
+        seed=seed,
+        use_nucleotides=use_nucleotides,
+        use_synonymous_sites_in_coding=use_synonymous_sites_in_coding,
+    )
     elements.run(noncds_scale, cds_scale, intron_scale)
     return elements
 
 
-def explicit(data, ns_sites: bool=True,):
+def explicit(
+    data, 
+    use_nucleotides: bool=False,
+    use_synonymous_sites_in_coding: bool=True,
+    ):
     """Return a chromosome built from a dictionary.
 
     The dict should contain tuples of (start,end) positions as keys
@@ -87,4 +111,8 @@ def explicit(data, ns_sites: bool=True,):
     >>> })
     >>> print(chromosome.data)
     """
-    return ChromosomeExplicit(data)
+    return ChromosomeExplicit(
+        data=data,
+        use_nucleotides=use_nucleotides,
+        use_synonymous_sites_in_coding=use_synonymous_sites_in_coding,
+    )
