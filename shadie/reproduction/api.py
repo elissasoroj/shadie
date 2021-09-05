@@ -193,7 +193,25 @@ class ReproductionApi:
         spo_random_death_chance: float=None,
         gam_random_death_chance: float=None,
         ):
-        pass
+        AngiospermMonoecious(
+            spo_pop_size=spo_pop_size,
+            gam_pop_size=gam_pop_size,
+            spo_mutation_rate=spo_mutation_rate,
+            gam_mutation_rate=gam_mutation_rate,
+            spo_flowers_per_individual=spo_flowers_per_individual,
+            spo_ovules_per_flower=spo_ovules_per_flower,
+            spo_ovule_success_rate=spo_ovule_success_rate,
+            spo_pollen_per_flower=spo_pollen_per_flower,
+            spo_pollen_success_rate=spo_pollen_success_rate,
+            spo_pistils_per_flower=spo_pistils_per_flower,
+            spo_pistils_pollen_comp=spo_pistils_pollen_comp,
+            spo_clone_rate=spo_clone_rate,
+            spo_clone_number=spo_clone_number,
+            spo_self_rate=spo_self_rate,
+            spo_maternal_effect=spo_maternal_effect,
+            spo_random_death_chance=spo_random_death_chance,
+            gam_random_death_chance=gam_random_death_chance,
+        ).run()
 
     def pteridophyte(
         self,
