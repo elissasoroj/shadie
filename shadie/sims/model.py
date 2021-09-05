@@ -256,7 +256,7 @@ class Model(AbstractContextManager):
 
         # Standard single population simulation.
     
-    def readfromfile(self, tag_script:str):
+    def readfromfile(self, tag_scripts:str):
         """
         If a .trees file is provided, this will be the starting point
         of the simulation

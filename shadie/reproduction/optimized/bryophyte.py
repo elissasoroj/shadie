@@ -188,7 +188,7 @@ class Bryophyte(BryophyteBase):
         """
         if self._file_in:
             self.model.readfromfile(
-                tag_script=(["p1.individuals.tag=0",
+                tag_scripts=(["p1.individuals.tag=0",
                     P0_TAGS]))
         else:
             self.model.early(
