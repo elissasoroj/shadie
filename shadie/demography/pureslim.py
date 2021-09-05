@@ -59,7 +59,7 @@ class PureSlim:
         TODO: can more of this be saved in SLiM metadata?
         """
         gens = self._tree_sequence.metadata["SLiM"]["generation"]
-        self.generations = gens[0]
+        self.generations = gens
         assert self.popsize, "popsize not found in metadata; must enter a popsize arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
         assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
