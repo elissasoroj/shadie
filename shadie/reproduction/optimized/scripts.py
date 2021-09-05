@@ -111,9 +111,10 @@ EARLY_ANGIO = """
 """
 
 P0_TAGS = """
-    fems = gam_female_to_male_ratio*gam_pop_size;
-    gam_sex_starts = c(rep(1, asInteger(fems)), 
-        rep(2, asInteger(gam_pop_size-fems)));
+
+    fems = asInteger(gam_female_to_male_ratio*length(p0.individuals));
+    gam_sex_starts = c(rep(1, fems), 
+        rep(2, length(p0.individuals)-fems));
     p0.individuals.tag = gam_sex_starts;
 """
 
