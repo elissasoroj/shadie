@@ -81,7 +81,6 @@ class NonWrightFisher(ReproductionBase):
     include alternation of generations (p0 and p1 subpops). The
     alternative is to implement a WF model.
     """
-
     def _define_subpopulations(self):
         """add haploid and diploid life stages as subpopulations."""
         if self.model._file_in:
@@ -117,7 +116,6 @@ class NonWrightFisher(ReproductionBase):
         or deactivate fitness effects of mutations in alternating
         generations.
         """
-
         # add fitness callback for gametophytes based on MutationTypes
         # in the model.chromosome.
         # this will map to sx-sy survival callbacks.
@@ -222,7 +220,6 @@ class WrightFisher(ReproductionBase):
     def _add_initialize_constants(self):
         """Add defineConstant calls to init for new variables."""
         self.model.map["initialize"][0]['constants']["K"] = self.pop_size
-
 
 
 
