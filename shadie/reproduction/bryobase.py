@@ -40,12 +40,13 @@ class BryophyteBase(NonWrightFisher):
     gam_pop_size: int
     spo_mutation_rate: Optional[float]
     gam_mutation_rate: Optional[float]
-    spo_spores_per: int
-    gam_sporophytes_per: int
+    gam_eggs_per_megaspore: int
+    gam_sperm_per_microspore: int
     gam_clone_rate: float
     gam_clone_number: int
-    gam_maternal_effect: float
     spo_self_rate: float
+    gam_self_rate: float
+    gam_maternal_effect: float
     spo_random_death_chance: float
     gam_random_death_chance: float
 
@@ -63,13 +64,11 @@ class BryophyteBase(NonWrightFisher):
             self.gam_mutation_rate = 0.5 * self.model._mutation_rate
 
     def _add_shared_mode_scripts(self):
-        """Fills model.map scripts applying to heterosp or homosp bryos.
+        """Adds scripts shared by homosp and heterosp superclasses.
 
-        This will define survival callback functions s5-s8 which are
-        turned on or off depending on model parameters.
+        Adds a survival script to define the random_chance_of_death,
+        maternal effects, and survival=0 for alternation of generations.
         """
-        # add a survival script to define the random_chance_of_death,
-        # maternal effects, and survival=0 for alternation of generations.
         survival_script = (
             SURV.format(
                 p0maternal_effect="",
@@ -83,9 +82,9 @@ class BryophyteBase(NonWrightFisher):
 @dataclass
 class BryophyteDioicous(BryophyteBase):
     mode: str = field(default="heterosporous", init=False)
-    gam_female_to_male_ratio: Tuple[float,float]=(2, 1)
-    spo_megaspores_per: int=1
-    spo_microspores_per: int=1
+    gam_female_to_male_ratio: Tuple[float,float]
+    spo_megaspores_per: int
+    spo_microspores_per: int
 
     def __post_init__(self):
         """Convert tuple ratio to a float."""
@@ -119,6 +118,7 @@ class BryophyteDioicous(BryophyteBase):
             scripts=REPRO_BRYO_DIO_P0,
             comment="generates gametes from sporophytes"
         )
+        # TODO add late here.
 
 
 @dataclass
@@ -130,7 +130,7 @@ class BryophyteMonoicous(BryophyteBase):
         """Fill self.model.map with SLiM script snippets."""
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
-        self._add_alternation_of_generations()        
+        self._add_alternation_of_generations()
         self._add_initialize_constants()
         self._write_trees_file()
 
