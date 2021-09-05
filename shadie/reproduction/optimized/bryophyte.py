@@ -108,6 +108,9 @@ class Bryophyte(BryophyteBase):
         megaspore_prop_check = spo_megaspores_generated/(
                     spo_megaspores_generated+spo_microspores_generated)
 
+        min_microspores_needed = eggs_needed/spo_sperm_generated
+        suggested_gam_pop_size = min_microspores_needed + megaspores_needed
+
         self.microspore_pool = spo_megaspores_generated
 
         logger.info("\nYour target megaspore:micospore proportion based "
@@ -146,6 +149,12 @@ class Bryophyte(BryophyteBase):
                 f"{new_megaspore_prop}"
                 ""
                 )
+
+        if self.gam_pop_size != suggested_gam_pop_size:
+            logger.info("\nCurrent `gam_pop_size parameter = "
+                f"{self.gam_pop_size}. Suggested min value is: "
+                f"{suggested_gam_pop_size}.")
+
 
     def add_initialize_constants(self):
         """
