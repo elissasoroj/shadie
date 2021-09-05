@@ -35,10 +35,11 @@ Example
 >>> }
 """
 
-from typing import Union, Optional
+from typing import Union, Optional, List
 import os
 import tempfile
 import subprocess
+from copy import deepcopy
 from contextlib import AbstractContextManager
 from concurrent.futures import ProcessPoolExecutor
 from loguru import logger
@@ -109,15 +110,17 @@ class Model(AbstractContextManager):
         """The final SLiM script built from components in `.map`."""
         self.stdout = ""
         """The stdout from running `slim script` if `.run()` is called."""
-
-        # store chromosome (mut, ele), constants, and populations
-        self.sim_time: int = 0
-        """The length of the simulation in sprorophyte generations."""
+        self.sim_time: int=0
+        """The length of the simulation in sporophyte generations."""
         self.chromosome = None
         """Chromosome object with genome structure."""
         
-        self.constants = {}
-        self.populations = {}
+        # hidden attributes set by .initialize()
+        self._file_in: str=None
+        self._file_out: str=None
+        self._pop_size: int=None
+        self._mutation_rate: float=None
+        self._recomb_rate: float=None
 
         self.reproduction = ReproductionApi(self)
         """API to access reproduction functions."""
@@ -142,7 +145,7 @@ class Model(AbstractContextManager):
         """
         sorted_keys = [
             'initialize', 'timed', 'reproduction', 'early',
-            'fitness', 'survival', 'late', 'custom',
+            'custom', 'survival', 'fitness', 'late',
         ]
 
         # copy map and split timed events to a new key list
@@ -185,18 +188,17 @@ class Model(AbstractContextManager):
         self._check_script()
         logger.debug("exiting Model")
 
-
     def initialize(
         self,
         chromosome,
-        sim_time:int=1000, #length of sim in # of diploid generations
-        mutation_rate:float=1e-8, #mutation rate
-        recomb_rate:float=1e-9, #recombination rate
-        ne:Union[None, int]=None, #option ne parameter in initialize
-        file_in:Union[None, str]=None, #optional starting file
-        constants:Union[None, dict]=None,
-        scripts:Union[None, list]=None,
+        sim_time: int=1000,
+        mutation_rate: float=1e-8,
+        recomb_rate: float=1e-9,
+        constants: Union[None, dict]=None,
+        scripts: Union[None, list]=None,
+        file_in: Union[None, str]=None,
         file_out: str="shadie.trees",
+        skip_neutral_mutations: bool=False,
         ):
         """Add an initialize() block to the SLiM code map.
 
@@ -218,65 +220,57 @@ class Model(AbstractContextManager):
         recomb_rate: float
             The per-site per-*sporophyte*-generation recombination rate.
             This is applied in the sporophyte generation during meiosis.
-        ne: int
-            Optional, for WF (base) model ONLY - user can define ne here
-            if they are not going to call .reproduction
-        file_in: str
-            Optional starting .trees file used to initialize the starting
-            population
         constants: dict[str,Any]
             Custom constants defined by user
         scripts: list[str]
             Customo scripts provided by the user
+        file_in: str
+            Optional starting .trees file used to initialize the 
+            starting population
         file_out: str
             Filepath to save output
-        ...
+        skip_neutral_mutations: bool
+            If True then mutations are not added to neutral genomic 
+            regions. This should be used if you plan to add coalescent
+            recapitated ancestry and mutations. Default=False.
         """
         logger.debug("initializing Model")
         constants = {} if constants is None else constants
         scripts = [] if scripts is None else scripts
 
-        self.chromosome = chromosome
+        # store a copy of the chromosome and set to keep or exclude neutral.
+        self.chromosome = deepcopy(chromosome)
+        self.chromosome._skip_neutral_mutations = skip_neutral_mutations
         self.sim_time = sim_time
-        self.file_in = file_in
-        self.file_out = file_out
-        self.ne = ne
-        self.mutation_rate = mutation_rate
-        
+        self._file_in = file_in
+        self._file_out = file_out
+        self._mutation_rate = mutation_rate
+        self._recomb_rate = recomb_rate
+
         self.map['initialize'].append({
             'mutation_rate': mutation_rate,
-            'recombination_rate': f"{recomb_rate}, {int(chromosome.genome_size)}",
-            'genome_size': chromosome.genome_size,
-            'mutations': chromosome.to_slim_mutation_types(),
-            'elements': chromosome.to_slim_element_types(),
-            'chromosome': chromosome.to_slim_elements(),
+            'recombination_rate': f"{recomb_rate}, {int(self.chromosome.genome_size)}",
+            'genome_size': self.chromosome.genome_size,
+            'mutations': self.chromosome.to_slim_mutation_types(),
+            'elements': self.chromosome.to_slim_element_types(),
+            'chromosome': self.chromosome.to_slim_elements(),
             'constants': constants,
             'scripts': scripts,
         })
-
-        # Standard single population simulation.
     
-    def readfromfile(self, tag_scripts:str):
-        """
-        If a .trees file is provided, this will be the starting point
-        of the simulation
-        """
-        if self.file_in:
-        # starting from another simulation starting point.
-            #raise NotImplementedError("This isn't ready to use yet.")
-            scripts = [f"sim.readFromPopulationFile('{self.file_in}')"]
-            for i in tag_scripts:
-                scripts.append(i)
+    def _read_from_file(self, tag_scripts: List[str]):
+        """Set an existing .trees file as starting state of simulation.
 
-            self.early(
-                time=1,
-                scripts=scripts,
-                comment="read starting populations from file_in"
-                )
-            # self.late(
-            #     time=1,
-            #     scripts=["sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)\n"],
-            #     comment="save starting pop")
+        If the trees file is not a shadie trees file (e.g., with 
+        subpops defined as p0 and p1) this will cause problems.
+        """
+        scripts = [f"sim.readFromPopulationFile('{self._file_in}')"]
+        scripts.extend(tag_scripts)
+        self.early(
+            time=1,
+            scripts=scripts,
+            comment="read starting populations from file_in"
+        )
 
     def early(
         self,
@@ -384,33 +378,15 @@ class Model(AbstractContextManager):
             'comment': comment,
         })
 
-    def _check_repro(self):
-        """
-        TODO.
-        """
-        #check for reproduction; if does not exist, implement WF model
-        if "reproduction" in self.script:
-            pass
-        else:
-            print(self.ne)
-            self.reproduction.base()
-            logger.warning("You did not specify a reproduction mode "
-                "so a default WF model has been used for this simulation")
-
-
     def _check_script(self):
+        """Checks that the model contains the minimal requirements.
         """
-        TODO.
-        """
-        #check for initialization
         assert "initialize" in self.script, (
-            "You must call initialize() from within Model context")
-
-        # assert "reproduction" in self.script, (
-        #     "You must specify a reproduction model to use")
-
-        # assert "late" in self.script, (
-            # "You must call late() from within Model context")
+            "You must call initialize() from within Model context.")
+        assert "reproduction" in self.script, (
+            "You must call reproduction() from within Model context "
+            "to implement either an organism specific reproduction "
+            "or a standard wright_fisher model.")
 
     def write(self, path: Optional[str]=None):
         """Write SLIM script to the outname filepath or stdout."""
@@ -463,7 +439,8 @@ class Model(AbstractContextManager):
             # check for errors
             if proc.returncode:
                 logger.error(out.decode())
-                raise SyntaxError("SLiM3 error")
+                self.write("/tmp/slim.slim")
+                raise SyntaxError("SLiM3 error, see script at /tmp/slim.slim")
 
         # todo: parse stdout to store, and send warnings to logger
         self.stdout = out.decode()
@@ -527,6 +504,7 @@ if __name__ == "__main__":
         # init the model
 
         model.initialize(chromosome=chrom)
+        model.reproduction.wright_fisher(pop_size=1000)
 
         model.early(
             time=1000,

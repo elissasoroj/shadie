@@ -16,10 +16,6 @@ from shadie.base.elements import ElementList as elist
 from shadie.sims.model import Model
 from shadie import chromosome
 from shadie import reproduction
-from shadie import demography
-from shadie.demography.postsim import PostSim, NeutralSim
-from shadie.demography.result import TwoSims
-from shadie.demography.pureslim import PureSlim, PureSlim_TwoPop
-
+from shadie import postsim
 from shadie.utils import set_loglevel
 set_loglevel("INFO")
