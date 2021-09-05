@@ -58,7 +58,7 @@ class PureSlim:
 
         TODO: can more of this be saved in SLiM metadata?
         """
-        gens = [i.metadata["SLiM"]["generation"] for i in self.tree_sequences]
+        gens = [i.metadata["SLiM"]["generation"] for i in self._tree_sequence]
         assert len(set(gens)) == 1, ("simulations must be same length (gens).")
         self.generations = gens[0]
         assert self.popsize, "popsize not found in metadata; must enter a popsize arg."
@@ -229,7 +229,7 @@ class PureSlim_TwoPop:
 
         TODO: can more of this be saved in SLiM metadata?
         """
-        gens = [i.metadata["SLiM"]["generation"] for i in self.tree_sequences]
+        gens = [i.metadata["SLiM"]["generation"] for i in self._tree_sequences]
         assert len(set(gens)) == 1, ("simulations must be same length (gens).")
         self.generations = gens[0]
         assert self.popsize, "popsize not found in metadata; must enter a popsize arg."
@@ -277,7 +277,7 @@ class PureSlim_TwoPop:
             # find that there are no longer any nodes in population=1. This
             # does not remove any Nodes, but it does remove a population.
             # https://tskit.dev/tskit/docs/stable/_modules/tskit/tables.html
-            self.tree_sequences[idx] = mod_tree_seq.simplify(
+            self._tree_sequences[idx] = mod_tree_seq.simplify(
                 samples=nodes_in_edge_table,
                 keep_input_roots=True,
                 keep_unary_in_individuals=True
