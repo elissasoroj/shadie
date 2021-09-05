@@ -40,7 +40,7 @@ class ReproductionApi:
         gam_eggs_per_megaspore: int=1,
         gam_sperm_per_microspore: int=10,
         gam_clone_rate: float=0.0,
-        gam_clone_number: int = 1,
+        gam_clones_per: int = 1,
         spo_self_rate: float=0.0,
         gam_self_rate: float=0.0,
         gam_maternal_effect: float=0,
@@ -107,7 +107,7 @@ class ReproductionApi:
             gam_eggs_per_megaspore = gam_eggs_per_megaspore,
             gam_sperm_per_microspore = gam_sperm_per_microspore,
             gam_clone_rate=gam_clone_rate,
-            gam_clone_number=gam_clone_number,
+            gam_clones_per=gam_clones_per,
             spo_self_rate=spo_self_rate, gam_self_rate=gam_self_rate,
             gam_maternal_effect=gam_maternal_effect,
             spo_random_death_chance=spo_random_death_chance,
@@ -128,10 +128,10 @@ class ReproductionApi:
         spo_female_to_male_ratio: float.as_integer_ratio = (1,1),
         gam_female_to_male_ratio: float.as_integer_ratio = (1,1),
         spo_clone_rate: float=0.0,
-        spo_clone_number: int=1,
+        spo_clones_per: int=1,
         spo_self_rate: float=0.0,
         gam_clone_rate: float=0.0,
-        gam_clone_number: int=1,
+        gam_clones_per: int=1,
         gam_self_rate: float=0.0,
         spo_maternal_effect: float=0,
         gam_maternal_effect: float=0,
@@ -194,9 +194,9 @@ class ReproductionApi:
             gam_female_to_male_ratio = gam_female_to_male_ratio,
             spo_spores_per=spo_spores_per,
             spo_clone_rate=spo_clone_rate, 
-            spo_clone_number = spo_clone_number,
+            spo_clones_per = spo_clones_per,
             gam_clone_rate=gam_clone_rate,
-            gam_clone_number = gam_clone_number,
+            gam_clones_per = gam_clones_per,
             spo_self_rate=spo_self_rate, gam_self_rate=gam_self_rate,
             spo_maternal_effect=spo_maternal_effect,
             gam_maternal_effect=gam_maternal_effect,
@@ -218,7 +218,7 @@ class ReproductionApi:
         gam_mutation_rate: Union[None, float]=None,
         spo_female_to_male_ratio: float.as_integer_ratio = (1,1),
         spo_clone_rate: float=0.0,
-        spo_clone_number: int =1,
+        spo_clones_per: int =1,
         spo_self_rate: float=0.0,
         flower_ovules_per: int=30,
         flower_pollen_per: int=100,
@@ -260,7 +260,7 @@ class ReproductionApi:
             Gametophyte female:male ratio; e.g. (1,1)
         spo_clone_rate: float
             Chance a sporophyte will clone
-        spo_clone_number: int
+        spo_clones_per: int
             Number of clones produced by each clonal sporophyte
         flower_ovules_per: int
             Number of ovules per sporophyte (remmeber to multiply number
@@ -294,7 +294,7 @@ class ReproductionApi:
             gam_mutation_rate = gam_mutation_rate, 
             spo_female_to_male_ratio = spo_female_to_male_ratio,
             spo_clone_rate=spo_clone_rate, 
-            spo_clone_number = spo_clone_number, 
+            spo_clones_per = spo_clones_per, 
             spo_self_rate=spo_self_rate,
             flower_ovules_per=flower_ovules_per,
             flower_pollen_per=flower_pollen_per,

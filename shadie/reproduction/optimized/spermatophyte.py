@@ -39,7 +39,7 @@ class Spermatophyte(SpermatophyteBase):
     gam_mutation_rate: float = 0.0
     spo_female_to_male_ratio: float.as_integer_ratio = (1,1)
     spo_clone_rate: float=0.0
-    spo_clone_number:int = 1
+    spo_clones_per:int = 1
     flower_ovules_per: int=30
     ovule_fertilization_rate: float=0.7
     pollen_success_rate: float=0.7
@@ -88,7 +88,7 @@ class Spermatophyte(SpermatophyteBase):
         constants["gam_mutation_rate"] = self.gam_mutation_rate
         constants["spo_female_to_male_ratio"] = self.spo_female_to_male_ratio
         constants["spo_clone_rate"] = self.spo_clone_rate
-        constants["spo_clone_number"] = self.spo_clone_number
+        constants["spo_clones_per"] = self.spo_clones_per
         # constants["Self_rate"] = self.selfing_rate
         constants["flower_ovules_per"] = self.flower_ovules_per
         constants["ovule_fertilization_rate"] = self.ovule_fertilization_rate

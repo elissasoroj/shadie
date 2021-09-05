@@ -43,7 +43,7 @@ class Bryophyte(BryophyteBase):
     gam_eggs_per_megaspore: int=1 
     gam_sperm_per_microspore: int=10
     gam_clone_rate: float=0.0
-    gam_clone_number: int=1
+    gam_clones_per: int=1
     spo_self_rate: float=0
     gam_self_rate: float=0
     gam_maternal_effect: float=0
@@ -151,7 +151,7 @@ class Bryophyte(BryophyteBase):
         constants["gam_eggs_per_megaspore"] = self.gam_eggs_per_megaspore
         constants["gam_sperm_per_microspore"] = self.gam_sperm_per_microspore
         constants["gam_clone_rate"] = self.gam_clone_rate
-        constants["gam_clone_number"] = self.gam_clone_number
+        constants["gam_clones_per"] = self.gam_clones_per
         constants["spo_self_rate"] = self.spo_self_rate
         constants["gam_self_rate"] = self.gam_self_rate
         constants["gam_maternal_effect"] = self.gam_maternal_effect
