@@ -187,7 +187,7 @@ class Bryophyte(BryophyteBase):
         add haploid and diploid life stages
         """
         if self._file_in:
-            self.model.readfromfile()
+            self.model.readfromfile(tag_script="p1.individuals.tag=0")
         else:
             self.model.early(
                 time=1,
