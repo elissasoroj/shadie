@@ -78,7 +78,7 @@ class PureSlim:
 
         # tskit tables are immutable, but we can modify a copy of
         # the table and use load_tables to make a new ts from it.
-        tables = self.tree_sequence.tables
+        tables = self._tree_sequence.tables
 
         # modify the tables to set population to 0 for all
         nnodes = tables.nodes.num_rows
@@ -135,7 +135,7 @@ class PureSlim:
         # get a list of Series
         for rep in range(reps):
             seed = rng.integers(2**31)
-            tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
+            tts = ToyTreeSequence(self._tree_sequence, sample=sample, seed=seed)
             samples = np.arange(tts.sample[0])
             sample_0 = samples[:tts.sample[0]]
 
