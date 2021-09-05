@@ -25,7 +25,6 @@ EARLY = """
         
         //extra pressure applied to sperm to reduce sim size
         microspores = p0.individuals[p0.individuals.tag==2];
-        microspore_pool = 2*sperm_pool/gam_sperm_per_microspore;
         microspores.fitnessScaling = (microspore_pool/length(microspores));
 
         //set mutation rate for haploids
@@ -516,7 +515,7 @@ REPRO_ANGIO_MONO_P1="""
 REPRO_PTER_HOMOSPORE_P1 = """
     g_1 = genome1;
     g_2 = genome2;
-    if (individual.tag z== 0) { //normal sporophyte makes female and male spores
+    if (individual.tag == 0) { //normal sporophyte makes female and male spores
         //chance of creating a merisitc (egg-bearing) gametophyte
         if (runif(1) < gam_female_to_male_ratio){
             meiosis_reps = asInteger(spo_megaspores_per/2);

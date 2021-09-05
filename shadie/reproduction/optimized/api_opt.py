@@ -31,7 +31,7 @@ class ReproductionApi:
         mode:str, 
         spo_pop_size: int,
         gam_pop_size: int,
-        sperm_pool: Union[None, int]=None,
+        microspore_pool: Union[None, int]=None,
         spo_mutation_rate: Union[None, float]=None,
         gam_mutation_rate: Union[None, float]=None,
         gam_female_to_male_ratio: float.as_integer_ratio = (1,1),
@@ -97,8 +97,8 @@ class ReproductionApi:
         """
         Bryophyte(
             model=self.model,
-            mode=mode, spo_pop_size=spo_pop_size, gam_pop_size=gam_pop_size,
-            sperm_pool = sperm_pool,
+            mode=mode, spo_pop_size=spo_pop_size,
+            gam_pop_size=gam_pop_size, microspore_pool = microspore_pool,
             spo_mutation_rate=spo_mutation_rate,
             gam_mutation_rate=gam_mutation_rate, 
             gam_female_to_male_ratio=gam_female_to_male_ratio,
@@ -112,7 +112,8 @@ class ReproductionApi:
             gam_maternal_effect=gam_maternal_effect,
             spo_random_death_chance=spo_random_death_chance,
             gam_random_death_chance=gam_random_death_chance,
-            _file_in=self.model.file_in, _chromosome=self.model.chromosome, 
+            _file_in=self.model.file_in, 
+            _chromosome=self.model.chromosome, 
             _sim_time = 2*self.model.sim_time, 
             _file_out = self.model.file_out,
         ).run()
@@ -122,11 +123,15 @@ class ReproductionApi:
         mode:str, 
         spo_pop_size: int,
         gam_pop_size: int,
+        microspore_pool: Union[None, int]=None,
         spo_mutation_rate: Union[None, float]=None,
         gam_mutation_rate: Union[None, float]=None,
-        spo_spores_per: int=100,
         spo_female_to_male_ratio: float.as_integer_ratio = (1,1),
         gam_female_to_male_ratio: float.as_integer_ratio = (1,1),
+        spo_megaspores_per: int=10,
+        spo_microspores_per: int=100,
+        gam_eggs_per_megaspore: int=1,
+        gam_sperm_per_microspore: int=10,
         spo_clone_rate: float=0.0,
         spo_clones_per: int=1,
         spo_self_rate: float=0.0,
@@ -187,12 +192,16 @@ class ReproductionApi:
         ...
         """
         Pteridophyte(
-            model=self.model, mode=mode, spo_pop_size=spo_pop_size, gam_pop_size=gam_pop_size,
+            model=self.model, mode=mode, spo_pop_size=spo_pop_size,
+            gam_pop_size=gam_pop_size, microspore_pool = microspore_pool,
             spo_mutation_rate = spo_mutation_rate,
             gam_mutation_rate = gam_mutation_rate, 
             spo_female_to_male_ratio = spo_female_to_male_ratio,
             gam_female_to_male_ratio = gam_female_to_male_ratio,
-            spo_spores_per=spo_spores_per,
+            spo_megaspores_per = spo_megaspores_per,
+            spo_microspores_per = spo_microspores_per,
+            gam_eggs_per_megaspore = gam_eggs_per_megaspore,
+            gam_sperm_per_microspore = gam_sperm_per_microspore,
             spo_clone_rate=spo_clone_rate, 
             spo_clones_per = spo_clones_per,
             gam_clone_rate=gam_clone_rate,
@@ -338,15 +347,4 @@ class ReproductionApi:
             _file_in= self.model.file_in,
             _file_out = self.model.file_out,
         ).run()
-
-    # def optimize(
-    #         self, 
-    #         desired_eggs_per_gen = None):
-    #     """
-    #     Convenience function to choose optimized params
-    #     """
-    #     Bryophyte(model).optimize(
-    #         self,
-    #         desired_eggs_per_gen = None,
-    #     ).run()
 

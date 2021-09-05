@@ -3,9 +3,10 @@
 """
 Starting an alternate implementation of Reproduction 
 """
-import pyslim
-from typing import Union
 from dataclasses import dataclass, field
+from typing import Union
+import pyslim
+from loguru import logger
 from shadie.reproduction.optimized.base_wf import ReproductionBase
 from shadie.reproduction.optimized.scripts import (
     ACTIVATE, DEACTIVATE, EARLY, SURV,
@@ -35,11 +36,15 @@ class Pteridophyte(PteridophyteBase):
     """
     spo_pop_size: int
     gam_pop_size: int
+    microspore_pool: Union[None, int]=None,
     spo_mutation_rate: Union[None, float] = None
     gam_mutation_rate: Union[None, float] = None
     spo_female_to_male_ratio: float.as_integer_ratio = (1,1)
     gam_female_to_male_ratio: float.as_integer_ratio = (1,1)
-    spo_spores_per: int=100
+    spo_megaspores_per: int= 10
+    spo_microspores_per: int=100
+    gam_eggs_per_megaspore: int=1 
+    gam_sperm_per_microspore: int=10
     spo_clone_rate: float=0.0
     spo_clones_per: float=1
     gam_clone_rate: float=0.0
@@ -80,6 +85,8 @@ class Pteridophyte(PteridophyteBase):
             self.spo_mutation_rate = 0.5*self.model.mutation_rate
             self.gam_mutation_rate = 0.5*self.model.mutation_rate
 
+        self.optimize()
+
         self.add_initialize_constants()
         self.add_early_haploid_diploid_subpops() 
         self.end_sim()       
@@ -92,6 +99,63 @@ class Pteridophyte(PteridophyteBase):
                 f"'mode' not recognized, must be in {DTYPES + MTYPES}")
 
 
+    def optimize(self):
+        spo_microspores_generated = int(self.spo_pop_size
+                    *(1-self.spo_female_to_male_ratio)
+                    *self.spo_microspores_per
+                    )
+        spo_sperm_generated = spo_microspores_generated*self.gam_sperm_per_microspore
+
+        spo_megaspores_generated = int(self.spo_pop_size
+                    *self.spo_female_to_male_ratio
+                    *self.spo_megaspores_per
+                    )
+        spo_eggs_generated = spo_megaspores_generated*self.gam_eggs_per_megaspore
+        eggs_needed = self.spo_pop_size
+        megaspores_needed = eggs_needed/self.gam_eggs_per_megaspore
+
+        target_megaspore_prop_in_gam_pop = megaspores_needed/self.gam_pop_size
+
+        megaspore_prop_check = spo_megaspores_generated/(
+                    spo_megaspores_generated+spo_microspores_generated)
+
+        logger.info("\nYour target megaspore:micospore proportion based "
+            f"on `gam_pop_size` = {self.gam_pop_size} is: "
+            f"{target_megaspore_prop_in_gam_pop}.\n"
+            f"If this value is very different from your supplied "
+            f"`gam_female_to_male_ratio` = {self.gam_female_to_male_ratio}"
+            f", then you may need to adjust these parameters."
+            "\n\nYour calculatetd megaspore:micospore proportion is: "
+            f"{megaspore_prop_check}.\n"
+            f"This value is based on {spo_eggs_generated} eggs and "
+            f"{spo_sperm_generated} sperm generated each generation"
+            )
+
+        eggs_alive_in_p0 =  int(megaspore_prop_check*self.gam_pop_size)
+        
+        if eggs_alive_in_p0 < self.spo_pop_size:
+            microspore_pool = spo_megaspores_generated
+            total_spores = microspore_pool + spo_megaspores_generated
+            new_megaspore_prop = spo_megaspores_generated/total_spores
+            new_eggs_alive = int(new_megaspore_prop
+                        *self.gam_pop_size*self.gam_eggs_per_megaspore)
+            self.microspore_pool = microspore_pool
+
+            logger.info("\nGiven your current `gam_pop_size` = "
+                f"{self.gam_pop_size}, your expected egg suvival is "
+                f"{eggs_alive_in_p0}. This will not support `spo_pop_size`"
+                f" of {self.spo_pop_size}.\n"
+                f"Using `microspore_pool` = {self.microspore_pool} to "
+                f"produce approximately "
+                f"{self.microspore_pool*self.gam_sperm_per_microspore} "
+                f"sperm and {spo_eggs_generated} eggs per "
+                f"generation, of which approximately {new_eggs_alive} "
+                f"eggs will survive.\n"
+                "New calculatetd megaspore:micospore proportion is "
+                f"{new_megaspore_prop}"
+                ""
+                )
+
     def add_initialize_constants(self):
         """
         Add defineConstant calls to init for new variables
@@ -99,12 +163,15 @@ class Pteridophyte(PteridophyteBase):
         constants = self.model.map["initialize"][0]['constants']
         constants["spo_pop_size"] = self.spo_pop_size
         constants["gam_pop_size"] = self.gam_pop_size
+        constants["microspore_pool"] = self.microspore_pool
         constants["spo_mutation_rate"] = self.spo_mutation_rate
         constants["gam_mutation_rate"] = self.gam_mutation_rate
-        constants["spo_microspores_per"] = self.spo_microspores_per
-        constants["spo_megaspores_per"] = self.spo_megaspores_per
         constants["spo_female_to_male_ratio"] = self.spo_female_to_male_ratio
         constants["gam_female_to_male_ratio"] = self.gam_female_to_male_ratio
+        constants["spo_megaspores_per"] = self.spo_megaspores_per
+        constants["spo_microspores_per"] = self.spo_microspores_per
+        constants["gam_eggs_per_megaspore"] = self.gam_eggs_per_megaspore
+        constants["gam_sperm_per_microspore"] = self.gam_sperm_per_microspore
         constants["spo_clone_rate"] = self.spo_clone_rate
         constants["spo_clones_per"] = self.spo_clones_per
         constants["spo_self_rate"] = self.spo_self_rate
@@ -334,7 +401,7 @@ if __name__ == "__main__":
         mod.reproduction.pteridophyte(
             mode='homosporous',
             spo_pop_size=1000, 
-            gam_pop_size=1000,
+            gam_pop_size=2000,
         )
 
 

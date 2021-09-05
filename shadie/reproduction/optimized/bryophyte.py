@@ -34,7 +34,7 @@ class Bryophyte(BryophyteBase):
     """
     spo_pop_size: int
     gam_pop_size: int
-    sperm_pool: Union[None, int]=None,
+    microspore_pool: Union[None, int]=None,
     spo_mutation_rate: Union[None, float] = None
     gam_mutation_rate: Union[None, float] = None
     gam_female_to_male_ratio: float.as_integer_ratio = (1,1)
@@ -75,54 +75,7 @@ class Bryophyte(BryophyteBase):
             self.spo_mutation_rate = 0.5*self.model.mutation_rate
             self.gam_mutation_rate = 0.5*self.model.mutation_rate
 
-        #optimize spore numbers
-        eggs_per_gen = (self.gam_pop_size*self.gam_female_to_male_ratio*
-                    (1-self.gam_random_death_chance)*
-                    self.spo_megaspores_per*self.gam_eggs_per_megaspore)
-        
-        sperm_per_gen = (self.gam_pop_size*
-            (1-self.gam_female_to_male_ratio)*self.spo_microspores_per*
-            (1-self.gam_random_death_chance)*self.gam_sperm_per_microspore)
-
-        if self.sperm_pool is None:
-            # excess_eggs = ((eggs_per_gen/self.spo_pop_size)-1)*eggs_per_gen
-            # sperm_pool = eggs_per_gen+(excess_eggs/2)
-            sperm_pool = eggs_per_gen
-
-        fertilization_chance = sperm_per_gen/eggs_per_gen
-        self.sperm_pool = sperm_pool
-        eggs_alive = self.gam_pop_size*(eggs_per_gen/sperm_per_gen)
-        
-        logger.info("\nWith these simulation parameters, you will "
-            f"generate {int(eggs_per_gen)} eggs and {int(sperm_per_gen)} "
-            "sperm each generation. Likelihood of fertilization is "
-            f"{min(int(fertilization_chance*100), 100)}%. Use `.optimize()` to choose "
-            "optimized parameter values.\n"
-            "You are generating enough eggs to reach spo_pop_size: "
-            f"{eggs_per_gen > self.spo_pop_size}\n"
-            "Enough eggs will live to next gen: "
-            f"{eggs_alive > self.spo_pop_size}\n"
-            )
-        if not eggs_alive > self.spo_pop_size:
-            new_eggs_alive = self.gam_pop_size*(eggs_per_gen/self.sperm_pool)
-            self.sperm_pool = new_eggs_alive
-
-            logger.info("\nYour egg:sperm ratio is too low given "
-                "gam_pop_size. \nYour expected egg suvival is "
-                f"{int(eggs_alive)} eggs per generation.\n"
-                f"Using `sperm_pool` = {self.sperm_pool} to produce "
-                f"approximately {new_eggs_alive} eggs and "
-                f"{self.sperm_pool} sperm per generation "
-                "instead."
-                )
-        check_eggs = new_eggs_alive>(self.spo_pop_size*self.gam_female_to_male_ratio)
-        if not check_eggs:
-            logger.info("\nYour gam_pop_size is too low to maintain a "
-                f"spo_pop_size of {self.spo_pop_size}")
-
-        self.eggs_per_gen = eggs_per_gen
-        self.sperm_per_gen = sperm_per_gen
-        self.fertilization_chance = fertilization_chance
+        self.optimize()
 
         self.add_initialize_constants()
         self.add_early_haploid_diploid_subpops() 
@@ -135,14 +88,71 @@ class Bryophyte(BryophyteBase):
             raise ValueError(
                 f"'mode' not recognized, must be in {DTYPES + MTYPES}")
 
-    def add_initialize_constants(self):
+    def optimize(self):
+        spo_microspores_generated = int(self.spo_pop_size
+                    *(1-self.spo_female_to_male_ratio)
+                    *self.spo_microspores_per
+                    )
+        spo_sperm_generated = spo_microspores_generated*self.gam_sperm_per_microspore
+
+        spo_megaspores_generated = int(self.spo_pop_size
+                    *self.spo_female_to_male_ratio
+                    *self.spo_megaspores_per
+                    )
+        spo_eggs_generated = spo_megaspores_generated*self.gam_eggs_per_megaspore
+        eggs_needed = self.spo_pop_size
+        megaspores_needed = eggs_needed/self.gam_eggs_per_megaspore
+
+        target_megaspore_prop_in_gam_pop = megaspores_needed/self.gam_pop_size
+
+        megaspore_prop_check = spo_megaspores_generated/(
+                    spo_megaspores_generated+spo_microspores_generated)
+
+        logger.info("\nYour target megaspore:micospore proportion based "
+            f"on `gam_pop_size` = {self.gam_pop_size} is: "
+            f"{target_megaspore_prop_in_gam_pop}.\n"
+            f"If this value is very different from your supplied "
+            f"`gam_female_to_male_ratio` = {self.gam_female_to_male_ratio}"
+            f", then you may need to adjust these parameters."
+            "\n\nYour calculatetd megaspore:micospore proportion is: "
+            f"{megaspore_prop_check}.\n"
+            f"This value is based on {spo_eggs_generated} eggs and "
+            f"{spo_sperm_generated} sperm generated each generation"
+            )
+
+        eggs_alive_in_p0 =  int(megaspore_prop_check*self.gam_pop_size)
+        
+        if eggs_alive_in_p0 < self.spo_pop_size:
+            microspore_pool = spo_megaspores_generated
+            total_spores = microspore_pool + spo_megaspores_generated
+            new_megaspore_prop = spo_megaspores_generated/total_spores
+            new_eggs_alive = int(new_megaspore_prop
+                        *self.gam_pop_size*self.gam_eggs_per_megaspore)
+            self.microspore_pool = microspore_pool
+
+            logger.info("\nGiven your current `gam_pop_size` = "
+                f"{self.gam_pop_size}, your expected egg suvival is "
+                f"{eggs_alive_in_p0}. This will not support `spo_pop_size`"
+                f" of {self.spo_pop_size}.\n"
+                f"Using `microspore_pool` = {self.microspore_pool} to "
+                f"produce approximately "
+                f"{self.microspore_pool*self.gam_sperm_per_microspore} "
+                f"sperm and {spo_eggs_generated} eggs per "
+                f"generation, of which approximately {new_eggs_alive} "
+                f"eggs will survive.\n"
+                "New calculatetd megaspore:micospore proportion is "
+                f"{new_megaspore_prop}"
+                ""
+                )
+
+        def add_initialize_constants(self):
         """
         Add defineConstant calls to init for new variables
         """
         constants = self.model.map["initialize"][0]['constants']
         constants["spo_pop_size"] = self.spo_pop_size
         constants["gam_pop_size"] = self.gam_pop_size
-        constants["sperm_pool"] = self.sperm_pool
+        constants["microspore_pool"] = self.microspore_pool
         constants["spo_mutation_rate"] = self.spo_mutation_rate
         constants["gam_mutation_rate"] = self.gam_mutation_rate
         constants["gam_female_to_male_ratio"] = self.gam_female_to_male_ratio
@@ -351,33 +361,6 @@ class Bryophyte(BryophyteBase):
             scripts=substitution_script,
             comment="fixes mutations in haploid gen"
             )
-
-    def optimize(
-        self, 
-        desired_eggs_per_gen = None,
-        desired_egg_to_sperm_ratio: float.as_integer_ratio=(1,2)):
-        """
-        Convenience function to choose optimized params
-        """
-        gam_female_to_male_ratio = self.gam_female_to_male_ratio
-        gam_eggs_per_megaspore = self.gam_eggs_per_megaspore
-        gam_sperm_per_microspore = self.gam_sperm_per_microspore
-        spo_megaspores_per = self.spo_megaspores_per
-        gam_random_death_chance = self.gam_random_death_chance
-        fertilization_chance = self.fertilization_chance,
-        gam_pop_size = self.gam_pop_size
-        
-        if not desired_eggs_per_gen:
-            desired_eggs_per_gen = (gam_pop_size*gam_female_to_male_ratio
-                *spo_megaspores_per*gam_eggs_per_megaspore*
-                (1-gam_random_death_chance))
-
-        minimum_sperm_needed = desired_eggs_per_gen/desired_egg_to_sperm_ratio
-        minimum_spo_microspores_per = minimum_sperm_needed/gam_sperm_per_microspore
-
-        self.minimum_spo_microspores_per = minimum_spo_microspores_per
-
-        logger.info(f"Optimized `spo_spores_per` is {minimum_spo_microspores_per}.")
 
 if __name__ == "__main__":
 
