@@ -6,14 +6,14 @@ These are the main user-facing options for implementing life
 histories into SLiM scripts using the shadie Model context.
 """
 
-from shadie.reproduction.base import Base_old
-from shadie.reproduction.bryobase import Bryophyte_old
-from shadie.reproduction.angiobase import Spermatophyte_old
-from shadie.reproduction.fernbase import Pteridophyte_old
+from shadie.reproduction.base import Base
+from shadie.reproduction.bryobase import Bryophyte
+from shadie.reproduction.angiobase import Spermatophyte
+from shadie.reproduction.fernbase import Pteridophyte
 from typing import Union
 
 
-class ReproductionApi_old:
+class ReproductionApi:
     """API for generating organism specific reproduction code blocks.
 
     Methods
@@ -25,7 +25,7 @@ class ReproductionApi_old:
     def __init__(self, model: 'shadie.Model'):
         self.model = model
 
-    def bryophyte_old(
+    def bryophyte(
         self, 
         mode:str, 
         spo_popsize: int,
@@ -90,7 +90,7 @@ class ReproductionApi_old:
             point for the simulation
         ...
         """
-        Bryophyte_old(
+        Bryophyte(
             model=self.model,
             mode=mode, spo_popsize=spo_popsize, gam_popsize=gam_popsize,
             spo_mutation_rate=spo_mutation_rate,
@@ -109,7 +109,7 @@ class ReproductionApi_old:
         ).run()
 
 
-    def pteridophyte_old(
+    def pteridophyte(
         self, 
         mode:str, 
         spo_popsize: int,
@@ -176,7 +176,7 @@ class ReproductionApi_old:
             point for the simulation
         ...
         """
-        Pteridophyte_old(
+        Pteridophyte(
             model=self.model, mode=mode, spo_popsize=spo_popsize, gam_popsize=gam_popsize,
             spo_mutation_rate = spo_mutation_rate,
             gam_mutation_rate = gam_mutation_rate, 
@@ -198,7 +198,7 @@ class ReproductionApi_old:
         ).run()
 
 
-    def spermatophyte_old(
+    def spermatophyte(
         self, 
         mode:str, 
         spo_popsize: int,
@@ -275,7 +275,7 @@ class ReproductionApi_old:
             regardless of fitness
         ...
         """
-        Spermatophyte_old(
+        Spermatophyte(
             model=self.model, mode=mode,spo_popsize=spo_popsize, gam_popsize=gam_popsize,
             spo_mutation_rate = spo_mutation_rate,
             gam_mutation_rate = gam_mutation_rate, 
@@ -294,7 +294,7 @@ class ReproductionApi_old:
             _file_out = self.model.file_out,
         ).run()
 
-    def base_old(
+    def base(
         self,  
         ne = None,
         sexes = False,    
@@ -314,7 +314,7 @@ class ReproductionApi_old:
             individuals will be male and female
         ...
         """
-        Base_old(
+        Base(
             model=self.model, ne = ne, sexes = sexes, 
             _chromosome=self.model.chromosome, 
             _sim_time = self.model.sim_time, 

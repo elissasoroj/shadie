@@ -6,7 +6,7 @@ Starting an alternate implementation of Reproduction
 import pyslim
 from typing import Union
 from dataclasses import dataclass, field
-from shadie.reproduction.base import ReproductionBase_old
+from shadie.reproduction.base import ReproductionBase
 from shadie.reproduction.base_scripts import (
     ACTIVATE, DEACTIVATE, EARLY, SURV, MATERNAL_EFFECT,
     SUBSTITUTION, SUB_INNER, REPRO_BRYO_DIO_P1, REPRO_BRYO_DIO_P0,
@@ -17,7 +17,7 @@ DTYPES = ("d", "dio", "dioicy", "dioicous", "heterosporous",)
 MTYPES = ("m", "mono", "monoicy", "monoicous", "homosporous",)
 
 @dataclass
-class BryophyteBase_old(ReproductionBase_old):
+class BryophyteBase(ReproductionBase):
     lineage: str = field(default="Bryophyte", init=False)
     mode: str
     _file_in: str
@@ -26,7 +26,7 @@ class BryophyteBase_old(ReproductionBase_old):
     _file_out: str
 
 @dataclass
-class Bryophyte_old(BryophyteBase_old):
+class Bryophyte(BryophyteBase):
     """
     Reproduction mode based on mosses, hornworts, and liverworts
     """
@@ -318,7 +318,7 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.bryophyte_old(
+        mod.reproduction.bryophyte(
             mode='dio',
             spo_popsize=1000, 
             gam_popsize=1000,
