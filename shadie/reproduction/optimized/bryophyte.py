@@ -12,7 +12,7 @@ from shadie.reproduction.optimized.scripts import (
     ACTIVATE, DEACTIVATE, EARLY, SURV, MATERNAL_EFFECT_P0,
     MATERNAL_EFFECT_P1, SUBSTITUTION, SUB_MUTS, REPRO_BRYO_DIO_P1, 
     REPRO_BRYO_DIO_P0, REPRO_BRYO_MONO_P1, REPRO_BRYO_MONO_P0,
-    LATE_BRYO_DIO, LATE_BRYO_MONO
+    LATE_BRYO_DIO, LATE_BRYO_MONO, P0_TAGS
 )
 
 DTYPES = ("d", "dio", "dioicy", "dioicous", "heterosporous",)
@@ -187,7 +187,9 @@ class Bryophyte(BryophyteBase):
         add haploid and diploid life stages
         """
         if self._file_in:
-            self.model.readfromfile(tag_script="p1.individuals.tag=0")
+            self.model.readfromfile(
+                tag_script=(["p1.individuals.tag=0",
+                    P0_TAGS]))
         else:
             self.model.early(
                 time=1,

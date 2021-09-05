@@ -256,7 +256,7 @@ class Model(AbstractContextManager):
 
         # Standard single population simulation.
     
-    def readfromfile(self, tag_script:str=None):
+    def readfromfile(self, tag_script:str):
         """
         If a .trees file is provided, this will be the starting point
         of the simulation
@@ -264,10 +264,13 @@ class Model(AbstractContextManager):
         if self.file_in:
         # starting from another simulation starting point.
             #raise NotImplementedError("This isn't ready to use yet.")
+            scripts = [f"sim.readFromPopulationFile('{self.file_in}')"]
+            for i in tag_scripts:
+                scripts.append(i)
+
             self.early(
                 time=1,
-                scripts=[f"sim.readFromPopulationFile('{self.file_in}')",
-                        tag_script],
+                scripts=scripts,
                 comment="read starting populations from file_in"
                 )
             # self.late(
