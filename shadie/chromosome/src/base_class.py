@@ -34,7 +34,10 @@ class ChromosomeBase:
         For every three bases in a coding regions the first two will be
         of the MutationType of the coding region, but the third will be
         of a NONCODING MutationType to emulate synonmyous codon sites.
-    skip_neutral_mutations: bool
+
+    Attributes
+    -----------
+    _skip_neutral_mutations: bool
         Do not simulation neutral mutations. This should be used if you
         plan to combine forward and backward simulations.
     """
