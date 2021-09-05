@@ -114,7 +114,7 @@ s2 survival(p1) {{
         return F;
     else
         return NULL;
-    
+
     {p1maternal_effect}
 }}
 
@@ -125,7 +125,7 @@ s3 survival(p0) {{
         return F;
     else
         {p0survival}
-    
+
     {p0maternal_effect}
 }}
 
@@ -169,9 +169,9 @@ REPRO_BRYO_DIO_P1 = """
     meiosis_reps = floor(spo_spores_per/2);
     for (rep in 1:meiosis_reps) {
         breaks = sim.chromosome.drawBreakpoints(individual);
-        p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 
+        p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag =
             ifelse (runif(1)<gam_female_to_male_ratio, 1, 0);
-        p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 
+        p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag =
             ifelse (runif(1)<gam_female_to_male_ratio, 1, 0);
     }
 """
@@ -184,7 +184,7 @@ REPRO_BRYO_DIO_P0 = """
         // clones give the focal individual extra opportunities to reproduce
         if (runif(1) <= gam_clone_rate)
         {
-            reproduction_opportunity_count = reproduction_opportunity_count 
+            reproduction_opportunity_count = reproduction_opportunity_count
                 + (gam_clone_number * gam_sporophytes_per);
         }
 
@@ -200,7 +200,7 @@ REPRO_BRYO_DIO_P0 = """
 
                 if (sperm.size() == 1) {
                     child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
-                    
+
                     // Mother's fitness affects sporophyte fitness; see survival()
                     if (gam_maternal_effect > 0)
                         child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
@@ -231,7 +231,7 @@ REPRO_BRYO_MONO_P0 = """
 
     // clones give the focal individual extra opportunities to reproduce
     if (runif(1) <= gam_clone_rate) {
-        reproduction_opportunity_count = reproduction_opportunity_count 
+        reproduction_opportunity_count = reproduction_opportunity_count
         + (gam_clone_number * spo_per_gam);
     }
 
@@ -256,7 +256,7 @@ EARLY1_ANGIO = """
     sim.addSubpop('p0', 0); // haploid gametophyte pop
 
     fems = spo_female_to_male_ratio * spo_pop_size;
-    spo_sex_starts = c(rep(1, asInteger(fems)), 
+    spo_sex_starts = c(rep(1, asInteger(fems)),
         rep(0, asInteger(spo_pop_size-fems)));
     p1.individuals.tag = spo_sex_starts;
 """
@@ -311,7 +311,7 @@ REPRO_ANGIO_DIO_P0  = """
                 //sort pollens by fitness
                 fitness_vector = pollen_pool.getValue("fitness");
                 sorted_fitness_vector = sort(fitness_vector, ascending=F);
-                                
+
                 //calculate how many pollens attempt to fertilize
                 attempts = 0;
 
@@ -320,7 +320,7 @@ REPRO_ANGIO_DIO_P0  = """
                     if (runif(1)<pollen_success_rate)
                         break;
                     }
-                idx = attempts-1;    
+                idx = attempts-1;
                 target_fitness = sorted_fitness_vector[idx];
                 winners = pollen_pool[pollen_pool.getValue("fitness") == target_fitness];
                 sperm = winners[0];
@@ -423,10 +423,10 @@ REPRO_PTER_HETEROSPORE_P0 = """
     g_2 = genome2;
     if (individual.tag == 1) // reproduction callbacks for megaspores only
     {   reproduction_opportunity_count = 1;
-            
+
         for (repro in seqLen(reproduction_opportunity_count))
         {   sperm = p0.sampleIndividuals(1, tag=0); // find a male!
-                
+
             if (sperm.size() == 1)
             {// intergametophytic/sporophytic selfing might happen by chance
                 child = p1.addRecombinant(individual.genome1, NULL, NULL,
@@ -442,7 +442,7 @@ REPRO_PTER_HETEROSPORE_P1 = """
 
     meiosis_reps = floor(spores_per_spo/2);
     reproduction_opportunity_count = 1;
-    
+
     // clones give the focal individual extra opportunities to reproduce
     if (runif(1) <= spo_clone_rate)
         meiosis_reps = spo_clone_number*meiosis_reps*2;
@@ -453,12 +453,12 @@ REPRO_PTER_HETEROSPORE_P1 = """
         p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
         p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
 	}
-	
+
 	if (runif(1) <= gam_female_to_male_ratio)
 		child.tag = 1;
     else
         child.tag = 0;
-    
+
     //Mother's fitness affects gametophyte fitness; see survival()
     if (gam_maternal_effect > 0)
         child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
