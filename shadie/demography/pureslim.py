@@ -173,6 +173,126 @@ class PureSlim:
         )
         return data
 
+    def draw_tree(
+        self,
+        idx: int=None,
+        site: int=None,
+        sample: Union[int, Iterable[int]]=10,
+        seed=None,
+        show_label=True,
+        show_generation_line=True,
+        **kwargs):
+        """Returns a toytree drawing for a random sample of tips.
+
+        The tree drawing will include mutations as marks on edges
+        with mutationTypes colored differently. The tips are re-labeled
+        indicating {population-id}-{random-sample-id}.
+
+        Parameters
+        ----------
+        ...
+        """
+        self._tree_sequence = self.tree_sequence
+        # load as a ToyTreeSequence
+        tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
+
+        # draw tree and mutations with a pre-set style
+        base_style = {
+            'scale_bar': True,
+            'width': 400,
+            'height': 400,
+        }
+        base_style.update(kwargs)
+        canvas, axes, marks = tts.draw_tree(
+            idx=idx, site=site, show_label=show_label, **base_style)
+
+        # add fill to show the SLiM portion of the simulation.
+        if show_generation_line:
+            style = {"stroke-dasharray": "4,2", "stroke-width": 2, "stroke": "grey"}
+            if marks[0].layout == "u":
+                axes.hlines(-self.generations, style=style)
+            elif marks[0].layout == "d":
+                axes.hlines(self.generations, style=style)
+            elif marks[0].layout == "r":
+                axes.vlines(-self.generations, style=style)
+            elif marks[0].layout == "l":
+                axes.vlines(self.generations, style=style)
+        return canvas, axes, marks
+
+
+    def draw_tree_sequence(
+        self,
+        start: int=0,
+        max_trees: int=10,
+        sample: Union[int,Iterable[int]]=10,
+        seed: Optional[int]=None,
+        height: Optional[int]=None,
+        width: Optional[int]=None,
+        show_generation_line: bool=True,
+        scrollable: bool=True,
+        axes: Optional['toyplot.coordinates.Cartesian']=None,
+        **kwargs,
+        ):
+        """Return a ToyTreeSequence drawing.
+
+        """
+        # load as a ToyTreeSequence
+        tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
+
+        # get auto-dimensions from tree size
+        height = height if height is not None else 325
+        height += 100
+        width = max(300, (
+            width if width is not None else 
+            15 * tts.at_index(0).ntips * min(max_trees, len(tts))
+        ))        
+
+        # create an axis for the chromosome. +100 height for chrom.
+        canvas = ScrollableCanvas(height=height, width=width)
+        ax0 = canvas.cartesian(bounds=(50, -50, 50, 75), padding=5)
+        ax1 = canvas.cartesian(bounds=(50, -50, 100, -50))        
+
+        # draw tree sequence
+        canvas, axes, mark = tts.draw_tree_sequence(
+            start=start,
+            max_trees=max_trees,
+            axes=ax1,
+            **kwargs,
+        )
+
+        # add chromosome to top axis
+        self.chromosome.draw(axes=ax0)
+        # ax0.y.show = False
+        # ax0.x.ticks.show = True
+        ax0.x.ticks.near = 5
+        ax0.x.ticks.far = 0
+        # ax0.fill(
+            # [0, 1], [0, 0], [1, 1], 
+            # color='green',
+        # )
+        # ax0.x.ticks.locator = toyplot.locator.Extended(count=8)
+
+
+        # ntrees = len(tts)
+        # tmax = start + min(ntrees, max_trees)
+        # breaks = tts.tree_sequence.breakpoints(True)[start: tmax + 1]
+        # cend = breaks[-1]
+        # print(cend)
+
+        # cdat = self.chromosome.data.loc[start:tmax]
+
+
+
+        # add generation line showing where SLiM simulation ended.
+        if show_generation_line:
+            axes.hlines(
+                self.generations,
+                style={"stroke-dasharray": "4,2", "stroke-opacity": 0.4}
+            )
+
+        return canvas, axes, mark
+
+
 
 class PureSlim_TwoPop:
     """"Loads and merges two TreeSequence files with ancestral burn-in
