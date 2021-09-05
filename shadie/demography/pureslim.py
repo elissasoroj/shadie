@@ -507,7 +507,7 @@ class PureSlim_TwoPop:
                 data=[
                     tts.tree_sequence.diversity(sample_0),
                     tts.tree_sequence.diversity(sample_1),
-                    tts.tree_sequence.Fst([sample_0_nodes, sample_1]),
+                    tts.tree_sequence.Fst([sample_0, sample_1]),
                     tts.tree_sequence.divergence([sample_0, sample_1]),
                     tts.tree_sequence.Tajimas_D(sample_0),
                     tts.tree_sequence.Tajimas_D(sample_1),
