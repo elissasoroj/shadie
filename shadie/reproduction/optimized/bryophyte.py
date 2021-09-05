@@ -108,7 +108,7 @@ class Bryophyte(BryophyteBase):
         megaspore_prop_check = spo_megaspores_generated/(
                     spo_megaspores_generated+spo_microspores_generated)
 
-        self.microspore_pool. = spo_megaspores_generated
+        self.microspore_pool = spo_megaspores_generated
 
         logger.info("\nYour target megaspore:micospore proportion based "
             f"on `gam_pop_size` = {self.gam_pop_size} is: "
