@@ -62,6 +62,54 @@ EARLY = """
     }}
 """
 
+EARLY_ANGIO = """
+// diploids (p1) just generated haploid gametophytes
+    if (sim.generation % 2 == 0) {{
+
+        // fitness affects gametophyte survival
+        megaspores = p0.individuals[p0.individuals.tag==1];
+        megaspores.fitnessScaling = ((spo_pop_size*spo_female_to_male_ratio
+                    *spo_flowers_per*flower_ovules_per)/length(megaspores));
+        
+        //extra pressure applied to sperm to reduce sim size
+        microspores = p0.individuals[p0.individuals.tag==2];
+        microspores.fitnessScaling = (microspore_pool/length(microspores));
+
+        //set mutation rate for haploids
+        sim.chromosome.setMutationRate(gam_mutation_rate);
+
+        // p0 and p1 survival callbacks
+        s1.active = 1;
+        s2.active = 0;
+        s3.active = 1;
+        s4.active = 0;
+
+        // haploids get modified fitness, without dominance
+        {activate}
+    }}
+
+
+    // odd generations = gametophytes (p0) just generated sporophytes
+    else {{
+
+        // fitness affects sporophytes
+        p1.fitnessScaling = spo_pop_size / p1.individualCount;
+
+        //set mutation rate for diploids
+        sim.chromosome.setMutationRate(spo_mutation_rate);
+
+        // turn off p0 survival callbacks
+        // turn on p1 survival callbacks
+        s1.active = 0;
+        s2.active = 1;
+        s3.active = 0;
+        s4.active = 1;
+
+        // diploids get SLiM's standard fitness calculation, with dominance
+        {deactivate}
+    }}
+"""
+
 #-----------------------------------------------
 #FITNESS CALLBACKS
 
@@ -148,7 +196,7 @@ s4 survival(p0) {{
 """
 
 ANGIO_SURV_P0 = """
-    if {//All ovules survive; this is a way of implementing maternal effect
+    //All ovules survive; this is a way of implementing maternal effect
     //if mother died, they would not be produced
         if (individual.tag == 1)
                 return T;
@@ -273,22 +321,6 @@ LATE_BRYO_DIO = """
 	}
 """
 
-GAMETOPHYTIC_SELFING = """
-    //P1
-    if (individual.tag == 6){ //gametophytic selfing
-        meiosis_count = asInteger(spo_spores_per/2);
-        for (i in 1:meiosis_count)
-            breaks = sim.chromosome.drawBreakpoints(individual);
-        p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 6; //one egg will undergo selfing
-        p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag =
-            ifelse (runif(1)<gam_female_to_male_ratio, 1, 2); //the other will outcross
-    }
-    //P0
-    if (individual.tag == 6) { //performed gametophytic selfing
-    p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL,  NULL).tag=0;
-    }
-"""
-
 REPRO_BRYO_MONO_P1 = """
     // creation of gametes from sporophytes
     g_1 = genome1;
@@ -368,121 +400,169 @@ EARLY1_ANGIO = """
 
     fems = spo_female_to_male_ratio*spo_pop_size;
     spo_sex_starts = c(rep(1, asInteger(fems)), 
-        rep(0, asInteger(spo_pop_size-fems)));
+        rep(2, asInteger(spo_pop_size-fems)));
     p1.individuals.tag = spo_sex_starts;
 """
 
 REPRO_ANGIO_DIO_P1 = """
     g_1 = genome1;
     g_2 = genome2;
-
-    // individual is female
-    if (individual.tag == 1) {
-
-        // determine how many ovules were fertilized, out of the total
-        fertilized_ovules = rbinom(1, flower_ovules_per, ovule_fertilization_rate);
-        meiosis_reps = floor(fertilized_ovules/2);
-        if (runif(1) <= spo_clone_rate)
-            meiosis_reps = spo_clones_per*meiosis_reps*2;
-
-        for (rep in 1:meiosis_reps) {
+    if (individual.tag == 1) { //female sporophyte makes megaspores
+        meiosis_reps = asInteger(spo_flowers_per*flower_ovules_per/2);
+        for (rep in 1:meiosis_reps){
             breaks = sim.chromosome.drawBreakpoints(individual);
-            p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 1;
-            p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 1;
+            child1 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
+            child1.tag = 1;
+            
+            child2 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+            child2.tag = 1;
+            
+            // Mother's fitness affects gametophyte fitness; see survival()
+            if (spo_maternal_effect > 0){
+                child1.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+                child2.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+            }
         }
     }
-
-    // individual is male
-    else {
-        meiosis_reps = floor(pollen_count/2);
-        if (runif(1) <= spo_clone_rate)
-            meiosis_reps = spo_clones_per*meiosis_reps*2;
-        for (rep in 1:meiosis_reps) {
-            breaks = sim.chromosome.drawBreakpoints(individual);
-            p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 0;
-            p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag = 0;
-        }
-    }
-"""
-
-LATE_ANGIO_DIO = """
-    //odd = starts with gam in p0, generates spo into p1
-    else {
-        p1_size = length(p1.individuals);
-        p1.individuals.tag = 0; //set null tag
-        clones = p1.sampleIndividuals(asInteger(p1_size*spo_clone_rate)); //there is no spo cloning, so remove later
-        clones.tag = 4; //tag clones
-        
-        number_selfed = rbinom(1, length(p1_size), spo_self_rate);
-        selfed_inds = p1.sampleIndividuals(number_selfed);
-        
-        selfed = selfed_inds[selfed_inds.tag == 0];
-        selfed.tag = 5; //tag sporophytic selfing inds
-        
-        selfed_cloned = selfed_inds[selfed_inds.tag == 4];
-        selfed_cloned.tag = 45; //tag selfing and cloning inds
-        
-        num_gam_self = rbinom(1, length(p1_size), gam_self_rate);
-        gam_selfed_inds = p1.sampleIndividuals(num_gam_self);
-        
-        gam_selfed = gam_selfed_inds[gam_selfed_inds.tag == 0];
-        gam_selfed.tag = 6; //tag gametophytic selfing indsp1_size = length(p1.individuals);
-        
-        gam_selfed_cloned = gam_selfed_inds[gam_selfed_inds.tag == 4];
-        gam_selfed_cloned.tag = 46; //tag selfing and cloning inds
     
+    //else made a male-only gametophyte
+    if (individual.tag == 2) {
+        meiosis_reps = asInteger(spo_flowers_per*flower_pollen_per/2);
+        for (rep in 1:meiosis_reps){
+            breaks = sim.chromosome.drawBreakpoints(individual);
+            child1 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
+            child1.tag = 2;
+            
+            child2 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+            child2.tag = 2;
+            
+            // Mother's fitness affects gametophyte fitness; see survival()
+            if (spo_maternal_effect > 0){
+                child1.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+                child2.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+            }
+        }
+    }
+    
+    
+    if (individual.tag == 41) { //save cloned spo to p0
+        //make the clonoes
+        for (i in 1:spo_clones_per)
+            p0.addCloned(individual).tag = 41;
+        
+        meiosis_reps = asInteger(spo_flowers_per*flower_ovules_per/2);
+        for (rep in 1:meiosis_reps){
+            breaks = sim.chromosome.drawBreakpoints(individual);
+            child1 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
+            child1.tag = 1;
+            
+            child2 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+            child2.tag = 1;
+            
+            // Mother's fitness affects gametophyte fitness; see survival()
+            if (spo_maternal_effect > 0){
+                child1.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+                child2.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+            }
+        }
+    }
+    
+    //else made a male-only gametophyte
+    if (individual.tag == 42) {
+        //make the clonoes
+        for (i in 1:spo_clones_per)
+            p0.addCloned(individual).tag = 41;
+        
+        meiosis_reps = asInteger(spo_flowers_per*flower_pollen_per/2);
+        for (rep in 1:meiosis_reps){
+            breaks = sim.chromosome.drawBreakpoints(individual);
+            child1 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
+            child1.tag = 2;
+            
+            child2 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+            child2.tag = 2;
+            
+            // Mother's fitness affects gametophyte fitness; see survival()
+            if (spo_maternal_effect > 0){
+                child1.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+                child2.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+            }
+        }
     }
 """
-
 
 REPRO_ANGIO_DIO_P0  = """
-    // females find male gametes to reproduce
-    if (individual.tag == 1) {
+    if (individual.tag == 1) { //eggs
         if (pollen_comp == T) {
-
+            
             // sperm land on stigma
-            pollen_pool = p0.sampleIndividuals(pollen_per_ovule, tag=0);
+            pollen_pool = p0.sampleIndividuals(asInteger(stigma_pollen_per/flower_ovules_per), tag=2);
             for (pollen in pollen_pool) {
                 // store fitness value
                 pollen.setValue("fitness", p0.cachedFitness(pollen.index));
-                pollen.tag = 2;
+                pollen.tag = 20; //pollen is used
             }
-
+            
             if (length(pollen_pool)>0) {
                 //sort pollens by fitness
                 fitness_vector = pollen_pool.getValue("fitness");
                 sorted_fitness_vector = sort(fitness_vector, ascending=F);
-                                
+                
                 //calculate how many pollens attempt to fertilize
                 attempts = 0;
-
-                for (i in range(1:length(pollen_pool)))
-                    {attempts = attempts + 1;
+                
+                for (i in range(1:length(pollen_pool))){
+                    attempts = attempts + 1;
                     if (runif(1)<pollen_success_rate)
                         break;
-                    }
-                idx = attempts-1;    
+                }
+                idx = attempts-1;
                 target_fitness = sorted_fitness_vector[idx];
                 winners = pollen_pool[pollen_pool.getValue("fitness") == target_fitness];
                 sperm = winners[0];
             }
-            // find a male
-            else sperm = p0.sampleIndividuals(1, tag=0);
         }
-
-        else
-            // find a male
+        else // find a male
             sperm = p0.sampleIndividuals(1, tag=0);
-
+        
+        
+        sperm = p0.sampleIndividuals(1, tag =2); //find a sperm
+        
         if (sperm.size() == 1) {
             child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
-            sperm.tag = 2;
-
-            if (runif(1) <= spo_female_to_male_ratio)
-                child.tag = 1;
-            else
-                child.tag = 0;
+            child.tag=0;
+                
+            // take out of the mating pool
+            sperm.tag = 20;
+            }
         }
+    }
+    
+    
+    if (individual.tag == 41){ //sporophyte clone from last gen moves directly to p1
+        //add sporophytic clones
+        for (i in 1:spo_clones_per)
+            p1.addCloned(individual).tag = 1;
+    }
+    
+    if (individual.tag == 42){ //sporophyte clone from last gen moves directly to p1
+        //add sporophytic clones
+        for (i in 1:spo_clones_per)
+            p1.addCloned(individual).tag = 2;
+    }
+"""
+
+LATE_ANGIO_DIO = """
+    }
+    //odd = starts with gam in p0, generates spo into p1
+    else {
+        p1_size = length(p1.individuals);
+        
+        clones = p1.sampleIndividuals(asInteger(p1_size*spo_clone_rate));
+        femclones = clones[clones.tag == 1];
+        femclones.tag = 41;
+        maleclones = clones[clones.tag == 2];
+        maleclones.tag = 42;
     }
 """
 

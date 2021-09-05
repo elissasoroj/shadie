@@ -399,7 +399,7 @@ if __name__ == "__main__":
         mod.initialize(chromosome=chrom)
 
         mod.reproduction.pteridophyte(
-            mode='heterosporous',
+            mode='homosporous',
             spo_pop_size=1000, 
             gam_pop_size=2000,
         )

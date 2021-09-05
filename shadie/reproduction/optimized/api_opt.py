@@ -223,18 +223,19 @@ class ReproductionApi:
         mode:str, 
         spo_pop_size: int,
         gam_pop_size: int,
+        microspore_pool: Union[None, int]=None,
         spo_mutation_rate: Union[None, float]=None,
         gam_mutation_rate: Union[None, float]=None,
         spo_female_to_male_ratio: float.as_integer_ratio = (1,1),
         spo_clone_rate: float=0.0,
         spo_clones_per: int =1,
-        spo_self_rate: float=0.0,
-        flower_ovules_per: int=30,
+        spo_flowers_per: int=5,
+        flower_ovules_per: int=15,
         flower_pollen_per: int=100,
         ovule_fertilization_rate: float=0.7,
         pollen_success_rate: float=1.0,
         pollen_comp: str="F",
-        stigma_pollen_per: int=8,
+        stigma_pollen_per: int=50,
         spo_maternal_effect: float=0,
         spo_random_death_chance: float=0,  
         gam_random_death_chance: float=0, 
@@ -282,7 +283,7 @@ class ReproductionApi:
             number of pollen produced by each sporophyte
         pollen_comp: str="F" or "T"
             turn pollen competition on or off
-        pollen_per_ovule: int
+        stigma_pollen_per: int
             number of pollen that will compete to fertilize a single 
             ovule *TODO: update code so that they compete for ALL the
             ovules in a given flower
@@ -302,9 +303,10 @@ class ReproductionApi:
             spo_mutation_rate = spo_mutation_rate,
             gam_mutation_rate = gam_mutation_rate, 
             spo_female_to_male_ratio = spo_female_to_male_ratio,
+            microspore_pool = microspore_pool,
             spo_clone_rate=spo_clone_rate, 
-            spo_clones_per = spo_clones_per, 
-            spo_self_rate=spo_self_rate,
+            spo_clones_per = spo_clones_per,
+            spo_flowers_per = spo_flowers_per, 
             flower_ovules_per=flower_ovules_per,
             flower_pollen_per=flower_pollen_per,
             ovule_fertilization_rate=ovule_fertilization_rate, 
