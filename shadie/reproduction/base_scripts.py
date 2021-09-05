@@ -89,11 +89,11 @@ MATERNAL_EFFECT = """
     maternal_effect = individual.getValue("maternal_fitness");
 
     if (!isNULL(maternal_effect)) {
-        corrected_fitness = (maternal_effect * Maternal_weight) + fitness * (1 - Maternal_weight);
+        corrected_fitness = (maternal_effect * gam_maternal_effect) + fitness * (1 - gam_maternal_effect);
         return (draw < corrected_fitness);
     }
-
-    return NULL;
+    else
+        return NULL;
 """
 
 DEATH = """
@@ -176,80 +176,6 @@ REPRO_BRYO_DIO_P1 = """
     }
 """
 
-REPRO_BRYO_DIO_P0 = """
-    // females find male gametes to reproduce
-    if (individual.tag == 1) {
-        reproduction_opportunity_count = gam_sporophytes_per;
-
-        // clones give the focal individual extra opportunities to reproduce
-        if (runif(1) <= gam_clone_rate)
-        {
-            reproduction_opportunity_count = reproduction_opportunity_count
-                + (gam_clone_number * gam_sporophytes_per);
-        }
-
-        for (repro in seqLen(reproduction_opportunity_count)) {
-            if (runif(1) <= gam_self_rate) {
-                // this is selfing using two identical gametes – intragametophytic selfing
-                // intergametophytic (sporophytic) selfing might happen below, by chance
-                p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
-            }
-            else {
-                // find a male!
-                sperm = p0.sampleIndividuals(1, tag=0);
-
-                if (sperm.size() == 1) {
-                    child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
-
-                    // Mother's fitness affects sporophyte fitness; see survival()
-                    if (gam_maternal_effect > 0)
-                        child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
-
-                    // take out of the mating pool
-                    sperm.tag = 2;
-                }
-            }
-        }
-    }
-"""
-
-REPRO_BRYO_MONO_P1 = """
-    // creation of gametes from sporophytes
-    g_1 = genome1;
-    g_2 = genome2;
-
-    meiosis_reps = floor(spo_spores_per/2);
-    for (rep in 1:meiosis_reps) {
-        breaks = sim.chromosome.drawBreakpoints(individual);
-        p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
-        p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-    }
-"""
-
-REPRO_BRYO_MONO_P0 = """
-    reproduction_opportunity_count = spo_per_gam;
-
-    // clones give the focal individual extra opportunities to reproduce
-    if (runif(1) <= gam_clone_rate) {
-        reproduction_opportunity_count = reproduction_opportunity_count
-        + (gam_clone_number * spo_per_gam);
-    }
-
-    for (repro in seqLen(reproduction_opportunity_count)) {
-        if (runif(1) <= gam_self_rate) {
-            // this is selfing using two identical gametes – intragametophytic selfing
-            p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
-            // intergametophytic selfing might happen below, by chance
-        }
-        else {
-            sperm = p0.sampleIndividuals(1);
-            child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
-            // Mother's fitness affects sporophyte fitness; see survival()
-            if (Maternal_weight > 0)
-                child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
-        }
-    }
-"""
 
 EARLY1_ANGIO = """
     sim.addSubpop('p1', spo_pop_size); // diploid sporophyte pop

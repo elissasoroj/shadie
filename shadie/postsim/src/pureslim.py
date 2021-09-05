@@ -17,36 +17,19 @@ from toytree.utils.tree_sequence.src.toytree_sequence import ToyTreeSequence
 from toytree.utils.utils import ScrollableCanvas
 from shadie.chromosome.src.classes import ChromosomeBase
 
-
 class PureSlim:
-    """"Loads and merges two TreeSequence files with ancestral burn-in
+    """"Loads two TreeSequence files with ancestral burn-in
     from a pure SLiM simulation
-    
-    Two runs were initiated from an ancestral SLiM burn-in .trees file
-
-    SliM has been run for two populations with the same genome type
-    for T generations starting from different seeds and perhaps
-    with different selection or demographic histories. Each ts
-    includes N haploid individuals at time_start and time_end.
-
-    SLiM was run with the argument keep_input_roots=True so that it
-    preserves the first-generation ancestors so they can be used for
-    recapitation.
     """
     def __init__(
         self,
-        tree_files: List[str],
-        ancestral_burnin: str,
+        tree_file: str,
         seed: Optional[int]=None,
         **kwargs,
         ):
 
         # hidden attributes
-        self._tree_files: List[str] = tree_files
-        self._tree_sequences = [pyslim.load(i) for i in self._tree_files]
-        self._nts: int = len(self._tree_files)
-
-        self._burnin= pyslim.load(ancestral_burnin)
+        self._tree_sequence = pyslim.load(tree_file)
 
         # attributes to be parsed from the slim metadata
         self.generations: int=0
@@ -68,7 +51,297 @@ class PureSlim:
 
         # try to fill attributes by extracting metadata from the tree files.
         self._extract_metadata()
-        self._union_all()
+        self._remove_null_population_and_nodes()
+
+    def _extract_metadata(self):
+        """Extract self attributes from shadie .trees file metadata.
+
+        TODO: can more of this be saved in SLiM metadata?
+        """
+        gens = self._tree_sequence.metadata["SLiM"]["generation"]
+        self.generations = gens
+        assert self.popsize, "popsize not found in metadata; must enter a popsize arg."
+        assert self.mut, "mut not found in metadata; must enter a mut arg."
+        assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
+
+    def _remove_null_population_and_nodes(self):
+        """Call tskit simplify function to remove null pop.
+
+        There is a null population in shadie simulations because we
+        define an alternation of generations with two alternating
+        subpopulations. At the final generation of shadie SLiMulation
+        the generation is even, and so we ...
+        """
+        # set population=0 for all nodes in each ts. Nodes from the
+        # diploid sub-generation are currently labeled as population=1.
+        
+
+        # tskit tables are immutable, but we can modify a copy of
+        # the table and use load_tables to make a new ts from it.
+        tables = self._tree_sequence.tables
+
+        # modify the tables to set population to 0 for all
+        nnodes = tables.nodes.num_rows
+        tables.nodes.population = np.zeros(nnodes, dtype=np.int32)
+
+        # drop nodes that are not connected to anything. This includes
+        # the pseudo-nodes representing half of the haploid populations.
+        nodes_in_edge_table = list(
+            set(tables.edges.parent).union(tables.edges.child)
+        )
+
+        # reload treeseq FROM modified tables
+        mod_tree_seq = pyslim.load_tables(tables)
+
+        # remove the empty population (p1) by using simplify, which will
+        # find that there are no longer any nodes in population=1. This
+        # does not remove any Nodes, but it does remove a population.
+        # https://tskit.dev/tskit/docs/stable/_modules/tskit/tables.html
+        self.tree_sequence = mod_tree_seq.simplify(
+            samples=nodes_in_edge_table,
+            keep_input_roots=True,
+            keep_unary_in_individuals=True
+        )
+
+    def stats(
+        self,
+        sample: Union[int, Iterable[int]]=10,
+        seed: Optional[int]=None,
+        reps: int=10
+        ):
+        """Calculate statistics summary on mutated TreeSequence.
+        
+        Returns a dataframe with several statistics calculated and
+        summarized from replicate random sampling.
+
+        Parameters
+        ----------
+        sample: int or Iterable of ints
+            The number of tips to randomly sample from each population.
+        seed: int
+            A seed for random sampling.
+        reps: int
+            Number of replicate times to random sample tips and 
+            calculate statistics.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A dataframe with mean and 95% confidence intervals.
+        """
+        rng = np.random.default_rng(seed)
+        data = []
+
+        # get a list of Series
+        for rep in range(reps):
+            seed = rng.integers(2**31)
+            tts = ToyTreeSequence(self._tree_sequence, sample=sample, seed=seed)
+            samples = np.arange(tts.sample[0])
+            sample_0 = samples[:tts.sample[0]]
+
+            stats = pd.Series(
+                index=["theta_0", "theta_1", "Fst_01", "Dist_01", "D_Taj_0", "D_Taj_1"],
+                name=str(rep),
+                data=[
+                    tts.tree_sequence.diversity(sample_0),
+                    tts.tree_sequence.Tajimas_D(sample_0),
+                ],
+                dtype=float,
+            )
+            data.append(stats)
+
+        # concat to a dataframe
+        data = pd.concat(data, axis=1).T
+
+        # get 95% confidence intervals
+        confs = []
+        for stat in data.columns:
+            mean_val = np.mean(data[stat])
+            low, high = scipy.stats.t.interval(
+                alpha=0.95,
+                df=len(data[stat]) - 1,
+                loc=mean_val,
+                scale=scipy.stats.sem(data[stat]),
+            )
+            confs.append((mean_val, low, high))
+
+        # reshape into a dataframe
+        data = pd.DataFrame(
+            columns=["mean", "CI_5%", "CI_95%"],
+            index=data.columns,
+            data=np.vstack(confs),
+        )
+        return data
+
+    def draw_tree(
+        self,
+        idx: int=None,
+        site: int=None,
+        sample: Union[int, Iterable[int]]=10,
+        seed=None,
+        show_label=True,
+        show_generation_line=True,
+        **kwargs):
+        """Returns a toytree drawing for a random sample of tips.
+
+        The tree drawing will include mutations as marks on edges
+        with mutationTypes colored differently. The tips are re-labeled
+        indicating {population-id}-{random-sample-id}.
+
+        Parameters
+        ----------
+        ...
+        """
+        self._tree_sequence = self.tree_sequence
+        # load as a ToyTreeSequence
+        tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
+
+        # draw tree and mutations with a pre-set style
+        base_style = {
+            'scale_bar': True,
+            'width': 400,
+            'height': 400,
+        }
+        base_style.update(kwargs)
+        canvas, axes, marks = tts.draw_tree(
+            idx=idx, site=site, show_label=show_label, **base_style)
+
+        # add fill to show the SLiM portion of the simulation.
+        if show_generation_line:
+            style = {"stroke-dasharray": "4,2", "stroke-width": 2, "stroke": "grey"}
+            if marks[0].layout == "u":
+                axes.hlines(-self.generations, style=style)
+            elif marks[0].layout == "d":
+                axes.hlines(self.generations, style=style)
+            elif marks[0].layout == "r":
+                axes.vlines(-self.generations, style=style)
+            elif marks[0].layout == "l":
+                axes.vlines(self.generations, style=style)
+        return canvas, axes, marks
+
+
+    def draw_tree_sequence(
+        self,
+        start: int=0,
+        max_trees: int=10,
+        sample: Union[int,Iterable[int]]=10,
+        seed: Optional[int]=None,
+        height: Optional[int]=None,
+        width: Optional[int]=None,
+        show_generation_line: bool=True,
+        scrollable: bool=True,
+        axes: Optional['toyplot.coordinates.Cartesian']=None,
+        **kwargs,
+        ):
+        """Return a ToyTreeSequence drawing.
+
+        """
+        # load as a ToyTreeSequence
+        tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
+
+        # get auto-dimensions from tree size
+        height = height if height is not None else 325
+        height += 100
+        width = max(300, (
+            width if width is not None else 
+            15 * tts.at_index(0).ntips * min(max_trees, len(tts))
+        ))        
+
+        # create an axis for the chromosome. +100 height for chrom.
+        canvas = ScrollableCanvas(height=height, width=width)
+        ax0 = canvas.cartesian(bounds=(50, -50, 50, 75), padding=5)
+        ax1 = canvas.cartesian(bounds=(50, -50, 100, -50))        
+
+        # draw tree sequence
+        canvas, axes, mark = tts.draw_tree_sequence(
+            start=start,
+            max_trees=max_trees,
+            axes=ax1,
+            **kwargs,
+        )
+
+        # add chromosome to top axis
+        self.chromosome.draw(axes=ax0)
+        # ax0.y.show = False
+        # ax0.x.ticks.show = True
+        ax0.x.ticks.near = 5
+        ax0.x.ticks.far = 0
+        # ax0.fill(
+            # [0, 1], [0, 0], [1, 1], 
+            # color='green',
+        # )
+        # ax0.x.ticks.locator = toyplot.locator.Extended(count=8)
+
+
+        # ntrees = len(tts)
+        # tmax = start + min(ntrees, max_trees)
+        # breaks = tts.tree_sequence.breakpoints(True)[start: tmax + 1]
+        # cend = breaks[-1]
+        # print(cend)
+
+        # cdat = self.chromosome.data.loc[start:tmax]
+
+
+
+        # add generation line showing where SLiM simulation ended.
+        if show_generation_line:
+            axes.hlines(
+                self.generations,
+                style={"stroke-dasharray": "4,2", "stroke-opacity": 0.4}
+            )
+
+        return canvas, axes, mark
+
+
+
+class PureSlim_TwoPop:
+    """"Loads and merges two TreeSequence files with ancestral burn-in
+    from a pure SLiM simulation
+    
+    Two runs were initiated from an ancestral SLiM burn-in .trees file
+
+    SliM has been run for two populations with the same genome type
+    for T generations starting from different seeds and perhaps
+    with different selection or demographic histories. Each ts
+    includes N haploid individuals at time_start and time_end.
+
+    SLiM was run with the argument keep_input_roots=True so that it
+    preserves the first-generation ancestors so they can be used for
+    recapitation.
+    """
+    def __init__(
+        self,
+        tree_files: List[str],
+        seed: Optional[int]=None,
+        **kwargs,
+        ):
+
+        # hidden attributes
+        self._tree_files: List[str] = tree_files
+        self._tree_sequences = [pyslim.load(i) for i in self._tree_files]
+        self._nts: int = len(self._tree_files)
+
+        # attributes to be parsed from the slim metadata
+        self.generations: int=0
+        """The SLiM simulated length of time in diploid generations AFTER
+        the ancestral burn in (branch gens only)"""
+        self.popsize: int=kwargs.get("popsize")
+        """The SLiM simulated diploid carrying capacity"""
+        self.recomb: float=kwargs.get("recomb")
+        """The recombination rate to use for recapitation."""
+        self.mut: float=kwargs.get("mut")
+        """The mutation rate to use for recapitated treesequence."""
+        self.chromosome: ChromosomeBase=kwargs.get("chromosome")
+        """The shadie.Chromosome class representing the SLiM genome."""
+        self.rng: np.random.Generator=np.random.default_rng(seed)
+
+        # new attributes built as results
+        self.tree_sequence: pyslim.SlimTreeSequence=None
+        """A SlimTreeSequence that has been recapitated and mutated."""
+
+        # try to fill attributes by extracting metadata from the tree files.
+        self._extract_metadata()
+        self._union()
 
     def _extract_metadata(self):
         """Extract self attributes from shadie .trees file metadata.
@@ -82,8 +355,8 @@ class PureSlim:
         assert self.mut, "mut not found in metadata; must enter a mut arg."
         assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
 
-    def _union_all(self):
-        """Calls tskit union, simplify, mutate to complete neutral sim.
+    def _union(self):
+        """Calls tskit union.
         ...
         """
         self._remove_null_population_and_nodes()
@@ -150,18 +423,6 @@ class PureSlim:
 
         self.tree_sequence = pyslim.SlimTreeSequence(tsu)
 
-    def _report_ninds(self):
-        """Report number of inds in each population."""
-        treeseq = self.tree_sequence
-        # get array of ids of individuals (sets of 2 nodes) alive at
-        # 0 generations ago (diploids) [time=1 also has nodes].
-        # e.g., [0, 1, 2, ... 2000, 2001, 2002]
-        inds_alive_in_pop0 = treeseq.individuals_alive_at(time=0, population=0)
-        inds_alive_in_pop1 = treeseq.individuals_alive_at(time=0, population=1)
-        npop0 = len(inds_alive_in_pop0)
-        npop1 = len(inds_alive_in_pop1)
-        logger.info(f"inds alive at time=0; simpop0={npop0}, simpop1={npop1}")
-
     def _match_nodes(self, other, ts, split_time):
         """
         Given SLiM tree sequences `other` and `ts`, builds a numpy array with length
@@ -188,6 +449,18 @@ class PureSlim:
         node_mapping[both] = sorted_ids0[matches]
         
         return node_mapping
+
+    def _report_ninds(self):
+        """Report number of inds in each population."""
+        treeseq = self.tree_sequence
+        # get array of ids of individuals (sets of 2 nodes) alive at
+        # 0 generations ago (diploids) [time=1 also has nodes].
+        # e.g., [0, 1, 2, ... 2000, 2001, 2002]
+        inds_alive_in_pop0 = treeseq.individuals_alive_at(time=0, population=0)
+        inds_alive_in_pop1 = treeseq.individuals_alive_at(time=0, population=1)
+        npop0 = len(inds_alive_in_pop0)
+        npop1 = len(inds_alive_in_pop1)
+        logger.info(f"inds alive at time=0; simpop0={npop0}, simpop1={npop1}")
 
     def stats(
         self,
@@ -218,7 +491,6 @@ class PureSlim:
         rng = np.random.default_rng(seed)
         data = []
 
-        # if self.tree_sequence.
         # get a list of Series
         for rep in range(reps):
             seed = rng.integers(2**31)
@@ -226,24 +498,19 @@ class PureSlim:
             samples = np.arange(tts.sample[0] + tts.sample[1])
             sample_0 = samples[:tts.sample[0]]
             sample_0_nodes = []
-            for i in sample_0:
-               sample_0_nodes.extend(tts.tree_sequence.individual(i).nodes)
             
             sample_1 = samples[tts.sample[0]:]
-            sample_1_nodes = []
-            for i in sample_1:
-               sample_1_nodes.extend(tts.tree_sequence.individual(i).nodes)
 
             stats = pd.Series(
                 index=["theta_0", "theta_1", "Fst_01", "Dist_01", "D_Taj_0", "D_Taj_1"],
                 name=str(rep),
                 data=[
-                    tts.tree_sequence.diversity(sample_0_nodes),
-                    tts.tree_sequence.diversity(sample_1_nodes),
-                    tts.tree_sequence.Fst([sample_0_nodes, sample_1_nodes]),
-                    tts.tree_sequence.divergence([sample_0_nodes, sample_1_nodes]),
-                    tts.tree_sequence.Tajimas_D(sample_0_nodes),
-                    tts.tree_sequence.Tajimas_D(sample_1_nodes),
+                    tts.tree_sequence.diversity(sample_0),
+                    tts.tree_sequence.diversity(sample_1),
+                    tts.tree_sequence.Fst([sample_0, sample_1]),
+                    tts.tree_sequence.divergence([sample_0, sample_1]),
+                    tts.tree_sequence.Tajimas_D(sample_0),
+                    tts.tree_sequence.Tajimas_D(sample_1),
                 ],
                 dtype=float,
             )

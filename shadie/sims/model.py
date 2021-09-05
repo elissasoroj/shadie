@@ -35,7 +35,7 @@ Example
 >>> }
 """
 
-from typing import Union, Optional
+from typing import Union, Optional, List
 import os
 import tempfile
 import subprocess
@@ -46,7 +46,7 @@ from loguru import logger
 import numpy as np
 from shadie.base.mutations import MutationTypeBase
 from shadie.base.elements import ElementType
-from shadie.reproduction.api import ReproductionApi
+from shadie.reproduction.optimized.api_opt import ReproductionApi
 from shadie.sims.format import (
     format_event_dicts_to_strings,
     EVENT_TO_FORMATTER,
@@ -258,15 +258,17 @@ class Model(AbstractContextManager):
             'scripts': scripts,
         })
     
-    def _read_from_file(self):
+    def _read_from_file(self, tag_scripts: List[str]):
         """Set an existing .trees file as starting state of simulation.
 
         If the trees file is not a shadie trees file (e.g., with 
         subpops defined as p0 and p1) this will cause problems.
         """
+        scripts = [f"sim.readFromPopulationFile('{self._file_in}')"]
+        scripts.extend(tag_scripts)
         self.early(
             time=1,
-            scripts=[f"sim.readFromPopulationFile('{self._file_in}')"],
+            scripts=scripts,
             comment="read starting populations from file_in"
         )
 

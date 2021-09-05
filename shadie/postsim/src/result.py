@@ -331,7 +331,7 @@ class TwoSims:
                 index=["theta_0", "theta_1", "Fst_01", "Dist_01", "D_Taj_0", "D_Taj_1"],
                 name=str(rep),
                 data=[
-                    tts.tree_sequence.diversity(sample_0_),
+                    tts.tree_sequence.diversity(sample_0),
                     tts.tree_sequence.diversity(sample_1),
                     tts.tree_sequence.Fst([sample_0, sample_1]),
                     tts.tree_sequence.divergence([sample_0, sample_1]),

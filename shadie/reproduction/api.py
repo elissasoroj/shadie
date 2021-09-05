@@ -67,7 +67,7 @@ class ReproductionApi:
             Chance a gametophyte will clone
         gam_selfing_rate: float
             Chance a gametophyte will engage in gametophytic selfing
-        gam_maternal_effect_weight: flat
+        gam_maternal_effect_weight: float
             Maternal contribution to diploid offspring fitness (as
             weighted average)
         spo_random_death_chance:float
