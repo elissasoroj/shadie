@@ -6,7 +6,7 @@ Starting an alternate implementation of Reproduction
 import pyslim
 from typing import Union
 from dataclasses import dataclass, field
-from shadie.reproduction.base import ReproductionBase
+from shadie.reproduction.base import ReproductionBase_old
 from shadie.reproduction.base_scripts import (
     ACTIVATE, DEACTIVATE, EARLY, SURV,
     SUBSTITUTION, SUB_INNER, MATERNAL_EFFECT,
@@ -18,7 +18,7 @@ DTYPES = ("d", "dio", "dioicy", "dioicous", "heterosporous",)
 MTYPES = ("m", "mono", "monoicy", "monoicous", "homosporous",)
 
 @dataclass
-class PteridophyteBase(ReproductionBase):
+class PteridophyteBase_old(ReproductionBase_old):
     lineage: str = field(default="Angiosperm", init=False)
     mode: str
     _file_in: str
@@ -27,7 +27,7 @@ class PteridophyteBase(ReproductionBase):
     _file_out: str
 
 @dataclass
-class Pteridophyte(PteridophyteBase):
+class Pteridophyte_old_old(PteridophyteBase_old):
     """
     Reproduction mode based on ferns and lycophytes
     """

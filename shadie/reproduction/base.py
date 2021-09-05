@@ -10,7 +10,7 @@ from typing import Union
 
 
 @dataclass
-class ReproductionBase:
+class ReproductionBase_old:
     """
     Reproduction code block generation BaseClass. All Reproduction 
     subclasses will store the Model, lineage, mode, and a set of 
@@ -28,7 +28,7 @@ class ReproductionBase:
     model: 'shadie.Model'
 
 @dataclass
-class nonWFBase(ReproductionBase):
+class nonWFBase_old(ReproductionBase_old):
     lineage: str = field(default="Null", init=False)
     chromosome: 'shadie.chromosome.ChromosomeBase'
     _file_in: Union[None, str]
@@ -36,7 +36,7 @@ class nonWFBase(ReproductionBase):
     _file_out: str
 
 @dataclass
-class Base(nonWFBase):
+class Base_old(nonWFBase_old):
     """
     Reproduction mode based on Wright-Fisher model
     """
