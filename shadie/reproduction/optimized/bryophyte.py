@@ -90,13 +90,13 @@ class Bryophyte(BryophyteBase):
 
     def optimize(self):
         spo_microspores_generated = int(self.spo_pop_size
-                    *(1-self.spo_female_to_male_ratio)
+                    *(1-self.gam_female_to_male_ratio)
                     *self.spo_microspores_per
                     )
         spo_sperm_generated = spo_microspores_generated*self.gam_sperm_per_microspore
 
         spo_megaspores_generated = int(self.spo_pop_size
-                    *self.spo_female_to_male_ratio
+                    *self.gam_female_to_male_ratio
                     *self.spo_megaspores_per
                     )
         spo_eggs_generated = spo_megaspores_generated*self.gam_eggs_per_megaspore
