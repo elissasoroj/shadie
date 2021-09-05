@@ -100,13 +100,15 @@ class Bryophyte(BryophyteBase):
                     *self.spo_megaspores_per
                     )
         spo_eggs_generated = spo_megaspores_generated*self.gam_eggs_per_megaspore
-        eggs_needed = self.spo_pop_size
+
+        
+        megaspore_prop_check = spo_megaspores_generated/(
+                    spo_megaspores_generated+spo_microspores_generated)
+
+        eggs_needed = self.spo_pop_size/megaspore_prop_check
         megaspores_needed = eggs_needed/self.gam_eggs_per_megaspore
 
         target_megaspore_prop_in_gam_pop = megaspores_needed/self.gam_pop_size
-
-        megaspore_prop_check = spo_megaspores_generated/(
-                    spo_megaspores_generated+spo_microspores_generated)
 
         min_microspores_needed = eggs_needed/spo_sperm_generated
         suggested_gam_pop_size = min_microspores_needed + megaspores_needed
