@@ -59,7 +59,6 @@ class PureSlim:
         TODO: can more of this be saved in SLiM metadata?
         """
         gens = [i.metadata["SLiM"]["generation"] for i in self._tree_sequence]
-        assert len(set(gens)) == 1, ("simulations must be same length (gens).")
         self.generations = gens[0]
         assert self.popsize, "popsize not found in metadata; must enter a popsize arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
@@ -391,7 +390,7 @@ class PureSlim_TwoPop:
                     tts.tree_sequence.Fst([sample_0_nodes, sample_1]),
                     tts.tree_sequence.divergence([sample_0, sample_1]),
                     tts.tree_sequence.Tajimas_D(sample_0),
-                    tts.tree_sequence.Tajimas_D(sample_1_),
+                    tts.tree_sequence.Tajimas_D(sample_1),
                 ],
                 dtype=float,
             )
