@@ -19,7 +19,7 @@ from shadie import reproduction
 from shadie import demography
 from shadie.demography.postsim import PostSim, NeutralSim
 from shadie.demography.result import TwoSims
-from shadie.demography.pureslim import PureSlim, PureSlim_TwoSims
+from shadie.demography.pureslim import PureSlim, PureSlim_TwoPop
 
 from shadie.utils import set_loglevel
 set_loglevel("INFO")
