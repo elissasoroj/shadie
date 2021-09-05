@@ -145,7 +145,7 @@ class Bryophyte(BryophyteBase):
                 ""
                 )
 
-        def add_initialize_constants(self):
+    def add_initialize_constants(self):
         """
         Add defineConstant calls to init for new variables
         """
