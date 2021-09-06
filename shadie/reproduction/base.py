@@ -84,7 +84,7 @@ class NonWrightFisher(ReproductionBase):
     def _define_subpopulations(self):
         """add haploid and diploid life stages as subpopulations."""
         if self.model.metadata['file_in']:
-            self.model.read_from_file()
+            self.model._read_from_file(tag_scripts =[ "p1.individuals.tag=0"])
         else:
             self.model.early(
                 time=1,

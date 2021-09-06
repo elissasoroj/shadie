@@ -198,7 +198,8 @@ if __name__ == "__main__":
     )
 
     with shadie.Model() as mod:
-        mod.initialize(chromosome=chrom, sim_time=50, file_out="/tmp/test.trees")
+        mod.initialize(chromosome=chrom, sim_time=50, file_out="/tmp/test.trees",
+            file_in = "/tmp/test.trees")
         mod.reproduction.bryophyte_dioicous(
             spo_pop_size=100,
             gam_pop_size=100,

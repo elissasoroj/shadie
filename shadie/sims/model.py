@@ -510,7 +510,7 @@ if __name__ == "__main__":
 
         # init the model
 
-        model.initialize(chromosome=chrom)
+        model.initialize(chromosome=chrom,)
         model.reproduction.wright_fisher(pop_size=1000)
 
         model.early(
