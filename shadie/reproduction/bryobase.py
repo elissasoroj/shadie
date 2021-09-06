@@ -16,9 +16,9 @@ ReproductionBase
 from typing import Tuple, Optional
 from dataclasses import dataclass, field
 from shadie.reproduction.base import NonWrightFisher
-from shadie.reproduction.base_scripts import (
+from shadie.reproduction.scripts import (
     SURV,
-    MATERNAL_EFFECT,
+    GAM_MATERNAL_EFFECT_ON_P1,
     SUBSTITUTION,
 )
 from shadie.reproduction.bryo_scripts import (
@@ -71,9 +71,9 @@ class BryophyteBase(NonWrightFisher):
         """
         survival_script = (
             SURV.format(
-                p0maternal_effect="",
-                p1maternal_effect=MATERNAL_EFFECT,
-                p0survival="return NULL;"
+                p0_maternal_effect="",
+                p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+                p0survival=""
             )
         )
         self.model.custom(survival_script, comment="maternal effects and survival")
@@ -137,14 +137,15 @@ class BryophyteMonoicous(BryophyteBase):
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
+        # methods inherited from parent Bryophyte class
+        self._set_mutation_rates()
+        self._add_shared_mode_scripts()
+
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
         self._add_alternation_of_generations()
         self._add_initialize_constants()
         self._write_trees_file()
-
-        # methods inherited from parent Bryophyte class
-        self._add_shared_mode_scripts()
 
         # mode-specific functions
         self._add_mode_scripts()
