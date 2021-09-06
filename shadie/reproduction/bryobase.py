@@ -27,10 +27,8 @@ from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_MONO_P0,
 )
 
-
 DTYPES = ("dioicy", "dioicous", "heterosporous")
 MTYPES = ("monoicy", "monoicous", "homosporous")
-
 
 @dataclass
 class BryophyteBase(NonWrightFisher):
@@ -81,7 +79,7 @@ class BryophyteBase(NonWrightFisher):
 
 @dataclass
 class BryophyteDioicous(BryophyteBase):
-    mode: str = field(default="heterosporous", init=False)
+    mode: str = field(default="dioicous", init=False)
     gam_female_to_male_ratio: Tuple[float,float]
     spo_megaspores_per: int
     spo_microspores_per: int

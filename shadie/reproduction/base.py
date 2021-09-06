@@ -13,7 +13,7 @@ import pyslim
 from shadie.reproduction.base_scripts import (
     EARLY,
     SUBSTITUTION,
-    SUB_INNER,
+    SUB_MUTS,
 )
 
 
@@ -148,8 +148,8 @@ class NonWrightFisher(ReproductionBase):
 
             # add reference to this mutation to be added to a late call
             # for checking whether a mutation has become a substitution.
-            sub_inner = SUB_INNER.format(idx=sidx, mut=mut.name).lstrip()
-            substitutions.append(sub_inner)
+            sub_muts = SUB_MUTS.format(idx=sidx, mut=mut.name).lstrip()
+            substitutions.append(sub_muts)
 
         # insert references to fitness callbacks into an early script
         # that will alternately activate or deactivate them on
@@ -169,7 +169,7 @@ class NonWrightFisher(ReproductionBase):
         # and add as a late call.
         substitution_str = "\n    ".join(substitutions)
         substitution_script = (
-            SUBSTITUTION.format(inner=substitution_str))
+            SUBSTITUTION.format(muts=substitution_str))
         self.model.late(
             time=None,
             scripts=substitution_script,

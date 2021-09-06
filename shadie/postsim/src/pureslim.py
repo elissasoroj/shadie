@@ -4,7 +4,7 @@
 A returned object class from a shadie simulation call.
 """
 
-from typing import List, Optional, Union, Iterable
+from typing import List, Optional, Iterable, Union
 import numpy as np
 import pyslim
 import tskit
@@ -135,16 +135,21 @@ class PureSlim:
         # get a list of Series
         for rep in range(reps):
             seed = rng.integers(2**31)
-            tts = ToyTreeSequence(self._tree_sequence, sample=sample, seed=seed)
-            samples = np.arange(tts.sample[0])
+            tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
+            samples = np.arange(tts.sample[0] + tts.sample[1])
             sample_0 = samples[:tts.sample[0]]
+            sample_1 = samples[tts.sample[0]:]
 
             stats = pd.Series(
                 index=["theta_0", "theta_1", "Fst_01", "Dist_01", "D_Taj_0", "D_Taj_1"],
                 name=str(rep),
                 data=[
                     tts.tree_sequence.diversity(sample_0),
+                    tts.tree_sequence.diversity(sample_1),
+                    tts.tree_sequence.Fst([sample_0, sample_1]),
+                    tts.tree_sequence.divergence([sample_0, sample_1]),
                     tts.tree_sequence.Tajimas_D(sample_0),
+                    tts.tree_sequence.Tajimas_D(sample_1),
                 ],
                 dtype=float,
             )
@@ -294,7 +299,7 @@ class PureSlim:
 
 
 
-class PureSlim_TwoPop:
+class PureSlim_TwoPops:
     """"Loads and merges two TreeSequence files with ancestral burn-in
     from a pure SLiM simulation
     
@@ -539,6 +544,42 @@ class PureSlim_TwoPop:
         )
         return data
 
+    def alt_stats(self, sample:int = 10, seed = 123):
+        inds_alive_in_pop0 = treeseq.individuals_alive_at(time=0, population=0)
+        inds_alive_in_pop1 = treeseq.individuals_alive_at(time=0, population=1)
+
+        rng = np.random.default_rng(seed)
+
+        sample0 = rng.choice(inds_alive_in_pop0, sample, replace=False)
+        sample1 = rng.choice(inds_alive_in_pop1, sample, replace=False)
+
+        nodes0 = []
+        nodes1 = []
+
+        for i in sample0:
+           nodes0.extend(self.tree_sequence.individual(i).nodes)
+        for i in sample1:
+           nodes1.extend(self.tree_sequence.individual(i).nodes)
+
+        rng = np.random.default_rng(seed)
+        data = []
+        stats = pd.Series(
+            index=["theta_0", "theta_1", "Fst_01", "Dist_01", "D_Taj_0", "D_Taj_1"],
+            name=str(rep),
+            data=[
+                tts.tree_sequence.diversity(nodes0),
+                tts.tree_sequence.diversity(nodes1),
+                tts.tree_sequence.Fst([nodes0, nodes1]),
+                tts.tree_sequence.divergence([nodes0, nodes1]),
+                tts.tree_sequence.Tajimas_D(nodes1),
+                tts.tree_sequence.Tajimas_D(nodes0),
+            ],
+            dtype=float,
+        )
+        data.append(stats)
+
+        # concat to a dataframe
+        data = pd.concat(data, axis=1).T
 
     def draw_tree(
         self,

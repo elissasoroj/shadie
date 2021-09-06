@@ -149,12 +149,12 @@ ANGIO_SURV_P0 = """
 SUBSTITUTION = """
     // gametophytes have just undergone fitness selection
     if (sim.generation % 2 == 0) {{
-        {inner}
+        {muts}
     }}
 """
 
 #late() **for every mut!
-SUB_INNER = """
+SUB_MUTS = """
         mut{idx} = sim.mutationsOfType({mut});
         freq{idx} = sim.mutationFrequencies(NULL, mut{idx});
         if (any(freq{idx} == 0.5))

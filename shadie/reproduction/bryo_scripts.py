@@ -75,11 +75,13 @@ REPRO_BRYO_DIO_P1 = """
             p0.addRecombinant(genome_2, genome_1, breaks_m, NULL, NULL, NULL).tag = 2;
 
             //only one megaspore will be produced, used for the new selfed sporophyte
+            breaks_f = sim.chromosome.drawBreakpoints(individual);
+            
             // add the diploid selfed 
             p0.addRecombinant(genome_1, genome_2, breaks_m, genome_2, genome_1, breaks_f).tag = 5;
         }
 
-        // perforrm any additional meiosis rounds for male
+        // perform any additional meiosis rounds for male
         male_meiosis_reps = asInteger(spo_microspores_per/4) - (meiosis_reps*4);
         for (rep in 1:male_meiosis_reps){
 
