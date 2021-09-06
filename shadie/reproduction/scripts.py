@@ -167,18 +167,18 @@ s2 survival(p1) {{
     return NULL;
 }}
 
-// remove p0 individuals during odd generations
-s3 survival(p0) {{
-    return F;
-}}
-
 // remove p0s by random chance of death and apply maternal effects to fitness
-s4 survival(p0) {{
+s3 survival(p0) {{
     //this code implements random chance of death in gametophytes
     if (runif(1) < gam_random_death_chance)
         return F;   
     {p0survival} 
     {p0_maternal_effect}
     return NULL;
+}}
+
+// remove p0 individuals during odd generations
+s4 survival(p0) {{
+    return F;
 }}
 """
