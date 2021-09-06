@@ -8,6 +8,7 @@ Pteridophyte specific SLIM script snippets used for string substitution.
 #spo_spore_per
 #spo_maternal_effect
 #spo_clones_per
+#gam_archegonia_per
 # -------------------------
 # TAGS
 # 0, 1, 2, 4, 5
@@ -111,7 +112,7 @@ REPRO_PTER_HOMOSPORE_P1 = """
     if (individual.tag == 45) {
         //make clones and move to p0 as diploids
         for (i in 1:spo_clones_per)
-            p0.addClones(individual).tag = 45;
+            p0.addClones(individual).tag = 44;
         
         //individuals also selfs    
         //perform meiosis twice for the selfed diploid
@@ -178,14 +179,18 @@ REPRO_PTER_HOMOSPORE_P1 = """
     }
 """
 
+# PARAMETERS
+#gam_archegonia_per
+# -------------------------
+# TAGS
+# 0, 1, 2, 4, 5
 REPRO_PTER_HOMOSPORE_P0 = """
-	
-
-    // females find male gametes to reproduce
-    if (individual.tag == 1) { //meristic (egg-bearing) gametophyte
-        reproduction_opportunity_count = gam_eggs_per_megaspore;
-        for (repro in seqLen(reproduction_opportunity_count)) {
-            sperm = p0.sampleIndividuals(1); //all individuals make sperm
+	//all gametophytes are hermaphroditic
+	if (individudal.tag == 0) {
+		eggs = gam_archegonia_per
+		//for each egg per gametophyte, perform fertilization
+		for (rep in 1:am_archegonia_per){
+			sperm = p0.sampleIndividuals(1); //all individuals make sperm
             
             if (sperm.size() == 1) {
                 child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
@@ -199,10 +204,9 @@ REPRO_PTER_HOMOSPORE_P0 = """
                 sperm.tag = 20;
             }
         }
-    }
+	}
     
-    
-    if (individual.tag == 4) { //add new gametophyte clones to p1
+    if (individual.tag == 4) { //add new gametophyte clones to p1 as haploids
         for (i in 1:gam_clones_per)
             p1.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 4;
     }
@@ -216,16 +220,6 @@ REPRO_PTER_HOMOSPORE_P0 = """
     if (individual.tag == 5)
         p1.addCloned(individual).tag = 0;
     
-    if (individual.tag == 45){
-        //clones
-        for (i in 1:gam_clones_per)
-            p1.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 4;
-        
-        //selfed
-        if (individual.tag == 5)
-            p1.addCloned(individual).tag = 0;
-    }
-    
     if (individual.tag == 6){ //performs gametophytic selfing
         child = p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL,  NULL);
         child.tag=0;
@@ -235,7 +229,8 @@ REPRO_PTER_HOMOSPORE_P0 = """
     }
 """
 
-LATE_PTER_HETEROSPORE = """
+LATE_PTER_HOMOSPORE = """
+	//tag gametophytes that will self
     p0_size = length(p0.individuals);
         clones = p0.sampleIndividuals(asInteger(p0_size*gam_clone_rate));
         clones.tag = 4; //tag clones
@@ -244,9 +239,11 @@ LATE_PTER_HETEROSPORE = """
     else {
         p1_size = length(p1.individuals);
         
+        //tag sporophytes that will clone
         clones = p1.sampleIndividuals(asInteger(p1_size*spo_clone_rate));
         clones.tag = 44; //tag clones - 4 is gam, 44 is spo
         
+        //tag sporophytes that will self
         number_selfed = rbinom(1, length(p1_size), spo_self_rate);
         selfed_inds = p1.sampleIndividuals(number_selfed);
         selfed_cloned = selfed_inds[selfed_inds.tag == 44];
@@ -255,6 +252,7 @@ LATE_PTER_HETEROSPORE = """
         selfed = selfed_inds[selfed_inds.tag == 0];
         selfed.tag = 5; //tag sporophytic selfing inds
         
+        //tag sporophytes that will have gametophytes that self
         num_gam_self = rbinom(1, length(p1_size), gam_self_rate);
         gam_selfed_inds = p1.sampleIndividuals(num_gam_self);
         gam_selfed_cloned = gam_selfed_inds[gam_selfed_inds.tag == 44];
