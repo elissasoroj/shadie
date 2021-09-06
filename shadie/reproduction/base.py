@@ -102,7 +102,7 @@ class NonWrightFisher(ReproductionBase):
         unique set of attributes. Excludes parent attrs like model.
         """
         # exclude parent class attributes
-        exclude = ["lineage", "mode", "model"]
+        exclude = ["lineage", "mode", "model", "_substitution_str"]
         asdict = {
             i: j for (i, j) in self.__dict__.items()
             if i not in exclude
@@ -166,16 +166,9 @@ class NonWrightFisher(ReproductionBase):
         )
 
         # insert the substitution-checking scripts into larger context
-        # and add as a late call.
         substitution_str = "\n    ".join(substitutions)
-        substitution_script = (
-            SUBSTITUTION.format(muts=substitution_str))
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-        )
-
+        #save subsitutions for late call in model-specific scripts
+        self._substitution_str = substitution_str
 
 @dataclass
 class WrightFisher(ReproductionBase):

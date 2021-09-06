@@ -4,7 +4,7 @@
 Starting an alternate implementation of Reproduction 
 """
 import pyslim
-from typing import Union
+from typing import Union, Optional, Tuple
 from dataclasses import dataclass, field
 from shadie.reproduction.base import NonWrightFisher
 from shadie.reproduction.base_scripts import (
@@ -25,16 +25,6 @@ MTYPES = ("monoicy", "monoicous", "homosporous")
 
 @dataclass
 class PteridophyteBase(NonWrightFisher):
-    lineage: str = field(default="Angiosperm", init=False)
-    mode: str
-    _file_in: str
-    _chromosome: 'shadie.chromosome.ChromosomeBase'
-    _sim_time: int
-    _file_out: str
-
-@dataclass
-class Pteridophyte(PteridophyteBase):
-    """Reproduction mode based on ferns and lycophytes"""
     lineage: str = field(default="Bryophyte", init=False)
     spo_pop_size: int
     gam_pop_size: int
@@ -43,7 +33,7 @@ class Pteridophyte(PteridophyteBase):
     gam_eggs_per_megaspore: int
     gam_sperm_per_microspore: int
     gam_clone_rate: float
-    gam_clone_number: int
+    gam_clones_per: int
     spo_self_rate: float
     gam_self_rate: float
     gam_maternal_effect: float
@@ -77,6 +67,11 @@ class Pteridophyte(PteridophyteBase):
             )
         )
         self.model.custom(survival_script, comment="maternal effects and survival")
+
+@dataclass
+class PteridophyteHomosporous(PteridophyteBase):
+    """Reproduction mode based on homosporoous ferns and lycophytes"""
+    
 
 @dataclass
 class PteridophyteHeterosporous(PteridophyteBase):
@@ -147,7 +142,7 @@ class PteridophyteHeterosporous(PteridophyteBase):
         constants["spo_clone_number"] = self.spo_clone_number
         constants["gam_self_rate"] = self.gam_self_rate
         constants["gam_clone_rate"] = self.gam_clone_rate
-        constants["gam_clone_number"] = self.gam_clone_number
+        constants["gam_clones_per"] = self.gam_clones_per
         constants["gam_maternal_effect"] = self.gam_maternal_effect
         constants["spo_random_death_chance"] = self.spo_random_death_chance
         constants["gam_random_death_chance"] = self.gam_random_death_chance
@@ -364,7 +359,7 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.pteridophyte(
+        mod.reproduction.pteridophyte_homosporous(
             mode='mono',
             spo_popsize=1000, 
             gam_popsize=1000,

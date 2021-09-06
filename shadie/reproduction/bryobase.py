@@ -19,12 +19,15 @@ from shadie.reproduction.base import NonWrightFisher
 from shadie.reproduction.base_scripts import (
     SURV,
     MATERNAL_EFFECT,
+    SUBSTITUTION,
 )
 from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_DIO_P1,
     REPRO_BRYO_DIO_P0,
+    LATE_BRYO_DIO,
     REPRO_BRYO_MONO_P1,
     REPRO_BRYO_MONO_P0,
+    LATE_BRYO_MONO,
 )
 
 DTYPES = ("dioicy", "dioicous", "heterosporous")
@@ -38,15 +41,14 @@ class BryophyteBase(NonWrightFisher):
     gam_pop_size: int
     spo_mutation_rate: Optional[float]
     gam_mutation_rate: Optional[float]
-    gam_eggs_per_megaspore: int
-    gam_sperm_per_microspore: int
     gam_clone_rate: float
-    gam_clone_number: int
+    gam_clones_per: int
     spo_self_rate: float
-    gam_self_rate: float
-    gam_maternal_effect: float
     spo_random_death_chance: float
     gam_random_death_chance: float
+    spo_spores_per: int
+    gam_maternal_effect: float
+    gam_archegonia_per: int
 
     def __post_init__(self):
         """Checks parameters after init."""
@@ -81,8 +83,6 @@ class BryophyteBase(NonWrightFisher):
 class BryophyteDioicous(BryophyteBase):
     mode: str = field(default="dioicous", init=False)
     gam_female_to_male_ratio: Tuple[float,float]
-    spo_megaspores_per: int
-    spo_microspores_per: int
 
     def __post_init__(self):
         """Convert tuple ratio to a float."""
@@ -116,12 +116,22 @@ class BryophyteDioicous(BryophyteBase):
             scripts=REPRO_BRYO_DIO_P0,
             comment="generates gametes from sporophytes"
         )
-        # TODO add late here.
+        
+        # add late call
+        substitution_script = (
+            SUBSTITUTION.format(**{'muts': self._substitution_str,
+                'late': LATE_BRYO_DIO}).lstrip())
+
+        self.model.late(
+            time=None,
+            scripts=substitution_script,
+            comment="fixes mutations in haploid gen"
+            )
 
 
 @dataclass
 class BryophyteMonoicous(BryophyteBase):
-    mode: str = field(default="homosporous", init=False)
+    mode: str = field(default="monoicous", init=False)
     gam_self_rate: float=0.2
 
     def run(self):
@@ -151,6 +161,17 @@ class BryophyteMonoicous(BryophyteBase):
             scripts=REPRO_BRYO_MONO_P0,
             comment="generates gametes from sporophytes"
         )
+        
+        # add late call
+        substitution_script = (
+            SUBSTITUTION.format(**{'muts': self._substitution_str,
+                'late': LATE_BRYO_MONO}).lstrip())
+
+        self.model.late(
+            time=None,
+            scripts=substitution_script,
+            comment="fixes mutations in haploid gen"
+            )
 
 
 
@@ -180,5 +201,6 @@ if __name__ == "__main__":
             spo_pop_size=100,
             gam_pop_size=100,
         )
-    mod.write("/tmp/slim.slim")
+    print(mod.script)
+    #mod.write("/tmp/slim.slim")
     # mod.run(binary="/usr/local/bin/slim", seed=123)

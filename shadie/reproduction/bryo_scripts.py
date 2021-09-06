@@ -50,13 +50,14 @@ REPRO_BRYO_DIO_P1 = """
         breaks2 = sim.chromosome.drawBreakpoints(individual);
         p0.addRecombinant(genome_1, genome_2, breaks2, NULL, NULL, NULL).tag = 1;
         p0.addRecombinant(genome_2, genome_1, breaks2, NULL, NULL, NULL).tag = 1;
-        microspore_3 = p0.addRecombinant(genome_2, genome_1, breaks2, NULL, NULL, NULL).tag = 2;
+        microspore_3 = p0.addRecombinant(genome_2, genome_1, breaks2, NULL, NULL, NULL);
 
         // add the diploid selfed 
         p0.addRecombinant(genome_1, genome_2, breaks_1, genome_2, genome_1, breaks_2).tag = 5;
 
-        //add the sperm for each. microspore (each microspore makes 4 identical sperm)
-        microspores = c(microspore1, microspore2, microspore3)
+        //see note below**
+        microspores = c(microspore1, microspore2, microspore3);
+        microspores.tag = 2;
 
         // perform any additional meiosis rounds for the rest of the spores
         // each meiotic division produces 4 spores, two female and two male
@@ -72,13 +73,13 @@ REPRO_BRYO_DIO_P1 = """
             microspore1 = p0.addRecombinant(genome_1, genome_2, breaks, NULL, NULL, NULL);
             microspore2 = p0.addRecombinant(genome_2, genome_1, breaks, NULL, NULL, NULL);
 
-            //each microspore will produce a male gametophyte that may
+            //**each microspore will produce a male gametophyte that may
             //develop many antheridia, each of which produces thousands of sperm.
             //For simplicity and computation time we do not model these sperm individuallally,
             //but this part of the code may be modified to implement parameters such as 
             //chance of male gametophyte developing antheridium, etc. 
-            microspores = c(microspore1, microspore2)
-            microspores.tag = 2
+            microspores = c(microspore1, microspore2);
+            microspores.tag = 2;
         }
     }
 """
