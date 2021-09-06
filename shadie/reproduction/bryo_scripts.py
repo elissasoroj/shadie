@@ -24,10 +24,10 @@ REPRO_BRYO_DIO_P1 = """
             breaks = sim.chromosome.drawBreakpoints(individual);
 
             // create 2 megaspores and 2 microspores (all recombinant for now)
-            p0.addRecombinant(genome_1, genome_2, breaks, NULL, NULL, NULL).tag = 1;
-            p0.addRecombinant(genome_2, genome_1, breaks, NULL, NULL, NULL).tag = 1;
-            p0.addRecombinant(genome_1, genome_2, breaks, NULL, NULL, NULL).tag = 2;
-            p0.addRecombinant(genome_2, genome_1, breaks, NULL, NULL, NULL).tag = 2;
+            p0.addRecombinant(genome1, genome2, breaks, NULL, NULL, NULL).tag = 1;
+            p0.addRecombinant(genome2, genome1, breaks, NULL, NULL, NULL).tag = 1;
+            p0.addRecombinant(genome1, genome2, breaks, NULL, NULL, NULL).tag = 2;
+            p0.addRecombinant(genome2, genome1, breaks, NULL, NULL, NULL).tag = 2;
         }
     }
 
@@ -43,17 +43,17 @@ REPRO_BRYO_DIO_P1 = """
     if (individual.tag == 5) {
         // perform rounds of two meiotic divisions
         breaks1 = sim.chromosome.drawBreakpoints(individual);
-        p0.addRecombinant(genome_2, genome_1, breaks1, NULL, NULL, NULL).tag = 1;
-        microspore1 = p0.addRecombinant(genome_1, genome_2, breaks1, NULL, NULL, NULL);
-        microspore2 = p0.addRecombinant(genome_2, genome_1, breaks1, NULL, NULL, NULL);
+        p0.addRecombinant(genome2, genome1, breaks1, NULL, NULL, NULL).tag = 1;
+        microspore1 = p0.addRecombinant(genome1, genome2, breaks1, NULL, NULL, NULL);
+        microspore2 = p0.addRecombinant(genome2, genome1, breaks1, NULL, NULL, NULL);
 
         breaks2 = sim.chromosome.drawBreakpoints(individual);
-        p0.addRecombinant(genome_1, genome_2, breaks2, NULL, NULL, NULL).tag = 1;
-        p0.addRecombinant(genome_2, genome_1, breaks2, NULL, NULL, NULL).tag = 1;
-        microspore_3 = p0.addRecombinant(genome_2, genome_1, breaks2, NULL, NULL, NULL);
+        p0.addRecombinant(genome1, genome2, breaks2, NULL, NULL, NULL).tag = 1;
+        p0.addRecombinant(genome2, genome1, breaks2, NULL, NULL, NULL).tag = 1;
+        microspore_3 = p0.addRecombinant(genome2, genome1, breaks2, NULL, NULL, NULL);
 
         // add the diploid selfed 
-        p0.addRecombinant(genome_1, genome_2, breaks_1, genome_2, genome_1, breaks_2).tag = 5;
+        p0.addRecombinant(genome1, genome2, breaks_1, genome2, genome1, breaks_2).tag = 5;
 
         //see note below**
         microspores = c(microspore1, microspore2, microspore3);
@@ -68,10 +68,10 @@ REPRO_BRYO_DIO_P1 = """
             breaks = sim.chromosome.drawBreakpoints(individual);
 
             // create 2 megaspores and 2 microspores (all recombinant for now)
-            p0.addRecombinant(genome_1, genome_2, breaks, NULL, NULL, NULL).tag = 1;
-            p0.addRecombinant(genome_2, genome_1, breaks, NULL, NULL, NULL).tag = 1;
-            microspore1 = p0.addRecombinant(genome_1, genome_2, breaks, NULL, NULL, NULL);
-            microspore2 = p0.addRecombinant(genome_2, genome_1, breaks, NULL, NULL, NULL);
+            p0.addRecombinant(genome1, genome2, breaks, NULL, NULL, NULL).tag = 1;
+            p0.addRecombinant(genome2, genome1, breaks, NULL, NULL, NULL).tag = 1;
+            microspore1 = p0.addRecombinant(genome1, genome2, breaks, NULL, NULL, NULL);
+            microspore2 = p0.addRecombinant(genome2, genome1, breaks, NULL, NULL, NULL);
 
             //**each microspore will produce a male gametophyte that may
             //develop many antheridia, each of which produces thousands of sperm.

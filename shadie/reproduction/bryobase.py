@@ -50,7 +50,7 @@ class BryophyteBase(NonWrightFisher):
     gam_maternal_effect: float
     gam_archegonia_per: int
 
-    def __post_init__(self):
+    def _set_mutation_rates(self):
         """Checks parameters after init."""
         # Set mutation rates for both, or use Model rate / 2 for both.
         if self.spo_mutation_rate or self.gam_mutation_rate:
@@ -60,9 +60,9 @@ class BryophyteBase(NonWrightFisher):
                 "You must define a mutation rate for both sporophyte "
                 "and gametophyte generations.")
         else:
-            self.spo_mutation_rate = 0.5 * self.model._mutation_rate
-            self.gam_mutation_rate = 0.5 * self.model._mutation_rate
-
+            self.spo_mutation_rate = 0.5 * self.model.metadata['mutation_rate']
+            self.gam_mutation_rate = 0.5 * self.model.metadata['mutation_rate']
+    
     def _add_shared_mode_scripts(self):
         """Adds scripts shared by homosp and heterosp superclasses.
 
@@ -92,14 +92,15 @@ class BryophyteDioicous(BryophyteBase):
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
+        # methods inherited from parent Bryophyte class
+        self._set_mutation_rates()
+        self._add_shared_mode_scripts()
+
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
         self._add_alternation_of_generations()
         self._add_initialize_constants()
         self._write_trees_file()
-
-        # methods inherited from parent Bryophyte class
-        self._add_shared_mode_scripts()
 
         # mode-specific functions
         self._add_mode_scripts()

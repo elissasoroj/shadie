@@ -46,7 +46,7 @@ from loguru import logger
 import numpy as np
 from shadie.base.mutations import MutationTypeBase
 from shadie.base.elements import ElementType
-from shadie.reproduction.optimized.api_opt import ReproductionApi
+from shadie.reproduction.api import ReproductionApi
 from shadie.sims.format import (
     format_event_dicts_to_strings,
     EVENT_TO_FORMATTER,
@@ -114,8 +114,11 @@ class Model(AbstractContextManager):
         """The length of the simulation in sporophyte generations."""
         self.chromosome = None
         """Chromosome object with genome structure."""
+        self.metadata: dict = {}
+        """Dictionary storing simulation metadata"""
         
         # hidden attributes set by .initialize()
+        # TODO: can we nix these now because of the metadata dict??
         self._file_in: str=None
         self._file_out: str=None
         self._pop_size: int=None
@@ -242,10 +245,14 @@ class Model(AbstractContextManager):
         self.chromosome = deepcopy(chromosome)
         self.chromosome._skip_neutral_mutations = skip_neutral_mutations
         self.sim_time = sim_time
-        self._file_in = file_in
-        self._file_out = file_out
         self._mutation_rate = mutation_rate
-        self._recomb_rate = recomb_rate
+        
+        #store metadata as dictionary
+        self.metadata = {'file_in': file_in,
+                        'file_out': file_out,
+                        'mutation_rate': mutation_rate,
+                        'recomb_rate': recomb_rate
+                        }
 
         self.map['initialize'].append({
             'mutation_rate': mutation_rate,
@@ -264,7 +271,7 @@ class Model(AbstractContextManager):
         If the trees file is not a shadie trees file (e.g., with 
         subpops defined as p0 and p1) this will cause problems.
         """
-        scripts = [f"sim.readFromPopulationFile('{self._file_in}')"]
+        scripts = [f"sim.readFromPopulationFile('{self.metadata['file_in']}')"]
         scripts.extend(tag_scripts)
         self.early(
             time=1,
