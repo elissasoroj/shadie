@@ -11,7 +11,7 @@ Pteridophyte specific SLIM script snippets used for string substitution.
 #gam_archegonia_per
 # -------------------------
 # TAGS
-# 0, 1, 2, 4, 5
+# 0, 1, 2, 4, 45, 5, 6
 REPRO_PTER_HOMOSPORE_P1 = """
     g_1 = genome1;
     g_2 = genome2;
@@ -183,7 +183,7 @@ REPRO_PTER_HOMOSPORE_P1 = """
 #gam_archegonia_per
 # -------------------------
 # TAGS
-# 0, 1, 2, 4, 5
+# 0, 1, 2, 4, 5, 6
 REPRO_PTER_HOMOSPORE_P0 = """
 	//all gametophytes are hermaphroditic
 	if (individudal.tag == 0) {
@@ -229,6 +229,15 @@ REPRO_PTER_HOMOSPORE_P0 = """
     }
 """
 
+# PARAMETERS
+#gam_archegonia_per
+#spo_clone_rate
+#gam_clone_rate
+#spo_self_rate
+#gam_self_rate
+# -------------------------
+# TAGS
+# 0, 1, 2, 4, 45, 5, 6
 LATE_PTER_HOMOSPORE = """
 	//tag gametophytes that will self
     p0_size = length(p0.individuals);
@@ -263,11 +272,17 @@ LATE_PTER_HOMOSPORE = """
     }
 """
 
-REPRO_PTER_HOMOSPORE_P1 = """
+# PARAMETERS
+#gam_archegonia_per
+# -------------------------
+# TAGS
+# 0, 1, 2, 4, 5
+REPRO_PTER_HETEROSPORE_P1 = """
     g_1 = genome1;
     g_2 = genome2;
 
-    if (individual.tag == 0) { //normal sporophyte makes female and male spores
+    //normal sporophyte makes female and male spores
+    if (individual.tag == 0) { 
         //chance of creating a merisitc (egg-bearing) gametophyte
         if (runif(1) < gam_female_to_male_ratio){
             meiosis_reps = asInteger(spo_megaspores_per/2);
