@@ -10,6 +10,7 @@ from shadie.reproduction.base import NonWrightFisher
 from shadie.reproduction.scripts import (
     SURV,
     GAM_MATERNAL_EFFECT_ON_P1,
+    SPO_MATERNAL_EFFECT_ON_P0,
     SUBSTITUTION,
 )
 from shadie.reproduction.fern_scripts import (
@@ -67,7 +68,7 @@ class PteridophyteBase(NonWrightFisher):
         """
         survival_script = (
             SURV.format(
-                p0_maternal_effect="",
+                p0_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
                 p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
                 p0survival=""
             )
