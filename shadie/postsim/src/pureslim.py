@@ -13,6 +13,7 @@ import pandas as pd
 import scipy.stats
 from loguru import logger
 
+import toyplot
 from toytree.utils.tree_sequence.src.toytree_sequence import ToyTreeSequence
 from toytree.utils.utils import ScrollableCanvas
 from shadie.chromosome.src.classes import ChromosomeBase
@@ -545,8 +546,8 @@ class PureSlim_TwoPops:
         return data
 
     def alt_stats(self, sample:int = 10, seed = 123):
-        inds_alive_in_pop0 = treeseq.individuals_alive_at(time=0, population=0)
-        inds_alive_in_pop1 = treeseq.individuals_alive_at(time=0, population=1)
+        inds_alive_in_pop0 = self.tree_sequence.individuals_alive_at(time=0, population=0)
+        inds_alive_in_pop1 = self.tree_sequence.individuals_alive_at(time=0, population=1)
 
         rng = np.random.default_rng(seed)
 
@@ -567,12 +568,12 @@ class PureSlim_TwoPops:
             index=["theta_0", "theta_1", "Fst_01", "Dist_01", "D_Taj_0", "D_Taj_1"],
             name=str(rep),
             data=[
-                tts.tree_sequence.diversity(nodes0),
-                tts.tree_sequence.diversity(nodes1),
-                tts.tree_sequence.Fst([nodes0, nodes1]),
-                tts.tree_sequence.divergence([nodes0, nodes1]),
-                tts.tree_sequence.Tajimas_D(nodes1),
-                tts.tree_sequence.Tajimas_D(nodes0),
+                self.tree_sequence.diversity(nodes0),
+                self.tree_sequence.diversity(nodes1),
+                self.tree_sequence.Fst([nodes0, nodes1]),
+                self.tree_sequence.divergence([nodes0, nodes1]),
+                self.tree_sequence.Tajimas_D(nodes1),
+                self.tree_sequence.Tajimas_D(nodes0),
             ],
             dtype=float,
         )
@@ -697,4 +698,34 @@ class PureSlim_TwoPops:
                 style={"stroke-dasharray": "4,2", "stroke-opacity": 0.4}
             )
 
+        return canvas, axes, mark
+
+    def draw_stats(
+        self,
+        stat: str="diversity",
+        window_size: int=20_000,
+        sample: Union[int, Iterable[int]]=6,
+        ):
+        """Return a toyplot drawing of a statistic across the genome.
+
+        """
+        if stat == "diversity":
+            values = self.tree_sequence.diversity(
+                sample_sets=self.tree_sequence.samples()[:sample], 
+                windows=np.linspace(0, self.tree_sequence.sequence_length, 20)
+            )           
+        
+        # draw canvas...
+        canvas, axes, mark  = toyplot.fill(
+            values, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80)
+        )
+
+        # style axes
+        axes.x.ticks.show = True
+        axes.x.ticks.locator = toyplot.locator.Extended(only_inside=True)
+        axes.y.ticks.labels.angle = -90
+        axes.y.ticks.show = True
+        axes.y.ticks.locator = toyplot.locator.Extended(only_inside=True, count=5)        
+        axes.label.offset = 20
+        axes.label.text = f"{stat} in {int(window_size / 1000)}kb windows"
         return canvas, axes, mark
