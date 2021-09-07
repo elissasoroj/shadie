@@ -85,7 +85,7 @@ class PteridophyteHomosporous(PteridophyteBase):
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
-        # methods inherited from parent Bryophyte class
+        # methods inherited from parent Pteridophyte class
         self._set_mutation_rates()
         self._add_shared_mode_scripts()
 
@@ -124,7 +124,7 @@ class PteridophyteHomosporous(PteridophyteBase):
 
 @dataclass
 class PteridophyteHeterosporous(PteridophyteBase):
-    mode: str = field(default="homosporous", init=False)
+    mode: str = field(default="heterosporous", init=False)
     rs_megasporangia_per: int
     rs_microsporangia_per: int
     megasporangia_megaspores_per: int
