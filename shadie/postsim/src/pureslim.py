@@ -298,6 +298,37 @@ class PureSlim:
 
         return canvas, axes, mark
 
+    def draw_stats(
+        self,
+        stat: str="diversity",
+        window_size: int=20_000,
+        sample: Union[int, Iterable[int]]=6,
+        ):
+        """Return a toyplot drawing of a statistic across the genome.
+
+        """
+        if stat == "diversity":
+            values = self.tree_sequence.diversity(
+                sample_sets=self.tree_sequence.samples()[:sample], 
+                windows=np.linspace(0, self.tree_sequence.sequence_length, 20)
+            )           
+        
+        # draw canvas...
+        canvas, axes, mark  = toyplot.fill(
+            values, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80)
+        )
+
+        # style axes
+        axes.x.ticks.show = True
+        axes.x.ticks.locator = toyplot.locator.Extended(only_inside=True)
+        axes.y.ticks.labels.angle = -90
+        axes.y.ticks.show = True
+        axes.y.ticks.locator = toyplot.locator.Extended(only_inside=True, count=5)        
+        axes.label.offset = 20
+        axes.label.text = f"{stat} in {int(window_size / 1000)}kb windows"
+        return canvas, axes, mark
+
+
 
 
 class PureSlim_TwoPops:
