@@ -9,10 +9,7 @@ Spermatophyte (just angiosperm currently) string substitutions.
 # spo_female_to_male_ratio
 #
 EARLY1_ANGIO = """
-    // diploid sporophyte pop
     sim.addSubpop('p1', spo_pop_size);
-
-    // haploid gametophyte pop
     sim.addSubpop('p0', 0);
 
     // tag individuals as male or female.
@@ -26,7 +23,7 @@ EARLY1_ANGIO = """
 # spo_flowers_per
 # flower_ovules_per
 # flower_anthers_per
-# anther_microspores_per
+# anther_pollen_per
 # spo_clones_per
 #spo_maternal_effect
 # -------------------------
@@ -53,7 +50,7 @@ REPRO_ANGIO_DIO_P1 = """
     
     //male sporophytes produce microspores (one microsporocyte -> 4 microspores = 4 pollen)
     if (individual.tag == 2) {
-        microsporocytes = asInteger(spo_flowers_per*flower_anthers_per*anther_microspores_per/4);
+        microsporocytes = asInteger(spo_flowers_per*flower_anthers_per*anther_pollen_per/4);
         //perform meiosis for each microsporocyte to produce microspores, which will mature into pollen
         for (rep in 1:microsporocytes){
             breaks = sim.chromosome.drawBreakpoints(individual);
@@ -97,7 +94,7 @@ REPRO_ANGIO_DIO_P1 = """
         for (i in 1:spo_clones_per)
             p0.addCloned(individual).tag = 42;
         
-        microsporocytes = asInteger(spo_flowers_per*flower_anthers_per*anther_microspores_per/4);
+        microsporocytes = asInteger(spo_flowers_per*flower_anthers_per*anther_pollen_per/4);
         //perform meiosis for each microsporocyte to produce microspores, which will mature into pollen
         for (rep in 1:microsporocytes){
             breaks = sim.chromosome.drawBreakpoints(individual);
@@ -160,9 +157,7 @@ REPRO_ANGIO_DIO_P0  = """
             sperm = p0.sampleIndividuals(1, tag=2); //find pollen to fetilize ovule
 
         if (sperm.size() == 1) {
-
             child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
-
             sperm.tag = 20; //sperm goes into used pool
 
             if (runif(1) <= spo_female_to_male_ratio)
@@ -196,7 +191,7 @@ LATE_ANGIO_DIO = """
 # spo_flowers_per
 # flower_ovules_per
 # flower_anthers_per
-# anther_microspores_per
+# anther_pollen_per
 # spo_clones_per
 # spo_maternal_effect
 # -------------------------
@@ -222,7 +217,7 @@ REPRO_ANGIO_MONO_P1="""
         }
 
         //make microspores (pollen)
-        microsporocytes = asInteger(spo_flowers_per*flower_anthers_per*anther_microspores_per/4);
+        microsporocytes = asInteger(spo_flowers_per*flower_anthers_per*anther_pollen_per/4);
         //perform meiosis for each microsporocyte to produce microspores, which will mature into pollen
         for (rep in 1:microsporocytes){
             breaks = sim.chromosome.drawBreakpoints(individual);
@@ -262,7 +257,7 @@ REPRO_ANGIO_MONO_P1="""
         }
 
         //make microspores (pollen)
-        microsporocytes = asInteger(spo_flowers_per*flower_anthers_per*anther_microspores_per/4);
+        microsporocytes = asInteger(spo_flowers_per*flower_anthers_per*anther_pollen_per/4);
         //perform meiosis for each microsporocyte to produce microspores, which will mature into pollen
         for (rep in 1:microsporocytes){
             breaks = sim.chromosome.drawBreakpoints(individual);
@@ -290,9 +285,9 @@ REPRO_ANGIO_MONO_P1="""
             // sample meiosis crossover position to generate 4 microspores
             // male outcross
             breaks_m = sim.chromosome.drawBreakpoints(individual);
-            child1 = p0.addRecombinant(NULL, NULL, NULL, genome_2, genome_1, breaks_m).tag = 2;
-            child2 = p0.addRecombinant(NULL, NULL, NULL, genome_1, genome_2, breaks_m).tag = 2;
-            child3 = p0.addRecombinant(genome_2, genome_1, breaks_m, NULL, NULL, NULL).tag = 2;
+            child1 = p0.addRecombinant(NULL, NULL, NULL, genome_2, genome_1, breaks_m);
+            child2 = p0.addRecombinant(NULL, NULL, NULL, genome_1, genome_2, breaks_m);
+            child3 = p0.addRecombinant(genome_2, genome_1, breaks_m, NULL, NULL, NULL);
 
             //only one megaspore will be produced, used for the new selfed sporophyte
             breaks_f = sim.chromosome.drawBreakpoints(individual);
@@ -309,10 +304,10 @@ REPRO_ANGIO_MONO_P1="""
             }
         }
 
-        #make remaining microspores
+        //make remaining microspores
         //make microspores (pollen)
-        microsporocytes = asInteger(spo_flowers_per*flower_anthers_per*anther_microspores_per/4);
-        male_meiosis_reps = microsporocytes-meiosis_reps
+        microsporocytes = asInteger(spo_flowers_per*flower_anthers_per*anther_pollen_per/4);
+        male_meiosis_reps = microsporocytes-meiosis_reps;
         //perform meiosis for each microsporocyte to produce microspores, which will mature into pollen
         for (rep in 1:male_meiosis_reps){
             breaks = sim.chromosome.drawBreakpoints(individual);
@@ -344,9 +339,9 @@ REPRO_ANGIO_MONO_P1="""
             // sample meiosis crossover position to generate 4 microspores
             // male outcross
             breaks_m = sim.chromosome.drawBreakpoints(individual);
-            child1 = p0.addRecombinant(NULL, NULL, NULL, genome_2, genome_1, breaks_m).tag = 2;
-            child2 = p0.addRecombinant(NULL, NULL, NULL, genome_1, genome_2, breaks_m).tag = 2;
-            child3 = p0.addRecombinant(genome_2, genome_1, breaks_m, NULL, NULL, NULL).tag = 2;
+            child1 = p0.addRecombinant(NULL, NULL, NULL, genome_2, genome_1, breaks_m);
+            child2 = p0.addRecombinant(NULL, NULL, NULL, genome_1, genome_2, breaks_m);
+            child3 = p0.addRecombinant(genome_2, genome_1, breaks_m, NULL, NULL, NULL);
 
             //only one megaspore will be produced, used for the new selfed sporophyte
             breaks_f = sim.chromosome.drawBreakpoints(individual);
@@ -363,10 +358,10 @@ REPRO_ANGIO_MONO_P1="""
             }
         }
 
-        #make remaining microspores
+        //make remaining microspores
         //make microspores (pollen)
-        microsporocytes = asInteger(spo_flowers_per*flower_anthers_per*anther_microspores_per/4);
-        male_meiosis_reps = microsporocytes-meiosis_reps
+        microsporocytes = asInteger(spo_flowers_per*flower_anthers_per*anther_pollen_per/4);
+        male_meiosis_reps = microsporocytes-meiosis_reps;
         //perform meiosis for each microsporocyte to produce microspores, which will mature into pollen
         for (rep in 1:male_meiosis_reps){
             breaks = sim.chromosome.drawBreakpoints(individual);
@@ -437,11 +432,11 @@ REPRO_ANGIO_MONO_P0="""
 
     //move clones back into p1,reset tag
     if (individual.tag == 44)
-        p1.addCloned(individual).tag=0
+        p1.addCloned(individual).tag=0;
 
     //move clones back into p1, reset tag
     if (individual.tag == 5)
-        p1.addCloned(individual).tag=0
+        p1.addCloned(individual).tag=0;
 
 """
 
@@ -464,10 +459,10 @@ LATE_ANGIO_MONO = """
         number_selfed = rbinom(1, length(p1_size), spo_self_rate);
         selfed_inds = p1.sampleIndividuals(number_selfed);
         selfed_cloned = selfed_inds[selfed_inds.tag == 44];
-        selfed_cloned.tag = 45; //tag selfing and cloning spo inds
+        selfed_cloned.tag = 45; //tag selfing and cloning spo inds;
         
         selfed = selfed_inds[selfed_inds.tag == 0];
-        selfed.tag = 5; //tag sporophytic selfing inds
+        selfed.tag = 5; //tag sporophytic selfing inds;
     }
 """
 
