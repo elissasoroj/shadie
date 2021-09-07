@@ -171,7 +171,6 @@ class ReproductionApi:
 
     def pteridophyte_homosporous(
         self,
-        mode:str,
         spo_pop_size: int,
         gam_pop_size: int,
         spo_mutation_rate: Union[None, float]=None,
@@ -255,7 +254,6 @@ class ReproductionApi:
 
     def pteridophyte_heterosporous(
         self,
-        mode:str,
         spo_pop_size: int,
         gam_pop_size: int,
         spo_mutation_rate: Union[None, float]=None,
