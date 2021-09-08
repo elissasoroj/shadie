@@ -50,7 +50,7 @@ REPRO_BRYO_DIO_P1 = """
         breaks2 = sim.chromosome.drawBreakpoints(individual);
         p0.addRecombinant(genome1, genome2, breaks2, NULL, NULL, NULL).tag = 1;
         p0.addRecombinant(genome2, genome1, breaks2, NULL, NULL, NULL).tag = 1;
-        microspore_3 = p0.addRecombinant(genome2, genome1, breaks2, NULL, NULL, NULL);
+        microspore3 = p0.addRecombinant(genome2, genome1, breaks2, NULL, NULL, NULL);
 
         // add the diploid selfed 
         p0.addRecombinant(genome1, genome2, breaks1, genome2, genome1, breaks2).tag = 5;
