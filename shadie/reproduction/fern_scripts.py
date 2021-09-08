@@ -172,9 +172,17 @@ REPRO_PTER_HOMOSPORE_P1 = """
     if (individual.tag == 6){ 
     	breaks = sim.chromosome.drawBreakpoints(individual);
         p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=6;          
-        child5 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-        child6 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
-        child7 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+        child1 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+        child2 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
+        child3 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+
+        children = c(child1, child2, child3);
+        children.tag = 0;
+
+            // Mother's fitness affects gametophyte fitness; see survival()
+            if (spo_maternal_effect > 0){
+                children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+            }
 
         meiosis_reps = asInteger(spo_spores_per/4)-1;
     	for (rep in 1:meiosis_reps){
@@ -184,7 +192,7 @@ REPRO_PTER_HOMOSPORE_P1 = """
             child3 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
             child4 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
             
-            children = c(child1, child2, child3, child4, child5, child6, child7);
+            children = c(child1, child2, child3, child4);
             children.tag = 0;
 
             // Mother's fitness affects gametophyte fitness; see survival()
@@ -203,9 +211,17 @@ REPRO_PTER_HOMOSPORE_P1 = """
 
     	breaks = sim.chromosome.drawBreakpoints(individual);
         p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=6;          
-        child5 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-        child6 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
-        child7 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+        child1 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+        child2 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
+        child3 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+
+        children = c(child1, child2, child3);
+        children.tag = 0;
+
+        // Mother's fitness affects gametophyte fitness; see survival()
+        if (spo_maternal_effect > 0){
+            children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+        }
 
         meiosis_reps = asInteger(spo_spores_per/4)-1;
     	for (rep in 1:meiosis_reps){
@@ -215,7 +231,7 @@ REPRO_PTER_HOMOSPORE_P1 = """
             child3 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
             child4 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
             
-            children = c(child1, child2, child3, child4, child5, child6, child7);
+            children = c(child1, child2, child3, child4);
             children.tag = 0;
 
             // Mother's fitness affects gametophyte fitness; see survival()
@@ -423,9 +439,9 @@ REPRO_PTER_HETEROSPORE_P1 = """
             // sample meiosis crossover position to generate 4 microspores
             // male outcross
             breaks_m = sim.chromosome.drawBreakpoints(individual);
-            child1 = p0.addRecombinant(NULL, NULL, NULL, genome2, genome1, breaks_m).tag = 2;
-            child2 = p0.addRecombinant(NULL, NULL, NULL, genome1, genome2, breaks_m).tag = 2;
-            child3 = p0.addRecombinant(genome2, genome1, breaks_m, NULL, NULL, NULL).tag = 2;
+            child1 = p0.addRecombinant(NULL, NULL, NULL, genome2, genome1, breaks_m).tag;
+            child2 = p0.addRecombinant(NULL, NULL, NULL, genome1, genome2, breaks_m).tag;
+            child3 = p0.addRecombinant(genome2, genome1, breaks_m, NULL, NULL, NULL).tag;
 
             //only one megaspore will be produced, used for the new selfed sporophyte
             breaks_f = sim.chromosome.drawBreakpoints(individual);
@@ -480,18 +496,18 @@ REPRO_PTER_HETEROSPORE_P1 = """
             // sample meiosis crossover position to generate 4 microspores
             // male outcross
             breaks_m = sim.chromosome.drawBreakpoints(individual);
-            child1 = p0.addRecombinant(NULL, NULL, NULL, genome2, genome1, breaks_m).tag = 2;
-            child2 = p0.addRecombinant(NULL, NULL, NULL, genome1, genome2, breaks_m).tag = 2;
-            child3 = p0.addRecombinant(genome2, genome1, breaks_m, NULL, NULL, NULL).tag = 2;
+            child1 = p0.addRecombinant(NULL, NULL, NULL, genome2, genome1, breaks_m);
+            child2 = p0.addRecombinant(NULL, NULL, NULL, genome1, genome2, breaks_m);
+            child3 = p0.addRecombinant(genome2, genome1, breaks_m, NULL, NULL, NULL);
 
             //only one megaspore will be produced, used for the new selfed sporophyte
             breaks_f = sim.chromosome.drawBreakpoints(individual);
             
             // add the diploid selfed 
-            p0.addRecombinant(genome1, genome2, breaks_m, genome2, genome1, breaks_f).tag = 5;
+            p0.addRecombinant(genome1, genome2, breaks_m, genome2, genome1, breaks_f);
 
             //maternal effects
-            children = c(child1, child2, child3, child4, child5, child6, child7);
+            children = c(child1, child2, child3);
             children.tag = 2;
 
             // Mother's fitness affects gametophyte fitness; see survival()
