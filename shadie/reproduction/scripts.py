@@ -117,7 +117,7 @@ SUBSTITUTION = """
     // gametophytes have just undergone fitness selection
     if (sim.generation % 2 == 0) {{
         {muts}
-    }}
+    {late}
 """
 
 SUB_MUTS = """

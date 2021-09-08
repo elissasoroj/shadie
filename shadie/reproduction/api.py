@@ -431,7 +431,6 @@ class ReproductionApi:
     
     def spermatophyte(
         self,
-        mode:str,
         spo_pop_size: int,
         gam_pop_size: int,
         spo_mutation_rate: Union[None, float]=None,
@@ -507,7 +506,7 @@ class ReproductionApi:
         ...
         """
         Spermatophyte(
-            model=self.model, mode=mode,spo_pop_size=spo_pop_size, gam_pop_size=gam_pop_size,
+            model=self.model,spo_pop_size=spo_pop_size, gam_pop_size=gam_pop_size,
             spo_mutation_rate = spo_mutation_rate,
             gam_mutation_rate = gam_mutation_rate,
             spo_female_to_male_ratio = spo_female_to_male_ratio,

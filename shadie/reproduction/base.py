@@ -10,7 +10,7 @@ ReproductionBase -> NonWrightFisher -> BryophyteBase
 
 from dataclasses import dataclass
 import pyslim
-from shadie.reproduction.base_scripts import (
+from shadie.reproduction.scripts import (
     EARLY,
     SUBSTITUTION,
     SUB_MUTS,

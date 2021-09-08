@@ -200,7 +200,6 @@ if __name__ == "__main__":
         mod.initialize(chromosome=chrom)
 
         mod.reproduction.pteridophyte_homosporous(
-            mode='dio',
             spo_pop_size=1000, 
             gam_pop_size=1000,
         )

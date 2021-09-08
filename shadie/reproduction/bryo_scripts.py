@@ -53,7 +53,7 @@ REPRO_BRYO_DIO_P1 = """
         microspore_3 = p0.addRecombinant(genome2, genome1, breaks2, NULL, NULL, NULL);
 
         // add the diploid selfed 
-        p0.addRecombinant(genome1, genome2, breaks_1, genome2, genome1, breaks_2).tag = 5;
+        p0.addRecombinant(genome1, genome2, breaks1, genome2, genome1, breaks2).tag = 5;
 
         //see note below**
         microspores = c(microspore1, microspore2, microspore3);
@@ -199,7 +199,7 @@ REPRO_BRYO_MONO_P1 = """
         p0.addRecombinant(genome2, genome1, breaks2, NULL, NULL, NULL).tag = 0;
 
         // add the diploid selfed 
-        p0.addRecombinant(genome1, genome2, breaks_1, genome2, genome1, breaks_2).tag = 5;
+        p0.addRecombinant(genome1, genome2, breaks1, genome2, genome1, breaks2).tag = 5;
 
         }
 """
