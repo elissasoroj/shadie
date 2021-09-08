@@ -92,6 +92,7 @@ class PteridophyteHomosporous(PteridophyteBase):
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
         self._add_alternation_of_generations()
+        self._add_early_script()
         self._add_initialize_constants()
         self._write_trees_file()
 
@@ -139,6 +140,7 @@ class PteridophyteHeterosporous(PteridophyteBase):
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
         self._add_alternation_of_generations()
+        self._add_early_script()
         self._add_initialize_constants()
         self._write_trees_file()
 

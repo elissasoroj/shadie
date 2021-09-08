@@ -20,6 +20,7 @@ from shadie.reproduction.scripts import (
     SURV,
     GAM_MATERNAL_EFFECT_ON_P1,
     SUBSTITUTION,
+    P0_FITNESS_SCALE_DEFAULT,
 )
 from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_DIO_P1,
@@ -95,10 +96,12 @@ class BryophyteDioicous(BryophyteBase):
         # methods inherited from parent Bryophyte class
         self._set_mutation_rates()
         self._add_shared_mode_scripts()
+        self._add_early_script()
 
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
         self._add_alternation_of_generations()
+        self._add_early_script()
         self._add_initialize_constants()
         self._write_trees_file()
 
@@ -144,6 +147,7 @@ class BryophyteMonoicous(BryophyteBase):
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
         self._add_alternation_of_generations()
+        self._add_early_script()
         self._add_initialize_constants()
         self._write_trees_file()
 

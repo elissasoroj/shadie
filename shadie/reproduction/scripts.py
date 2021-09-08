@@ -11,7 +11,7 @@ EARLY = """
     if (sim.generation % 2 == 0) {{
 
         // fitness affects gametophyte survival
-        p0.fitnessScaling = (gam_pop_size / p0.individualCount);
+        {p0_fitnessScaling};
 
         //set mutation rate for haploids
         sim.chromosome.setMutationRate(gam_mutation_rate);
@@ -47,6 +47,9 @@ EARLY = """
         {deactivate}
     }}
 """
+
+
+P0_FITNESS_SCALE_DEFAULT = "p0.fitnessScaling = spo_pop_size / p0.individualCount;"
 
 # gam_pop_size
 # gam_female_to_male_ratio
