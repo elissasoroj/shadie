@@ -140,17 +140,17 @@ REPRO_BRYO_DIO_P0 = """
 LATE_BRYO_DIO = """
     p0_size = length(p0.individuals);
         clones = p0.sampleIndividuals(asInteger(p0_size*gam_clone_rate));
-        femclones = clones[clones.tag ==1]
-        femclones.tag = 41; //tag female clones
-        maleclones = clones[clones.tag ==2]
-        maleclones.tag = 42; //tag male clones
+        femclones = clones[clones.tag ==1];
+        femclones.tag = 41; //tag female clones;
+        maleclones = clones[clones.tag ==2];
+        maleclones.tag = 42; //tag male clones;
     }
     //odd = starts with gam in p0, generates spo into p1
     else {
         p1_size = length(p1.individuals);
         number_selfed = rbinom(1, length(p1_size), spo_self_rate);
         selfed = p1.sampleIndividuals(number_selfed);
-        selfed.tag = 5; //tag sporophytic selfing inds
+        selfed.tag = 5; //tag sporophytic selfing inds;
     }
 """
 
@@ -259,6 +259,6 @@ LATE_BRYO_MONO = """
         p1_size = length(p1.individuals);
         number_selfed = rbinom(1, length(p1_size), spo_self_rate);
         selfed = p1.sampleIndividuals(number_selfed);
-        selfed.tag = 5; //tag sporophytic selfing inds
+        selfed.tag = 5; //tag sporophytic selfing inds;
     }
 """
