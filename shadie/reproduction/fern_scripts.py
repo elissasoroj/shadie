@@ -73,18 +73,18 @@ REPRO_PTER_HOMOSPORE_P1 = """
 
         // 4 gametophytes that producearchegonia+antheridia per meiosis
         breaks_m = sim.chromosome.drawBreakpoints(individual);
-        child1 = p0.addRecombinant(NULL, NULL, NULL, genome_2, genome_1, breaks_m);
-        child2 = p0.addRecombinant(NULL, NULL, NULL, genome_1, genome_2, breaks_m);
-        child3 = p0.addRecombinant(genome_2, genome_1, breaks_m, NULL, NULL, NULL);
+        child1 = p0.addRecombinant(NULL, NULL, NULL, genome2, genome1, breaks_m);
+        child2 = p0.addRecombinant(NULL, NULL, NULL, genome1, genome2, breaks_m);
+        child3 = p0.addRecombinant(genome2, genome1, breaks_m, NULL, NULL, NULL);
 
         //4 gametophytes that produce archegonia+antheridia per meiosis
         breaks_f = sim.chromosome.drawBreakpoints(individual);
-        child4 = p0.addRecombinant(NULL, NULL, NULL, genome_2, genome_1, breaks_m);
-        child5 = p0.addRecombinant(NULL, NULL, NULL, genome_1, genome_2, breaks_m);
-        child6 = p0.addRecombinant(genome_2, genome_1, breaks_m, NULL, NULL, NULL);
+        child4 = p0.addRecombinant(NULL, NULL, NULL, genome2, genome1, breaks_m);
+        child5 = p0.addRecombinant(NULL, NULL, NULL, genome1, genome2, breaks_m);
+        child6 = p0.addRecombinant(genome2, genome1, breaks_m, NULL, NULL, NULL);
 
         // one gametophyte from each set above produces selfed
-        p0.addRecombinant(genome_1, genome_2, breaks_m, genome_2, genome_1, breaks_f).tag = 5;
+        p0.addRecombinant(genome1, genome2, breaks_m, genome2, genome1, breaks_f).tag = 5;
 
         //save all children produced to vector
         children = c(child1, child2, child3, child4, child5, child6);
@@ -128,18 +128,18 @@ REPRO_PTER_HOMOSPORE_P1 = """
 
         // 4 gametophytes that producearchegonia+antheridia per meiosis
         breaks_m = sim.chromosome.drawBreakpoints(individual);
-        child1 = p0.addRecombinant(NULL, NULL, NULL, genome_2, genome_1, breaks_m);
-        child2 = p0.addRecombinant(NULL, NULL, NULL, genome_1, genome_2, breaks_m);
-        child3 = p0.addRecombinant(genome_2, genome_1, breaks_m, NULL, NULL, NULL);
+        child1 = p0.addRecombinant(NULL, NULL, NULL, genome2, genome1, breaks_m);
+        child2 = p0.addRecombinant(NULL, NULL, NULL, genome1, genome2, breaks_m);
+        child3 = p0.addRecombinant(genome2, genome1, breaks_m, NULL, NULL, NULL);
 
         //4 gametophytes that produce archegonia+antheridia per meiosis
         breaks_f = sim.chromosome.drawBreakpoints(individual);
-        child4 = p0.addRecombinant(NULL, NULL, NULL, genome_2, genome_1, breaks_m);
-        child5 = p0.addRecombinant(NULL, NULL, NULL, genome_1, genome_2, breaks_m);
-        child6 = p0.addRecombinant(genome_2, genome_1, breaks_m, NULL, NULL, NULL);
+        child4 = p0.addRecombinant(NULL, NULL, NULL, genome2, genome1, breaks_m);
+        child5 = p0.addRecombinant(NULL, NULL, NULL, genome1, genome2, breaks_m);
+        child6 = p0.addRecombinant(genome2, genome1, breaks_m, NULL, NULL, NULL);
 
         // one gametophyte from each set above produces selfed
-        p0.addRecombinant(genome_1, genome_2, breaks_m, genome_2, genome_1, breaks_f).tag = 5;
+        p0.addRecombinant(genome1, genome2, breaks_m, genome2, genome1, breaks_f).tag = 5;
         
         children = c(child1, child2, child3, child4, child5, child6);
         children.tag = 0;
@@ -423,15 +423,15 @@ REPRO_PTER_HETEROSPORE_P1 = """
             // sample meiosis crossover position to generate 4 microspores
             // male outcross
             breaks_m = sim.chromosome.drawBreakpoints(individual);
-            child1 = p0.addRecombinant(NULL, NULL, NULL, genome_2, genome_1, breaks_m).tag = 2;
-            child2 = p0.addRecombinant(NULL, NULL, NULL, genome_1, genome_2, breaks_m).tag = 2;
-            child3 = p0.addRecombinant(genome_2, genome_1, breaks_m, NULL, NULL, NULL).tag = 2;
+            child1 = p0.addRecombinant(NULL, NULL, NULL, genome2, genome1, breaks_m).tag = 2;
+            child2 = p0.addRecombinant(NULL, NULL, NULL, genome1, genome2, breaks_m).tag = 2;
+            child3 = p0.addRecombinant(genome2, genome1, breaks_m, NULL, NULL, NULL).tag = 2;
 
             //only one megaspore will be produced, used for the new selfed sporophyte
             breaks_f = sim.chromosome.drawBreakpoints(individual);
             
             // add the diploid selfed 
-            p0.addRecombinant(genome_1, genome_2, breaks_m, genome_2, genome_1, breaks_f).tag = 5;
+            p0.addRecombinant(genome1, genome2, breaks_m, genome2, genome1, breaks_f).tag = 5;
 
             //maternal effects
             children = c(child1, child2, child3);
@@ -480,15 +480,15 @@ REPRO_PTER_HETEROSPORE_P1 = """
             // sample meiosis crossover position to generate 4 microspores
             // male outcross
             breaks_m = sim.chromosome.drawBreakpoints(individual);
-            child1 = p0.addRecombinant(NULL, NULL, NULL, genome_2, genome_1, breaks_m).tag = 2;
-            child2 = p0.addRecombinant(NULL, NULL, NULL, genome_1, genome_2, breaks_m).tag = 2;
-            child3 = p0.addRecombinant(genome_2, genome_1, breaks_m, NULL, NULL, NULL).tag = 2;
+            child1 = p0.addRecombinant(NULL, NULL, NULL, genome2, genome1, breaks_m).tag = 2;
+            child2 = p0.addRecombinant(NULL, NULL, NULL, genome1, genome2, breaks_m).tag = 2;
+            child3 = p0.addRecombinant(genome2, genome1, breaks_m, NULL, NULL, NULL).tag = 2;
 
             //only one megaspore will be produced, used for the new selfed sporophyte
             breaks_f = sim.chromosome.drawBreakpoints(individual);
             
             // add the diploid selfed 
-            p0.addRecombinant(genome_1, genome_2, breaks_m, genome_2, genome_1, breaks_f).tag = 5;
+            p0.addRecombinant(genome1, genome2, breaks_m, genome2, genome1, breaks_f).tag = 5;
 
             //maternal effects
             children = c(child1, child2, child3, child4, child5, child6, child7);
