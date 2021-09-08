@@ -21,7 +21,7 @@ from shadie.reproduction.scripts import (
     SPO_MATERNAL_EFFECT_ON_P0,
     SUBSTITUTION,
 )
-from shadie.reproduction.angio_scripts import (
+from shadie.reproduction.angio_scripts_opt import (
     REPRO_ANGIO_DIO_P1,
     REPRO_ANGIO_DIO_P0,
     LATE_ANGIO_DIO,
@@ -29,6 +29,7 @@ from shadie.reproduction.angio_scripts import (
     REPRO_ANGIO_MONO_P0,
     LATE_ANGIO_MONO,
     EARLY1_ANGIO,
+    ANGIO_P0_SURV,
 )
 
 DTYPES = ("d", "dio", "dioecy", "dioecious",)
@@ -79,7 +80,7 @@ class AngiospermBase(NonWrightFisher):
             SURV.format(
                 p0_maternal_effect="",
                 p1_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
-                p0survival=""
+                p0survival=ANGIO_P0_SURV,
             )
         )
         self.model.custom(survival_script, comment="maternal effects and survival")
@@ -101,6 +102,7 @@ class AngiospermDioecious(AngiospermBase):
             self.pollen_comp = "T"
         else:
             self.pollen_comp = "F"
+            self.pollen_comp_stigma_pollen_per = int(1)
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
@@ -121,14 +123,6 @@ class AngiospermDioecious(AngiospermBase):
         """Defines the subpopulations and males/females.
         This overrides the NonWrightFisher class function of same name.
         """
-        if self.model._file_in:
-            self.model.read_from_file()
-        else:
-            self.model.early(
-                time=1,
-                scripts=EARLY1_ANGIO,
-                comment="define subpops and initial sex ratio",
-            )
 
     def _add_mode_scripts(self):
         """scripts specific to this organism."""
@@ -166,6 +160,7 @@ class AngiospermMonoecious(AngiospermBase):
             self.pollen_comp = "T"
         else:
             self.pollen_comp = "F"
+            self.pollen_comp_stigma_pollen_per = int(1)
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
