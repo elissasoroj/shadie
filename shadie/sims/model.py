@@ -46,7 +46,7 @@ from loguru import logger
 import numpy as np
 from shadie.base.mutations import MutationTypeBase
 from shadie.base.elements import ElementType
-from shadie.reproduction.optimized.api_opt import ReproductionApi
+from shadie.reproduction.api import ReproductionApi
 from shadie.sims.format import (
     format_event_dicts_to_strings,
     EVENT_TO_FORMATTER,
@@ -114,6 +114,8 @@ class Model(AbstractContextManager):
         """The length of the simulation in sporophyte generations."""
         self.chromosome = None
         """Chromosome object with genome structure."""
+        self.metadata: dict = {}
+        """Dictionary storing simulation metadata"""
         
         # hidden attributes set by .initialize()
         self.metadata = {
@@ -267,7 +269,7 @@ class Model(AbstractContextManager):
         If the trees file is not a shadie trees file (e.g., with 
         subpops defined as p0 and p1) this will cause problems.
         """
-        scripts = [f"sim.readFromPopulationFile('{self._file_in}')"]
+        scripts = [f"sim.readFromPopulationFile('{self.metadata['file_in']}')"]
         scripts.extend(tag_scripts)
         self.early(
             time=1,
@@ -506,7 +508,7 @@ if __name__ == "__main__":
 
         # init the model
 
-        model.initialize(chromosome=chrom)
+        model.initialize(chromosome=chrom,)
         model.reproduction.wright_fisher(pop_size=1000)
 
         model.early(

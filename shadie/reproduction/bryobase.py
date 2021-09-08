@@ -16,21 +16,22 @@ ReproductionBase
 from typing import Tuple, Optional
 from dataclasses import dataclass, field
 from shadie.reproduction.base import NonWrightFisher
-from shadie.reproduction.base_scripts import (
+from shadie.reproduction.scripts import (
     SURV,
-    MATERNAL_EFFECT,
+    GAM_MATERNAL_EFFECT_ON_P1,
+    SUBSTITUTION,
 )
 from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_DIO_P1,
     REPRO_BRYO_DIO_P0,
+    LATE_BRYO_DIO,
     REPRO_BRYO_MONO_P1,
     REPRO_BRYO_MONO_P0,
+    LATE_BRYO_MONO,
 )
-
 
 DTYPES = ("dioicy", "dioicous", "heterosporous")
 MTYPES = ("monoicy", "monoicous", "homosporous")
-
 
 @dataclass
 class BryophyteBase(NonWrightFisher):
@@ -40,17 +41,16 @@ class BryophyteBase(NonWrightFisher):
     gam_pop_size: int
     spo_mutation_rate: Optional[float]
     gam_mutation_rate: Optional[float]
-    gam_eggs_per_megaspore: int
-    gam_sperm_per_microspore: int
     gam_clone_rate: float
-    gam_clone_number: int
+    gam_clones_per: int
     spo_self_rate: float
-    gam_self_rate: float
-    gam_maternal_effect: float
     spo_random_death_chance: float
     gam_random_death_chance: float
+    spo_spores_per: int
+    gam_maternal_effect: float
+    gam_archegonia_per: int
 
-    def __post_init__(self):
+    def _set_mutation_rates(self):
         """Checks parameters after init."""
         # Set mutation rates for both, or use Model rate / 2 for both.
         if self.spo_mutation_rate or self.gam_mutation_rate:
@@ -60,9 +60,9 @@ class BryophyteBase(NonWrightFisher):
                 "You must define a mutation rate for both sporophyte "
                 "and gametophyte generations.")
         else:
-            self.spo_mutation_rate = 0.5 * self.model._mutation_rate
-            self.gam_mutation_rate = 0.5 * self.model._mutation_rate
-
+            self.spo_mutation_rate = 0.5 * self.model.metadata['mutation_rate']
+            self.gam_mutation_rate = 0.5 * self.model.metadata['mutation_rate']
+    
     def _add_shared_mode_scripts(self):
         """Adds scripts shared by homosp and heterosp superclasses.
 
@@ -71,9 +71,9 @@ class BryophyteBase(NonWrightFisher):
         """
         survival_script = (
             SURV.format(
-                p0maternal_effect="",
-                p1maternal_effect=MATERNAL_EFFECT,
-                p0survival="return NULL;"
+                p0_maternal_effect="",
+                p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+                p0survival=""
             )
         )
         self.model.custom(survival_script, comment="maternal effects and survival")
@@ -81,10 +81,8 @@ class BryophyteBase(NonWrightFisher):
 
 @dataclass
 class BryophyteDioicous(BryophyteBase):
-    mode: str = field(default="heterosporous", init=False)
+    mode: str = field(default="dioicous", init=False)
     gam_female_to_male_ratio: Tuple[float,float]
-    spo_megaspores_per: int
-    spo_microspores_per: int
 
     def __post_init__(self):
         """Convert tuple ratio to a float."""
@@ -94,14 +92,15 @@ class BryophyteDioicous(BryophyteBase):
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
+        # methods inherited from parent Bryophyte class
+        self._set_mutation_rates()
+        self._add_shared_mode_scripts()
+
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
         self._add_alternation_of_generations()
         self._add_initialize_constants()
         self._write_trees_file()
-
-        # methods inherited from parent Bryophyte class
-        self._add_shared_mode_scripts()
 
         # mode-specific functions
         self._add_mode_scripts()
@@ -118,24 +117,35 @@ class BryophyteDioicous(BryophyteBase):
             scripts=REPRO_BRYO_DIO_P0,
             comment="generates gametes from sporophytes"
         )
-        # TODO add late here.
+        
+        # add late call
+        substitution_script = (
+            SUBSTITUTION.format(**{'muts': self._substitution_str,
+                'late': LATE_BRYO_DIO}).lstrip())
+
+        self.model.late(
+            time=None,
+            scripts=substitution_script,
+            comment="fixes mutations in haploid gen"
+            )
 
 
 @dataclass
 class BryophyteMonoicous(BryophyteBase):
-    mode: str = field(default="homosporous", init=False)
+    mode: str = field(default="monoicous", init=False)
     gam_self_rate: float=0.2
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
+        # methods inherited from parent Bryophyte class
+        self._set_mutation_rates()
+        self._add_shared_mode_scripts()
+
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
         self._add_alternation_of_generations()
         self._add_initialize_constants()
         self._write_trees_file()
-
-        # methods inherited from parent Bryophyte class
-        self._add_shared_mode_scripts()
 
         # mode-specific functions
         self._add_mode_scripts()
@@ -153,6 +163,17 @@ class BryophyteMonoicous(BryophyteBase):
             scripts=REPRO_BRYO_MONO_P0,
             comment="generates gametes from sporophytes"
         )
+        
+        # add late call
+        substitution_script = (
+            SUBSTITUTION.format(**{'muts': self._substitution_str,
+                'late': LATE_BRYO_MONO}).lstrip())
+
+        self.model.late(
+            time=None,
+            scripts=substitution_script,
+            comment="fixes mutations in haploid gen"
+            )
 
 
 
@@ -178,9 +199,10 @@ if __name__ == "__main__":
 
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=50, file_out="/tmp/test.trees")
-        mod.reproduction.bryophyte_dioicous(
+        mod.reproduction.bryophyte_monoicous(
             spo_pop_size=100,
             gam_pop_size=100,
         )
-    mod.write("/tmp/slim.slim")
+    print(mod.script)
+    #mod.write("/tmp/slim.slim")
     # mod.run(binary="/usr/local/bin/slim", seed=123)

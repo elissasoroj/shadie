@@ -10,10 +10,10 @@ ReproductionBase -> NonWrightFisher -> BryophyteBase
 
 from dataclasses import dataclass
 import pyslim
-from shadie.reproduction.base_scripts import (
+from shadie.reproduction.scripts import (
     EARLY,
     SUBSTITUTION,
-    SUB_INNER,
+    SUB_MUTS,
 )
 
 
@@ -50,15 +50,15 @@ class ReproductionBase:
         endtime = int(self.model.sim_time + 1)
 
         # calculate end based on this sim AND the loaded parent sim.
-        if self.model._file_in:
-            ts_start = pyslim.load(self.model._file_in)
+        if self.model.metadata['file_in']:
+            ts_start = pyslim.load(self.model.metadata['file_in'])
             sim_start = ts_start.max_root_time
             resched_end = int(endtime + sim_start)
             self.model.late(
                 time=resched_end,
                 scripts=[
                     "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)",
-                    f"sim.treeSeqOutput('{self.model._file_out}')"],
+                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}')"],
                 comment="end of sim; save .trees file",
             )
         # write output at last generation of this simulation.
@@ -67,7 +67,7 @@ class ReproductionBase:
                 time=endtime,
                 scripts=[
                     "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)",
-                    f"sim.treeSeqOutput('{self.model._file_out}')"],
+                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}')"],
                 comment="end of sim; save .trees file",
             )
 
@@ -83,14 +83,15 @@ class NonWrightFisher(ReproductionBase):
     """
     def _define_subpopulations(self):
         """add haploid and diploid life stages as subpopulations."""
-        if self.model._file_in:
-            self.model.read_from_file()
+        if self.model.metadata['file_in']:
+            self.model._read_from_file(tag_scripts =[ "p1.individuals.tag=0"])
         else:
             self.model.early(
                 time=1,
                 scripts=[
                     "sim.addSubpop('p1', spo_pop_size)",
-                    "sim.addSubpop('p0', 0)"],
+                    "sim.addSubpop('p0', 0)",
+                    "p1.individuals.tag = 0",],
                 comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
             )
 
@@ -102,7 +103,7 @@ class NonWrightFisher(ReproductionBase):
         unique set of attributes. Excludes parent attrs like model.
         """
         # exclude parent class attributes
-        exclude = ["lineage", "mode", "model"]
+        exclude = ["lineage", "mode", "model", "_substitution_str"]
         asdict = {
             i: j for (i, j) in self.__dict__.items()
             if i not in exclude
@@ -148,8 +149,8 @@ class NonWrightFisher(ReproductionBase):
 
             # add reference to this mutation to be added to a late call
             # for checking whether a mutation has become a substitution.
-            sub_inner = SUB_INNER.format(idx=sidx, mut=mut.name).lstrip()
-            substitutions.append(sub_inner)
+            sub_muts = SUB_MUTS.format(idx=sidx, mut=mut.name).lstrip()
+            substitutions.append(sub_muts)
 
         # insert references to fitness callbacks into an early script
         # that will alternately activate or deactivate them on
@@ -166,16 +167,9 @@ class NonWrightFisher(ReproductionBase):
         )
 
         # insert the substitution-checking scripts into larger context
-        # and add as a late call.
         substitution_str = "\n    ".join(substitutions)
-        substitution_script = (
-            SUBSTITUTION.format(inner=substitution_str))
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-        )
-
+        #save subsitutions for late call in model-specific scripts
+        self._substitution_str = substitution_str
 
 @dataclass
 class WrightFisher(ReproductionBase):
@@ -195,7 +189,7 @@ class WrightFisher(ReproductionBase):
 
     def _define_subpopulations(self):
         """Add a single diploid population. See NonWrightFisher for comparison."""
-        if self.model._file_in:
+        if self.model.metadata['file_in']:
             self.model.read_from_file()
         else:
             self.model.early(

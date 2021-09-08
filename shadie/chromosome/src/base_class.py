@@ -146,9 +146,16 @@ class ChromosomeBase:
 
         # cannot skip neutral mutations and have entirely neutral chrom.
         if self._skip_neutral_mutations & (not self.is_coding()):
-            raise ValueError(
-                "Chromosome cannot have skip_neutral_mutations=True and "
-                "be entirely neutral (non-coding).")
+            # the entire chrom is neutral; last bp is filled with a neutral
+            #genomic element, so that SLiM doesn't complain
+            start = int(self.genome_size-1)
+            end = int(self.genome_size)
+            commands.append([
+                    f"initializeGenomicElement({NONCDS.name}, {start}, {end});\n",
+                ])
+            # raise ValueError(
+            #     "Chromosome cannot have skip_neutral_mutations=True and "
+            #     "be entirely neutral (non-coding).")
 
         # iterate over int start positions of elements
         for idx in self.data.index:

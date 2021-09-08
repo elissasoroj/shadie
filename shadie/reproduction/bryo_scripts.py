@@ -6,110 +6,105 @@ Bryophyte specific SLIM script snippets used for string substitution.
 
 # PARAMETERS
 # gam_female_to_male_ratio
-# spo_megaspores_per
-# gam_eggs_per_megaspore
-# spo_microspores_per
+# spo_spores_per
+#gam_archegonia_per
+#gam_antheridia_per
 # -------------------------
 # TAGS
 # 0, 1, 2, 4, 5
 REPRO_BRYO_DIO_P1 = """
     // normal sporophyte: make both female and male spores
-    if (individual.tag == 0) {
+    if (individual.tag == 0) { //focus on one sporophyte
 
-        // if it is a female gametophyte
-        if (runif(1) < gam_female_to_male_ratio) {
-
-            // for each megaspore in the female gametophyte
-            meiosis_reps = asInteger(spo_megaspores_per / 2);
-            for (rep in 1:meiosis_reps){
-
-                // sample a meiosis crossover position.
-                breaks = sim.chromosome.drawBreakpoints(individual);
-
-                // create N recombinant eggs per, set tag to 1.
-                for (egg in 1:gam_eggs_per_megaspore){
-                    p0.addRecombinant(genome_1, genome_2, breaks, NULL, NULL, NULL).tag = 1;
-                    p0.addRecombinant(genome_2, genome_1, breaks, NULL, NULL, NULL).tag = 1;
-                }
-            }
-        }
-
-        // if it is a male gametophyte
-        else {
-
-            // for each microspore in the male gametophyte
-            meiosis_reps = asInteger(spo_microspores_per / 2);
-            for (rep in 1:meiosis_reps) {
-
-                // sample a meiosis crossover position.
-                breaks = sim.chromosome.drawBreakpoints(individual);
-
-                // create N recombinant sperm, set tag to 2.
-                for (sperm in 1:gam_sperm_per_microspore){
-                    p0.addRecombinant(genome_1, genome_2, breaks, NULL, NULL, NULL).tag = 2;
-                    p0.addRecombinant(genome_2, genome_1, breaks, NULL, NULL, NULL).tag = 2;
-                }
-            }
-        }
-
-    // clonal sporophyte: move clones directly to p0, sets tag to 4.
-    if (individual.tag == 4) {
-        p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 4;
-    }
-
-    // selfed sporophyte: make male, female, and self-recombinant spores
-    if (individual.tag == 5) {
-
-        // for each megaspore in the female gametophyte
-        meiosis_reps = asInteger(spo_megaspores_per / 2);
+        // each meiotic division produces 4 spores, two female and two male
+        meiosis_reps = asInteger(spo_spores_per/4);
         for (rep in 1:meiosis_reps) {
 
-            // sample meiosis crossover position to generate 4 spores (2 rounds of meiosis)
-            // male outcross
-            breaks_m = sim.chromosome.drawBreakpoints(individual);
-            p0.addRecombinant(NULL, NULL, NULL, genome_2, genome_1, breaks).tag = 1;
-
-            // female outcross
-            breaks_f = sim.chromosome.drawBreakpoints(individual);
-            p0.addRecombinant(genome_1, genome_2, breaks2, NULL, NULL, NULL).tag = 2;
-
-            // add the diploid selfed
-            p0.addRecombinant(genome_1, genome_2, breaks_m, genome_2, genome_1, breaks_f).tag = 5;
-        }
-
-        // for each microspore in the male gametophyte
-        male_meiosis_reps = asInteger(spo_microspores_per / 2) - meiosis_reps;
-        for (rep in 1:male_meiosis_reps){
-
-            // sample a meiosis crossover position
+            // sample a meiosis crossover position.
             breaks = sim.chromosome.drawBreakpoints(individual);
 
-            // create N recombinant sperm, set tag to 2.
-            for (sperm in 1:gam_sperm_per_microspore) {
-                p0.addRecombinant(genome_1, genome_2, breaks, NULL, NULL, NULL).tag = 2;
-                p0.addRecombinant(genome_2, genome_1, breaks, NULL, NULL, NULL).tag = 2;
-            }
+            // create 2 megaspores and 2 microspores (all recombinant for now)
+            p0.addRecombinant(genome1, genome2, breaks, NULL, NULL, NULL).tag = 1;
+            p0.addRecombinant(genome2, genome1, breaks, NULL, NULL, NULL).tag = 1;
+            p0.addRecombinant(genome1, genome2, breaks, NULL, NULL, NULL).tag = 2;
+            p0.addRecombinant(genome2, genome1, breaks, NULL, NULL, NULL).tag = 2;
+        }
+    }
+
+    // cloned gametophytes from last gen: copy and move clones directly to p0,
+    //these cloned gametophyte becomes a 'normal' gametophyte in p0, tag=4 removed
+    if (individual.tag == 41) 
+        p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 1;
+
+    if (individual.tag == 42) 
+        p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 2;
+
+    // selfing sporophyte: make male, female, and self-recombinant spores
+    if (individual.tag == 5) {
+        // perform rounds of two meiotic divisions
+        breaks1 = sim.chromosome.drawBreakpoints(individual);
+        p0.addRecombinant(genome2, genome1, breaks1, NULL, NULL, NULL).tag = 1;
+        microspore1 = p0.addRecombinant(genome1, genome2, breaks1, NULL, NULL, NULL);
+        microspore2 = p0.addRecombinant(genome2, genome1, breaks1, NULL, NULL, NULL);
+
+        breaks2 = sim.chromosome.drawBreakpoints(individual);
+        p0.addRecombinant(genome1, genome2, breaks2, NULL, NULL, NULL).tag = 1;
+        p0.addRecombinant(genome2, genome1, breaks2, NULL, NULL, NULL).tag = 1;
+        microspore3 = p0.addRecombinant(genome2, genome1, breaks2, NULL, NULL, NULL);
+
+        // add the diploid selfed 
+        p0.addRecombinant(genome1, genome2, breaks1, genome2, genome1, breaks2).tag = 5;
+
+        //see note below**
+        microspores = c(microspore1, microspore2, microspore3);
+        microspores.tag = 2;
+
+        // perform any additional meiosis rounds for the rest of the spores
+        // each meiotic division produces 4 spores, two female and two male
+        meiosis_reps = asInteger(spo_spores_per/4)-8;
+        for (rep in 1:meiosis_reps) {
+
+            // sample a meiosis crossover position.
+            breaks = sim.chromosome.drawBreakpoints(individual);
+
+            // create 2 megaspores and 2 microspores (all recombinant for now)
+            p0.addRecombinant(genome1, genome2, breaks, NULL, NULL, NULL).tag = 1;
+            p0.addRecombinant(genome2, genome1, breaks, NULL, NULL, NULL).tag = 1;
+            microspore1 = p0.addRecombinant(genome1, genome2, breaks, NULL, NULL, NULL);
+            microspore2 = p0.addRecombinant(genome2, genome1, breaks, NULL, NULL, NULL);
+
+            //**each microspore will produce a male gametophyte that may
+            //develop many antheridia, each of which produces thousands of sperm.
+            //For simplicity and computation time we do not model these sperm individuallally,
+            //but this part of the code may be modified to implement parameters such as 
+            //chance of male gametophyte developing antheridium, etc. 
+            microspores = c(microspore1, microspore2);
+            microspores.tag = 2;
         }
     }
 """
 
-# PARAMETERS:
-# gam_eggs_per_megaspore (was gam_sporophytes_per)
+# Parameters:
+# gam_archegonia_per (we could use "megaspore_archegonia_per" or "gam_eggs_per")
 # gam_clones_per
 # -------------------------
 # TAGS:
 # 0, 1, 4, 5, 20
 REPRO_BRYO_DIO_P0 = """
-    // P0 at this point contains microsporangia and megasporangia
-    // gametophytic normal: if female, sample new recombinant male and female gametes
+    // P0 at this point contains microspores and megaspores
+    // normal gametophyte: if female, fertilize with recombinant male
     if (individual.tag == 1) {
 
-    	// for each egg (reproductive opportunity) in this indiv.
-        reproduction_opportunity_count = gam_eggs_per_megaspore;
-        for (repro in seqLen(reproduction_opportunity_count)) {
+    	// each megaspore makes N archegonia, each of which contains one egg
+        eggs = gam_archegonia_per;
+        for (egg in 1:eggs) {
 
-            // sample a sperm from p0
+            // sample a sperm from p0; each microspore creates one sperm
             sperm = p0.sampleIndividuals(1, tag=2);
+            //note, the sperm will NOT be removed from the pool, because it is actually
+            //a pool of microspores, which can produce thousands of clonal sperm
+            
+            //if we run out of sperm, skip zygote formation
             if (sperm.size() == 1) {
 
                 // create zygote and set tag to 0
@@ -119,9 +114,6 @@ REPRO_BRYO_DIO_P0 = """
                 // store maternal fitness to apply maternal effects later (in survival).
                 if (gam_maternal_effect > 0)
                     child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
-
-                // remove this sperm from the p0 mating pool
-                sperm.tag = 20;
             }
         }
     }
@@ -141,79 +133,132 @@ REPRO_BRYO_DIO_P0 = """
 
 # PARAMETERS
 # gam_clone_rate
-#
+# spo_self_rate
 # ------------------
 # TAGS
-# 4, 6
+# 4, 5
 LATE_BRYO_DIO = """
-    p0_size = length(p0.individuals);
+        p0_size = length(p0.individuals);
         clones = p0.sampleIndividuals(asInteger(p0_size*gam_clone_rate));
-        clones.tag = 4; //tag clones
+        femclones = clones[clones.tag ==1];
+        femclones.tag = 41; //tag female clones;
+        maleclones = clones[clones.tag ==2];
+        maleclones.tag = 42; //tag male clones;
     }
     //odd = starts with gam in p0, generates spo into p1
     else {
         p1_size = length(p1.individuals);
         number_selfed = rbinom(1, length(p1_size), spo_self_rate);
         selfed = p1.sampleIndividuals(number_selfed);
-        selfed.tag = 5; //tag sporophytic selfing inds
-
-        num_gam_self = rbinom(1, length(p1_size), gam_self_rate);
-        gam_selfed = p1.sampleIndividuals(num_gam_self);
-        gam_selfed.tag = 6; //tag gametophytic selfing
+        selfed.tag = 5; //tag sporophytic selfing inds;
     }
 """
 
 
-
-
-#
+## PARAMETERS
 # spo_spores_per
-#
+# ------------------
+# TAGS
+# 0, 4, 5
 REPRO_BRYO_MONO_P1 = """
-    // creation of gametes from sporophytes
-    g_1 = genome1;
-    g_2 = genome2;
+    // normal sporophyte: make both female and male spores
+    if (individual.tag == 0) { //focus on one sporophyte
 
-    meiosis_reps = floor(spo_spores_per/2);
-    for (rep in 1:meiosis_reps) {
-        breaks = sim.chromosome.drawBreakpoints(individual);
-        p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
-        p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+        // each meiotic division produces 4 spores
+        meiosis_reps = asInteger(spo_spores_per/4);
+        for (rep in 1:meiosis_reps) {
+
+            // sample a meiosis crossover position.
+            breaks = sim.chromosome.drawBreakpoints(individual);
+
+            // create 2 megaspores and 2 microspores (all recombinant for now)
+            p0.addRecombinant(genome1, genome2, breaks, NULL, NULL, NULL).tag = 0;
+            p0.addRecombinant(genome2, genome1, breaks, NULL, NULL, NULL).tag = 0;
+            p0.addRecombinant(genome1, genome2, breaks, NULL, NULL, NULL).tag = 0;
+            p0.addRecombinant(genome2, genome1, breaks, NULL, NULL, NULL).tag = 0;
+        }
     }
+
+    // cloned gametophytes from last gen: copy and move clones directly to p0,
+    //these cloned gametophyte becomes a 'normal' gametophyte in p0, tag=4 removed
+    if (individual.tag == 4) 
+        p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 0;
+
+    // selfing sporophyte: make selfed each meiotic division
+    if (individual.tag == 5) {
+        meiosis_reps = asInteger(spo_spores_per/4);
+        for (rep in 1:meiosis_reps)
+        breaks1 = sim.chromosome.drawBreakpoints(individual);
+        p0.addRecombinant(genome2, genome1, breaks1, NULL, NULL, NULL).tag = 0;
+        p0.addRecombinant(genome2, genome1, breaks1, NULL, NULL, NULL).tag = 0;
+        p0.addRecombinant(genome1, genome2, breaks1, NULL, NULL, NULL).tag = 0;p0.addRecombinant(genome2, genome1, breaks1, NULL, NULL, NULL).tag = 0;
+
+        breaks2 = sim.chromosome.drawBreakpoints(individual);
+        p0.addRecombinant(genome1, genome2, breaks2, NULL, NULL, NULL).tag = 0;
+        p0.addRecombinant(genome1, genome2, breaks2, NULL, NULL, NULL).tag = 0;
+        p0.addRecombinant(genome2, genome1, breaks2, NULL, NULL, NULL).tag = 0;
+
+        // add the diploid selfed 
+        p0.addRecombinant(genome1, genome2, breaks1, genome2, genome1, breaks2).tag = 5;
+
+        }
 """
 
-
-#
-# gam_sporophytes_per (was spo_per_gam)
-# gam_clone_rate
-# gam_clone_number
-# gam_self_rate
-# gam_maternal_effect (was Maternal_weight)
-#
+## PARAMETERS
+# 
+# ------------------
+# TAGS
+# 0, 4, 5
 REPRO_BRYO_MONO_P0 = """
-    reproduction_opportunity_count = gam_sporophytes_per;
+    // p0 at this point contains microspores and megaspores
+    // normal gametophyte: makes both archegonia and antheridia
+    if (individual.tag == 0) {
 
-    // clones give the focal individual extra opportunities to reproduce
-    if (runif(1) <= gam_clone_rate) {
-        reproduction_opportunity_count = reproduction_opportunity_count
-        + (gam_clone_number * gam_sporophytes_per);
+        // each megaspore makes N archegonia, each of which contains one egg
+        eggs = gam_archegonia_per;
+        for (egg in 1:eggs) {
+
+            // sample a sperm from p0; each microspore creates many sperm
+            sperm = p0.sampleIndividuals(1);
+            //note, the sperm will NOT be removed from the pool, because it is actually
+            //a pool of microspores, which can produce thousands of clonal sperm
+            
+            if (sperm.size() == 1) {
+
+                // create zygote and set tag to 0
+                child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
+                child.tag = 0;
+
+                // store maternal fitness to apply maternal effects later (in survival).
+                if (gam_maternal_effect > 0)
+                    child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+            }
+        }
     }
 
-    for (repro in seqLen(reproduction_opportunity_count)) {
-
-	    // this is selfing using two identical gametes – intragametophytic selfing
-        if (runif(1) <= gam_self_rate) {
-            p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
+    // gametophytic clone: add gametophyte to p1 and set tag=4.
+    if (individual.tag == 4) {
+        for (i in 1:gam_clones_per) {
+            p1.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 4;
         }
+    }
 
-        // intergametophytic selfing might happen below, by chance
-        else {
-            sperm = p0.sampleIndividuals(1);
-            child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
+    // sporophytic selfed: move into p1 and set tag=0.
+    if (individual.tag == 5) 
+        p1.addCloned(individual).tag = 0;
+"""
 
-            // Mother's fitness affects sporophyte fitness; see survival()
-            if (gam_maternal_effect > 0)
-                child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
-        }
+LATE_BRYO_MONO = """
+//odd = starts with gam in p0, generates spo into p1
+    p0_size = length(p0.individuals);
+    //tag gametophytic clones
+    p0.sampleIndividuals(asInteger(p0_size*gam_clone_rate)).tag=4;
+    }
+    //odd = starts with gam in p0, generates spo into p1
+    else {
+        p1_size = length(p1.individuals);
+        number_selfed = rbinom(1, length(p1_size), spo_self_rate);
+        selfed = p1.sampleIndividuals(number_selfed);
+        selfed.tag = 5; //tag sporophytic selfing inds;
     }
 """

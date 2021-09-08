@@ -4,7 +4,7 @@
 A returned object class from a shadie simulation call.
 """
 
-from typing import List, Optional, Union, Iterable
+from typing import List, Optional, Iterable, Union
 import numpy as np
 import pyslim
 import tskit
@@ -13,6 +13,7 @@ import pandas as pd
 import scipy.stats
 from loguru import logger
 
+import toyplot
 from toytree.utils.tree_sequence.src.toytree_sequence import ToyTreeSequence
 from toytree.utils.utils import ScrollableCanvas
 from shadie.chromosome.src.classes import ChromosomeBase
@@ -135,16 +136,21 @@ class PureSlim:
         # get a list of Series
         for rep in range(reps):
             seed = rng.integers(2**31)
-            tts = ToyTreeSequence(self._tree_sequence, sample=sample, seed=seed)
-            samples = np.arange(tts.sample[0])
+            tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
+            samples = np.arange(tts.sample[0] + tts.sample[1])
             sample_0 = samples[:tts.sample[0]]
+            sample_1 = samples[tts.sample[0]:]
 
             stats = pd.Series(
                 index=["theta_0", "theta_1", "Fst_01", "Dist_01", "D_Taj_0", "D_Taj_1"],
                 name=str(rep),
                 data=[
                     tts.tree_sequence.diversity(sample_0),
+                    tts.tree_sequence.diversity(sample_1),
+                    tts.tree_sequence.Fst([sample_0, sample_1]),
+                    tts.tree_sequence.divergence([sample_0, sample_1]),
                     tts.tree_sequence.Tajimas_D(sample_0),
+                    tts.tree_sequence.Tajimas_D(sample_1),
                 ],
                 dtype=float,
             )
@@ -292,9 +298,40 @@ class PureSlim:
 
         return canvas, axes, mark
 
+    def draw_stats(
+        self,
+        stat: str="diversity",
+        window_size: int=20_000,
+        sample: Union[int, Iterable[int]]=6,
+        ):
+        """Return a toyplot drawing of a statistic across the genome.
+
+        """
+        if stat == "diversity":
+            values = self.tree_sequence.diversity(
+                sample_sets=self.tree_sequence.samples()[:sample], 
+                windows=np.linspace(0, self.tree_sequence.sequence_length, 20)
+            )           
+        
+        # draw canvas...
+        canvas, axes, mark  = toyplot.fill(
+            values, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80)
+        )
+
+        # style axes
+        axes.x.ticks.show = True
+        axes.x.ticks.locator = toyplot.locator.Extended(only_inside=True)
+        axes.y.ticks.labels.angle = -90
+        axes.y.ticks.show = True
+        axes.y.ticks.locator = toyplot.locator.Extended(only_inside=True, count=5)        
+        axes.label.offset = 20
+        axes.label.text = f"{stat} in {int(window_size / 1000)}kb windows"
+        return canvas, axes, mark
 
 
-class PureSlim_TwoPop:
+
+
+class PureSlim_TwoPops:
     """"Loads and merges two TreeSequence files with ancestral burn-in
     from a pure SLiM simulation
     
@@ -461,6 +498,44 @@ class PureSlim_TwoPop:
         npop0 = len(inds_alive_in_pop0)
         npop1 = len(inds_alive_in_pop1)
         logger.info(f"inds alive at time=0; simpop0={npop0}, simpop1={npop1}")
+    
+
+    def alt_stats(self, sample:int = 10, seed = 123):
+        inds_alive_in_pop0 = self.tree_sequence.individuals_alive_at(time=0, population=0)
+        inds_alive_in_pop1 = self.tree_sequence.individuals_alive_at(time=0, population=1)
+
+        rng = np.random.default_rng(seed)
+
+        sample0 = rng.choice(inds_alive_in_pop0, sample, replace=False)
+        sample1 = rng.choice(inds_alive_in_pop1, sample, replace=False)
+
+        nodes0 = []
+        nodes1 = []
+
+        for i in sample0:
+           nodes0.extend(self.tree_sequence.individual(i).nodes)
+        for i in sample1:
+           nodes1.extend(self.tree_sequence.individual(i).nodes)
+
+        rng = np.random.default_rng(seed)
+        data = []
+        stats = pd.Series(
+            index=["theta_0", "theta_1", "Fst_01", "Dist_01", "D_Taj_0", "D_Taj_1"],
+            name=str(rep),
+            data=[
+                self.tree_sequence.diversity(nodes0),
+                self.tree_sequence.diversity(nodes1),
+                self.tree_sequence.Fst([nodes0, nodes1]),
+                self.tree_sequence.divergence([nodes0, nodes1]),
+                self.tree_sequence.Tajimas_D(nodes1),
+                self.tree_sequence.Tajimas_D(nodes0),
+            ],
+            dtype=float,
+        )
+        data.append(stats)
+
+        # concat to a dataframe
+        data = pd.concat(data, axis=1).T
 
     def stats(
         self,
@@ -497,8 +572,6 @@ class PureSlim_TwoPop:
             tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
             samples = np.arange(tts.sample[0] + tts.sample[1])
             sample_0 = samples[:tts.sample[0]]
-            sample_0_nodes = []
-            
             sample_1 = samples[tts.sample[0]:]
 
             stats = pd.Series(
@@ -538,7 +611,6 @@ class PureSlim_TwoPop:
             data=np.vstack(confs),
         )
         return data
-
 
     def draw_tree(
         self,
@@ -585,7 +657,6 @@ class PureSlim_TwoPop:
                 axes.vlines(self.generations, style=style)
         return canvas, axes, marks
 
-
     def draw_tree_sequence(
         self,
         start: int=0,
@@ -627,33 +698,79 @@ class PureSlim_TwoPop:
         )
 
         # add chromosome to top axis
-        self.chromosome.draw(axes=ax0)
-        # ax0.y.show = False
-        # ax0.x.ticks.show = True
-        ax0.x.ticks.near = 5
-        ax0.x.ticks.far = 0
-        # ax0.fill(
-            # [0, 1], [0, 0], [1, 1], 
-            # color='green',
-        # )
-        # ax0.x.ticks.locator = toyplot.locator.Extended(count=8)
-
-
-        # ntrees = len(tts)
-        # tmax = start + min(ntrees, max_trees)
-        # breaks = tts.tree_sequence.breakpoints(True)[start: tmax + 1]
-        # cend = breaks[-1]
-        # print(cend)
-
-        # cdat = self.chromosome.data.loc[start:tmax]
-
-
+        if self.chromosome is not None:
+            self.chromosome.draw(axes=ax0)
+            # ax0.y.show = False
+            # ax0.x.ticks.show = True
+            ax0.x.ticks.near = 5
+            ax0.x.ticks.far = 0
 
         # add generation line showing where SLiM simulation ended.
+        # only add if not much higher than highest tree height.
+        # thsi could be faster by not building all these trees...
+        top_root = max([i.treenode.height for i in tts][start:start+max_trees])
         if show_generation_line:
-            axes.hlines(
-                self.generations,
-                style={"stroke-dasharray": "4,2", "stroke-opacity": 0.4}
-            )
+            if self.generations < top_root + top_root * 0.1:
+                axes.hlines(
+                    self.generations,
+                    style={"stroke-dasharray": "4,2", "stroke-opacity": 0.4}
+                )
 
+        return canvas, axes, mark
+
+    def draw_stats(
+        self,
+        stat: str="diversity",
+        window_size: int=20_000,
+        sample: Union[int, Iterable[int]]=6,
+        reps: int=1,
+        seed: Optional[int]=None,
+        ):
+        """Return a toyplot drawing of a statistic across the genome.
+        
+        If reps > 1 the measurement is repeated on multiple sets of 
+        random samples of size `sample`, and the returned statistic
+        is the mean with +/- 1 stdev shown. 
+
+        Parameters
+        ----------
+        """
+        # select a supported statistic to measure
+        if stat == "diversity":
+            func = self.tree_sequence.diversity
+        else:
+            raise NotImplementedError(f"stat {stat} on the TODO list...")
+
+        # repeat measurement over many random sampled replicates
+        rng = np.random.default_rng(seed)
+        rep_values = []
+        for _ in range(reps):
+            samples = rng.choice(self.tree_sequence.samples(), sample, replace=False)
+            values = func(
+                sample_sets=samples,
+                windows=np.linspace(
+                    start=0, 
+                    stop=self.tree_sequence.sequence_length, 
+                    num=round(self.tree_sequence.sequence_length / window_size)
+                )
+            )
+            rep_values.append(values)
+        
+        # get mean and std
+        means = np.array(rep_values).mean(axis=0)
+        stds = np.array(rep_values).mean(axis=0)        
+
+        # draw canvas...
+        canvas, axes, mark  = toyplot.fill(
+            means, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80)
+        )
+
+        # style axes
+        axes.x.ticks.show = True
+        axes.x.ticks.locator = toyplot.locator.Extended(only_inside=True)
+        axes.y.ticks.labels.angle = -90
+        axes.y.ticks.show = True
+        axes.y.ticks.locator = toyplot.locator.Extended(only_inside=True, count=5)        
+        axes.label.offset = 20
+        axes.label.text = f"{stat} in {int(window_size / 1000)}kb windows"
         return canvas, axes, mark
