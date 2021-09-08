@@ -123,6 +123,14 @@ class AngiospermDioecious(AngiospermBase):
         """Defines the subpopulations and males/females.
         This overrides the NonWrightFisher class function of same name.
         """
+        if self.model.metadata['file_in']:
+            self.model._read_from_file(tag_scripts =[ "p1.individuals.tag=0"])
+        else:
+            self.model.early(
+                time=1,
+                scripts=EARLY1_ANGIO,
+                comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
+            )
 
     def _add_mode_scripts(self):
         """scripts specific to this organism."""
@@ -231,9 +239,10 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.angiosperm_monoecious(
+        mod.reproduction.angiosperm_dioecious(
             spo_pop_size=1000, 
             gam_pop_size=1000,
+            spo_female_to_male_ratio = (1,1),
         )
 
     print(mod.script)
