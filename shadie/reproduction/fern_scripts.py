@@ -439,9 +439,9 @@ REPRO_PTER_HETEROSPORE_P1 = """
             // sample meiosis crossover position to generate 4 microspores
             // male outcross
             breaks_m = sim.chromosome.drawBreakpoints(individual);
-            child1 = p0.addRecombinant(NULL, NULL, NULL, genome2, genome1, breaks_m).tag;
-            child2 = p0.addRecombinant(NULL, NULL, NULL, genome1, genome2, breaks_m).tag;
-            child3 = p0.addRecombinant(genome2, genome1, breaks_m, NULL, NULL, NULL).tag;
+            child1 = p0.addRecombinant(NULL, NULL, NULL, genome2, genome1, breaks_m);
+            child2 = p0.addRecombinant(NULL, NULL, NULL, genome1, genome2, breaks_m);
+            child3 = p0.addRecombinant(genome2, genome1, breaks_m, NULL, NULL, NULL);
 
             //only one megaspore will be produced, used for the new selfed sporophyte
             breaks_f = sim.chromosome.drawBreakpoints(individual);
