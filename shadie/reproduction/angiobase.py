@@ -20,6 +20,8 @@ from shadie.reproduction.scripts import (
     SURV,
     SPO_MATERNAL_EFFECT_ON_P0,
     SUBSTITUTION,
+    P0_FITNESS_SCALE_DEFAULT,
+    EARLY,
 )
 from shadie.reproduction.angio_scripts_opt import (
     REPRO_ANGIO_DIO_P1,
@@ -30,6 +32,7 @@ from shadie.reproduction.angio_scripts_opt import (
     LATE_ANGIO_MONO,
     EARLY1_ANGIO,
     ANGIO_P0_SURV,
+    ANGIO_DIO_FITNESS_SCALE,
 )
 
 DTYPES = ("d", "dio", "dioecy", "dioecious",)
@@ -118,6 +121,7 @@ class AngiospermDioecious(AngiospermBase):
         # specific organism functions
         self._define_subpopulations()
         self._add_mode_scripts()
+        self._add_early_script()
 
     def _define_subpopulations(self):
         """Defines the subpopulations and males/females.
@@ -132,8 +136,27 @@ class AngiospermDioecious(AngiospermBase):
                 comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
             )
 
+    def _add_early_script(self):
+        """
+        Defines the early() callbacks for each gen.
+        This overrides the NonWrightFisher class function of same name.
+        """
+        early_script = (EARLY.format(
+            p0_fitnessScaling= ANGIO_DIO_FITNESS_SCALE,
+            activate=self._activate_str,
+            deactivate=self._deactivate_str
+            )
+        )
+
+        self.model.early(
+            time=None,
+            scripts=early_script,
+            comment="alternation of generations",
+        )
+
     def _add_mode_scripts(self):
         """scripts specific to this organism."""
+        # add reproduction calls
         self.model.repro(
             population="p1",
             scripts=REPRO_ANGIO_DIO_P1,
@@ -172,13 +195,14 @@ class AngiospermMonoecious(AngiospermBase):
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
-        # methods inherited from parent NonWrightFisher class
+        # methods inherited from parent AngiospermBase class
         self._set_mutation_rates()
         self._add_shared_mode_scripts()
 
         # methods inherited from parent NonWrightFisher class
         self._add_initialize_constants()
         self._add_alternation_of_generations()
+        self._add_early_script()
         self._write_trees_file()
 
         # specific organism functions
@@ -197,7 +221,7 @@ class AngiospermMonoecious(AngiospermBase):
             scripts=REPRO_ANGIO_MONO_P0,
             comment="generates gametes from sporophytes"
         )
-        
+
         # add late call
         substitution_script = (
             SUBSTITUTION.format(**{'muts': self._substitution_str,
