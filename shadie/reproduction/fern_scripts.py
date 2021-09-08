@@ -378,7 +378,7 @@ REPRO_PTER_HETEROSPORE_P1 = """
         //chance of creating megaspores
         strobilus_female_ratio = rs_megasporangia_per/rs_microsporangia_per;
         if (runif(1) < strobilus_female_ratio){
-        	megaspores = asInteger(megasporangia_megaspores_per*rs_megasporangia_per)
+        	megaspores = asInteger(megasporangia_megaspores_per*rs_megasporangia_per);
             meiosis_reps = megaspores;
             for (rep in 1:meiosis_reps){
                 breaks = sim.chromosome.drawBreakpoints(individual);
