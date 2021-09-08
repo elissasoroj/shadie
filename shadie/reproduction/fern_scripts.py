@@ -121,7 +121,7 @@ REPRO_PTER_HOMOSPORE_P1 = """
     if (individual.tag == 45) {
         //make clones and move to p0 as diploids
         for (i in 1:spo_clones_per)
-            p0.addClone(individual).tag = 44;
+            p0.addCloned(individual).tag = 44;
         
         //individuals also selfs    
         //perform meiosis twice for the selfed diploid
@@ -199,7 +199,7 @@ REPRO_PTER_HOMOSPORE_P1 = """
     if (individual.tag == 46){ 
     	//make clones and move to p0 as diploids
         for (i in 1:spo_clones_per)
-            p0.addClone(individual).tag = 44;
+            p0.addCloned(individual).tag = 44;
 
     	breaks = sim.chromosome.drawBreakpoints(individual);
         p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=6;          
