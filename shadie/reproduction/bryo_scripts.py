@@ -138,7 +138,7 @@ REPRO_BRYO_DIO_P0 = """
 # TAGS
 # 4, 5
 LATE_BRYO_DIO = """
-    p0_size = length(p0.individuals);
+        p0_size = length(p0.individuals);
         clones = p0.sampleIndividuals(asInteger(p0_size*gam_clone_rate));
         femclones = clones[clones.tag ==1];
         femclones.tag = 41; //tag female clones;
