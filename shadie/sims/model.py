@@ -116,11 +116,12 @@ class Model(AbstractContextManager):
         """Chromosome object with genome structure."""
         
         # hidden attributes set by .initialize()
-        self._file_in: str=None
-        self._file_out: str=None
-        self._pop_size: int=None
-        self._mutation_rate: float=None
-        self._recomb_rate: float=None
+        self.metadata = {
+            'file_in': None,
+            'file_out': None,
+            'mutation_rate': None,
+            'recomb_rate': None,    
+        }
 
         self.reproduction = ReproductionApi(self)
         """API to access reproduction functions."""
@@ -242,10 +243,12 @@ class Model(AbstractContextManager):
         self.chromosome = deepcopy(chromosome)
         self.chromosome._skip_neutral_mutations = skip_neutral_mutations
         self.sim_time = sim_time
-        self._file_in = file_in
-        self._file_out = file_out
-        self._mutation_rate = mutation_rate
-        self._recomb_rate = recomb_rate
+        self.metadata.update({
+            'file_in': file_in,
+            'file_out': file_out,
+            'mutation_rate': mutation_rate,
+            'recomb_rate': recomb_rate,
+        })
 
         self.map['initialize'].append({
             'mutation_rate': mutation_rate,
