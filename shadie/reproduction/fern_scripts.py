@@ -554,7 +554,7 @@ REPRO_PTER_HETEROSPORE_P0 = """
         eggs = gam_archegonia_per;
         //fertilize each egg
         for (rep in 1:eggs) {
-            sperm = p0.sampleIndividuals(1, tag==2); //find a microspore
+            sperm = p0.sampleIndividuals(1, tag=2); //find a microspore
             //NOTE: each microspore gives rise to a male gametophyte, which will
             //produce many antheridia, giving rise to thousands of clonal sperm
             //because of this, sperm is not removed from the mating pool when used
