@@ -345,9 +345,9 @@ LATE_PTER_HOMOSPORE = """
 REPRO_PTER_HETEROSPORE_P1 = """
     g_1 = genome1;
     g_2 = genome2;
-
+    
     //normal sporophyte makes female and male spores
-    if (individual.tag == 0) { 
+    if (individual.tag == 0) {
         //chance of creating megaspores
         strobilus_female_ratio = rs_megasporangia_per/(rs_microsporangia_per+rs_megasporangia_per);
         if (runif(1) < strobilus_female_ratio){
@@ -365,17 +365,17 @@ REPRO_PTER_HETEROSPORE_P1 = """
         }
         //else make microspores
         else {
-        	//4 microspores per meiosis rep
-            meiosis_reps = asInteger((microsporangia_microspores_per*microsporangia_microspores_per)/4);
+            //4 microspores per meiosis rep
+            meiosis_reps = asInteger((rs_megasporangia_per*microsporangia_microspores_per)/4);
             for (rep in 1:meiosis_reps){
                 breaks = sim.chromosome.drawBreakpoints(individual);
-                child1 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
-	            child2 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-	            child3 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
-	            child4 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-	            
-	            children = c(child1, child2, child3, child4);
-	            children.tag = 2;
+                child1 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
+                child2 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+                child3 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
+                child4 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+                
+                children = c(child1, child2, child3, child4);
+                children.tag = 2;
                 
                 // Mother's fitness affects gametophyte fitness; see survival()
                 if (spo_maternal_effect > 0){
@@ -394,7 +394,7 @@ REPRO_PTER_HETEROSPORE_P1 = """
         //chance of creating megaspores
         strobilus_female_ratio = rs_megasporangia_per/(rs_microsporangia_per+rs_megasporangia_per);
         if (runif(1) < strobilus_female_ratio){
-        	megaspores = asInteger(megasporangia_megaspores_per*rs_megasporangia_per);
+            megaspores = asInteger(megasporangia_megaspores_per*rs_megasporangia_per);
             meiosis_reps = megaspores;
             for (rep in 1:meiosis_reps){
                 breaks = sim.chromosome.drawBreakpoints(individual);
@@ -410,17 +410,17 @@ REPRO_PTER_HETEROSPORE_P1 = """
         }
         //else make microspores
         else {
-        	//4 microspores per meiosis rep
-            meiosis_reps = asInteger((microsporangia_microspores_per*microsporangia_microspores_per)/4);
+            //4 microspores per meiosis rep
+            meiosis_reps = asInteger((rs_megasporangia_per*microsporangia_microspores_per)/4);
             for (rep in 1:meiosis_reps){
                 breaks = sim.chromosome.drawBreakpoints(individual);
-                child1 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
-	            child2 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-	            child3 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
-	            child4 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-	            
-	            children = c(child1, child2, child3, child4);
-	            children.tag = 2;
+                child1 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
+                child2 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+                child3 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
+                child4 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
+                
+                children = c(child1, child2, child3, child4);
+                children.tag = 2;
                 
                 // Mother's fitness affects gametophyte fitness; see survival()
                 if (spo_maternal_effect > 0){
@@ -435,112 +435,111 @@ REPRO_PTER_HETEROSPORE_P1 = """
         megaspores = asInteger(megasporangia_megaspores_per*rs_megasporangia_per);
         meiosis_reps = megaspores;
         for (rep in 1:meiosis_reps) {
-
+            
             // sample meiosis crossover position to generate 4 microspores
             // male outcross
             breaks_m = sim.chromosome.drawBreakpoints(individual);
             child1 = p0.addRecombinant(NULL, NULL, NULL, genome2, genome1, breaks_m);
             child2 = p0.addRecombinant(NULL, NULL, NULL, genome1, genome2, breaks_m);
             child3 = p0.addRecombinant(genome2, genome1, breaks_m, NULL, NULL, NULL);
-
+            
             //only one megaspore will be produced, used for the new selfed sporophyte
             breaks_f = sim.chromosome.drawBreakpoints(individual);
             
             // add the diploid selfed 
             p0.addRecombinant(genome1, genome2, breaks_m, genome2, genome1, breaks_f).tag = 5;
-
+            
             //maternal effects
             children = c(child1, child2, child3);
             children.tag = 2;
-
+            
             // Mother's fitness affects gametophyte fitness; see survival()
             if (spo_maternal_effect > 0){
                 children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
             }
         }
-
+        
         // perform any additional meiosis rounds for male
         microspores = microsporangia_microspores_per*rs_microsporangia_per;
         male_meiosis_reps = asInteger(microspores/4) - (meiosis_reps*4);
         for (rep in 1:male_meiosis_reps){
-
+            
             // sample a meiosis crossover position
             breaks = sim.chromosome.drawBreakpoints(individual);
-
+            
             // create 4 recombinant sperm, set tag to 2.
-            child1 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
+            child1 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
             child2 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-            child3 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
+            child3 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
             child4 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-
+            
             children = c(child1, child2, child3, child4);
-	        children.tag = 2;
-
-	        // Mother's fitness affects gametophyte fitness; see survival()
+            children.tag = 2;
+            
+            // Mother's fitness affects gametophyte fitness; see survival()
             if (spo_maternal_effect > 0){
                 children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
-        	}
-   		}
-   	}
-
-   	if (individual.tag == 45) { //sporophytic selfing and cloning
+            }
+        }
+    }
+    
+    if (individual.tag == 45) { //sporophytic selfing and cloning
         //make sporophytic clones and save to p0
         for (i in 1:spo_clones_per)
             p0.addCloned(individual).tag = 44;
-
+        
         // for each megaspore generated by the sporophyte, perform meiosis twice
         megaspores = asInteger(megasporangia_megaspores_per*rs_megasporangia_per);
         meiosis_reps = megaspores;
         for (rep in 1:meiosis_reps) {
-
+            
             // sample meiosis crossover position to generate 4 microspores
             // male outcross
             breaks_m = sim.chromosome.drawBreakpoints(individual);
             child1 = p0.addRecombinant(NULL, NULL, NULL, genome2, genome1, breaks_m);
             child2 = p0.addRecombinant(NULL, NULL, NULL, genome1, genome2, breaks_m);
             child3 = p0.addRecombinant(genome2, genome1, breaks_m, NULL, NULL, NULL);
-
+            
             //only one megaspore will be produced, used for the new selfed sporophyte
             breaks_f = sim.chromosome.drawBreakpoints(individual);
             
             // add the diploid selfed 
             p0.addRecombinant(genome1, genome2, breaks_m, genome2, genome1, breaks_f);
-
+            
             //maternal effects
             children = c(child1, child2, child3);
             children.tag = 2;
-
+            
             // Mother's fitness affects gametophyte fitness; see survival()
             if (spo_maternal_effect > 0){
                 children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
             }
-
+        
         }
-
+        
         // perform any additional meiosis rounds for male
         microspores = microsporangia_microspores_per*rs_microsporangia_per;
         male_meiosis_reps = asInteger(microspores/4) - meiosis_reps;
         for (rep in 1:male_meiosis_reps){
-
+            
             // sample a meiosis crossover position
             breaks = sim.chromosome.drawBreakpoints(individual);
-
+            
             // create 4 recombinant sperm, set tag to 2.
-            child1 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
+            child1 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
             child2 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-            child3 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
+            child3 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);
             child4 = p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL);
-
+            
             children = c(child1, child2, child3, child4);
-	        children.tag = 2;
-
-	        // Mother's fitness affects gametophyte fitness; see survival()
+            children.tag = 2;
+            
+            // Mother's fitness affects gametophyte fitness; see survival()
             if (spo_maternal_effect > 0){
                 children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
-        	}
-   		}
-   	}
-
+            }
+        }
+    }
 """
 
 # PARAMETERS
