@@ -169,7 +169,7 @@ REPRO_ANGIO_DIO_P0  = """
 		if (pollen_comp == T) {
 			
 			// sperm land on stigma
-			pollen_pool = p0.sampleIndividuals(pollen_per_stigma, tag=2);
+			pollen_pool = p0.sampleIndividuals(pollen_comp_stigma_pollen_per, tag=2);
 			for (pollen in pollen_pool) {
 				// store fitness value
 				pollen.setValue("fitness", p0.cachedFitness(pollen.index));

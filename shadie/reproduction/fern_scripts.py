@@ -3,6 +3,8 @@
 """
 Pteridophyte specific SLIM script snippets used for string substitution.
 """
+PTER_HETERO_FITNESS_SCALE = """males = length(p0.individuals[p0.individuals.tag ==2]);
+        p0.fitnessScaling = (gam_pop_size / (p0.individualCount-males));"""
 
 # PARAMETERS
 #spo_spore_per
