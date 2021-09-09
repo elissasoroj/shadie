@@ -264,23 +264,25 @@ REPRO_ANGIO_MONO_P1="""
 		//calculate chanec a give microsporophyte will be successful
 		//total number of ovules in gametophyte population:
 		ovule_pop = spo_flowers_per*flower_ovules_per*length(p1.individuals);
-		microsporocytes = asInteger(spo_flowers_per*flower_anthers_per*anther_pollen_per/4);
-		if (runif(1) < pollen_comp_stigma_pollen_per*ovule_pop/microsporocytes){
+		males = length(p1.individuals[p1.individuals.tag==2]);
+		successful_pollen = rbinom(1,pollen_comp_stigma_pollen_per*ovule_pop, 1/males);
+		pollen_chance = pollen_comp_stigma_pollen_per*ovule_pop/males;
+		for (count in 1:successful_pollen){
 			
-			if (runif(1) < 0.25^4){
+			if (runif(1) < pollen_chance^3){
 				breaks = sim.chromosome.drawBreakpoints(individual);
 				p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 				p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
 				p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 				p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
 			}
-			else if (runif(1) < (0.25)^3){
+			else if (runif(1) < (pollen_chance)^2){
 				breaks = sim.chromosome.drawBreakpoints(individual);
 				p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 				p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
 				p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 			}
-			else if (runif(1) < (0.25)^2){
+			else if (runif(1) < (pollen_chance)^1){
 				breaks = sim.chromosome.drawBreakpoints(individual);
 				p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 				p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
@@ -314,30 +316,26 @@ REPRO_ANGIO_MONO_P1="""
 		}
 		
 		//make microspores (pollen)
-		if (runif(1) < pollen_comp_stigma_pollen_per*ovule_pop/microsporocytes){
+		ovule_pop = spo_flowers_per*flower_ovules_per*length(p1.individuals);
+		males = length(p1.individuals[p1.individuals.tag==2]);
+		successful_pollen = rbinom(1,pollen_comp_stigma_pollen_per*ovule_pop, 1/males);
+		pollen_chance = pollen_comp_stigma_pollen_per*ovule_pop/males;
+		for (count in 1:successful_pollen){
 			
-			if (runif(1) < 0.25^4){
+			if (runif(1) < pollen_chance^3){
 				breaks = sim.chromosome.drawBreakpoints(individual);
 				p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 				p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
 				p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 				p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
 			}
-			else if (runif(1) < (0.25)^3){
+			else if (runif(1) < (pollen_chance)^2){
 				breaks = sim.chromosome.drawBreakpoints(individual);
 				p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 				p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
 				p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
-				
-				children = c(child1, child2, child3);
-				children.tag = 2;
-				
-				// Mother's fitness affects gametophyte fitness; see survival()
-				if (spo_maternal_effect > 0){
-					children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
-				}
 			}
-			else if (runif(1) < (0.25)^2){
+			else if (runif(1) < (pollen_chance)^1){
 				breaks = sim.chromosome.drawBreakpoints(individual);
 				p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 				p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
@@ -368,33 +366,34 @@ REPRO_ANGIO_MONO_P1="""
 			
 			//make extra pollen, if lucky
 			//make microspores (pollen)
-			if (runif(1) < pollen_comp_stigma_pollen_per*ovule_pop/microsporocytes){
+			ovule_pop = spo_flowers_per*flower_ovules_per*length(p1.individuals);
+			males = length(p1.individuals[p1.individuals.tag==2]);
+			successful_pollen = rbinom(1,pollen_comp_stigma_pollen_per*ovule_pop, 1/males);
+			pollen_chance = pollen_comp_stigma_pollen_per*ovule_pop/males;
+			for (count in 1:successful_pollen){
 				
-				if (runif(1) < 0.25^4){
+				if (runif(1) < pollen_chance^3){
 					breaks = sim.chromosome.drawBreakpoints(individual);
 					p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 					p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
 					p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 					p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
 				}
-				else if (runif(1) < (0.25)^3){
+				else if (runif(1) < (pollen_chance)^2){
 					breaks = sim.chromosome.drawBreakpoints(individual);
 					p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 					p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
 					p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
-					
-					children = c(child1, child2, child3);
-					children.tag = 2;
-					
-					// Mother's fitness affects gametophyte fitness; see survival()
-					if (spo_maternal_effect > 0){
-						children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
-					}
 				}
-				else if (runif(1) < (0.25)^2){
+				else if (runif(1) < (pollen_chance)^1){
 					breaks = sim.chromosome.drawBreakpoints(individual);
 					p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 					p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
+				}
+				else{
+					breaks = sim.chromosome.drawBreakpoints(individual);
+					p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 2;
+				
 				}
 			}
 		}
@@ -421,34 +420,34 @@ REPRO_ANGIO_MONO_P1="""
 			p0.addRecombinant(genome1, genome2, breaks_m, genome2, genome1, breaks_f).tag = 5;
 			
 			//make extra pollen, if lucky
-			//make microspores (pollen)
-			if (runif(1) < pollen_comp_stigma_pollen_per*ovule_pop/microsporocytes){
+			ovule_pop = spo_flowers_per*flower_ovules_per*length(p1.individuals);
+			males = length(p1.individuals[p1.individuals.tag==2]);
+			successful_pollen = rbinom(1,pollen_comp_stigma_pollen_per*ovule_pop, 1/males);
+			pollen_chance = pollen_comp_stigma_pollen_per*ovule_pop/males;
+			for (count in 1:successful_pollen){
 				
-				if (runif(1) < 0.25^4){
+				if (runif(1) < pollen_chance^3){
 					breaks = sim.chromosome.drawBreakpoints(individual);
 					p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 					p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
 					p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 					p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
 				}
-				else if (runif(1) < (0.25)^3){
+				else if (runif(1) < (pollen_chance)^2){
 					breaks = sim.chromosome.drawBreakpoints(individual);
 					p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 					p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
 					p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
-					
-					children = c(child1, child2, child3);
-					children.tag = 2;
-					
-					// Mother's fitness affects gametophyte fitness; see survival()
-					if (spo_maternal_effect > 0){
-						children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
-					}
 				}
-				else if (runif(1) < (0.25)^2){
+				else if (runif(1) < (pollen_chance)^1){
 					breaks = sim.chromosome.drawBreakpoints(individual);
 					p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag=2;
 					p0.addRecombinant(g_2, g_1, breaks, NULL, NULL, NULL).tag=2;
+				}
+				else{
+					breaks = sim.chromosome.drawBreakpoints(individual);
+					p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL).tag = 2;
+				
 				}
 			}
 		}
