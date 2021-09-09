@@ -504,7 +504,7 @@ REPRO_PTER_HETEROSPORE_P1 = """
             breaks_f = sim.chromosome.drawBreakpoints(individual);
             
             // add the diploid selfed 
-            p0.addRecombinant(genome1, genome2, breaks_m, genome2, genome1, breaks_f);
+            p0.addRecombinant(genome1, genome2, breaks_m, genome2, genome1, breaks_f).tag=5;
             
             //maternal effects
             children = c(child1, child2, child3);
