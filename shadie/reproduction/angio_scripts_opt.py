@@ -364,7 +364,7 @@ REPRO_ANGIO_MONO_P1="""
 			breaks_f = sim.chromosome.drawBreakpoints(individual);
 			
 			// add the diploid selfed 
-			p0.addRecombinant(genome_1, genome_2, breaks_m, genome_2, genome_1, breaks_f).tag = 5;
+			p0.addRecombinant(genome1, genome2, breaks_m, genome2, genome1, breaks_f).tag = 5;
 			
 			//make extra pollen, if lucky
 			//make microspores (pollen)
@@ -418,7 +418,7 @@ REPRO_ANGIO_MONO_P1="""
 			breaks_f = sim.chromosome.drawBreakpoints(individual);
 			
 			// add the diploid selfed 
-			p0.addRecombinant(genome_1, genome_2, breaks_m, genome_2, genome_1, breaks_f).tag = 5;
+			p0.addRecombinant(genome1, genome2, breaks_m, genome2, genome1, breaks_f).tag = 5;
 			
 			//make extra pollen, if lucky
 			//make microspores (pollen)
