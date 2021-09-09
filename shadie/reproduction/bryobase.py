@@ -96,7 +96,6 @@ class BryophyteDioicous(BryophyteBase):
         # methods inherited from parent Bryophyte class
         self._set_mutation_rates()
         self._add_shared_mode_scripts()
-        self._add_early_script()
 
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
@@ -203,7 +202,7 @@ if __name__ == "__main__":
 
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=50, file_out="/tmp/test.trees")
-        mod.reproduction.bryophyte_monoicous(
+        mod.reproduction.bryophyte_dioicous(
             spo_pop_size=100,
             gam_pop_size=100,
         )

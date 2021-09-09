@@ -349,7 +349,7 @@ REPRO_PTER_HETEROSPORE_P1 = """
     //normal sporophyte makes female and male spores
     if (individual.tag == 0) { 
         //chance of creating megaspores
-        strobilus_female_ratio = rs_megasporangia_per/rs_microsporangia_per;
+        strobilus_female_ratio = rs_megasporangia_per/(rs_microsporangia_per+rs_megasporangia_per);
         if (runif(1) < strobilus_female_ratio){
             meiosis_reps = asInteger(megasporangia_megaspores_per*rs_megasporangia_per);
             for (rep in 1:meiosis_reps){
@@ -366,7 +366,7 @@ REPRO_PTER_HETEROSPORE_P1 = """
         //else make microspores
         else {
         	//4 microspores per meiosis rep
-            meiosis_reps = asInteger((microsporangia_microspores_per*strobilus_microspores_per)/4);
+            meiosis_reps = asInteger((microsporangia_microspores_per*microsporangia_microspores_per)/4);
             for (rep in 1:meiosis_reps){
                 breaks = sim.chromosome.drawBreakpoints(individual);
                 child1 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          
@@ -392,7 +392,7 @@ REPRO_PTER_HETEROSPORE_P1 = """
         
         //individual can make gametes too
         //chance of creating megaspores
-        strobilus_female_ratio = rs_megasporangia_per/rs_microsporangia_per;
+        strobilus_female_ratio = rs_megasporangia_per/(rs_microsporangia_per+rs_megasporangia_per);
         if (runif(1) < strobilus_female_ratio){
         	megaspores = asInteger(megasporangia_megaspores_per*rs_megasporangia_per);
             meiosis_reps = megaspores;
@@ -411,7 +411,7 @@ REPRO_PTER_HETEROSPORE_P1 = """
         //else make microspores
         else {
         	//4 microspores per meiosis rep
-            meiosis_reps = asInteger((microsporangia_microspores_per*strobilus_microspores_per)/4);
+            meiosis_reps = asInteger((microsporangia_microspores_per*microsporangia_microspores_per)/4);
             for (rep in 1:meiosis_reps){
                 breaks = sim.chromosome.drawBreakpoints(individual);
                 child1 = p0.addRecombinant(g_1, g_2, breaks, NULL, NULL, NULL);          

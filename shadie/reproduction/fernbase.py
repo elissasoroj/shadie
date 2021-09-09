@@ -201,7 +201,7 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.pteridophyte_homosporous(
+        mod.reproduction.pteridophyte_heterosporous(
             spo_pop_size=1000, 
             gam_pop_size=1000,
         )

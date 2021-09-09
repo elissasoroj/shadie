@@ -198,7 +198,6 @@ class PureSlim:
         ----------
         ...
         """
-        self._tree_sequence = self.tree_sequence
         # load as a ToyTreeSequence
         tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
 
@@ -224,7 +223,6 @@ class PureSlim:
             elif marks[0].layout == "l":
                 axes.vlines(self.generations, style=style)
         return canvas, axes, marks
-
 
     def draw_tree_sequence(
         self,
@@ -267,34 +265,23 @@ class PureSlim:
         )
 
         # add chromosome to top axis
-        self.chromosome.draw(axes=ax0)
-        # ax0.y.show = False
-        # ax0.x.ticks.show = True
-        ax0.x.ticks.near = 5
-        ax0.x.ticks.far = 0
-        # ax0.fill(
-            # [0, 1], [0, 0], [1, 1], 
-            # color='green',
-        # )
-        # ax0.x.ticks.locator = toyplot.locator.Extended(count=8)
-
-
-        # ntrees = len(tts)
-        # tmax = start + min(ntrees, max_trees)
-        # breaks = tts.tree_sequence.breakpoints(True)[start: tmax + 1]
-        # cend = breaks[-1]
-        # print(cend)
-
-        # cdat = self.chromosome.data.loc[start:tmax]
-
-
+        if self.chromosome is not None:
+            self.chromosome.draw(axes=ax0)
+            # ax0.y.show = False
+            # ax0.x.ticks.show = True
+            ax0.x.ticks.near = 5
+            ax0.x.ticks.far = 0
 
         # add generation line showing where SLiM simulation ended.
+        # only add if not much higher than highest tree height.
+        # thsi could be faster by not building all these trees...
+        top_root = max([i.treenode.height for i in tts][start:start+max_trees])
         if show_generation_line:
-            axes.hlines(
-                self.generations,
-                style={"stroke-dasharray": "4,2", "stroke-opacity": 0.4}
-            )
+            if self.generations < top_root + top_root * 0.1:
+                axes.hlines(
+                    self.generations,
+                    style={"stroke-dasharray": "4,2", "stroke-opacity": 0.4}
+                )
 
         return canvas, axes, mark
 
@@ -303,19 +290,46 @@ class PureSlim:
         stat: str="diversity",
         window_size: int=20_000,
         sample: Union[int, Iterable[int]]=6,
+        reps: int=1,
+        seed: Optional[int]=None,
         ):
         """Return a toyplot drawing of a statistic across the genome.
-
-        """
-        if stat == "diversity":
-            values = self.tree_sequence.diversity(
-                sample_sets=self.tree_sequence.samples()[:sample], 
-                windows=np.linspace(0, self.tree_sequence.sequence_length, 20)
-            )           
         
+        If reps > 1 the measurement is repeated on multiple sets of 
+        random samples of size `sample`, and the returned statistic
+        is the mean with +/- 1 stdev shown. 
+
+        Parameters
+        ----------
+        """
+        # select a supported statistic to measure
+        if stat == "diversity":
+            func = self.tree_sequence.diversity
+        else:
+            raise NotImplementedError(f"stat {stat} on the TODO list...")
+
+        # repeat measurement over many random sampled replicates
+        rng = np.random.default_rng(seed)
+        rep_values = []
+        for _ in range(reps):
+            samples = rng.choice(self.tree_sequence.samples(), sample, replace=False)
+            values = func(
+                sample_sets=samples,
+                windows=np.linspace(
+                    start=0, 
+                    stop=self.tree_sequence.sequence_length, 
+                    num=round(self.tree_sequence.sequence_length / window_size)
+                )
+            )
+            rep_values.append(values)
+        
+        # get mean and std
+        means = np.array(rep_values).mean(axis=0)
+        stds = np.array(rep_values).mean(axis=0)        
+
         # draw canvas...
         canvas, axes, mark  = toyplot.fill(
-            values, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80)
+            means, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80)
         )
 
         # style axes
@@ -536,7 +550,7 @@ class PureSlim_TwoPops:
 
         # concat to a dataframe
         data = pd.concat(data, axis=1).T
-
+        
     def stats(
         self,
         sample: Union[int, Iterable[int]]=10,
