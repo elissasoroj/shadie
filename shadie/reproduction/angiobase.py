@@ -55,8 +55,8 @@ class AngiospermBase(NonWrightFisher):
     flower_ovules_per: int
     flower_anthers_per: int
     anther_pollen_per: int
-    spo_ovule_success_rate: float
-    spo_pollen_success_rate: float
+    ovule_success_rate: float
+    pollen_success_rate: float
     pollen_comp: Union[bool, str]
     pollen_comp_stigma_pollen_per: int
 

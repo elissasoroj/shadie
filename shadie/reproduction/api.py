@@ -355,8 +355,8 @@ class ReproductionApi:
         flower_ovules_per: int=6,
         flower_anthers_per: int=6,
         anther_pollen_per: int=300,
-        spo_ovule_success_rate: float=1.0,
-        spo_pollen_success_rate: float=1.0,
+        ovule_success_rate: float=1.0,
+        pollen_success_rate: float=1.0,
         pollen_comp: Union[bool, str]=False,
         pollen_comp_stigma_pollen_per: int=8
         ):
@@ -376,8 +376,8 @@ class ReproductionApi:
             flower_ovules_per=flower_ovules_per,
             flower_anthers_per=flower_anthers_per,
             anther_pollen_per=anther_pollen_per,
-            spo_ovule_success_rate=spo_ovule_success_rate,
-            spo_pollen_success_rate=spo_pollen_success_rate,
+            ovule_success_rate=ovule_success_rate,
+            pollen_success_rate=pollen_success_rate,
             pollen_comp=pollen_comp,
             pollen_comp_stigma_pollen_per=pollen_comp_stigma_pollen_per
         ).run()
@@ -400,8 +400,8 @@ class ReproductionApi:
         flower_ovules_per: int=6,
         flower_anthers_per: int=6,
         anther_pollen_per: int=300,
-        spo_ovule_success_rate: float=1.0,
-        spo_pollen_success_rate: float=1.0,
+        ovule_success_rate: float=1.0,
+        pollen_success_rate: float=1.0,
         pollen_comp: Union[bool, str]=False,
         pollen_comp_stigma_pollen_per: int=8
         ):
@@ -423,8 +423,8 @@ class ReproductionApi:
             flower_ovules_per=flower_ovules_per,
             flower_anthers_per=flower_anthers_per,
             anther_pollen_per=anther_pollen_per,
-            spo_ovule_success_rate=spo_ovule_success_rate,
-            spo_pollen_success_rate=spo_pollen_success_rate,
+            ovule_success_rate=ovule_success_rate,
+            pollen_success_rate=pollen_success_rate,
             pollen_comp=pollen_comp,
             pollen_comp_stigma_pollen_per=pollen_comp_stigma_pollen_per
         ).run()
