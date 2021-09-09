@@ -202,12 +202,30 @@ class AngiospermMonoecious(AngiospermBase):
         # methods inherited from parent NonWrightFisher class
         self._add_initialize_constants()
         self._add_alternation_of_generations()
-        self._add_early_script()
         self._write_trees_file()
 
         # specific organism functions
         self._define_subpopulations()
         self._add_mode_scripts()
+        self._add_early_script()
+
+    def _add_early_script(self):
+        """
+        Defines the early() callbacks for each gen.
+        This overrides the NonWrightFisher class function of same name.
+        """
+        early_script = (EARLY.format(
+            p0_fitnessScaling= ANGIO_DIO_FITNESS_SCALE,
+            activate=self._activate_str,
+            deactivate=self._deactivate_str
+            )
+        )
+
+        self.model.early(
+            time=None,
+            scripts=early_script,
+            comment="alternation of generations",
+        )
 
     def _add_mode_scripts(self):
         """scripts specific to this organism."""
@@ -263,10 +281,10 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.angiosperm_dioecious(
+        mod.reproduction.angiosperm_monoecious(
             spo_pop_size=1000, 
             gam_pop_size=1000,
-            spo_female_to_male_ratio = (1,1),
+            #spo_female_to_male_ratio = (1,1),
         )
 
     print(mod.script)
