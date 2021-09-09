@@ -264,7 +264,7 @@ REPRO_ANGIO_MONO_P1="""
 		//calculate chanec a give microsporophyte will be successful
 		//total number of ovules in gametophyte population:
 		ovule_pop = spo_flowers_per*flower_ovules_per*length(p1.individuals);
-		males = length(p1.individuals[p1.individuals.tag==2]);
+		males = length(p1.individuals[p1.individuals.tag==0]);
 		successful_pollen = rbinom(1,pollen_comp_stigma_pollen_per*ovule_pop, 1/males);
 		pollen_chance = pollen_comp_stigma_pollen_per*ovule_pop/males;
 		for (count in 1:successful_pollen){
@@ -317,7 +317,7 @@ REPRO_ANGIO_MONO_P1="""
 		
 		//make microspores (pollen)
 		ovule_pop = spo_flowers_per*flower_ovules_per*length(p1.individuals);
-		males = length(p1.individuals[p1.individuals.tag==2]);
+		males = length(p1.individuals[p1.individuals.tag==0]);
 		successful_pollen = rbinom(1,pollen_comp_stigma_pollen_per*ovule_pop, 1/males);
 		pollen_chance = pollen_comp_stigma_pollen_per*ovule_pop/males;
 		for (count in 1:successful_pollen){
@@ -367,7 +367,7 @@ REPRO_ANGIO_MONO_P1="""
 			//make extra pollen, if lucky
 			//make microspores (pollen)
 			ovule_pop = spo_flowers_per*flower_ovules_per*length(p1.individuals);
-			males = length(p1.individuals[p1.individuals.tag==2]);
+			males = length(p1.individuals[p1.individuals.tag==0]);
 			successful_pollen = rbinom(1,pollen_comp_stigma_pollen_per*ovule_pop, 1/males);
 			pollen_chance = pollen_comp_stigma_pollen_per*ovule_pop/males;
 			for (count in 1:successful_pollen){
@@ -421,7 +421,7 @@ REPRO_ANGIO_MONO_P1="""
 			
 			//make extra pollen, if lucky
 			ovule_pop = spo_flowers_per*flower_ovules_per*length(p1.individuals);
-			males = length(p1.individuals[p1.individuals.tag==2]);
+			males = length(p1.individuals[p1.individuals.tag==0]);
 			successful_pollen = rbinom(1,pollen_comp_stigma_pollen_per*ovule_pop, 1/males);
 			pollen_chance = pollen_comp_stigma_pollen_per*ovule_pop/males;
 			for (count in 1:successful_pollen){
