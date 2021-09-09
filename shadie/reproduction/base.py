@@ -206,7 +206,7 @@ class WrightFisher(ReproductionBase):
     def _define_subpopulations(self):
         """Add a single diploid population. See NonWrightFisher for comparison."""
         if self.model.metadata['file_in']:
-            self.model.read_from_file()
+            self.model._read_from_file(tag_scripts="")
         else:
             self.model.early(
                 time=1,
@@ -254,7 +254,7 @@ if __name__ == "__main__":
     )
 
     with shadie.Model() as mod:
-        mod.initialize(chromosome=chrom, sim_time=1000)
+        mod.initialize(chromosome=chrom, sim_time=1000, file_in = "/tmp/test.trees")
         mod.reproduction.wright_fisher(pop_size=1000)
 
     #mod.write("/tmp/slim.slim")

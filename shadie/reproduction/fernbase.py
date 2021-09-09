@@ -12,6 +12,7 @@ from shadie.reproduction.scripts import (
     GAM_MATERNAL_EFFECT_ON_P1,
     SPO_MATERNAL_EFFECT_ON_P0,
     SUBSTITUTION,
+    EARLY,
 )
 from shadie.reproduction.fern_scripts import (
     REPRO_PTER_HOMOSPORE_P1, 
@@ -19,7 +20,8 @@ from shadie.reproduction.fern_scripts import (
     LATE_PTER_HOMOSPORE,
     REPRO_PTER_HETEROSPORE_P1, 
     REPRO_PTER_HETEROSPORE_P0,
-    LATE_PTER_HETEROSPORE
+    LATE_PTER_HETEROSPORE,
+    PTER_HETERO_FITNESS_SCALE,
 )
 
 DTYPES = ("dioicy", "dioicous", "heterosporous")
@@ -140,12 +142,30 @@ class PteridophyteHeterosporous(PteridophyteBase):
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
         self._add_alternation_of_generations()
-        self._add_early_script()
         self._add_initialize_constants()
         self._write_trees_file()
 
         # mode-specific functions
         self._add_mode_scripts()
+        self._add_early_script()
+
+    def _add_early_script(self):
+        """
+        Defines the early() callbacks for each gen.
+        This overrides the NonWrightFisher class function of same name.
+        """
+        early_script = (EARLY.format(
+            p0_fitnessScaling= PTER_HETERO_FITNESS_SCALE,
+            activate=self._activate_str,
+            deactivate=self._deactivate_str
+            )
+        )
+
+        self.model.early(
+            time=None,
+            scripts=early_script,
+            comment="alternation of generations",
+        )
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
