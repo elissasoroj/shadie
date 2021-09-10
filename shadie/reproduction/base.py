@@ -90,7 +90,7 @@ class NonWrightFisher(ReproductionBase):
             self.model.early(
                 time=1,
                 scripts=[
-                    "sim.addSubpop('p1', spo_pop_size)",
+                    "sim.addSubpop('p1', SPO_POP_SIZE)",
                     "sim.addSubpop('p0', 0)",
                     "p1.individuals.tag = 0",],
                 comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
@@ -122,7 +122,7 @@ class NonWrightFisher(ReproductionBase):
         # add fitness callback for gametophytes based on MutationTypes
         # in the model.chromosome.
         # this will map to sx-sy survival callbacks.
-        idx = 4
+        idx = 6
         activate_scripts = []
         deactivate_scripts = []
         substitutions = []

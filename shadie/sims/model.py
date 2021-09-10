@@ -314,6 +314,7 @@ class Model(AbstractContextManager):
         self,
         population: Union[str, None],
         scripts: Union[str, list],
+        idx:Union[str, None]=None,
         comment: Union[str,None]=None,
         ):
         """Add a custom reproduction() block to the SLiM code map.
@@ -326,6 +327,7 @@ class Model(AbstractContextManager):
         self.map['reproduction'].append({
             'population': population,
             'scripts': scripts,
+            'idx': idx,
             'comment': comment,
         })
 
@@ -343,6 +345,7 @@ class Model(AbstractContextManager):
             'idx': idx,
             'mutation': mutation,
             'scripts': scripts,
+            'idx': idx,
             'comment': comment,
         })
 

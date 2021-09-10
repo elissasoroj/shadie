@@ -22,6 +22,7 @@ from shadie.reproduction.fern_scripts import (
     REPRO_PTER_HETEROSPORE_P0,
     LATE_PTER_HETEROSPORE,
     PTER_HETERO_FITNESS_SCALE,
+    PTER_FUNCTIONS,
 )
 
 DTYPES = ("dioicy", "dioicous", "heterosporous")
@@ -65,16 +66,18 @@ class PteridophyteBase(NonWrightFisher):
     def _add_shared_mode_scripts(self):
         """Adds scripts shared by homosp and heterosp superclasses.
 
-        Adds a survival script to define the random_chance_of_death,
-        maternal effects, and survival=0 for alternation of generations.
+        Adds shadie-defined functions and a survival script to define 
+        the random_chance_of_death, maternal effects, and survival=0 for 
+        alternation of generations.
         """
+        self.model.custom(scripts=PTER_FUNCTIONS, comment = "shadie Definitions")
+
         survival_script = (
-            SURV.format(
-                p0_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
-                p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
-                p0survival=""
-            )
-        )
+                    SURV.format(
+                        p0_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
+                        p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+                        p0survival=""
+                    ))
         self.model.custom(survival_script, comment="maternal effects and survival")
 
 @dataclass
@@ -104,11 +107,13 @@ class PteridophyteHomosporous(PteridophyteBase):
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
         self.model.repro(
+            idx = "s5",
             population="p1",
             scripts=REPRO_PTER_HOMOSPORE_P1,
             comment="generates gametes from sporophytes"
         )
         self.model.repro(
+            idx = "s6",
             population="p0",
             scripts=REPRO_PTER_HOMOSPORE_P0,
             comment="generates gametes from sporophytes"
@@ -171,11 +176,13 @@ class PteridophyteHeterosporous(PteridophyteBase):
         """Add reproduction scripts unique to heterosporous bryo."""
         self.model.repro(
             population="p1",
+            idx = 5,
             scripts=REPRO_PTER_HETEROSPORE_P1,
             comment="generates gametes from sporophytes"
         )
         self.model.repro(
             population="p0",
+            idx = 6,
             scripts=REPRO_PTER_HETEROSPORE_P0,
             comment="generates gametes from sporophytes"
         )
@@ -207,8 +214,8 @@ if __name__ == "__main__":
         # OK: a good use case for logger.warning('fitness is too high...')
         
         # define elements types
-        e0 = shadie.etype([m0, m1], [1, 2])
-        e1 = shadie.etype([m1], [1])
+        e0 = shadie.EXON
+        e1 = shadie.INTRON
         
         # design chromosome of elements
         chrom = shadie.chromosome.random(
