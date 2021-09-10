@@ -22,7 +22,8 @@ from shadie.reproduction.fern_scripts import (
     REPRO_PTER_HETEROSPORE_P0,
     LATE_PTER_HETEROSPORE,
     PTER_HETERO_FITNESS_SCALE,
-    PTER_FUNCTIONS,
+    FUNCTIONS_PTER_HOMOSPORE,
+    FUNCTIONS_PTER_HETEROSPORE,
 )
 
 DTYPES = ("dioicy", "dioicous", "heterosporous")
@@ -70,8 +71,6 @@ class PteridophyteBase(NonWrightFisher):
         the random_chance_of_death, maternal effects, and survival=0 for 
         alternation of generations.
         """
-        self.model.custom(scripts=PTER_FUNCTIONS, comment = "shadie Definitions")
-
         survival_script = (
                     SURV.format(
                         p0_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
@@ -106,6 +105,8 @@ class PteridophyteHomosporous(PteridophyteBase):
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
+        self.model.custom(scripts=FUNCTIONS_PTER_HOMOSPORE, comment = "shadie DEFINITIONS")
+
         self.model.repro(
             idx = "s5",
             population="p1",
@@ -174,15 +175,17 @@ class PteridophyteHeterosporous(PteridophyteBase):
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
+        self.model.custom(scripts=FUNCTIONS_PTER_HETEROSPORE, comment = "shadie DEFINITIONS")
+
         self.model.repro(
             population="p1",
-            idx = 5,
+            idx = "s5",
             scripts=REPRO_PTER_HETEROSPORE_P1,
             comment="generates gametes from sporophytes"
         )
         self.model.repro(
             population="p0",
-            idx = 6,
+            idx = "s6",
             scripts=REPRO_PTER_HETEROSPORE_P0,
             comment="generates gametes from sporophytes"
         )
@@ -228,7 +231,7 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.pteridophyte_homosporous(
+        mod.reproduction.pteridophyte_heterosporous(
             spo_pop_size=1000, 
             gam_pop_size=1000,
         )
