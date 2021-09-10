@@ -147,18 +147,20 @@ class Model(AbstractContextManager):
         order and runs checks on the script.
         """
         sorted_keys = [
-            'initialize', 'reproduction', 'early',
+            'initialize', 'shadie', 'reproduction', 'early',
             'custom', 'survival', 'fitness', 'late',
         ]
 
         # copy map and split timed events to a new key list
         mapped = self.map.copy()
-        # mapped['1'] = []
-        # mapped['early'] = []
-        # mapped['late'] = []
-        # mapped['timed'] = []
-        # mapped_keys = list(mapped.keys())
-        # for key in mapped_keys:
+        mapped['shadie'] = []
+        mapped_keys = list(mapped.keys())
+        for key in mapped_keys:
+            if key == "custom":
+                for i in range(0, len(mapped[key])):
+                    script = mapped[key][i]
+                    if "DEFINITIONS" in script['comment']:
+                        mapped['shadie'].append(mapped[key].pop(i))
         #     for item in mapped[key]:
         #         print(item)
         #         if 'time' in item:
@@ -172,7 +174,9 @@ class Model(AbstractContextManager):
         script_chunks = []
         for key in sorted_keys:
             # sort events within key type
-            if key == "early":
+            if key == "shadie":
+                events = mapped[key]
+            elif key == "early":
                 events = sorted(mapped[key], key=lambda x: str(x['time']))
             elif key == "late":
                 events = sorted(mapped[key], key=lambda x: str(x['time']))

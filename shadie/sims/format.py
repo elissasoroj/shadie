@@ -16,7 +16,7 @@ initialize() {{
   // config
   initializeRecombinationRate({recombination_rate});
   initializeMutationRate({mutation_rate});
-  initializeTreeSeq(checkCoalescence=T);
+  initializeTreeSeq();
 
   // MutationType init
   {mutations}
@@ -85,6 +85,7 @@ EVENT_TO_FORMATTER = {
     'survival': SURVIVAL,
     'custom': CUSTOM,
     'reproduction': REPRODUCTION,
+    'shadie': CUSTOM,
 }
 
 
