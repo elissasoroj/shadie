@@ -196,7 +196,7 @@ s3 survival(p0) {{
 // remove p0 individuals during odd generations
 s4 survival(p0) {{
     if ((individual.tag == 4) | (individual.tag == 6)) {{
-        individual.tag = 0;
+        {s4_tag}
         return T;
     }}
     else

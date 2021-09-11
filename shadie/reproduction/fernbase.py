@@ -24,6 +24,7 @@ from shadie.reproduction.fern_scripts import (
     PTER_HETERO_FITNESS_SCALE,
     FUNCTIONS_PTER_HOMOSPORE,
     FUNCTIONS_PTER_HETEROSPORE,
+    S4_TAG,
 )
 
 DTYPES = ("dioicy", "dioicous", "heterosporous")
@@ -40,7 +41,7 @@ class PteridophyteBase(NonWrightFisher):
     gam_clones_per: int
     spo_clone_rate: float
     spo_clones_per: int
-    spo_self_rate: float
+    spo_self_chance: float
     spo_random_death_chance: float
     gam_random_death_chance: float
     spo_maternal_effect: float
@@ -75,7 +76,8 @@ class PteridophyteBase(NonWrightFisher):
                     SURV.format(
                         p0_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
                         p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
-                        p0survival=""
+                        p0survival="",
+                        s4_tag = S4_TAG,
                     ))
         self.model.custom(survival_script, comment="maternal effects and survival")
 

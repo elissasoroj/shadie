@@ -29,6 +29,8 @@ from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_MONO_P1,
     REPRO_BRYO_MONO_P0,
     LATE_BRYO_MONO,
+    S4_TAG,
+    FUNCTIONS_BRYO_DIO,
 )
 
 DTYPES = ("dioicy", "dioicous", "heterosporous")
@@ -44,7 +46,8 @@ class BryophyteBase(NonWrightFisher):
     gam_mutation_rate: Optional[float]
     gam_clone_rate: float
     gam_clones_per: int
-    spo_self_rate: float
+    egg_spo_self_rate: float
+    spo_self_chance: float
     spo_random_death_chance: float
     gam_random_death_chance: float
     spo_spores_per: int
@@ -74,7 +77,8 @@ class BryophyteBase(NonWrightFisher):
             SURV.format(
                 p0_maternal_effect="",
                 p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
-                p0survival=""
+                p0survival="",
+                s4_tag = S4_TAG,
             )
         )
         self.model.custom(survival_script, comment="maternal effects and survival")
@@ -109,14 +113,18 @@ class BryophyteDioicous(BryophyteBase):
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
+        self.model.custom(scripts=FUNCTIONS_BRYO_DIO, comment = "shadie DEFINITIONS")
+
         self.model.repro(
             population="p1",
             scripts=REPRO_BRYO_DIO_P1,
+            idx = "s5",
             comment="generates gametes from sporophytes"
         )
         self.model.repro(
             population="p0",
             scripts=REPRO_BRYO_DIO_P0,
+            idx = "s6",
             comment="generates gametes from sporophytes"
         )
         

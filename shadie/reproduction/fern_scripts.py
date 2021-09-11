@@ -6,6 +6,8 @@ Pteridophyte specific SLIM script snippets used for string substitution.
 PTER_HETERO_FITNESS_SCALE = """males = length(p0.individuals[p0.individuals.tag ==2]);
         p0.fitnessScaling = (GAM_POP_SIZE / (p0.individualCount-males));"""
 
+S4_TAG = """individual.tag = 0;"""
+
 # PARAMETERS
 #spo_spore_per
 #spo_maternal_effect
@@ -167,7 +169,7 @@ REPRO_PTER_HOMOSPORE_P0 = """
 #gam_archegonia_per
 #spo_clone_rate
 #gam_clone_rate
-#spo_self_rate
+#spo_self_chance
 #gam_self_rate
 # -------------------------
 # TAGS
@@ -192,7 +194,7 @@ LATE_PTER_HOMOSPORE = """
         clones.tag = 44; //tag clones - 4 is gam, 44 is spo;
         
         //tag sporophytes that will self
-        number_selfed = rbinom(1, length(p1_size), SPO_SELF_RATE);
+        number_selfed = rbinom(1, length(p1_size), spo_self_chance);
         selfed_inds = p1.sampleIndividuals(number_selfed);
         selfed_cloned = selfed_inds[selfed_inds.tag == 44];
         selfed_cloned.tag = 45; //tag selfing and cloning spo inds;
@@ -257,7 +259,7 @@ function (void)sporophyte_selfs(object<Individual>$ ind){
     if (runif(1) < strobilus_female_ratio){
         for (i in 1:MEGASPORANGIA_MEGASPORES_PER){
             for (i in 1:GAM_ARCHEGONIA_PER){ //gametophyte makes archegonia
-                if (runif(1)<SPO_SELF_RATE){
+                if (runif(1)<spo_self_chance){
                     count = count + 1;
                     breaks1 = sim.chromosome.drawBreakpoints(individual);
                     breaks2 = sim.chromosome.drawBreakpoints(individual);
@@ -376,7 +378,7 @@ REPRO_PTER_HETEROSPORE_P0 = """
 
 # PARAMETERS
 #spo_clone_rate
-#spo_self_rate
+#spo_self_chance
 # -------------------------
 # TAGS
 # 44, 45, 5
@@ -395,7 +397,7 @@ LATE_PTER_HETEROSPORE = """
         clones.tag = 44; //tag clones - 4 is gam, 44 is spo;
         
         //tag sporophytes that will self
-        number_selfed = rbinom(1, length(p1_size), SPO_SELF_RATE);
+        number_selfed = rbinom(1, length(p1_size), spo_self_chance);
         selfed_inds = p1.sampleIndividuals(number_selfed);
         selfed_cloned = selfed_inds[selfed_inds.tag == 44];
         selfed_cloned.tag = 45; //tag selfing and cloning spo inds;
