@@ -41,6 +41,7 @@ class PteridophyteBase(NonWrightFisher):
     gam_clones_per: int
     spo_clone_rate: float
     spo_clones_per: int
+    egg_spo_self_rate: float
     spo_self_chance: float
     spo_random_death_chance: float
     gam_random_death_chance: float
@@ -233,7 +234,7 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.pteridophyte_heterosporous(
+        mod.reproduction.pteridophyte_homosporous(
             spo_pop_size=1000, 
             gam_pop_size=1000,
         )
