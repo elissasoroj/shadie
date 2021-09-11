@@ -86,9 +86,9 @@ class PteridophyteBase(NonWrightFisher):
 class PteridophyteHomosporous(PteridophyteBase):
     """Reproduction mode based on homosporoous ferns and lycophytes"""
     mode: str = field(default="homosporous", init=False)
+    spo_spores_per: int
     gam_maternal_effect: float
     gam_self_rate: float
-    spo_spores_per: int
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
