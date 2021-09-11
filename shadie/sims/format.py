@@ -16,7 +16,7 @@ initialize() {{
   // config
   initializeRecombinationRate({recombination_rate});
   initializeMutationRate({mutation_rate});
-  initializeTreeSeq();
+  initializeTreeSeq(simplificationInterval=200);
 
   // MutationType init
   {mutations}
