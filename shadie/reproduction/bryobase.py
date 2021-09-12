@@ -31,7 +31,7 @@ from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_MONO_P0,
     LATE_BRYO_MONO,
     S4_TAG,
-    FUNCTIONS_BRYO_DIO,
+    FUNCTIONS_BRYO,
 )
 
 DTYPES = ("dioicy", "dioicous", "heterosporous")
@@ -116,8 +116,7 @@ class BryophyteDioicous(BryophyteBase):
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
-        self.model.custom(scripts=FUNCTIONS_BRYO_DIO, comment = "shadie DEFINITIONS")
-
+        self.model.custom(scripts=FUNCTIONS_BRYO, comment = "shadie DEFINITIONS")
         self.model.repro(
             population="p1",
             scripts=REPRO_BRYO_DIO_P1,
@@ -168,6 +167,7 @@ class BryophyteMonoicous(BryophyteBase):
     def _add_mode_scripts(self):
         """fills the model.map block with bryophyte-monoicous scripts."""
         # add reproduction scripts
+        self.model.custom(scripts=FUNCTIONS_BRYO, comment = "shadie DEFINITIONS")
         self.model.repro(
             population="p1",
             scripts=REPRO_BRYO_MONO_P1,
@@ -216,7 +216,7 @@ if __name__ == "__main__":
 
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=50, file_out="/tmp/test.trees")
-        mod.reproduction.bryophyte_dioicous(
+        mod.reproduction.bryophyte_monoicous(
             spo_pop_size=100,
             gam_pop_size=100,
         )

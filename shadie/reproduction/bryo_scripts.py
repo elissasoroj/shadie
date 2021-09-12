@@ -5,7 +5,7 @@ Bryophyte specific SLIM script snippets used for string substitution.
 """
 S4_TAG = """individual.tag = ifelse(runif(1)<0.5, 3, 2);"""
 
-FUNCTIONS_BRYO_DIO = """
+FUNCTIONS_BRYO = """
 // shadie DEFINITIONS
 //p0 = haploid population
 //p1 = diploid population
