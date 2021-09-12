@@ -21,6 +21,7 @@ from shadie.reproduction.scripts import (
     GAM_MATERNAL_EFFECT_ON_P1,
     SUBSTITUTION,
     P0_FITNESS_SCALE_DEFAULT,
+    EARLY_WITH_GAM_K,
 )
 from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_DIO_P1,
@@ -53,6 +54,7 @@ class BryophyteBase(NonWrightFisher):
     spo_spores_per: int
     gam_maternal_effect: float
     gam_archegonia_per: int
+    gam_k: int
 
     def _set_mutation_rates(self):
         """Checks parameters after init."""
@@ -66,7 +68,7 @@ class BryophyteBase(NonWrightFisher):
         else:
             self.spo_mutation_rate = 0.5 * self.model.metadata['mutation_rate']
             self.gam_mutation_rate = 0.5 * self.model.metadata['mutation_rate']
-    
+
     def _add_shared_mode_scripts(self):
         """Adds scripts shared by homosp and heterosp superclasses.
 
@@ -105,6 +107,7 @@ class BryophyteDioicous(BryophyteBase):
         self._define_subpopulations()
         self._add_alternation_of_generations()
         self._add_early_script()
+        self._set_gametophyte_k()
         self._add_initialize_constants()
         self._write_trees_file()
 
@@ -155,6 +158,7 @@ class BryophyteMonoicous(BryophyteBase):
         self._define_subpopulations()
         self._add_alternation_of_generations()
         self._add_early_script()
+        self._set_gametophyte_k()
         self._add_initialize_constants()
         self._write_trees_file()
 
