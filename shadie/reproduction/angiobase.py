@@ -23,7 +23,7 @@ from shadie.reproduction.scripts import (
     P0_FITNESS_SCALE_DEFAULT,
     EARLY,
 )
-from shadie.reproduction.angio_scripts import (
+from shadie.reproduction.angio_scripts_opt import (
     REPRO_ANGIO_DIO_P1,
     REPRO_ANGIO_DIO_P0,
     LATE_ANGIO_DIO,
@@ -33,8 +33,6 @@ from shadie.reproduction.angio_scripts import (
     EARLY1_ANGIO,
     ANGIO_P0_SURV,
     ANGIO_DIO_FITNESS_SCALE,
-    EARLY_P0_FITNESS,
-    FUNCTIONS_ANGIO_MONO
 )
 
 DTYPES = ("d", "dio", "dioecy", "dioecious",)
@@ -159,7 +157,7 @@ class AngiospermDioecious(AngiospermBase):
 
     def _add_mode_scripts(self):
         """scripts specific to this organism."""
-        self.model.custom(scripts=FUNCTIONS_ANGIO_MONO, comment = "shadie DEFINITIONS")
+        #self.model.custom(scripts=FUNCTIONS_ANGIO_MONO, comment = "shadie DEFINITIONS")
 
         # add reproduction calls
         self.model.repro(
@@ -222,7 +220,7 @@ class AngiospermMonoecious(AngiospermBase):
         This overrides the NonWrightFisher class function of same name.
         """
         early_script = (EARLY.format(
-            p0_fitnessScaling= EARLY_P0_FITNESS,
+            p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
             activate=self._activate_str,
             deactivate=self._deactivate_str
             )
@@ -236,7 +234,7 @@ class AngiospermMonoecious(AngiospermBase):
 
     def _add_mode_scripts(self):
         """scripts specific to this organism."""
-        self.model.custom(scripts=FUNCTIONS_ANGIO_MONO, comment = "shadie DEFINITIONS")
+        #self.model.custom(scripts=FUNCTIONS_ANGIO_MONO, comment = "shadie DEFINITIONS")
 
         self.model.repro(
             population="p1",
