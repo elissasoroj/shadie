@@ -77,7 +77,7 @@ function (void)sporophyte_selfs(object<Individual>$ ind){
             children.setValue("maternal_fitness", ind.subpopulation.cachedFitness(individual.index));
     }
     //make non-selfed eggs
-    make_eggs(individual, asInteger(eggs-eggs_selfed);
+    make_eggs(individual, asInteger(eggs-eggs_selfed));
     
     //make the rest of the pollen
     meiosis_reps = asInteger(SPO_FLOWERS_PER*FLOWER_ANTHERS_PER*ANTHER_POLLEN_PER/4) - eggs_selfed;
