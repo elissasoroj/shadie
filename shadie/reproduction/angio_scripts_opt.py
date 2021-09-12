@@ -49,7 +49,7 @@ REPRO_ANGIO_DIO_P1 = """
 	//sporophytes make hermaphroditic flowers
 	if (individual.tag == 1) {
 		//make ovules
-		meiosis_reps = asInteger(sPO_FLOWERS_PER*FLOWER_OVULES_PER);
+		meiosis_reps = asInteger(SPO_FLOWERS_PER*FLOWER_OVULES_PER);
 		//each ovule undergoes meiosis once and produces a single megaspore
 		for (rep in 1:meiosis_reps){
 			breaks = sim.chromosome.drawBreakpoints(individual);
