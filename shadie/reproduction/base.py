@@ -15,6 +15,7 @@ from shadie.reproduction.scripts import (
     SUB_MUTS,
     P0_FITNESS_SCALE_DEFAULT,
     EARLY,
+    EARLY_WITH_GAM_K,
 )
 
 
@@ -82,6 +83,14 @@ class NonWrightFisher(ReproductionBase):
     include alternation of generations (p0 and p1 subpops). The
     alternative is to implement a WF model.
     """
+    def _set_gametophyte_k(self):
+        """Sets a carrying capacity for gametophyte holding pop (during p1
+        generation, to avoid lagging in the simulation. Automatically sets
+        to 10x user-defined popsize
+        """
+        if not self.gam_k:
+            self.gam_k = 10*self.gam_pop_size
+
     def _define_subpopulations(self):
         """add haploid and diploid life stages as subpopulations."""
         if self.model.metadata['file_in']:
@@ -175,7 +184,7 @@ class NonWrightFisher(ReproductionBase):
         Defines the early() callbacks for each gen.
         This overrides the NonWrightFisher class function of same name.
         """
-        early_script = (EARLY.format(
+        early_script = (EARLY_WITH_GAM_K.format(
             p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
             activate= self._activate_str,
             deactivate= self._deactivate_str

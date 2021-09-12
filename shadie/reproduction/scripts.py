@@ -67,6 +67,57 @@ P0_FITNESS_SCALE_DEFAULT = "p0.fitnessScaling = GAM_POP_SIZE / p0.individualCoun
 # spo_pops_size
 # spo_mutation_rate
 
+EARLY_WITH_GAM_K = """
+// diploids (p1) just generated haploid gametophytes
+    if (sim.generation % 2 == 0) {{
+
+        // fitness affects gametophyte survival
+        {p0_fitnessScaling};
+
+        //set mutation rate for haploids
+        sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
+
+        // p0 and p1 survival callbacks
+        s1.active = 1;
+        s2.active = 0;
+        s3.active = 1;
+        s4.active = 0;
+
+        // haploids reproduce, diploids don't
+        s5.active = 0;
+        s6.active = 1;
+
+        // haploids get modified fitness, without dominance
+        {activate}
+    }}
+
+
+    // odd generations = gametophytes (p0) just generated sporophytes
+    else {{
+
+        // fitness affects sporophytes
+        p1.fitnessScaling = SPO_POP_SIZE / p1.individualCount;
+        p0.fitnessScaling = GAM_K/ p0.individualCount;
+
+        //set mutation rate for diploids
+        sim.chromosome.setMutationRate(SPO_MUTATION_RATE);
+
+        // turn off p0 survival callbacks
+        // turn on p1 survival callbacks
+        s1.active = 0;
+        s2.active = 1;
+        s3.active = 0;
+        s4.active = 1;
+
+        // diploids reproduce, haploids don't
+        s5.active = 1;
+        s6.active = 0;
+
+        // diploids get SLiM's standard fitness calculation, with dominance
+        {deactivate}
+    }}
+"""
+
 EARLY_OPT = """
 	// even generation, sporophytes (p1) just generated gametophytes
     if (sim.generation % 2 == 0) {{
@@ -167,7 +218,8 @@ SPO_MATERNAL_EFFECT_ON_P0 = """
 SURV = """
 // remove p1 individuals during even generations
 s1 survival(p1) {{
-    if ((individual.tag == 44) | (individual.tag == 5) | (individual.tag == 45)){{
+    if ((individual.tag == 44) | (individual.tag == 5) | (individual.tag == 45) 
+        | (individual.tag == 41) | (individual.tag == 42)){{
         individual.tag = 0;
         return T;
     }}
@@ -195,7 +247,7 @@ s3 survival(p0) {{
 
 // remove p0 individuals during odd generations
 s4 survival(p0) {{
-    if ((individual.tag == 4) | (individual.tag == 6)) {{
+    if ((individual.tag == 4) | (individual.tag == 6) | (individual.tag == 41) | (individual.tag == 42)) {{
         {s4_tag}
         return T;
     }}
