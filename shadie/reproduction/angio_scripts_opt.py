@@ -513,7 +513,7 @@ REPRO_ANGIO_MONO_P0="""
 
 # PARAMETERS
 # spo_clone_rate
-# spo_self_rate
+# spo_self_chance
 # -------------------------
 # TAGS
 # 44, 5, 45
@@ -527,7 +527,7 @@ LATE_ANGIO_MONO = """
         clones.tag == 44;
         
         //sporophytic selfing
-        number_selfed = rbinom(1, length(p1_size), spo_self_rate);
+        number_selfed = rbinom(1, length(p1_size), spo_self_chance);
         selfed_inds = p1.sampleIndividuals(number_selfed);
         selfed_cloned = selfed_inds[selfed_inds.tag == 44];
         selfed_cloned.tag = 45; //tag selfing and cloning spo inds;
