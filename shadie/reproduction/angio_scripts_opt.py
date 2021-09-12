@@ -166,7 +166,7 @@ REPRO_ANGIO_DIO_P1 = """
 REPRO_ANGIO_DIO_P0  = """
    // females find male gametes to reproduce
 	if (individual.tag == 1) {
-		if (pollen_comp == T) {
+		if (POLLEN_COMP == T) {
 			
 			// sperm land on stigma
 			pollen_pool = p0.sampleIndividuals(POLLEN_COMP_STIGMA_POLLEN_PER, tag=2);
