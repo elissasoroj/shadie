@@ -47,6 +47,7 @@ class PteridophyteBase(NonWrightFisher):
     gam_random_death_chance: float
     spo_maternal_effect: float
     gam_archegonia_per: int
+    gam_k: int
 
     #TODO?
     #optional (lineage-specific params that correspon to generalized ones)
@@ -99,6 +100,7 @@ class PteridophyteHomosporous(PteridophyteBase):
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
         self._add_alternation_of_generations()
+        self._set_gametophyte_k()
         self._add_early_script()
         self._add_initialize_constants()
         self._write_trees_file()
@@ -151,6 +153,7 @@ class PteridophyteHeterosporous(PteridophyteBase):
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
         self._add_alternation_of_generations()
+        self._set_gametophyte_k()
         self._add_initialize_constants()
         self._write_trees_file()
 
@@ -237,6 +240,7 @@ if __name__ == "__main__":
         mod.reproduction.pteridophyte_homosporous(
             spo_pop_size=1000, 
             gam_pop_size=1000,
+            spo_spores_per = 100
         )
 
 
