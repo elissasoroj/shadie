@@ -114,7 +114,6 @@ class AngiospermDioecious(AngiospermBase):
         self._add_shared_mode_scripts()
 
         # methods inherited from parent NonWrightFisher class
-        self._set_gametophyte_k()
         self._add_initialize_constants()
         self._add_alternation_of_generations()
         self._write_trees_file()
@@ -290,11 +289,11 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.angiosperm_monoecious(
+        mod.reproduction.angiosperm_dioecious(
             spo_pop_size=1000, 
             gam_pop_size=1000,
             pollen_control=0.5,
-            #spo_female_to_male_ratio = (1,1),
+            spo_female_to_male_ratio = (1,1),
         )
 
     print(mod.script)
