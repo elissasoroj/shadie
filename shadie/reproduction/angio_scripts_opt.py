@@ -200,7 +200,7 @@ REPRO_ANGIO_DIO_P0  = """
 			sperm = p0.sampleIndividuals(1, tag=2); //find pollen to fetilize ovule
 		
 		if (sperm.size() == 1) {
-			p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL).tag= ifelse(runif(1)<spo_female_to_male_ratio, 1, 2);
+			p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL).tag= ifelse(runif(1)<SPO_FEMALE_TO_MALE_RATIO, 1, 2);
 			sperm.tag = 20; //sperm goes into used pool
 		}
 	}
