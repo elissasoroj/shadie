@@ -53,7 +53,7 @@ function (void)make_eggs(object<Individual>$ ind, integer$ reps) {
 function (void)sporophyte_selfs(object<Individual>$ ind){
     //sporophyte makes a megasporangia
     eggs = FLOWER_OVULES_PER*SPO_FLOWERS_PER;
-    eggs_selfed = eggs*EGG_SPO_SELF_RATE;
+    eggs_selfed = asInteger(eggs*EGG_SPO_SELF_RATE); 
     for (i in 1:eggs_selfed){
         breaks1 = sim.chromosome.drawBreakpoints(individual);
         breaks2 = sim.chromosome.drawBreakpoints(individual);
@@ -77,7 +77,7 @@ function (void)sporophyte_selfs(object<Individual>$ ind){
             children.setValue("maternal_fitness", ind.subpopulation.cachedFitness(individual.index));
     }
     //make non-selfed eggs
-    make_eggs(individual, eggs-eggs_selfed);
+    make_eggs(individual, asInteger(eggs-eggs_selfed);
     
     //make the rest of the pollen
     meiosis_reps = asInteger(SPO_FLOWERS_PER*FLOWER_ANTHERS_PER*ANTHER_POLLEN_PER/4) - eggs_selfed;
