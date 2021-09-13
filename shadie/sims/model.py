@@ -52,6 +52,9 @@ from shadie.sims.format import (
     EVENT_TO_FORMATTER,
 )
 
+# register logger to this module only
+logger = logger.bind(name="shadie")
+
 # cannot do both mutationRate and nucleotidebased
 
 
