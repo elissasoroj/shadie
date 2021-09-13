@@ -20,6 +20,8 @@ from shadie.reproduction.scripts import (
     SURV,
     SPO_MATERNAL_EFFECT_ON_P0,
     SUBSTITUTION,
+    P0_FITNESS_SCALE_DEFAULT,
+    EARLY,
 )
 from shadie.reproduction.angio_scripts_opt import (
     REPRO_ANGIO_DIO_P1,
@@ -30,6 +32,7 @@ from shadie.reproduction.angio_scripts_opt import (
     LATE_ANGIO_MONO,
     EARLY1_ANGIO,
     ANGIO_P0_SURV,
+    ANGIO_DIO_FITNESS_SCALE,
 )
 
 DTYPES = ("d", "dio", "dioecy", "dioecious",)
@@ -44,7 +47,6 @@ class AngiospermBase(NonWrightFisher):
     gam_mutation_rate: Optional[float]
     spo_clone_rate: float
     spo_clones_per: int
-    spo_self_rate: float
     spo_random_death_chance: float
     gam_random_death_chance: float
     spo_maternal_effect: float
@@ -52,10 +54,11 @@ class AngiospermBase(NonWrightFisher):
     flower_ovules_per: int
     flower_anthers_per: int
     anther_pollen_per: int
-    spo_ovule_success_rate: float
-    spo_pollen_success_rate: float
+    ovule_success_rate: float
+    pollen_success_rate: float
     pollen_comp: Union[bool, str]
     pollen_comp_stigma_pollen_per: int
+    pollen_control: int
 
     def _set_mutation_rates(self):
         """Checks parameters after init."""
@@ -81,7 +84,7 @@ class AngiospermBase(NonWrightFisher):
                 p0_maternal_effect="",
                 p1_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
                 p0survival=ANGIO_P0_SURV,
-            )
+                s4_tag = "",            )
         )
         self.model.custom(survival_script, comment="maternal effects and survival")
 
@@ -118,6 +121,7 @@ class AngiospermDioecious(AngiospermBase):
         # specific organism functions
         self._define_subpopulations()
         self._add_mode_scripts()
+        self._add_early_script()
 
     def _define_subpopulations(self):
         """Defines the subpopulations and males/females.
@@ -132,16 +136,39 @@ class AngiospermDioecious(AngiospermBase):
                 comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
             )
 
+    def _add_early_script(self):
+        """
+        Defines the early() callbacks for each gen.
+        This overrides the NonWrightFisher class function of same name.
+        """
+        early_script = (EARLY.format(
+            p0_fitnessScaling= ANGIO_DIO_FITNESS_SCALE,
+            activate=self._activate_str,
+            deactivate=self._deactivate_str
+            )
+        )
+
+        self.model.early(
+            time=None,
+            scripts=early_script,
+            comment="alternation of generations",
+        )
+
     def _add_mode_scripts(self):
         """scripts specific to this organism."""
+        #self.model.custom(scripts=FUNCTIONS_ANGIO_MONO, comment = "shadie DEFINITIONS")
+
+        # add reproduction calls
         self.model.repro(
             population="p1",
             scripts=REPRO_ANGIO_DIO_P1,
+            idx = "s5",
             comment="generates gametes from sporophytes"
         )
         self.model.repro(
             population="p0",
             scripts=REPRO_ANGIO_DIO_P0,
+            idx = "s6",
             comment="generates gametes from sporophytes"
         )
         
@@ -161,6 +188,8 @@ class AngiospermDioecious(AngiospermBase):
 class AngiospermMonoecious(AngiospermBase):
     """Superclass of Spermatophyte base with dioecious functions."""
     mode: str = field(default="monecious", init=False)
+    egg_spo_self_rate: float
+    spo_self_chance: float
 
     def __post_init__(self):
         #set pollen competition as string
@@ -172,7 +201,7 @@ class AngiospermMonoecious(AngiospermBase):
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
-        # methods inherited from parent NonWrightFisher class
+        # methods inherited from parent AngiospermBase class
         self._set_mutation_rates()
         self._add_shared_mode_scripts()
 
@@ -184,20 +213,43 @@ class AngiospermMonoecious(AngiospermBase):
         # specific organism functions
         self._define_subpopulations()
         self._add_mode_scripts()
+        self._add_early_script()
+
+    def _add_early_script(self):
+        """
+        Defines the early() callbacks for each gen.
+        This overrides the NonWrightFisher class function of same name.
+        """
+        early_script = (EARLY.format(
+            p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
+            activate=self._activate_str,
+            deactivate=self._deactivate_str
+            )
+        )
+
+        self.model.early(
+            time=None,
+            scripts=early_script,
+            comment="alternation of generations",
+        )
 
     def _add_mode_scripts(self):
         """scripts specific to this organism."""
+        #self.model.custom(scripts=FUNCTIONS_ANGIO_MONO, comment = "shadie DEFINITIONS")
+
         self.model.repro(
             population="p1",
             scripts=REPRO_ANGIO_MONO_P1,
+            idx = "s5",
             comment="generates gametes from sporophytes"
         )
         self.model.repro(
             population="p0",
             scripts=REPRO_ANGIO_MONO_P0,
+            idx = "s6",
             comment="generates gametes from sporophytes"
         )
-        
+
         # add late call
         substitution_script = (
             SUBSTITUTION.format(**{'muts': self._substitution_str,
@@ -242,6 +294,7 @@ if __name__ == "__main__":
         mod.reproduction.angiosperm_dioecious(
             spo_pop_size=1000, 
             gam_pop_size=1000,
+            pollen_control=0.5,
             spo_female_to_male_ratio = (1,1),
         )
 

@@ -150,24 +150,39 @@ class Model(AbstractContextManager):
         order and runs checks on the script.
         """
         sorted_keys = [
-            'initialize', 'timed', 'reproduction', 'early',
+            'initialize', 'shadie', 'reproduction', 'early',
             'custom', 'survival', 'fitness', 'late',
         ]
 
         # copy map and split timed events to a new key list
         mapped = self.map.copy()
-        mapped['timed'] = []
+        mapped['shadie'] = []
         mapped_keys = list(mapped.keys())
         for key in mapped_keys:
-            if 'time' in mapped[key]:
-                mapped['timed'].append(mapped[key].pop(key))
+            if key == "custom":
+                for i in range(0, len(mapped[key])):
+                    script = mapped[key][i]
+                    if "DEFINITIONS" in script['comment']:
+                        mapped['shadie'].append(mapped[key].pop(i))
+        #     for item in mapped[key]:
+        #         print(item)
+        #         if 'time' in item:
+        #             if item['time']==1:
+        #                 mapped['1'].append(mapped[key].pop('time' == 1))
+        #             else:
+        #                 mapped['timed'].append(mapped[key].pop(0))
 
+        # logger.info(f"{test}")
         # visit events by ordered key type
         script_chunks = []
         for key in sorted_keys:
             # sort events within key type
-            if key == "timed":
-                events = sorted(mapped[key], key=lambda x: x['time'])
+            if key == "shadie":
+                events = mapped[key]
+            elif key == "early":
+                events = sorted(mapped[key], key=lambda x: str(x['time']))
+            elif key == "late":
+                events = sorted(mapped[key], key=lambda x: str(x['time']))
             elif key == "fitness":
                 events = sorted(mapped[key], key=lambda x: x['idx'])
             elif key == "survival":
@@ -304,6 +319,7 @@ class Model(AbstractContextManager):
         self,
         population: Union[str, None],
         scripts: Union[str, list],
+        idx:Union[str, None]=None,
         comment: Union[str,None]=None,
         ):
         """Add a custom reproduction() block to the SLiM code map.
@@ -316,6 +332,7 @@ class Model(AbstractContextManager):
         self.map['reproduction'].append({
             'population': population,
             'scripts': scripts,
+            'idx': idx,
             'comment': comment,
         })
 
@@ -333,6 +350,7 @@ class Model(AbstractContextManager):
             'idx': idx,
             'mutation': mutation,
             'scripts': scripts,
+            'idx': idx,
             'comment': comment,
         })
 

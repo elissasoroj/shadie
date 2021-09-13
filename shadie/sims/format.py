@@ -16,7 +16,7 @@ initialize() {{
   // config
   initializeRecombinationRate({recombination_rate});
   initializeMutationRate({mutation_rate});
-  initializeTreeSeq(checkCoalescence=T);
+  initializeTreeSeq(simplificationInterval=200);
 
   // MutationType init
   {mutations}
@@ -38,7 +38,7 @@ initialize() {{
 
 REPRODUCTION = """
 // generates offspring
-{comment}reproduction({population}) {{
+{comment}{idx}reproduction({population}) {{
     {scripts}
 }}
 """
@@ -85,6 +85,7 @@ EVENT_TO_FORMATTER = {
     'survival': SURVIVAL,
     'custom': CUSTOM,
     'reproduction': REPRODUCTION,
+    'shadie': CUSTOM,
 }
 
 
@@ -110,7 +111,7 @@ def format_event_dicts_to_strings(event: Dict):
     # cleanup formatting of some arguments
     if 'constants' in event:
         event['constants'] = "\n  ".join([
-            f"defineConstant('{key}', {val});" for key, val
+            f"defineConstant('{str(key).upper()}', {val});" for key, val
             in event['constants'].items()
         ])
 

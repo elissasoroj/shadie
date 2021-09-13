@@ -11,9 +11,11 @@ ReproductionBase -> NonWrightFisher -> BryophyteBase
 from dataclasses import dataclass
 import pyslim
 from shadie.reproduction.scripts import (
-    EARLY,
     SUBSTITUTION,
     SUB_MUTS,
+    P0_FITNESS_SCALE_DEFAULT,
+    EARLY,
+    EARLY_WITH_GAM_K,
 )
 
 
@@ -81,15 +83,24 @@ class NonWrightFisher(ReproductionBase):
     include alternation of generations (p0 and p1 subpops). The
     alternative is to implement a WF model.
     """
+    def _set_gametophyte_k(self):
+        """Sets a carrying capacity for gametophyte holding pop (during p1
+        generation, to avoid lagging in the simulation. Automatically sets
+        to 10x user-defined popsize
+        """
+        if not self.gam_k:
+            self.gam_k = 10*self.gam_pop_size
+
     def _define_subpopulations(self):
         """add haploid and diploid life stages as subpopulations."""
         if self.model.metadata['file_in']:
-            self.model._read_from_file(tag_scripts =[ "p1.individuals.tag=0"])
+            self.model._read_from_file(tag_scripts =["p1.individuals.tag=0;", 
+                "tags = rbinom(1, p0.individualCount, 0.5);", "p0.individuals.tag = tags;"])
         else:
             self.model.early(
                 time=1,
                 scripts=[
-                    "sim.addSubpop('p1', spo_pop_size)",
+                    "sim.addSubpop('p1', SPO_POP_SIZE)",
                     "sim.addSubpop('p0', 0)",
                     "p1.individuals.tag = 0",],
                 comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
@@ -103,7 +114,8 @@ class NonWrightFisher(ReproductionBase):
         unique set of attributes. Excludes parent attrs like model.
         """
         # exclude parent class attributes
-        exclude = ["lineage", "mode", "model", "_substitution_str"]
+        exclude = ["lineage", "mode", "model", "_substitution_str", 
+                    "_activate_str", "_deactivate_str"]
         asdict = {
             i: j for (i, j) in self.__dict__.items()
             if i not in exclude
@@ -120,7 +132,7 @@ class NonWrightFisher(ReproductionBase):
         # add fitness callback for gametophytes based on MutationTypes
         # in the model.chromosome.
         # this will map to sx-sy survival callbacks.
-        idx = 4
+        idx = 6
         activate_scripts = []
         deactivate_scripts = []
         substitutions = []
@@ -157,19 +169,33 @@ class NonWrightFisher(ReproductionBase):
         # alternating generations to only apply to gameto or sporo.
         activate_str = "\n        ".join(activate_scripts)
         deactivate_str = "\n        ".join(deactivate_scripts)
-        early_script = (
-            EARLY.format(activate=activate_str, deactivate=deactivate_str)
-        )
-        self.model.early(
-            time=None,
-            scripts=early_script,
-            comment="alternation of generations",
-        )
+
+        #save activate and deactivate scripts for later
+        self._activate_str = activate_str
+        self._deactivate_str = deactivate_str
 
         # insert the substitution-checking scripts into larger context
         substitution_str = "\n    ".join(substitutions)
         #save subsitutions for late call in model-specific scripts
         self._substitution_str = substitution_str
+
+    def _add_early_script(self):
+        """
+        Defines the early() callbacks for each gen.
+        This overrides the NonWrightFisher class function of same name.
+        """
+        early_script = (EARLY_WITH_GAM_K.format(
+            p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
+            activate= self._activate_str,
+            deactivate= self._deactivate_str
+            )
+        )
+
+        self.model.early(
+            time=None,
+            scripts=early_script,
+            comment="alternation of generations",
+        )
 
 @dataclass
 class WrightFisher(ReproductionBase):
@@ -190,7 +216,7 @@ class WrightFisher(ReproductionBase):
     def _define_subpopulations(self):
         """Add a single diploid population. See NonWrightFisher for comparison."""
         if self.model.metadata['file_in']:
-            self.model.read_from_file()
+            self.model._read_from_file(tag_scripts="")
         else:
             self.model.early(
                 time=1,
@@ -238,8 +264,8 @@ if __name__ == "__main__":
     )
 
     with shadie.Model() as mod:
-        mod.initialize(chromosome=chrom, sim_time=1000)
+        mod.initialize(chromosome=chrom, sim_time=1000, file_in = "/tmp/test.trees")
         mod.reproduction.wright_fisher(pop_size=1000)
 
-    mod.write("/tmp/slim.slim")
-    mod.run(binary="/usr/local/bin/slim")
+    #mod.write("/tmp/slim.slim")
+    #mod.run(binary="/usr/local/bin/slim")

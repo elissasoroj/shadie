@@ -20,6 +20,8 @@ from shadie.reproduction.scripts import (
     SURV,
     GAM_MATERNAL_EFFECT_ON_P1,
     SUBSTITUTION,
+    P0_FITNESS_SCALE_DEFAULT,
+    EARLY_WITH_GAM_K,
 )
 from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_DIO_P1,
@@ -28,6 +30,8 @@ from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_MONO_P1,
     REPRO_BRYO_MONO_P0,
     LATE_BRYO_MONO,
+    S4_TAG,
+    FUNCTIONS_BRYO,
 )
 
 DTYPES = ("dioicy", "dioicous", "heterosporous")
@@ -43,12 +47,14 @@ class BryophyteBase(NonWrightFisher):
     gam_mutation_rate: Optional[float]
     gam_clone_rate: float
     gam_clones_per: int
-    spo_self_rate: float
+    egg_spo_self_rate: float
+    spo_self_chance: float
     spo_random_death_chance: float
     gam_random_death_chance: float
     spo_spores_per: int
     gam_maternal_effect: float
     gam_archegonia_per: int
+    gam_k: int
 
     def _set_mutation_rates(self):
         """Checks parameters after init."""
@@ -62,7 +68,7 @@ class BryophyteBase(NonWrightFisher):
         else:
             self.spo_mutation_rate = 0.5 * self.model.metadata['mutation_rate']
             self.gam_mutation_rate = 0.5 * self.model.metadata['mutation_rate']
-    
+
     def _add_shared_mode_scripts(self):
         """Adds scripts shared by homosp and heterosp superclasses.
 
@@ -73,7 +79,8 @@ class BryophyteBase(NonWrightFisher):
             SURV.format(
                 p0_maternal_effect="",
                 p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
-                p0survival=""
+                p0survival="",
+                s4_tag = S4_TAG,
             )
         )
         self.model.custom(survival_script, comment="maternal effects and survival")
@@ -99,6 +106,8 @@ class BryophyteDioicous(BryophyteBase):
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
         self._add_alternation_of_generations()
+        self._add_early_script()
+        self._set_gametophyte_k()
         self._add_initialize_constants()
         self._write_trees_file()
 
@@ -107,14 +116,17 @@ class BryophyteDioicous(BryophyteBase):
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
+        self.model.custom(scripts=FUNCTIONS_BRYO, comment = "shadie DEFINITIONS")
         self.model.repro(
             population="p1",
             scripts=REPRO_BRYO_DIO_P1,
+            idx = "s5",
             comment="generates gametes from sporophytes"
         )
         self.model.repro(
             population="p0",
             scripts=REPRO_BRYO_DIO_P0,
+            idx = "s6",
             comment="generates gametes from sporophytes"
         )
         
@@ -144,6 +156,8 @@ class BryophyteMonoicous(BryophyteBase):
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
         self._add_alternation_of_generations()
+        self._add_early_script()
+        self._set_gametophyte_k()
         self._add_initialize_constants()
         self._write_trees_file()
 
@@ -153,14 +167,17 @@ class BryophyteMonoicous(BryophyteBase):
     def _add_mode_scripts(self):
         """fills the model.map block with bryophyte-monoicous scripts."""
         # add reproduction scripts
+        self.model.custom(scripts=FUNCTIONS_BRYO, comment = "shadie DEFINITIONS")
         self.model.repro(
             population="p1",
             scripts=REPRO_BRYO_MONO_P1,
+            idx = "s5",
             comment="generates gametes from sporophytes"
         )
         self.model.repro(
             population="p0",
             scripts=REPRO_BRYO_MONO_P0,
+            idx="s6",
             comment="generates gametes from sporophytes"
         )
         
