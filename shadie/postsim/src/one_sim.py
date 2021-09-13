@@ -19,6 +19,8 @@ from toytree.utils.tree_sequence import ToyTreeSequence
 from toytree.utils.utils import ScrollableCanvas
 from shadie.chromosome.src.classes import ChromosomeBase
 
+logger = logger.bind(name='shadie')
+
 
 class OneSim:
     """"Load and merge one TreeSequence files from SLiM.
