@@ -183,10 +183,11 @@ SUBSTITUTION = """
 """
 
 SUB_MUTS = """
+        fixedCount = p1.individualCount * 2 + p0.individualCount; // p1=diploid sporophytes, p0=haploid gametophytes
         mut{idx} = sim.mutationsOfType({mut});
-        freq{idx} = sim.mutationFrequencies(NULL, mut{idx});
-        if (any(freq{idx} == 0.5))
-            sim.subpopulations.genomes.removeMutations(mut{idx}[freq{idx} == 0.5], T);
+        count{idx} = sim.mutationFrequencies(NULL, mut{idx});
+        if (any(counts7 == fixedCount))
+            sim.subpopulations.genomes.removeMutations(muts{idx}[counts{idx} == fixedCount], T);
 """
 
 #-----------------------------------------------

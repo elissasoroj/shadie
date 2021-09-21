@@ -221,7 +221,7 @@ class AngiospermMonoecious(AngiospermBase):
         This overrides the NonWrightFisher class function of same name.
         """
         early_script = (EARLY.format(
-            p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
+            p0_fitnessScaling= ANGIO_DIO_FITNESS_SCALE,
             activate=self._activate_str,
             deactivate=self._deactivate_str
             )

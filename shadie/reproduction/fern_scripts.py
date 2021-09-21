@@ -161,7 +161,7 @@ REPRO_PTER_HOMOSPORE_P0 = """
         child.tag=0;
         // Mother's fitness affects sporophyte fitness; see survival()
         if (GAM_MATERNAL_EFFECT > 0)
-            child.setValue("maternal_fitness", individual.subpopopulation.cachedFitness(individual.index));
+            child.setValue("maternal_fitness", individual.subpopulation.cachedFitness(individual.index));
     }
 """
 
