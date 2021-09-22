@@ -645,7 +645,7 @@ class TwoSims:
         seed: Optional[int]=None,
         color: Optional[str]="mediumseagreen",
         ymax: Optional[float]=None,
-        plot_style: Optional[str]=None,
+        plot_style: Optional[str]="fill",
         height: Optional[int]=300,
         width: Optional[int]=500,
         ):
@@ -691,7 +691,8 @@ class TwoSims:
         
         # get mean and std
         means = np.array(rep_values).mean(axis=0)
-        # stds = np.array(rep_values).mean(axis=0)     
+        # stds = np.array(rep_values).mean(axis=0) 
+        self.means = means    
 
         std_low = []
         std_high = []
