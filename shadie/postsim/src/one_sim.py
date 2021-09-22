@@ -719,7 +719,7 @@ class TwoSims:
             )
         else:
             canvas = toyplot.Canvas(width=width, height=height)
-            axes = ccanvas.cartesian(ymax=ymax, ymin=0)
+            axes = canvas.cartesian(ymax=ymax, ymin=0)
             fill = axes.fill(np.arrange(means.size), means-std_low, means-std_high, opacity=0.2)
             line = axes.plot(means)
 
