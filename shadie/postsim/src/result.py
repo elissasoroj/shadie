@@ -14,8 +14,7 @@ import pandas as pd
 import scipy.stats
 from loguru import logger
 
-from toytree.utils.tree_sequence import ToyTreeSequence
-from toytree.utils.utils import ScrollableCanvas
+from toytree.utils import toytree_sequence, ScrollableCanvas
 from shadie.chromosome.src.classes import ChromosomeBase
 
 
