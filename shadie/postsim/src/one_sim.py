@@ -644,6 +644,8 @@ class TwoSims:
         reps: int=1,
         seed: Optional[int]=None,
         color: Optional[str]="mediumseagreen",
+        ymax: Optional[float]=None,
+        plot_style: Optional[str]=None,
         ):
         """Return a toyplot drawing of a statistic across the genome.
         
@@ -682,18 +684,40 @@ class TwoSims:
                 )
             )
             rep_values.append(values)
+
+            
         
         # get mean and std
         means = np.array(rep_values).mean(axis=0)
-        # stds = np.array(rep_values).mean(axis=0)        
+        # stds = np.array(rep_values).mean(axis=0)     
 
-        # draw canvas...
-        style = {"fill":str(color)}
+        std_low = []
+        std_high = []
 
-        canvas, axes, mark  = toyplot.fill(
-            means, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80),
-            style=style
-        )
+        for i in rep_values:
+            data = i
+            mean_val = np.mean(data)
+            low, high = scipy.stats.t.interval(
+                alpha=0.95,
+                df=len(data) - 1,
+                loc=mean_val,
+                scale=scipy.stats.sem(data),
+            ) 
+            std_low.append(low)
+            std_high.append(high)
+
+        
+        if plot_style == "fill":
+            # draw canvas...
+            style = {"fill":str(color)}
+
+            canvas, axes, mark  = toyplot.fill(
+                means, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80),
+                ymax=ymax, style=style
+            )
+        else:
+            fill = axes.fill(np.arrange(means.size), means-std_low, means-std_high, opacity=0.2)
+            line = axes.plot(means)
 
         # style axes
         axes.x.ticks.show = True
