@@ -8,35 +8,43 @@ import sys
 from loguru import logger
 
 
-# logger will show time, function name, and message.
 LOGFORMAT = (
-    "{time:hh:mm} | {level: <7} | "
-    "<b><red>{function: <15}</red></b> | "
-    "<level>{message}</level>"
+    "🌿 {level} | "
+    "<level>{file}</level> | "
+    "<black>{message}</black>"
 )
 
-# colorize the logger if stdout is IPython/Jupyter or a terminal (TTY)
-try:
-    import IPython
-    TTY1 = bool(IPython.get_ipython())
-except ImportError:
-    TTY1 = False
-TTY2 = sys.stdout.isatty()
+def colorize():
+    """colorize the logger if stderr is IPython/Jupyter or a terminal (TTY)"""
+    try:
+        import IPython        
+        tty1 = bool(IPython.get_ipython())
+    except ImportError:
+        tty1 = False
+    tty2 = sys.stderr.isatty()
+    if tty1 or tty2:
+        return True
+    return False
 
+LOGGERS = [0]
+def set_log_level(log_level="INFO"):
+    """Set the loglevel for loguru logger. 
 
-def set_loglevel(loglevel="INFO"):
+    This removes default loguru handler, but leaves any others, 
+    and adds a new one that will filter to only print logs from 
+    shadie modules, which should use `logger.bind(name='shadie')`.
     """
-    Set the loglevel for loguru logger. Using 'enable' here as 
-    described in the loguru docs for logging inside of a library.
-    This sets the level at which logger calls will be displayed 
-    throughout the rest of the code.
-    """
-    config = {}
-    config["handlers"] = [{
-        "sink": sys.stdout,
-        "format": LOGFORMAT,
-        "level": loglevel,
-        "colorize": TTY1 or TTY2,
-    }]
-    logger.configure(**config)
+    for idx in LOGGERS:
+        try:
+            logger.remove(idx)
+        except ValueError:
+            pass
+    idx = logger.add(
+        sink=sys.stderr,
+        level=log_level,
+        colorize=colorize(),
+        format=LOGFORMAT,
+        filter=lambda x: x['extra'].get("name") == "shadie",
+    )
+    LOGGERS.append(idx)
     logger.enable("shadie")
