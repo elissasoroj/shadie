@@ -646,6 +646,8 @@ class TwoSims:
         color: Optional[str]="mediumseagreen",
         ymax: Optional[float]=None,
         plot_style: Optional[str]=None,
+        height: Optional[int]=300,
+        width: Optional[int]=500,
         ):
         """Return a toyplot drawing of a statistic across the genome.
         
@@ -712,10 +714,12 @@ class TwoSims:
             style = {"fill":str(color)}
 
             canvas, axes, mark  = toyplot.fill(
-                means, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80),
+                means, height=height, width=width, opacity=0.5, margin=(60, 50, 50, 80),
                 ymax=ymax, style=style
             )
         else:
+            canvas = toyplot.Canvas(width=width, height=height)
+            axes = ccanvas.cartesian(ymax=ymax, ymin=0)
             fill = axes.fill(np.arrange(means.size), means-std_low, means-std_high, opacity=0.2)
             line = axes.plot(means)
 
