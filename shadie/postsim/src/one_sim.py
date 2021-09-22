@@ -692,6 +692,7 @@ class TwoSims:
         # get mean and std
         means = np.array(rep_values).mean(axis=0)
         # stds = np.array(rep_values).mean(axis=0) 
+        self.rep_values = rep_values
         self.means = means    
 
         std_low = []
