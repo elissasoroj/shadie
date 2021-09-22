@@ -720,8 +720,9 @@ class TwoSims:
         else:
             canvas = toyplot.Canvas(width=width, height=height)
             axes = canvas.cartesian(ymax=ymax, ymin=0)
-            fill = axes.fill(np.arange(means.size), means-std_low, means-std_high, opacity=0.2)
-            line = axes.plot(means)
+            for i in range(0, length(means)):
+                fill = axes.fill(means[i], means[i]-std_low[i], means[i]-std_high[i], opacity=0.2, style=style)
+                line = axes.plot(means, style=style)
 
         # style axes
         axes.x.ticks.show = True
