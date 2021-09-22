@@ -17,5 +17,5 @@ from shadie.sims.model import Model
 from shadie import chromosome
 from shadie import reproduction
 from shadie import postsim
-from shadie.utils import set_loglevel
-set_loglevel("INFO")
+from shadie.utils import set_log_level
+set_log_level("INFO")
