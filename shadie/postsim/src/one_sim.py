@@ -517,11 +517,11 @@ class TwoSims:
             sorter=sorted_ids0,
         )
         node_mapping[both] = sorted_ids0[matches]
-        match = sum(node_mapping != -1)
-        nomatch = sum(node_mapping == -1)
-        
+        # match = sum(node_mapping != -1)
+        # nomatch = sum(node_mapping == -1)
+        # logger.debug(f"match={match}; nomatch={nomatch}; {self.trees_files}")        
+
         # save it.
-        # logger.debug(f"match={match}; nomatch={nomatch}; {self.trees_files}")
         tsu = ts0.union(ts1, node_mapping=node_mapping, check_shared_equality=True)
         self.tree_sequence = pyslim.SlimTreeSequence(tsu)
 
