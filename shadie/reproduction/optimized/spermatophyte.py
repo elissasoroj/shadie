@@ -234,6 +234,81 @@ class Spermatophyte(SpermatophyteBase):
                 )
 
 
+    def monoecious(self):
+        """
+        fills the script reproduction block with bryophyte-monoicous
+        """
+
+        # fitness callback:
+        i = 4
+        activate = []
+        deactivate = []
+        substitutions = []
+        for mut in self._chromosome.mutations:
+            i = i + 1
+            idx = str("s" + str(i))
+            active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
+            deactive_script = DEACTIVATE.format(**{'idx': idx}).lstrip()
+            activate.append(active_script)
+            deactivate.append(deactive_script)
+            sub_muts = SUB_MUTS.format(**{'idx': idx, 'mut': mut}).lstrip()
+            substitutions.append(sub_muts)
+            self.model.fitness(
+                idx=idx,
+                mutation=mut,
+                scripts="return 1 + mut.selectionCoeff",
+                comment="gametophytes have no dominance effects",
+            )
+            
+        activate_str = ""
+        deactivate_str = ""
+        for i in activate:
+            activate_str += "\n  ".join([i.strip(';') + ";\n    "])
+
+        for i in deactivate:
+            deactivate_str += "\n  ".join([i.strip(';') + ";\n    "])
+
+        early_script = (
+            EARLY_ANGIO.format(**{'activate': activate_str, 
+                'deactivate': deactivate_str}).lstrip())
+
+        self.model.early(
+            time=None, 
+            scripts=early_script, 
+            comment="alternation of generations",
+        )
+
+        survival_script = (
+            SURV.format(**{'p0maternal_effect': "",
+                'p1maternal_effect': "",
+                'p0survival': ANGIO_SURV_P0}).lstrip())
+        self.model.custom(survival_script)
+
+        self.model.repro(
+            population="p1",
+            scripts=REPRO_ANGIO_MONO_P1,
+            comment="generates gametes from sporophytes"
+            )
+
+        self.model.repro(
+            population="p0",
+            scripts=REPRO_ANGIO_DIO_P0,
+            comment="generates gametes from sporophytes"
+            )
+
+        substitution_str = ""
+        for i in substitutions:
+            substitution_str += "\n  ".join([i.strip(';') + ";\n    "])
+
+        substitution_script = (
+            SUBSTITUTION.format(**{'inner': substitution_str}).lstrip())
+
+        self.model.late(
+            time=None,
+            scripts=substitution_script,
+            comment="fixes mutations in haploid gen"
+            )
+
     def dioecious(self):
         """
         fills the script reproduction block with bryophyte-dioicous
@@ -303,81 +378,6 @@ class Spermatophyte(SpermatophyteBase):
         substitution_script = (
             SUBSTITUTION.format(**{'muts': substitution_str,
                 'late': LATE_ANGIO_DIO}).lstrip())
-
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-            )
-
-    def monoecious(self):
-        """
-        fills the script reproduction block with bryophyte-monoicous
-        """
-
-        # fitness callback:
-        i = 4
-        activate = []
-        deactivate = []
-        substitutions = []
-        for mut in self._chromosome.mutations:
-            i = i + 1
-            idx = str("s" + str(i))
-            active_script = ACTIVATE.format(**{'idx': idx}).lstrip()
-            deactive_script = DEACTIVATE.format(**{'idx': idx}).lstrip()
-            activate.append(active_script)
-            deactivate.append(deactive_script)
-            sub_inner = SUB_INNER.format(**{'idx': idx, 'mut': mut}).lstrip()
-            substitutions.append(sub_inner)
-            self.model.fitness(
-                idx=idx,
-                mutation=mut,
-                scripts="return 1 + mut.selectionCoeff",
-                comment="gametophytes have no dominance effects",
-            )
-            
-        activate_str = ""
-        deactivate_str = ""
-        for i in activate:
-            activate_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        for i in deactivate:
-            deactivate_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        early_script = (
-            EARLY.format(**{'activate': activate_str, 
-                'deactivate': deactivate_str}).lstrip())
-
-        self.model.early(
-            time=None, 
-            scripts=early_script, 
-            comment="alternation of generations",
-        )
-
-        survival_script = (
-            SURV.format(**{'p0maternal_effect': "",
-                'p1maternal_effect': "",
-                'p0survival': ANGIO_SURV_P0}).lstrip())
-        self.model.custom(survival_script)
-
-        self.model.repro(
-            population="p1",
-            scripts=REPRO_ANGIO_MONO_P1,
-            comment="generates gametes from sporophytes"
-            )
-
-        self.model.repro(
-            population="p0",
-            scripts=REPRO_ANGIO_DIO_P0,
-            comment="generates gametes from sporophytes"
-            )
-
-        substitution_str = ""
-        for i in substitutions:
-            substitution_str += "\n  ".join([i.strip(';') + ";\n    "])
-
-        substitution_script = (
-            SUBSTITUTION.format(**{'inner': substitution_str}).lstrip())
 
         self.model.late(
             time=None,
