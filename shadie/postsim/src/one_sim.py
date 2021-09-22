@@ -351,6 +351,7 @@ class OneSim:
         sample: Union[int, Iterable[int]]=6,
         reps: int=1,
         seed: Optional[int]=None,
+        color: Optional[str]="lightseagreen"
         ):
         """Return a toyplot drawing of a statistic across the genome.
         
@@ -392,8 +393,11 @@ class OneSim:
         stds = np.array(rep_values).mean(axis=0)        
 
         # draw canvas...
+        style = {"fill":str(color)}
+
         canvas, axes, mark  = toyplot.fill(
-            means, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80)
+            means, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80), 
+            style=style,
         )
 
         # style axes
@@ -685,7 +689,7 @@ class TwoSims:
 
         # draw canvas...
         style = {"fill":str(color)}
-        
+
         canvas, axes, mark  = toyplot.fill(
             means, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80),
             style=style
