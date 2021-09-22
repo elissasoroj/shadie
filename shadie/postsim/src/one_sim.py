@@ -573,6 +573,7 @@ class TwoSims:
         """
         rng = np.random.default_rng(seed)
         data = []
+        thetas = []
 
         # get a list of Series
         for rep in range(reps):
@@ -602,6 +603,12 @@ class TwoSims:
             )
             data.append(stats)
 
+            thetas.append(tts.tree_sequence.diversity(sample_0))
+            thetas.append(tts.tree_sequence.diversity(sample_1))
+
+        #save all the thetas to a list
+        self.thetas = thetas 
+        
         # concat to a dataframe
         data = pd.concat(data, axis=1).T
 
