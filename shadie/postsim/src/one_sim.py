@@ -351,6 +351,7 @@ class OneSim:
         sample: Union[int, Iterable[int]]=6,
         reps: int=1,
         seed: Optional[int]=None,
+        color: Optional[str]="lightseagreen"
         ):
         """Return a toyplot drawing of a statistic across the genome.
         
@@ -392,8 +393,11 @@ class OneSim:
         stds = np.array(rep_values).mean(axis=0)        
 
         # draw canvas...
+        style = {"fill":str(color)}
+
         canvas, axes, mark  = toyplot.fill(
-            means, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80)
+            means, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80), 
+            style=style,
         )
 
         # style axes
@@ -573,6 +577,7 @@ class TwoSims:
         """
         rng = np.random.default_rng(seed)
         data = []
+        thetas = []
 
         # get a list of Series
         for rep in range(reps):
@@ -601,6 +606,12 @@ class TwoSims:
                 dtype=float,
             )
             data.append(stats)
+
+            thetas.append(tts.tree_sequence.diversity(sample_0))
+            thetas.append(tts.tree_sequence.diversity(sample_1))
+
+        #save all the thetas to a list
+        self.thetas = thetas 
 
         # concat to a dataframe
         data = pd.concat(data, axis=1).T
@@ -632,6 +643,11 @@ class TwoSims:
         sample: Union[int, Iterable[int]]=10,
         reps: int=1,
         seed: Optional[int]=None,
+        color: Optional[str]="mediumseagreen",
+        ymax: Optional[float]=None,
+        plot_style: Optional[str]="fill",
+        height: Optional[int]=300,
+        width: Optional[int]=500,
         ):
         """Return a toyplot drawing of a statistic across the genome.
         
@@ -670,15 +686,43 @@ class TwoSims:
                 )
             )
             rep_values.append(values)
+
+            
         
         # get mean and std
         means = np.array(rep_values).mean(axis=0)
-        # stds = np.array(rep_values).mean(axis=0)        
+        # stds = np.array(rep_values).mean(axis=0) 
+        self.rep_values = rep_values
+        self.means = means    
 
-        # draw canvas...
-        canvas, axes, mark  = toyplot.fill(
-            means, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80)
-        )
+        std_low = []
+        std_high = []
+
+        for i in rep_values:
+            data = i
+            mean_val = np.mean(data)
+            low, high = scipy.stats.t.interval(
+                alpha=0.95,
+                df=len(data) - 1,
+                loc=mean_val,
+                scale=scipy.stats.sem(data),
+            ) 
+            std_low.append(low)
+            std_high.append(high)
+
+        style = {"fill":str(color)}
+        if plot_style == "fill":
+            # draw canvas...
+            canvas, axes, mark  = toyplot.fill(
+                means, height=height, width=width, opacity=0.5, margin=(60, 50, 50, 80),
+                ymax=ymax, style=style
+            )
+        else:
+            canvas = toyplot.Canvas(width=width, height=height)
+            axes = canvas.cartesian(ymax=ymax, ymin=0)
+            for i in range(0, len(means)):
+                fill = axes.fill(means[i], means[i]-std_low[i], means[i]-std_high[i], opacity=0.2, style=style)
+                line = axes.plot(means, style=style)
 
         # style axes
         axes.x.ticks.show = True

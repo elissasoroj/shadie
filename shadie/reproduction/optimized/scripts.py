@@ -319,7 +319,7 @@ LATE_BRYO_DIO = """
 	//odd = starts with gam in p0, generates spo into p1
 	else {
 		p1_size = length(p1.individuals);
-        number_selfed = rbinom(1, length(p1_size), spo_self_rate);
+        number_selfed = rbinom(1, length(p1_size), spo_self_chance);
         selfed = p1.sampleIndividuals(number_selfed);
         selfed.tag = 5; //tag sporophytic selfing inds
         
@@ -381,7 +381,7 @@ LATE_BRYO_MONO = """
         clones = p1.sampleIndividuals(asInteger(p1_size*spo_clone_rate)); //there is no spo cloning, so remove later
         clones.tag = 4; //tag clones
         
-        number_selfed = rbinom(1, length(p1_size), spo_self_rate);
+        number_selfed = rbinom(1, length(p1_size), spo_self_chance);
         selfed_inds = p1.sampleIndividuals(number_selfed);
         
         selfed = selfed_inds[selfed_inds.tag == 0];
@@ -784,7 +784,7 @@ LATE_ANGIO_MONO = """
         clones.tag == 44;
         
         //sporophytic selfing
-        number_selfed = rbinom(1, length(p1_size), spo_self_rate);
+        number_selfed = rbinom(1, length(p1_size), spo_self_chance);
         selfed_inds = p1.sampleIndividuals(number_selfed);
         selfed_cloned = selfed_inds[selfed_inds.tag == 44];
         selfed_cloned.tag = 45; //tag selfing and cloning spo inds
@@ -1020,7 +1020,7 @@ LATE_PTER_HOMOSPORE = """
         clones = p1.sampleIndividuals(asInteger(p1_size*spo_clone_rate));
         clones.tag = 44; //tag clones - 4 is gam, 44 is spo
         
-        number_selfed = rbinom(1, length(p1_size), spo_self_rate);
+        number_selfed = rbinom(1, length(p1_size), spo_self_chance);
         selfed_inds = p1.sampleIndividuals(number_selfed);
         selfed_cloned = selfed_inds[selfed_inds.tag == 44];
         selfed_cloned.tag = 45; //tag selfing and cloning spo inds
@@ -1191,7 +1191,7 @@ LATE_PTER_HETEROSPORE = """
         clones.tag = 44; //tag clones - 4 is gam, 44 is spo
         
         //sporophytic selfing
-        number_selfed = rbinom(1, length(p1_size), spo_self_rate);
+        number_selfed = rbinom(1, length(p1_size), spo_self_chance);
         selfed_inds = p1.sampleIndividuals(number_selfed);
         selfed_cloned = selfed_inds[selfed_inds.tag == 44];
         selfed_cloned.tag = 45; //tag selfing and cloning spo inds
