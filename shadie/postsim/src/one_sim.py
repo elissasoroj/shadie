@@ -608,7 +608,7 @@ class TwoSims:
 
         #save all the thetas to a list
         self.thetas = thetas 
-        
+
         # concat to a dataframe
         data = pd.concat(data, axis=1).T
 
@@ -639,6 +639,7 @@ class TwoSims:
         sample: Union[int, Iterable[int]]=10,
         reps: int=1,
         seed: Optional[int]=None,
+        color: Optional[str]="mediumseagreen",
         ):
         """Return a toyplot drawing of a statistic across the genome.
         
@@ -683,8 +684,11 @@ class TwoSims:
         # stds = np.array(rep_values).mean(axis=0)        
 
         # draw canvas...
+        style = {"fill":str(color)}
+        
         canvas, axes, mark  = toyplot.fill(
-            means, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80)
+            means, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80),
+            style=style
         )
 
         # style axes
