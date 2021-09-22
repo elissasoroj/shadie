@@ -708,11 +708,9 @@ class TwoSims:
             std_low.append(low)
             std_high.append(high)
 
-        
+        style = {"fill":str(color)}
         if plot_style == "fill":
             # draw canvas...
-            style = {"fill":str(color)}
-
             canvas, axes, mark  = toyplot.fill(
                 means, height=height, width=width, opacity=0.5, margin=(60, 50, 50, 80),
                 ymax=ymax, style=style
