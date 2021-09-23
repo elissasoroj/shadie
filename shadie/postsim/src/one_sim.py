@@ -546,7 +546,7 @@ class TwoSims:
             random_seed=self.seed,
         )
 
-    def stats(
+    def get_stats(
         self,
         sample: Union[int, Iterable[int]]=10,
         seed: Optional[int]=None,
@@ -636,6 +636,60 @@ class TwoSims:
         )
         return data
 
+    def get_windowed_stats(
+        self,
+        stat: str="divergence",
+        window_size: int=20_000,
+        sample: Union[int, Iterable[int]]=10,
+        reps: int=1,
+        seed: Optional[int]=None,
+        ):
+        """Return array of stats measured over many random sampled replicates.
+        """
+        rng = np.random.default_rng(seed)
+        rep_values = []
+        for _ in range(reps):
+            rep_seed = rng.integers(2**31)
+            tts = toytree_sequence(self.tree_sequence, sample=sample, seed=rep_seed)
+            samples = np.arange(tts.sample[0] + tts.sample[1])
+            sample_0 = samples[:tts.sample[0]]
+            sample_1 = samples[tts.sample[0]:]
+            samples = [sample_0, sample_1]
+
+            # select a supported statistic to measure
+            if stat == "divergence":
+                func = tts.tree_sequence.divergence
+                sample_sets = samples
+            elif stat == "Fst":
+                func = tts.tree_sequence.Fst
+                sample_sets = samples                
+            elif stat == "theta0":
+                func = tts.tree_sequence.diversity
+                sample_sets = sample_0
+            elif stat == "theta1":
+                func = tts.tree_sequence.diversity
+                sample_sets = sample_1
+            elif stat == "tajimas0":
+                func = tts.tree_sequence.Tajimas_D
+                sample_sets = sample_1
+            elif stat == "tajimas1":
+                func = tts.tree_sequence.Tajimas_D
+                sample_sets = sample_1
+            else:
+                raise NotImplementedError(f"stat {stat} on the TODO list...")
+                
+            values = func(
+                sample_sets=sample_sets,
+                windows=np.linspace(
+                    start=0, 
+                    stop=tts.tree_sequence.sequence_length, 
+                    num=round(tts.tree_sequence.sequence_length / window_size)
+                )
+            )
+            rep_values.append(values)
+        return np.array(rep_values)
+
+
     def draw_stats(
         self,
         stat: str="divergence",
@@ -659,46 +713,19 @@ class TwoSims:
         ----------
         """
         # repeat measurement over many random sampled replicates
-        rng = np.random.default_rng(seed)
-        rep_values = []
-        for _ in range(reps):
-            rep_seed = rng.integers(2**31)
-            tts = toytree_sequence(self.tree_sequence, sample=sample, seed=rep_seed)
-            samples = np.arange(tts.sample[0] + tts.sample[1])
-            sample_0 = samples[:tts.sample[0]]
-            sample_1 = samples[tts.sample[0]:]
-            samples = [sample_0, sample_1]
-
-            # select a supported statistic to measure
-            if stat == "divergence":
-                func = tts.tree_sequence.divergence
-            elif stat == "Fst":
-                func = tts.tree_sequence.Fst
-            else:
-                raise NotImplementedError(f"stat {stat} on the TODO list...")
-                
-            values = func(
-                sample_sets=samples,
-                windows=np.linspace(
-                    start=0, 
-                    stop=tts.tree_sequence.sequence_length, 
-                    num=round(tts.tree_sequence.sequence_length / window_size)
-                )
-            )
-            rep_values.append(values)
-
-            
+        stats = self.get_windowed_stats(stat, window_size, sample, reps, seed)
         
         # get mean and std
-        means = np.array(rep_values).mean(axis=0)
-        # stds = np.array(rep_values).mean(axis=0) 
-        self.rep_values = rep_values
+        means = np.array(stats).mean(axis=0)
+        # stds = np.array(stats).std(axis=0) 
+
+        self.rep_values = means
         self.means = means    
 
         std_low = []
         std_high = []
 
-        for i in rep_values:
+        for i in self.rep_values:
             data = i
             mean_val = np.mean(data)
             low, high = scipy.stats.t.interval(
@@ -747,17 +774,17 @@ if __name__ == "__main__":
         "bryo_mono_run1[0-9]_from_smallchrom_2000spo.trees")
     )
 
-    post = OneSim(TREEFILES[0], ancestral_Ne=500, mut=1e-7, recomb=1e-8, chromosome=None)
-    print(post.stats())
+    # post = OneSim(TREEFILES[0], ancestral_Ne=500, mut=1e-7, recomb=1e-8, chromosome=None)
+    # print(post.stats())
 
-    post = TwoSims(
-        trees_files=[TREEFILES[0], TREEFILES[1]],
-        ancestral_ne=200,
-        mut=1e-7 / 2.,
-        recomb=1e-8,
-        chromosome=None,
-    )
-    print(post.stats(sample=20, reps=20))
+    # post = TwoSims(
+    #     trees_files=[TREEFILES[0], TREEFILES[1]],
+    #     ancestral_ne=200,
+    #     mut=1e-7 / 2.,
+    #     recomb=1e-8,
+    #     chromosome=None,
+    # )
+    # print(post.get_stats(sample=20, reps=20))
 
 
     TREEFILES = sorted(glob.glob(
@@ -771,6 +798,5 @@ if __name__ == "__main__":
         recomb=1e-8,
         chromosome=None,
     )
-    print(post.stats(sample=20, reps=20))
-
-    print(post.draw_stats())
+    print(post.get_stats(sample=20, reps=20))
+    print(post.get_windowed_stats(reps=5))
