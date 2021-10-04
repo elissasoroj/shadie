@@ -10,8 +10,8 @@ initialize() {
   initializeSLiMModelType("nonWF");
 
   // config
-  initializeRecombinationRate(1e-07, 15000000);
-  initializeMutationRate(5e-7);
+  initializeRecombinationRate(5e-08, 15000000);
+  initializeMutationRate(1e-7);
   initializeTreeSeq(simplificationInterval=200);
 
   // MutationType init
@@ -323,15 +323,17 @@ s82 fitness(m1) {
 
 // executes after selection occurs
 // end of sim; save .trees file
-2001 late() {
+5001 late() {
     // sim.treeSeqRememberIndividuals(sim.subpopulations.individuals);
     report();
     sim.treeSeqRememberIndividuals(p1.individuals);
     sim.treeSeqOutput(
         path='/tmp/fern2.trees', 
         metadata=Dictionary(
-            "meta", "test", "meta2", "test2"
-
+            "spo_mutation_rate", SPO_MUTATION_RATE,
+            "recombination_rate", 1e-7,
+            "spo_population_size", 
+            "gam_population_size",           
         )
     );
 }
