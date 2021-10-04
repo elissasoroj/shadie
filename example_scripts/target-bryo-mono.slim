@@ -27,8 +27,8 @@ initialize() {
   initializeGenomicElement(g2, 10000001, 10001000);
 
   // constants (Population sizes and others)
-  defineConstant('SPO_POP_SIZE', 500);
-  defineConstant('GAM_POP_SIZE', 500);
+  defineConstant('SPO_POP_SIZE', 5000);
+  defineConstant('GAM_POP_SIZE', 5000);
   defineConstant('SPO_MUTATION_RATE', 5e-07);
   defineConstant('GAM_MUTATION_RATE', 5e-07);
   defineConstant('GAM_CLONE_RATE', 0.00);
@@ -39,7 +39,7 @@ initialize() {
   defineConstant('GAM_RANDOM_DEATH_CHANCE', 0);
   defineConstant('GAM_MATERNAL_EFFECT', 0);
   defineConstant('GAM_ARCHEGONIA_PER', 10);
-  defineConstant('SPO_SPORES_PER', 100);
+  defineConstant('SPO_SPORES_PER', 20);
 
   // extra scripts (Optional)
   
@@ -296,7 +296,7 @@ s82 fitness(m1) {
 
 // executes after selection occurs
 // end of sim; save .trees file
-2001 late() {
+20001 late() {
     // sim.treeSeqRememberIndividuals(sim.subpopulations.individuals);
     report();
     sim.treeSeqRememberIndividuals(p1.individuals);
