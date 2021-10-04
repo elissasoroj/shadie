@@ -323,11 +323,11 @@ s82 fitness(m1) {
 
 // executes after selection occurs
 // end of sim; save .trees file
-5001 late() {
+20001 late() {
     // sim.treeSeqRememberIndividuals(sim.subpopulations.individuals);
     report();
     sim.treeSeqRememberIndividuals(p1.individuals);
-    sim.treeSeqOutput(path='/tmp/fern-5K.trees');
+    sim.treeSeqOutput(path='/tmp/fern-time20K-pops5K.trees');
     // metadata=Dictionary("spo_mutation_rate", SPO_MUTATION_RATE, "recombination_rate", 5e-8, "spo_population_size", 1000, "gam_population_size", 1000),
 }
 
