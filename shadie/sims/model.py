@@ -55,8 +55,6 @@ from shadie.sims.format import (
 # register logger to this module only
 logger = logger.bind(name="shadie")
 
-# cannot do both mutationRate and nucleotidebased
-
 
 class Model(AbstractContextManager):
     """The core shadie Class object to create and run SLiM scripts.
@@ -164,6 +162,7 @@ class Model(AbstractContextManager):
                     script = mapped[key][i]
                     if "DEFINITIONS" in script['comment']:
                         mapped['shadie'].append(mapped[key].pop(i))
+
         #     for item in mapped[key]:
         #         print(item)
         #         if 'time' in item:
@@ -456,17 +455,19 @@ class Model(AbstractContextManager):
 
             # build command and run in subprocess
             cmd = [binary, '-seed', str(seed), script_path]
-            proc = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            with subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                ) as proc:
 
-            # capture stdout
-            out, _ = proc.communicate()
+                # capture stdout
+                out, _ = proc.communicate()
 
-            # check for errors
-            if proc.returncode:
-                logger.error(out.decode())
-                self.write("/tmp/slim.slim")
-                raise SyntaxError("SLiM3 error, see script at /tmp/slim.slim")
+                # check for errors
+                if proc.returncode:
+                    logger.error(out.decode())
+                    self.write("/tmp/slim.slim")
+                    raise SyntaxError(
+                        "SLiM3 error, see script at /tmp/slim.slim")
 
         # todo: parse stdout to store, and send warnings to logger
         self.stdout = out.decode()
