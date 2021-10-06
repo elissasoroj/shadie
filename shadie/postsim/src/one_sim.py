@@ -37,11 +37,11 @@ class OneSim:
     def __init__(
         self,
         trees_file: str, #'tskit.trees.TreeSequence',
-        ancestral_Ne: int,
-        mut: float,
-        recomb: float,
-        chromosome: 'shadie.Chromosome',
+        mut: float=1e-8,
+        recomb: float=1e-9,
+        chromosome: 'shadie.Chromosome'=None,
         seed: Optional[int]=None,
+        ancestral_Ne: int=1,
         recapitate: bool=False,
         add_neutral_mutations: bool=False,
         ):
@@ -168,18 +168,21 @@ class OneSim:
 
     def stats(
         self,
-        sample: Union[int, Iterable[int]]=10,
+        sample_size: Union[int, Iterable[int]]=10,
         seed: Optional[int]=None,
         reps: int=10
         ):
         """Calculate statistics summary on mutated TreeSequence.
         
-        Returns a dataframe with several statistics calculated and
-        summarized from replicate random sampling.
+        Returns a dataframe with diversity and Tajima's D calculated 
+        for a single population. If sample_size is specified then N 
+        samples will subsampled, using the random seed, and stats will
+        be returned with 95% confidence interval over replicate 
+        subsampled sets of nodes.
 
         Parameters
         ----------
-        sample: int or Iterable of ints
+        sample_size: int or Iterable of ints
             The number of tips to randomly sample from each population.
         seed: int
             A seed for random sampling.
@@ -192,13 +195,24 @@ class OneSim:
         pandas.DataFrame
             A dataframe with mean and 95% confidence intervals.
         """
-        rng = np.random.default_rng(seed)
-        data = []
+        # no subsampling just return calculated stats.
+        if not sample_size:
+            return pd.Series(
+                index=["theta", "D_Taj"],
+                name=str(0),
+                data=[
+                    self.tree_sequence.diversity(),
+                    self.tree_sequence.Tajimas_D(),
+                ],
+                dtype=float,
+            )
 
         # get a list of Series
+        rng = np.random.default_rng(seed)
+        data = []
         for rep in range(reps):
             seed = rng.integers(2**31)
-            tts = toytree_sequence(self.tree_sequence, sample=sample, seed=seed)
+            tts = toytree_sequence(self.tree_sequence, sample=sample_size, seed=seed)
             samples = np.arange(tts.sample[0])
 
             stats = pd.Series(
@@ -244,7 +258,7 @@ class OneSim:
         show_label=True,
         show_generation_line=False,
         **kwargs):
-        """Returns a toytree drawing for a random sample of tips.
+        """Return a toytree drawing for a random sample of tips.
 
         The tree drawing will include mutations as marks on edges
         with mutationTypes colored differently. The tips are re-labeled
@@ -344,6 +358,42 @@ class OneSim:
 
         return canvas, axes, mark
 
+
+
+    def get_windowed_stats(
+        self,
+        stat: str="divergence",
+        window_size: int=20_000,
+        sample_size: Union[int, Iterable[int]]=10,
+        reps: int=1,
+        seed: Optional[int]=None,
+        ):
+        """Return array of stats measured over many random sampled replicates.
+        """
+        rng = np.random.default_rng(seed)
+        rep_values = []
+        for _ in range(reps):
+            rep_seed = rng.integers(2**31)
+            tts = toytree_sequence(self.tree_sequence, sample=sample_size, seed=rep_seed)
+            sample_sets = np.arange(sample_size).tolist()
+
+            # select a supported statistic to measure
+            if stat == "diversity":
+                func = tts.tree_sequence.diversity
+            else:
+                func = tts.tree_sequence.Tajimas_D
+                
+            values = func(
+                sample_sets=sample_sets,
+                windows=np.linspace(
+                    start=0, 
+                    stop=tts.tree_sequence.sequence_length, 
+                    num=round(tts.tree_sequence.sequence_length / window_size)
+                )
+            )
+            rep_values.append(values)
+        return np.array(rep_values)
+
     def draw_stats(
         self,
         stat: str="diversity",
@@ -365,6 +415,8 @@ class OneSim:
         # select a supported statistic to measure
         if stat == "diversity":
             func = self.tree_sequence.diversity
+        elif "ajima" in stat:
+            func = self.tree_sequence.Tajimas_D
         else:
             raise NotImplementedError(f"stat {stat} on the TODO list...")
 
