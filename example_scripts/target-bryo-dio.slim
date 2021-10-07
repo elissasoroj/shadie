@@ -1,5 +1,3 @@
-
-// Heterosporous fern.
 // Two mutationTypes defined:
 //   - m1 applies to gameto only
 //   - m2 applies to sporo only
@@ -39,8 +37,9 @@ initialize() {
   defineConstant('GAM_RANDOM_DEATH_CHANCE', 0);
   defineConstant('GAM_MATERNAL_EFFECT', 0);
   defineConstant('GAM_ARCHEGONIA_PER', 10);
-  defineConstant('SPO_SPORES_PER', 20);
-  defineConstant('OUTPATH', '/tmp/target-bryo-mono.trees');
+  defineConstant('GAM_FEMALE_TO_MALE_RATIO', 0.5);
+  defineConstant('SPO_SPORES_PER', 20);  // larger relative to popsize increases prob of inbreeding (ntergemetic selfing)
+
   // extra scripts (Optional)
   
 }
@@ -49,10 +48,12 @@ initialize() {
 // p0 = haploid population
 // p1 = diploid population
 
-// 0 = gametophyte (1N)
-// 1 = gametophyte clone (1N)
-// 2 = gametophyte selfed (1N)
-// 3 = sporophyte (2N)
+// 1 = gametophyte male
+// 2 = gametophyte female
+// 3 = gametophyte male clone
+// 4 = gemetophyte female clone
+// 5 = sporophyte
+
 // Note: sporophytes cannot clone here.
 // Note: sporophyte selfing is left to chance based on size of gametophyte pop.
 
@@ -62,7 +63,7 @@ initialize() {
 1 early() {
     sim.addSubpop('p1', SPO_POP_SIZE);
     sim.addSubpop('p0', 0);
-    p1.individuals.tag = 3;
+    p1.individuals.tag = 5;
 }
 
 
@@ -71,8 +72,10 @@ early() {
     // this generation will calculate fitness and apply selection on them.
     if (sim.generation % 2 == 0) {
 
-        // fitness is scaled relative to all p0s, b/c all monoicous bryos are hermaphroditic
-        p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
+        // fitness is scaled relative to num female gametophytes
+        num_females = length(p0.individuals[p0.individuals.tag == 2]);
+        num_females = num_females + length(p0.individuals[p0.individuals.tag == 4]);
+        p0.fitnessScaling = (GAM_POP_SIZE / (num_females));
 
         // set mutation rate to gametophyte rate
         sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
@@ -165,10 +168,14 @@ s1 survival(p1) {
 }
 
 // alternate to other generation.
-// remove p0 individuals unless it is a clone () or gameto-self (01)
+// remove p0 individuals unless it is a clone (00x)
 s2 survival(p0) {
-    if ((individual.tag == 1) | (individual.tag == 2)) {
-        individual.tag = 0;
+    if (individual.tag == 3) {
+    	individual.tag = 1;
+    	return T;
+    }
+    else if (individual.tag == 2) {
+        individual.tag = 4;
         return T;
     }
     return F;
@@ -209,16 +216,22 @@ s5 reproduction(p1) {
         breaks1 = sim.chromosome.drawBreakpoints(ind);
         breaks2 = sim.chromosome.drawBreakpoints(ind);
 
-        // create four meiotic products. If later two of these mate with each other
-        // it is an example of sporophytic selfing. Because we want to be able to 
-        // toggle the probability of this process, we need to indicate gametes are
-        // siblings. These gametes must still survive through the fitness calculations
-        // to reach s6 in the next generation before they can mate.
-        // idea: perhaps a spatial coordinate system could be used to model prob. of intergametic selfing.
-        p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL).tag=0;
-        p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL).tag=0;
-        p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL).tag=0;
-        p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL).tag=0;
+        // randomly sample whether it is male or female
+        if (runif(1) < GAM_FEMALE_TO_MALE_RATIO) {
+	        p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL).tag=2;
+	    }
+	    else {
+	        // create four meiotic products. If later two of these mate with each other
+	        // it is an example of sporophytic selfing. Because we want to be able to 
+	        // toggle the probability of this process, we need to indicate gametes are
+	        // siblings. These gametes must still survive through the fitness calculations
+	        // to reach s6 in the next generation before they can mate.
+	        // idea: perhaps a spatial coordinate system could be used to model prob. of intergametic selfing.
+	        p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL).tag=1;
+	        p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL).tag=1;
+	        p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL).tag=1;
+	        p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL).tag=1;
+	    }
     }
 }
 
@@ -231,41 +244,32 @@ s6 reproduction(p0) {
 
     // clonal individual get added to the p0 pool for next round.
     // NOTE: this doesn't allow clones to reproduce this round.
-    if (individual.tag == 1) {
-        p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 0;
+    if (individual.tag == 3) {
+        p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 1;
+        // maternal effect is removed from clones.
+        if (GAM_MATERNAL_EFFECT > 0)
+            child.setValue("maternal_fitness", 1.0);
+    }
+
+    // clonal individual get added to the p0 pool for next round.
+    // NOTE: this doesn't allow clones to reproduce this round.
+    else if (individual.tag == 4) {
+        p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 2;
         // maternal effect is removed from clones.
         if (GAM_MATERNAL_EFFECT > 0)
             child.setValue("maternal_fitness", 1.0);
     }
 
     // non-clones get to reproduce.
-    else {
+    else if (individual.tag == 2) {
         // iterate over each egg to find a mate (self or outcross)
         for (rep in 1:eggs) {
 
-            // selfed individual (intragametic selfing)
-            if ((individual.tag == 2) & (runif(1) < GAM_SELF_RATE_PER_EGG)) {
-                child = p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
-                child.tag = 3;
-            }
-
-            // inter-gametophytic selfed individual (same sporo parent)
-            // starts by finding a sibling... how can this be done?
-            // if (individual.tag == 01) & (runif(1) < GAM_SELF_RATE_PER_EGG)) {
-                // sibling = ...;
-                // child = p1.addRecombinant(individual.genome1, NULL, NULL, sibling.genome1, NULL, NULL);
-            // }
-
-            // outcrossing individual samples any other p0 as partner. This could
-            // cause intergametic selfing if other gametes in the pool are likely 
-            // to be from the same sporophytic parent, but that is left to chance here.       
-            else {
-                // NOTE: each gametophyte gives rise to antheridia that produce thousands of
-                // clonal sperm. Because of this, sperm is not removed from the mating pool when used.
-                sperm = p0.sampleIndividuals(1, tag=0); 
-                child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
-                child.tag = 3;
-            }
+            // NOTE: each gametophyte gives rise to antheridia that produce thousands of
+            // clonal sperm. Because of this, sperm is not removed from the mating pool when used.
+            sperm = p0.sampleIndividuals(1, tag=1);
+            child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
+            child.tag = 5;
 
             // set maternal effect on the sporophyte using gameto's fitness.
             if (GAM_MATERNAL_EFFECT > 0)
@@ -320,7 +324,7 @@ s82 fitness(m1) {
     report();
     sim.treeSeqRememberIndividuals(p1.individuals);
     sim.treeSeqOutput(
-        path=OUTPATH,
+        path='/tmp/target-bryo-dio.trees', 
         metadata=Dictionary(
             "spo_mutation_rate", SPO_MUTATION_RATE,
             "recombination_rate", 1e-7,
@@ -332,19 +336,20 @@ s82 fitness(m1) {
 
 // executes after selection occurs
 late() {
-
     // on even generations tag gametophytic clones and selfers
     if (sim.generation % 2 == 0) {
 
-        // tag gametophytes that will clone (2)
-        nsamples = asInteger(size(p0.individuals) * GAM_CLONE_RATE);
-        clones = p0.sampleIndividuals(nsamples, tag=0);
-        clones.tag = 1;
-        
-        // tag gametophytes that will self (3)
-        nsamples = asInteger(size(p0.individuals) * GAM_SELF_RATE_PER_IND);
-        selfed = p0.sampleIndividuals(nsamples, tag=0);
-        selfed.tag = 2;
+        // tag male gametophytes that will clone (1 -> 3)
+        num_males = length(p0.individuals[p0.individuals.tag == 1]);
+        num_male_clones = asInteger(num_males * GAM_CLONE_RATE);
+        clones = p0.sampleIndividuals(num_male_clones, tag=1);
+        clones.tag = 3;
+
+        // tag female gametophytes that will clone (2 -> 4)
+        num_females = length(p0.individuals[p0.individuals.tag == 2]);
+        num_female_clones = asInteger(num_females * GAM_CLONE_RATE);
+        clones = p0.sampleIndividuals(num_female_clones, tag=2);
+        clones.tag = 4;
     }
 
     // logger 
@@ -378,9 +383,10 @@ function (void)report(void) {
 
     cat(format('gen=%i, ', sim.generation));
     cat(format('ngenomes=%i, ', ngenomes));
-    cat(format('(p1=%i, ', 2 * p1.individuals.size()));
-    cat(format('p0.tag0=%i, ', sum(p0.individuals.tag == 0)));
+    cat(format('(p1.tag5=%i, ', 2 * p1.individuals.size()));
     cat(format('p0.tag1=%i, ', sum(p0.individuals.tag == 1)));
-    cat(format('p0.tag2=%i)\n', sum(p0.individuals.tag == 2)));
+    cat(format('p0.tag2=%i, ', sum(p0.individuals.tag == 2)));    
+    cat(format('p0.tag3=%i, ', sum(p0.individuals.tag == 3)));
+    cat(format('p0.tag4=%i)\n', sum(p0.individuals.tag == 4)));
     cat("\n---------------------- fixed=" + sim.substitutions.size() + "\n\n");
 }
