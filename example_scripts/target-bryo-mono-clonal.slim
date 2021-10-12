@@ -2,10 +2,6 @@
 //   - m1 is applied only to p0
 //   - m2 is applied only to p1
 
-// sporophytic selfing is working
-// gametophytic selfing is working
-// cloning ...
-
 initialize() {
 
   // model type
@@ -29,8 +25,8 @@ initialize() {
   initializeGenomicElement(g2, 10000001, 10001000);
 
   // constants (Population sizes and others)
-  defineConstant('SPO_POP_SIZE', 1000);
-  defineConstant('GAM_POP_SIZE', 1000);
+  defineConstant('SPO_POP_SIZE', 3000);
+  defineConstant('GAM_POP_SIZE', 3000);
   defineConstant('SPO_MUTATION_RATE', 5e-07);
   defineConstant('GAM_MUTATION_RATE', 5e-07);
 
@@ -311,15 +307,16 @@ s6 reproduction(p0) {
         // outcrossing individual samples any p0 that is not same tag.
         // only occurs if a non-sib gametophyte is still alive.
         else {
-            non_sibs = p0.individuals[p0.individuals.tag != individual.tag];
-            if (length(non_sibs) > 0) {
-
-                // TODO: alternatively could sample a single and test it a sib.
-                sperm = sample(non_sibs, 1);
-                child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
-                child.tag = 3;
-                if (GAM_MATERNAL_EFFECT > 0)
-                    child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));    
+            // try at most 10 times to find a non-sib sperm, then skip.
+            for (trial in 1:10) {
+                sperm = sample(p0.individuals, 1);
+                if (sperm.tag != individual.tag) {
+                    child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
+                    child.tag = 3;
+                    if (GAM_MATERNAL_EFFECT > 0)
+                        child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));    
+                    break;
+                }
             }
         }
     }
@@ -396,10 +393,11 @@ late() {
         clones = p0.individuals[p0.individuals.tag == 1];
         clones.tag = 0;
 
-        // gametophytes are tagged to indicate their spo parent, 
-        // these tags are no longer needed and so reset to 0.
-        spo_selfed = p0.individuals[p0.individuals.tag > 999999];
-        spo_selfed.tag = 0;
+        // // gametophytes are tagged to indicate their spo parent, 
+        // // these tags are no longer needed and so reset to 0.
+        // spo_selfed = p0.individuals[p0.individuals.tag > 999999];
+        // spo_selfed.tag = 0;
+        // p0.individuals.tag = 0;
     }
 
 }
