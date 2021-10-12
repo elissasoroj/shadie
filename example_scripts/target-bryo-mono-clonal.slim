@@ -35,23 +35,25 @@ initialize() {
   defineConstant('GAM_MUTATION_RATE', 5e-07);
 
   // cloning rate applies to gametophyte individuals
-  defineConstant('GAM_CLONE_RATE', 0.10);
-  defineConstant('GAM_CLONES_PER', 2);
+  defineConstant('GAM_CLONE_RATE', 0.0);
+  defineConstant('GAM_CLONES_PER', 1);
 
   // gam selfing rate applies to gametophyte archegonia
   // defineConstant('GAM_SELF_RATE_PER_IND', 0.10);
-  defineConstant('GAM_SELF_RATE_PER_EGG', 0.10);
+  defineConstant('GAM_SELF_RATE_PER_EGG', 0.0);
 
   // gametophytes from the same sporophyte will get unique tags
   // that will be used to specify mating later. Because bryos
   // have only one egg per archegon this is actually per-archeg.
   // defineConstant('SPO_SELF_RATE_PER_IND', 0.10);
-  defineConstant('SPO_SELF_RATE_PER_EGG', 0.10);  
+  defineConstant('SPO_SELF_RATE_PER_EGG', 0.0);
 
   // affects fitness and survival
-  defineConstant('SPO_RANDOM_DEATH_CHANCE', 0.1);
-  defineConstant('GAM_RANDOM_DEATH_CHANCE', 0.1);
-  defineConstant('GAM_MATERNAL_EFFECT', 0.1);
+  defineConstant('SPO_RANDOM_DEATH_CHANCE', 0.0);
+  defineConstant('GAM_RANDOM_DEATH_CHANCE', 0.0);
+
+  // TODO: needs further testing in GUI
+  defineConstant('GAM_MATERNAL_EFFECT', 0.0);
 
   // this defines the total number of gams that will be produced prior to selection
   // culling it down to the K population size. Larger numbers runs slower, but also
@@ -275,6 +277,8 @@ s6 reproduction(p0) {
     // NOTE: each gametophyte gives rise to antheridia that produce thousands of
     // clonal sperm. Because of this, sperm is not removed from the mating pool when used.       
     for (rep in 1:eggs) {
+
+        // idea: random_chance_of ... here?
 
         // weighted sampling: each egg gets gam-selfed, spo-selfed, or outcrossed.
         // Note: shadie enforces that GAM_SELF_RATE + SPO_SELF_RATE !> 1
