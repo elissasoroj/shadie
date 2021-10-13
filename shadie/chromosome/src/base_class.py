@@ -63,15 +63,15 @@ class ChromosomeBase:
     @property
     def mutations(self):
         """Return a list of all MutationType objects in the chromosome.
-
-        If chromosome.skip_neutral_mutations=True this will skip any
-        neutral mutations in the list it returns.
         """
         mutations = []
+        idxs = []
         for elem in self.elements:
             for mutation in elem.mlist:
-                mutations.append(mutation)
-        return list(set(mutations))
+                if mutation.idx not in idxs:
+                    mutations.append(mutation)
+                    idxs.append(mutation.idx)
+        return list(mutations)
 
     @property
     def elements(self):
