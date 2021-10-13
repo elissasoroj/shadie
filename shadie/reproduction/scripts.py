@@ -27,7 +27,7 @@ EARLY = """
         s6.active = 1;
 
         // haploids get modified fitness, without dominance
-        {activate}
+        {mutations_activate}
     }}
 
 
@@ -52,7 +52,7 @@ EARLY = """
         s6.active = 0;
 
         // diploids get SLiM's standard fitness calculation, with dominance
-        {deactivate}
+        {mutations_deactivate}
     }}
 """
 
@@ -67,6 +67,8 @@ P0_FITNESS_SCALE_DEFAULT = "p0.fitnessScaling = GAM_POP_SIZE / p0.individualCoun
 # spo_pops_size
 # spo_mutation_rate
 
+
+# THIS IS FOR WHAT? PLEASE COMMENT.
 EARLY_WITH_GAM_K = """
 // diploids (p1) just generated haploid gametophytes
     if (sim.generation % 2 == 0) {{
@@ -118,6 +120,7 @@ EARLY_WITH_GAM_K = """
     }}
 """
 
+
 EARLY_OPT = """
 	// even generation, sporophytes (p1) just generated gametophytes
     if (sim.generation % 2 == 0) {{
@@ -167,9 +170,7 @@ EARLY_OPT = """
 
 #-----------------------------------------------
 #activate/deactivate fitness callbacks
-
 ACTIVATE = "{idx}.active = 1;"
-
 DEACTIVATE = "{idx}.active = 0;"
 
 #-----------------------------------------------
@@ -178,22 +179,71 @@ DEACTIVATE = "{idx}.active = 0;"
 SUBSTITUTION = """
     // gametophytes have just undergone fitness selection
     if (sim.generation % 2 == 0) {{
-        {muts}
-    {late}
+
+        // get the total number of genomes
+        fixedCount = (p1.individualCount * 2) + p0.individualCount;
+
+        // for each MutationType check all muts for fixation
+        {checking_each_mut_for_fixation}
+
+        // part2
+        {late}
+    }}
 """
 
-SUB_MUTS = """
-        fixedCount = p1.individualCount * 2 + p0.individualCount; // p1=diploid sporophytes, p0=haploid gametophytes
-        mut{idx} = sim.mutationsOfType({mut});
-        count{idx} = sim.mutationFrequencies(NULL, mut{idx});
-        if (any(counts7 == fixedCount))
-            sim.subpopulations.genomes.removeMutations(muts{idx}[counts{idx} == fixedCount], T);
+
+CHECK_FOR_MUT_FIX = """
+    1:{sim_time} late() {
+
+        // only check occasionally for fixation
+        if (sim.generation % 10 == 0) {
+
+            // get the total number of genomes
+            ngenomes = (2 * size(p1.individuals)) + size(p0.individuals)
+
+            // iterate over mutationTypes in the simulation
+            for (mtype in sim.mutationTypes) {
+                cat('gen' + sim.generation + 'mutationType' + mtype)
+
+                // get all mutations of this type
+                muts = sim.mutationsOfType({mtype})
+
+                // 
+                count = sim.mutationCounts(NULL, muts)
+                freqs = sim.mutationFrequencies(NULL, muts);
+                cat('count' + count)
+                cat('freq' + freqs)
+            }
+        }
+    }
 """
+
+
+# this is used to check whether a substitution is completely fixed. 
+# A string with this chunk repeated for each mutationtype is then 
+# substituted into the LATE call below.
+ITER_CHECK_MUT_IS_SUB = """\
+        mut_{mut} = sim.mutationsOfType({mut});
+        freqs = sim.mutationFrequencies(NULL, mut_{mut});
+
+        // mutations are removed if their frequency is 0.5?
+        if (any(freqs == 0.5)) {{
+            sim.subpopulations.genomes.removeMutations(mut{idx}[freqs == 0.5], T);
+            print('removed fixed mutation');
+        }}
+"""
+
+# # this is used to check whether a substitution is completely fixed.
+# ITER_CHECK_MUT_IS_SUB = """
+#         count{idx} = sim.mutationFrequencies(NULL, sim.mutationsOfType({mut}));
+#         if (any(counts{idx} == fixedCount))
+#             sim.subpopulations.genomes.removeMutations(muts{idx}[counts{idx} == fixedCount], T);
+# """
 
 #-----------------------------------------------
 # gam_maternal_effect
 GAM_MATERNAL_EFFECT_ON_P1 = """
-	// Gametophyte mother fitness affects sporophyte survival
+	// gametophyte mother fitness affects sporophyte survival
     maternal_effect = individual.getValue("maternal_fitness");
     if (!isNULL(maternal_effect)) {
         corrected_fitness = (maternal_effect * GAM_MATERNAL_EFFECT) + fitness * (1 - GAM_MATERNAL_EFFECT);
@@ -204,7 +254,7 @@ GAM_MATERNAL_EFFECT_ON_P1 = """
 
 # spo_maternal_effect
 SPO_MATERNAL_EFFECT_ON_P0 = """
-    // Sporophyte motherr fitness affects gametophyte survival
+    // sporophyte mother fitness affects gametophyte survival
     maternal_effect = individual.getValue("maternal_fitness");
     if (!isNULL(maternal_effect)) {
         corrected_fitness = (maternal_effect * SPO_MATERNAL_EFFECT) + fitness * (1 - SPO_MATERNAL_EFFECT);
@@ -216,11 +266,22 @@ SPO_MATERNAL_EFFECT_ON_P0 = """
 # spo_random_death_chance
 # gam_random_death_chance
 
+
+# DEPRECATED IN FERNS CURRENTLY FOR A MORE SPECIFIC
 SURV = """
+// In nonWF models viability selection (survival) is the primary way
+// in which differential fitness is expressed; individual fitness values 
+// influence survival, not mating success. 
+
+// In the survival functions below s1 and s4 implement survival based
+// simply on tags, to remove haploids during diploid generations, and 
+// vice versa. Functions s2 and s3 implement survival on the valid 
+// remaining individuals. For example, s1 & s3 together select to remove
+// all p0 genomes, 
+
 // remove p1 individuals during even generations
 s1 survival(p1) {{
-    if ((individual.tag == 44) | (individual.tag == 5) | (individual.tag == 45) 
-        | (individual.tag == 41) | (individual.tag == 42)){{
+    if ((individual.tag == 44) | (individual.tag == 5) | (individual.tag == 45) {{
         individual.tag = 0;
         return T;
     }}
@@ -241,14 +302,14 @@ s3 survival(p0) {{
     //this code implements random chance of death in gametophytes
     if (runif(1) < GAM_RANDOM_DEATH_CHANCE)
         return F;   
-    {p0survival} 
+    {p0_survival} 
     {p0_maternal_effect}
     return NULL;
 }}
 
 // remove p0 individuals during odd generations
 s4 survival(p0) {{
-    if ((individual.tag == 4) | (individual.tag == 6) | (individual.tag == 41) | (individual.tag == 42)) {{
+    if ((individual.tag == 4) | (individual.tag == 6) {{
         {s4_tag}
         return T;
     }}

@@ -33,9 +33,16 @@ from shadie.reproduction.bryo_scripts import (
     S4_TAG,
     FUNCTIONS_BRYO,
 )
+# from shadie.reproduction.bryo_scripts2 import (
+#     LATE_BRYO_MONO,
+#     EARLY_BRYO_MONO,
+#     FUNCTIONS_BRYO_MONO,
+#     SURVIVAL_BRYO_MONO,
+#     REPRO_BRYO_MONO_0, 
+#     REPRO_BRYO_MONO_P1,
+# )
 
-DTYPES = ("dioicy", "dioicous", "heterosporous")
-MTYPES = ("monoicy", "monoicous", "homosporous")
+
 
 @dataclass
 class BryophyteBase(NonWrightFisher):
@@ -47,14 +54,16 @@ class BryophyteBase(NonWrightFisher):
     gam_mutation_rate: Optional[float]
     gam_clone_rate: float
     gam_clones_per: int
-    egg_spo_self_rate: float
-    spo_self_chance: float
+    gam_self_rate_per_ind: float
+    gam_self_rate_per_egg: float    
+    # egg_spo_self_rate: float
+    # spo_self_chance: float
     spo_random_death_chance: float
     gam_random_death_chance: float
     spo_spores_per: int
     gam_maternal_effect: float
     gam_archegonia_per: int
-    gam_k: int
+    # gam_k: int
 
     def _set_mutation_rates(self):
         """Checks parameters after init."""
@@ -75,15 +84,10 @@ class BryophyteBase(NonWrightFisher):
         Adds a survival script to define the random_chance_of_death,
         maternal effects, and survival=0 for alternation of generations.
         """
-        survival_script = (
-            SURV.format(
-                p0_maternal_effect="",
-                p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
-                p0survival="",
-                s4_tag = S4_TAG,
-            )
+        self.model.custom(
+            scripts=SURVIVAL_BRYO, 
+            comment="survival is random, maternal-effect, or standard fitness",
         )
-        self.model.custom(survival_script, comment="maternal effects and survival")
 
 
 @dataclass
@@ -105,9 +109,7 @@ class BryophyteDioicous(BryophyteBase):
 
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
-        self._add_alternation_of_generations()
-        self._add_early_script()
-        self._set_gametophyte_k()
+        self._add_early_and_late(EARLY_BRYO_MONO, LATE_BRYO_MONO)
         self._add_initialize_constants()
         self._write_trees_file()
 
@@ -116,11 +118,14 @@ class BryophyteDioicous(BryophyteBase):
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
-        self.model.custom(scripts=FUNCTIONS_BRYO, comment = "shadie DEFINITIONS")
+        self.model.custom(
+            scripts=FUNCTIONS_BRYO, 
+            comment="shadie DEFINITIONS",
+        )
         self.model.repro(
             population="p1",
+            idx="s5",
             scripts=REPRO_BRYO_DIO_P1,
-            idx = "s5",
             comment="generates gametes from sporophytes"
         )
         self.model.repro(
@@ -155,9 +160,7 @@ class BryophyteMonoicous(BryophyteBase):
 
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
-        self._add_alternation_of_generations()
-        self._add_early_script()
-        self._set_gametophyte_k()
+        self._add_early_and_late(EARLY_BRYO_MONO, LATE_BRYO_MONO)
         self._add_initialize_constants()
         self._write_trees_file()
 
@@ -167,7 +170,10 @@ class BryophyteMonoicous(BryophyteBase):
     def _add_mode_scripts(self):
         """fills the model.map block with bryophyte-monoicous scripts."""
         # add reproduction scripts
-        self.model.custom(scripts=FUNCTIONS_BRYO, comment = "shadie DEFINITIONS")
+        self.model.custom(
+            scripts=FUNCTIONS_BRYO, 
+            comment="shadie DEFINITIONS"
+        )
         self.model.repro(
             population="p1",
             scripts=REPRO_BRYO_MONO_P1,
@@ -178,19 +184,9 @@ class BryophyteMonoicous(BryophyteBase):
             population="p0",
             scripts=REPRO_BRYO_MONO_P0,
             idx="s6",
-            comment="generates gametes from sporophytes"
+            comment="generates sporophytes from gametes"
         )
-        
-        # add late call
-        substitution_script = (
-            SUBSTITUTION.format(**{'muts': self._substitution_str,
-                'late': LATE_BRYO_MONO}).lstrip())
 
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-            )
 
 
 

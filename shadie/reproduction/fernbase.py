@@ -1,34 +1,42 @@
 #!/usr/bin/env python
 
+"""Classes for Fern reproduction.
+
+The parent PteridophyteBase class has shared parameters and functions
+for classes PteridophyteHomosporous and PteridophyteHeterosporous. The
+parameters for these classes are defined in the factory functions 
+in :mod:`reproduction.optimized.pteridophytes`.
+
+Parameters
+----------
+
 """
-Starting an alternate implementation of Reproduction 
-"""
-from typing import Union, Optional, Tuple
+from typing import Optional
 from dataclasses import dataclass, field
-import pyslim
 from shadie.reproduction.base import NonWrightFisher
-from shadie.reproduction.scripts import (
-    SURV,
-    GAM_MATERNAL_EFFECT_ON_P1,
-    SPO_MATERNAL_EFFECT_ON_P0,
-    SUBSTITUTION,
-    EARLY,
-)
+# from shadie.reproduction.scripts import (
+    # GAM_MATERNAL_EFFECT_ON_P1,
+    # SPO_MATERNAL_EFFECT_ON_P0,
+    # SUBSTITUTION,
+    # EARLY,
+# )
 from shadie.reproduction.fern_scripts import (
     REPRO_PTER_HOMOSPORE_P1, 
     REPRO_PTER_HOMOSPORE_P0,
     LATE_PTER_HOMOSPORE,
-    REPRO_PTER_HETEROSPORE_P1, 
-    REPRO_PTER_HETEROSPORE_P0,
-    LATE_PTER_HETEROSPORE,
-    PTER_HETERO_FITNESS_SCALE,
-    FUNCTIONS_PTER_HOMOSPORE,
-    FUNCTIONS_PTER_HETEROSPORE,
-    S4_TAG,
+    FUNCTIONS_PTER_HOMOSPORE,   
+    # PTER_HETERO_FITNESS_SCALE,
 )
 
-DTYPES = ("dioicy", "dioicous", "heterosporous")
-MTYPES = ("monoicy", "monoicous", "homosporous")
+from shadie.reproduction.fern_scripts2 import (
+    LATE_PTER_HETERO,
+    EARLY_PTER_HETERO,
+    FUNCTIONS_PTER_HETERO,
+    SURVIVAL_PTER_HETERO,
+    REPRO_PTER_HETEROSPORE_P1, 
+    REPRO_PTER_HETEROSPORE_P0,
+)
+
 
 @dataclass
 class PteridophyteBase(NonWrightFisher):
@@ -37,22 +45,18 @@ class PteridophyteBase(NonWrightFisher):
     gam_pop_size: int
     spo_mutation_rate: Optional[float]
     gam_mutation_rate: Optional[float]
-    gam_clone_rate: float
+    gam_clone_rate: float   # TODO: maybe replace rate/num with a single poisson draw
     gam_clones_per: int
     spo_clone_rate: float
     spo_clones_per: int
-    egg_spo_self_rate: float
-    spo_self_chance: float
+    # spo_self_rate: float
+    spo_self_rate_per_egg: float  # egg_spo_self_rate: float
+    spo_self_rate_per_ind: float  # spo_self_chance: float
     spo_random_death_chance: float
     gam_random_death_chance: float
     spo_maternal_effect: float
     gam_archegonia_per: int
-    gam_k: int
-
-    #TODO?
-    #optional (lineage-specific params that correspon to generalized ones)
-    # cone_megasporangia_per: Optional[int]
-    # cone_microsporangia_per: Optional[int]
+    # gam_antheridia_per: int  # not modeled b/c it is very large.
 
     def _set_mutation_rates(self):
         """Checks parameters after init."""
@@ -74,14 +78,11 @@ class PteridophyteBase(NonWrightFisher):
         the random_chance_of_death, maternal effects, and survival=0 for 
         alternation of generations.
         """
-        survival_script = (
-                    SURV.format(
-                        p0_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
-                        p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
-                        p0survival="",
-                        s4_tag = S4_TAG,
-                    ))
-        self.model.custom(survival_script, comment="maternal effects and survival")
+        self.model.custom(
+            scripts=SURVIVAL_PTER_HETERO,
+            comment="alternate to other generation, random death and maternal effects.",
+        )
+
 
 @dataclass
 class PteridophyteHomosporous(PteridophyteBase):
@@ -99,9 +100,7 @@ class PteridophyteHomosporous(PteridophyteBase):
 
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
-        self._add_alternation_of_generations()
-        self._set_gametophyte_k()
-        self._add_early_script()
+        self._add_early_and_late(...)
         self._add_initialize_constants()
         self._write_trees_file()
 
@@ -110,39 +109,34 @@ class PteridophyteHomosporous(PteridophyteBase):
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
-        self.model.custom(scripts=FUNCTIONS_PTER_HOMOSPORE, comment = "shadie DEFINITIONS")
-
+        self.model.custom(
+            scripts=FUNCTIONS_PTER_HOMOSPORE, 
+            comment="shadie DEFINITIONS",
+        )
         self.model.repro(
-            idx = "s5",
+            idx="s5",
             population="p1",
             scripts=REPRO_PTER_HOMOSPORE_P1,
             comment="generates gametes from sporophytes"
         )
         self.model.repro(
-            idx = "s6",
+            idx="s6",
             population="p0",
             scripts=REPRO_PTER_HOMOSPORE_P0,
             comment="generates gametes from sporophytes"
         )
-        
-        # add late call
-        substitution_script = (
-            SUBSTITUTION.format(**{'muts': self._substitution_str,
-                'late': LATE_PTER_HOMOSPORE}).lstrip())
 
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-            )
 
 @dataclass
 class PteridophyteHeterosporous(PteridophyteBase):
     mode: str = field(default="heterosporous", init=False)
-    rs_megasporangia_per: int
-    rs_microsporangia_per: int
-    megasporangia_megaspores_per: int
-    microsporangia_microspores_per: int
+    # rs_megasporangia_per: int
+    # rs_microsporangia_per: int
+    # megasporangia_megaspores_per: int
+    # microsporangia_microspores_per: int
+    #spo_female_to_male_ratio: float
+    spo_microspores_per: int
+    spo_megaspores_per: int
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
@@ -152,68 +146,41 @@ class PteridophyteHeterosporous(PteridophyteBase):
 
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
-        self._add_alternation_of_generations()
-        self._set_gametophyte_k()
+        self._add_early_and_late(EARLY_PTER_HETERO, LATE_PTER_HETERO)
         self._add_initialize_constants()
         self._write_trees_file()
 
         # mode-specific functions
         self._add_mode_scripts()
-        self._add_early_script()
-
-    def _add_early_script(self):
-        """
-        Defines the early() callbacks for each gen.
-        This overrides the NonWrightFisher class function of same name.
-        """
-        early_script = (EARLY.format(
-            p0_fitnessScaling= PTER_HETERO_FITNESS_SCALE,
-            activate=self._activate_str,
-            deactivate=self._deactivate_str
-            )
-        )
-
-        self.model.early(
-            time=None,
-            scripts=early_script,
-            comment="alternation of generations",
-        )
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
-        self.model.custom(scripts=FUNCTIONS_PTER_HETEROSPORE, comment = "shadie DEFINITIONS")
+        self.model.custom(
+            scripts=FUNCTIONS_PTER_HETERO, 
+            comment="shadie DEFINITIONS",
+        )
 
         self.model.repro(
             population="p1",
-            idx = "s5",
+            idx="s5",
             scripts=REPRO_PTER_HETEROSPORE_P1,
-            comment="generates gametes from sporophytes"
+            comment="reproduction in p1: eggs or sperm are created."
         )
+
         self.model.repro(
             population="p0",
-            idx = "s6",
+            idx="s6",
             scripts=REPRO_PTER_HETEROSPORE_P0,
-            comment="generates gametes from sporophytes"
+            comment="reproduction in p0: eggs are fertilized by sperm."
         )
-        
-        # add late call
-        substitution_script = (
-            SUBSTITUTION.format(**{'muts': self._substitution_str,
-                'late': LATE_PTER_HETEROSPORE}).lstrip())
 
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-            )
 
 
 if __name__ == "__main__":
 
-
     import shadie
     with shadie.Model() as mod:
-        
+
         # define mutation types
         m0 = shadie.mtype(0.5, 'n', 0, 0.4)
         m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
@@ -240,7 +207,7 @@ if __name__ == "__main__":
         mod.reproduction.pteridophyte_homosporous(
             spo_pop_size=1000, 
             gam_pop_size=1000,
-            spo_spores_per = 100
+            spo_spores_per=100
         )
 
 
