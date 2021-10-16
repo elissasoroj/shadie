@@ -74,7 +74,7 @@ initialize() {
 // p1 = diploid population
 // >2000000 = male gametophyte (1N)
 // <2000000 = female gametophyte (1N)
-// 2 = gametophyte clones (1N)
+// 2 = gametophyte clones (1N)---------------- None in this model.
 // 3 = sporophyte (2N)
 // 4 = sporophyte clones (2N)
 // >1M- tmp tags
@@ -439,7 +439,6 @@ function (void)report(s$ title) {
 	cat(format('ngenomes=%i, ', ngenomes));
 	cat(format('(p1=%i, ', 2 * p1.individuals.size()));
 	cat(format('p0=%i, ',  p0.individuals.size()));
-	cat(format('0.2=%i, ', sum(p0.individuals.tag == 2)));
 	cat(format('1.3=%i, ', sum(p1.individuals.tag == 3)));	
 	cat(format('1.4=%i)\n', sum(p1.individuals.tag == 4)));	
 	cat("\n---------------------- fixed=" + sim.substitutions.size() + "\n\n");
