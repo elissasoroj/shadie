@@ -42,14 +42,13 @@ def substitute_outfile(script: str, outdir: str, idx: int, sim_time: int):
     name_script = script.replace(".slim", f"-{idx}.slim")
     name_trees = script.replace(".slim", f"-{idx}.trees")
 
-
     with open(script, 'r') as indata:
         lines = indata.readlines()
         for ldx, content in enumerate(lines):
 
             if "defineConstant('OUTPATH'," in content:
                 outpath = os.path.join(outdir, name_trees)
-                lines[ldx] = f"\tdefineConstant('OUTPATH',{outpath}');"
+                lines[ldx] = f"\tdefineConstant('OUTPATH', '{outpath}');\n"
 
             if content.startswith("10001 late() {"):
                 lines[ldx] = content.replace("10001", str(sim_time))
