@@ -14,16 +14,17 @@ app = typer.Typer(add_completion=False, context_settings=CONTEXT_SETTINGS)
 
 
 @app.command()
-def info(
+def run(
     organism: str = typer.Argument(..., help="organism name"),
     mode: str = typer.Argument(..., help="run type"),    
     idx: int = typer.Argument(..., help="replicate number"),
     outdir: str = typer.Argument(..., help="directory"),
     slim_binary: str = typer.Argument(..., help="path to slim"),
+    sim_time: int = typer.Argument(10001, help="length of simulation"),
     ):
     """Start a SliM job on a subprocess."""
     script = get_slim_script(organism, mode)
-    script = substitute_outfile(script, outdir, idx)
+    script = substitute_outfile(script, outdir, idx, sim_time)
     typer.secho(f"starting job: {script}", fg=typer.colors.CYAN)
     start_slim_job(script, idx, slim_binary)
 
@@ -36,7 +37,7 @@ def get_slim_script(organism: str, mode: str):
     return script
 
 
-def substitute_outfile(script: str, outdir: str, idx: int):
+def substitute_outfile(script: str, outdir: str, idx: int, sim_time: int):
     """Creates a tmp copy of the file with the outfile modified."""
     with open(script, 'r') as indata:
         lines = indata.readlines()
@@ -46,6 +47,9 @@ def substitute_outfile(script: str, outdir: str, idx: int):
                 outfile = outfile.rsplit("-", 1)[0]
                 outfile = outfile + f"-{idx}.trees"
                 lines[ldx] = f"\tdefineConstant('OUTPATH',{outfile}');"
+
+            if content.startswith("10001 late() {"):
+                lines[ldx] = content.replace("10001", str(sim_time))
 
     outname = script.replace(".slim", f"-{idx}.slim")
     outpath = os.path.join(outdir, outname)
@@ -65,4 +69,6 @@ def start_slim_job(script: str, idx: int, slim_binary: str):
 
 
 if __name__ == "__main__":
+
+    # "bryo-dio", "real", 2, "/tmp", "/usr/local/bin/slim", 10001)
     app()
