@@ -62,7 +62,7 @@ initialize() {
 	// then that one individual could potentially compose the entire population the 
 	// next generation if it has a very high fitness. 
 	defineConstant('GAM_ARCHEGONIA_PER', 10);
-	defineConstant('GAM_ANTHERIDIA_PER', 40);
+	defineConstant('GAM_ANTHERIDIA_PER', 10);
 	
 	// The trees file output path.
 	defineConstant('OUTPATH', '/tmp/target-ptero-hetero.trees');
@@ -277,9 +277,17 @@ s6 reproduction(p0) {
 	// iterate only over the female gametophyte to find mates
 	if (individual.tag < 2000000) {
 		
-		// each archegonium can produce multiple identical eggs
-		eggs = GAM_ARCHEGONIA_PER;	
-		for (rep in 1:eggs) {		
+		// get all males that could fertilize an egg of this female
+		males = p0.individuals[p0.individuals.tag > 2000000];		
+
+		// if selfing is possible then get all sibling males
+		if (SPO_SELF_RATE_PER_EGG > 0)
+			siblings = males[males.tag == 1000000 + individual.tag];
+
+		// iterate over each reproductive opportunity (archegonia) in this female.
+		// A female could produce multiple eggs per arch, but they are identical, 
+		// so we do not bother to model that for now ...
+		for (rep in 1:GAM_ARCHEGONIA_PER) {
 			// weighted sampling: each egg gets gam-selfed, spo-selfed, or outcrossed.
 			// Note: shadie enforces that GAM_SELF_RATE + SPO_SELF_RATE !> 1
 			// mode 1 = gametophytic selfing
@@ -293,9 +301,10 @@ s6 reproduction(p0) {
 		
 			// inter-gametophytic selfed individual (same sporo parent)
 			// only occurs IF a sibling gametophyte is still alive.
-			else if (mode == 2) {
-				sibling = p0.sampleIndividuals(1, tag=1000000+individual.tag);			
-				if (sibling.size() == 1) {
+			if (mode == 2) {
+				// sibling = p0.sampleIndividuals(1, tag=1000000 + individual.tag);
+				if (siblings.size() > 0) {
+					sibling = sample(siblings, 1);
 					child = p1.addRecombinant(individual.genome1, NULL, NULL, sibling.genome1, NULL, NULL);
 					child.tag = 3;
 				}
@@ -305,11 +314,10 @@ s6 reproduction(p0) {
 			// only occurs if a non-sib gametophyte is still alive.
 			else {
 				// try at most 10 times to find a non-sib sperm, then skip.
-				males = p0.individuals[p0.individuals.tag > 2000000];
+				// males = p0.individuals[p0.individuals.tag > 2000000];
 				for (trial in 1:10) {
 					sperm = sample(males, 1);
-					// if (sperm.size() == 1)
-					if (sperm.tag != individual.tag+1000000) {
+					if (sperm.tag != individual.tag + 1000000) {
 						child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
 						child.tag = 3;
 						break;
@@ -397,7 +405,7 @@ late() {
 	// spo_selfed.tag = 0;
 	// p0.individuals.tag = 0;
 	//}
-
+	// males = p0.individuals[p0.individuals.tag > 2000000];
 }
 
 
