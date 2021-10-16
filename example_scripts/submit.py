@@ -42,7 +42,8 @@ def substitute_outfile(script: str, outdir: str, idx: int, sim_time: int):
     with open(script, 'r') as indata:
         lines = indata.readlines()
         for ldx, content in enumerate(lines):
-            if content.startswith("\tdefineConstant('OUTPATH',"):
+
+            if "defineConstant('OUTPATH'," in content:
                 outfile = content.split("'OUTPATH',")[-1]
                 outfile = outfile.rsplit("-", 1)[0]
                 outfile = outfile + f"-{idx}.trees"
