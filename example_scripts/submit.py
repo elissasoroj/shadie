@@ -39,21 +39,22 @@ def get_slim_script(organism: str, mode: str):
 
 def substitute_outfile(script: str, outdir: str, idx: int, sim_time: int):
     """Creates a tmp copy of the file with the outfile modified."""
+    name_script = script.replace(".slim", f"-{idx}.slim")
+    name_trees = script.replace(".slim", f"-{idx}.trees")
+
+
     with open(script, 'r') as indata:
         lines = indata.readlines()
         for ldx, content in enumerate(lines):
 
             if "defineConstant('OUTPATH'," in content:
-                outfile = content.split("'OUTPATH',")[-1]
-                outfile = outfile.rsplit("-", 1)[0]
-                outfile = outfile + f"-{idx}.trees"
-                lines[ldx] = f"\tdefineConstant('OUTPATH',{outfile}');"
+                outpath = os.path.join(outdir, name_trees)
+                lines[ldx] = f"\tdefineConstant('OUTPATH',{outpath}');"
 
             if content.startswith("10001 late() {"):
                 lines[ldx] = content.replace("10001", str(sim_time))
 
-    outname = script.replace(".slim", f"-{idx}.slim")
-    outpath = os.path.join(outdir, outname)
+    outpath = os.path.join(outdir, name_script)
     with open(outpath, 'wt') as out:
         out.write("".join(lines))
     return outpath
