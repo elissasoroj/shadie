@@ -58,7 +58,7 @@ initialize() {
 	defineConstant('SPO_SPORES_PER', 10);
 	
 	// of the surviving gametophytes, this defines their reproductive potential to 
-	// make up the following generation. If one individual can produce a million eggs,
+	// make up the following generation. If one individual can produce a million eggs,x
 	// then that one individual could potentially compose the entire population the 
 	// next generation if it has a very high fitness. 
 	defineConstant('GAM_ARCHEGONIA_PER', 10);
@@ -226,15 +226,15 @@ s4 survival(p1) {
 // sporophyte (2N) undergoes meiosis to release 4 1N gametophytes for each spore
 s5 reproduction(p1) {
 	ind = individual;
-	strob_fem_ratio = GAM_ARCHEGONIA_PER/(GAM_ARCHEGONIA_PER+GAM_ANTHERIDIA_PER);
+	strob_fem_ratio = GAM_ARCHEGONIA_PER / (GAM_ARCHEGONIA_PER + GAM_ANTHERIDIA_PER);
 	
 	// clonal individual get added to the p0 pool for next round.
 	// NOTE: this doesn't allow clones to reproduce this round.
 	if (runif(1) < SPO_CLONE_RATE) {
 		for (i in 1:SPO_CLONES_PER) {
-			child = p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome2, NULL, NULL);
+			child = p1.addRecombinant(ind.genome1, NULL, NULL, ind.genome2, NULL, NULL);
 			child.tag = 4;
-			child.setValue("parentid", individual.tag);
+			child.setValue("parentid", ind.tag);
 		}
 	}
 	
@@ -262,7 +262,7 @@ s5 reproduction(p1) {
 		child4.tag = ifelse(runif(1) < strob_fem_ratio, ftag, mtag);	
 		children = c(child1, child2, child3, child4);
 		if (SPO_MATERNAL_EFFECT > 0)
-			children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+			children.setValue("maternal_fitness", subpop.cachedFitness(ind.index));
 	}
 }
 
@@ -274,41 +274,28 @@ s6 reproduction(p0) {
 	// NOTE: each gametophyte gives rise to antheridia that produce thousands of
 	// clonal sperm. Because of this, sperm is not removed from the mating pool when used. 
 	
-	//Reproduction scripts run only female gametophytes
+	// iterate only over the female gametophyte to find mates
 	if (individual.tag < 2000000) {
 		
-		// archegonia only produce one egg
-		eggs = GAM_ARCHEGONIA_PER;
-		
-		for (rep in 1:eggs) {
-			
-			// idea: random_chance_of ... here?
+		// each archegonium can produce multiple identical eggs
+		eggs = GAM_ARCHEGONIA_PER;	
+		for (rep in 1:eggs) {		
 			// weighted sampling: each egg gets gam-selfed, spo-selfed, or outcrossed.
 			// Note: shadie enforces that GAM_SELF_RATE + SPO_SELF_RATE !> 1
-			//mode 1 = gametophytic selfing
-			//moode 2 = sporophytic selfing
-			//mode 3 = out-crossing
+			// mode 1 = gametophytic selfing
+			// mode 2 = sporophytic selfing
+			// mode 3 = out-crossing
 			mode = sample(
-				x=c(1, 2, 3),
+				x=c(2, 3),
 				size=1,
-				weights=c(0.0, SPO_SELF_RATE_PER_EGG, 1 - (SPO_SELF_RATE_PER_EGG))
+				weights=c(SPO_SELF_RATE_PER_EGG, 1 - (SPO_SELF_RATE_PER_EGG))
 			);
-			
-			// intra-gametic selfed (only possible in homosporous)
-			if (mode == 1) {
-				child = p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
-				child.tag = 3;
-				if (GAM_MATERNAL_EFFECT > 0)
-					child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
-			}
-			
+		
 			// inter-gametophytic selfed individual (same sporo parent)
 			// only occurs IF a sibling gametophyte is still alive.
 			else if (mode == 2) {
 				sibling = p0.sampleIndividuals(1, tag=1000000+individual.tag);			
-				// if (!isNULL(sibling)) {
 				if (sibling.size() == 1) {
-					// print("FOUND A SIB");
 					child = p1.addRecombinant(individual.genome1, NULL, NULL, sibling.genome1, NULL, NULL);
 					child.tag = 3;
 				}
@@ -381,10 +368,10 @@ s82 fitness(m1) {
 	sim.treeSeqOutput(
 		path=OUTPATH,
 		metadata=Dictionary(
-		"spo_mutation_rate", SPO_MUTATION_RATE,
-		"recombination_rate", 1e-7,
-		"spo_population_size", SPO_POP_SIZE,
-		"gam_population_size", GAM_POP_SIZE)
+			"spo_mutation_rate", SPO_MUTATION_RATE,
+			"recombination_rate", 1e-7,
+			"spo_population_size", SPO_POP_SIZE,
+			"gam_population_size", GAM_POP_SIZE)
 	);
 }
 
@@ -443,7 +430,7 @@ function (void)report(s$ title) {
 	cat(format('gen=%i, ', sim.generation));
 	cat(format('ngenomes=%i, ', ngenomes));
 	cat(format('(p1=%i, ', 2 * p1.individuals.size()));
-	cat(format('p0=%i, ',  2 * p0.individuals.size()));
+	cat(format('p0=%i, ',  p0.individuals.size()));
 	cat(format('0.2=%i, ', sum(p0.individuals.tag == 2)));
 	cat(format('1.3=%i, ', sum(p1.individuals.tag == 3)));	
 	cat(format('1.4=%i)\n', sum(p1.individuals.tag == 4)));	
