@@ -24,6 +24,9 @@ initialize() {
   initializeGenomicElement(g1, 5000001, 5001000);
   initializeGenomicElement(g2, 10000001, 10001000);
 
+  // The trees file output path.
+  defineConstant('OUTPATH', '/tmp/target-bryo-mono-real.trees');
+ 
   // constants (Population sizes and others)
   defineConstant('SPO_POP_SIZE', 3000);
   defineConstant('GAM_POP_SIZE', 3000);
@@ -31,25 +34,25 @@ initialize() {
   defineConstant('GAM_MUTATION_RATE', 5e-07);
 
   // cloning rate applies to gametophyte individuals
-  defineConstant('GAM_CLONE_RATE', 0.0);
-  defineConstant('GAM_CLONES_PER', 1);
+  defineConstant('GAM_CLONE_RATE', 0.8);
+  defineConstant('GAM_CLONES_PER', 10);
 
   // gam selfing rate applies to gametophyte archegonia
   // defineConstant('GAM_SELF_RATE_PER_IND', 0.10);
-  defineConstant('GAM_SELF_RATE_PER_EGG', 0.0);
+  defineConstant('GAM_SELF_RATE_PER_EGG', 0.44);
 
   // gametophytes from the same sporophyte will get unique tags
   // that will be used to specify mating later. Because bryos
   // have only one egg per archegon this is actually per-archeg.
   // defineConstant('SPO_SELF_RATE_PER_IND', 0.10);
-  defineConstant('SPO_SELF_RATE_PER_EGG', 0.0);
+  defineConstant('SPO_SELF_RATE_PER_EGG', 0.44);
 
   // affects fitness and survival
   defineConstant('SPO_RANDOM_DEATH_CHANCE', 0.0);
   defineConstant('GAM_RANDOM_DEATH_CHANCE', 0.0);
 
   // TODO: needs further testing in GUI
-  defineConstant('GAM_MATERNAL_EFFECT', 0.0);
+  defineConstant('GAM_MATERNAL_EFFECT', 0.5);
 
   // this defines the total number of gams that will be produced prior to selection
   // culling it down to the K population size. Larger numbers runs slower, but also
@@ -62,11 +65,6 @@ initialize() {
   // then that one individual could potentially compose the entire population the 
   // next generation if it has a very high fitness. 
   defineConstant('GAM_ARCHEGONIA_PER', 10);
-
-  // The trees file output path.
-  defineConstant('OUTPATH', '/tmp/target-bryo-mono.trees');
-  // extra scripts (Optional)
-  
 }
 
 // shadie DEFINITIONS
@@ -190,9 +188,9 @@ s1 survival(p1) {
 // alternate to other generation.
 // remove p0 individuals unless it is a clone or selfed.
 s2 survival(p0) {
-    // allow clones to persist until next generation as new tag=0.
+    // allow clones to persist until next generation, retag with parent id.
     if (individual.tag == 1) {
-        individual.tag = 0;
+        individual.tag = individual.getValue("parentid");
         return T;
     }
     return F;
@@ -261,6 +259,7 @@ s6 reproduction(p0) {
         for (i in 1:GAM_CLONES_PER) {
             child = p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL);
             child.tag = 1;
+            child.setValue("parentid", individual.tag);
             if (GAM_MATERNAL_EFFECT > 0)
                 child.setValue("maternal_fitness", NULL);
         }
@@ -269,13 +268,14 @@ s6 reproduction(p0) {
     // the original plant making the clones can still reproduce regardless 
     // of whether or not it cloned.
 
+    // for crossing get the males, and for selfing get siblings
+    if (SPO_SELF_RATE_PER_EGG > 0)
+        siblings = p0.sampleIndividuals(1, tag=individual.tag);
+
     // iterate over each egg to find a mate (self, sib, or outcross)
     // NOTE: each gametophyte gives rise to antheridia that produce thousands of
     // clonal sperm. Because of this, sperm is not removed from the mating pool when used.       
     for (rep in 1:eggs) {
-
-        // idea: random_chance_of ... here?
-
         // weighted sampling: each egg gets gam-selfed, spo-selfed, or outcrossed.
         // Note: shadie enforces that GAM_SELF_RATE + SPO_SELF_RATE !> 1
         mode = sample(
@@ -295,8 +295,8 @@ s6 reproduction(p0) {
         // inter-gametophytic selfed individual (same sporo parent)
         // only occurs IF a sibling gametophyte is still alive.
         else if (mode == 2) {
-            sibling = p0.sampleIndividuals(1, tag=individual.tag);
-            if (!isNULL(sibling)) {
+            if (siblings.size() > 0) {
+                sibling = sample(siblings, 1);
                 child = p1.addRecombinant(individual.genome1, NULL, NULL, sibling.genome1, NULL, NULL);
                 child.tag = 3;
                 if (GAM_MATERNAL_EFFECT > 0)
@@ -319,6 +319,7 @@ s6 reproduction(p0) {
                 }
             }
         }
+        // print(mode);
     }
 }
 
@@ -380,26 +381,8 @@ s82 fitness(m1) {
 
 // executes after selection occurs
 late() {
-
     if (sim.generation % 10 == 0)
         report('late');
-
-    // if a cloned gametophyte survived to late then it can now be
-    // re-tagged as a normal gametophyte.
-    if (sim.generation % 2 == 0) {
-
-        // clones are tagged to 1 to indicate they should not experience survival
-        // but instead survive until next round where they start as normal tag=0.
-        clones = p0.individuals[p0.individuals.tag == 1];
-        clones.tag = 0;
-
-        // // gametophytes are tagged to indicate their spo parent, 
-        // // these tags are no longer needed and so reset to 0.
-        // spo_selfed = p0.individuals[p0.individuals.tag > 999999];
-        // spo_selfed.tag = 0;
-        // p0.individuals.tag = 0;
-    }
-
 }
 
 

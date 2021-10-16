@@ -236,7 +236,7 @@ s5 reproduction(p1) {
     if (individual.tag == 44) {
         for (i in 1:SPO_CLONES_PER)
             p1.addCloned(individual).tag = 44;
-        make_eggs(individual, SPO_MEGASPORES_PER);
+        make_megaspores(individual, SPO_MEGASPORES_PER);
         make_microspores(individual, max(4, SPO_MICROSPORES_PER));
     }
 

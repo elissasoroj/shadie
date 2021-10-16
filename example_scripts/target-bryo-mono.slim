@@ -27,22 +27,41 @@ initialize() {
   initializeGenomicElement(g2, 10000001, 10001000);
 
   // constants (Population sizes and others)
-  defineConstant('SPO_POP_SIZE', 3000);
-  defineConstant('GAM_POP_SIZE', 3000);
+  defineConstant('SPO_POP_SIZE', 1000);
+  defineConstant('GAM_POP_SIZE', 1000);
   defineConstant('SPO_MUTATION_RATE', 5e-07);
   defineConstant('GAM_MUTATION_RATE', 5e-07);
   defineConstant('GAM_CLONE_RATE', 0.10);
   defineConstant('GAM_CLONES_PER', 1);
-  defineConstant('GAM_SELF_RATE_PER_IND', 0.10);
+
+  // 
+  // defineConstant('GAM_SELF_RATE_PER_IND', 0.10);
   defineConstant('GAM_SELF_RATE_PER_EGG', 0.10);
-  defineConstant('SPO_RANDOM_DEATH_CHANCE', 0);
-  defineConstant('GAM_RANDOM_DEATH_CHANCE', 0);
-  defineConstant('GAM_MATERNAL_EFFECT', 0);
-  defineConstant('GAM_ARCHEGONIA_PER', 10);
+
+  // gametophytes from the same sporophyte will get unique tags
+  // that will be used to specify mating later. Because bryos
+  // have only one egg per archegon this is actually per-archeg.
+  // defineConstant('SPO_SELF_RATE_PER_IND', 0.10);
+  defineConstant('SPO_SELF_RATE_PER_EGG', 0.10);
+
+  // affects fitness and survival
+  defineConstant('SPO_RANDOM_DEATH_CHANCE', 0.1);
+  defineConstant('GAM_RANDOM_DEATH_CHANCE', 0.1);
+  defineConstant('GAM_MATERNAL_EFFECT', 0.1);
+
+  // this defines the total number of gams that will be produced prior to selection
+  // culling it down to the K population size.
   defineConstant('SPO_SPORES_PER', 20);
+
+  // of the surviving gametophytes, this defines their reproductive potential to 
+  // make up the following generation. If one individual can produce a million eggs,
+  // then that one individual could potentially compose the entire population the 
+  // next generation if it has a very high fitness.
+  defineConstant('GAM_ARCHEGONIA_PER', 10);
+
+  // The trees file output path.
   defineConstant('OUTPATH', '/tmp/target-bryo-mono.trees');
   // extra scripts (Optional)
-  
 }
 
 // shadie DEFINITIONS
@@ -192,9 +211,13 @@ s3 survival(p0) {
 s4 survival(p1) {
     if (runif(1) < SPO_RANDOM_DEATH_CHANCE)
         return F;
-    maternal_effect = individual.getValue("maternal_fitness");
-    if (!isNULL(maternal_effect)) {
-        corrected_fitness = (maternal_effect * GAM_MATERNAL_EFFECT) + fitness * (1 - GAM_MATERNAL_EFFECT);
+    maternal_fitness = individual.getValue("maternal_fitness");
+    if (!isNULL(maternal_fitness)) {
+        corrected_fitness = (maternal_fitness * GAM_MATERNAL_EFFECT) + fitness * (1 - GAM_MATERNAL_EFFECT);
+        // print(format('fitness: %.3f', fitness));
+        // print(format('mat fitness: %.3f', maternal_fitness));
+        // print(format('new fitness: %.3f', corrected_fitness));
+        // print("-----");
         return (runif(1) < corrected_fitness);
     }
     return NULL;
@@ -205,6 +228,12 @@ s4 survival(p1) {
 // sporophyte (2N) undergoes meiosis to release 4 1N gametophytes for each spore
 s5 reproduction(p1) {
     ind = individual;
+
+    // generate a random unique tag for this p1
+    /// nvm, use setValue...
+    tag = 100;
+
+    //
     for (rep in 1:SPO_SPORES_PER) {
         breaks1 = sim.chromosome.drawBreakpoints(ind);
         breaks2 = sim.chromosome.drawBreakpoints(ind);
@@ -214,7 +243,17 @@ s5 reproduction(p1) {
         // toggle the probability of this process, we need to indicate gametes are
         // siblings. These gametes must still survive through the fitness calculations
         // to reach s6 in the next generation before they can mate.
-        // idea: perhaps a spatial coordinate system could be used to model prob. of intergametic selfing.
+        // idea: they could be tagged with an integer that counts up from X.
+        // if (runif(1) < SPO_SELF_RATE_PER_IND) {
+            // p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL).tag=tag;
+            // p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL).tag=tag;
+            // p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL).tag=tag;
+            // p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL).tag=tag;
+            // tag = tag + 1;
+        // }
+
+
+        // non-selfing
         p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL).tag=0;
         p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL).tag=0;
         p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL).tag=0;
@@ -232,13 +271,15 @@ s6 reproduction(p0) {
     // clonal individual get added to the p0 pool for next round.
     // NOTE: this doesn't allow clones to reproduce this round.
     if (individual.tag == 1) {
-        p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 0;
-        // maternal effect is removed from clones.
-        if (GAM_MATERNAL_EFFECT > 0)
-            child.setValue("maternal_fitness", 1.0);
+        for (i in 1:GAM_CLONES_PER) {
+            child = p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL);
+            child.tag = 0;
+            // maternal effect is removed from clones.
+            if (GAM_MATERNAL_EFFECT > 0)
+                child.setValue("maternal_fitness", NULL);
+        }
     }
 
-    // non-clones get to reproduce.
     else {
         // iterate over each egg to find a mate (self or outcross)
         for (rep in 1:eggs) {
@@ -333,9 +374,9 @@ s82 fitness(m1) {
 // executes after selection occurs
 late() {
 
-    // on even generations tag gametophytic clones and selfers
+    // if a cloned gametophyte survived to late then it can now be
+    // re-tagged as a normal gametophyte.
     if (sim.generation % 2 == 0) {
-
         // tag gametophytes that will clone (2)
         nsamples = asInteger(size(p0.individuals) * GAM_CLONE_RATE);
         clones = p0.sampleIndividuals(nsamples, tag=0);

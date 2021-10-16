@@ -27,8 +27,8 @@ initialize() {
   initializeGenomicElement(g2, 10000001, 10001000);
 
   // constants (Population sizes and others)
-  defineConstant('SPO_POP_SIZE', 5000);
-  defineConstant('GAM_POP_SIZE', 5000);
+  defineConstant('SPO_POP_SIZE', 3000);
+  defineConstant('GAM_POP_SIZE', 3000);
   defineConstant('SPO_MUTATION_RATE', 5e-08);
   defineConstant('GAM_MUTATION_RATE', 5e-08);
   defineConstant('GAM_CLONE_RATE', 0.00);
@@ -51,15 +51,15 @@ initialize() {
 // shadie DEFINITIONS
 // p0 = haploid population
 // p1 = diploid population
- 
-// 0 = hermaphrodite
-// 1 = female
-// 2 = male
-// 4 = gametophyte clone
-// 44 = sporophyte clone
-// 45 = sporophyte cloned and selfed
-// 5 = sporophytic selfed
-// 6 = gametophyte selfed
+
+
+// 1 = gametophyte male (microspore)
+// 2 = gametophyte female (megaspore)
+// 11 = gametophyte cloned male
+// 22 = gametophyte cloned female
+// 3 = sporophyte 2N (non-clonal)
+// 33 = sporophyte clone 2N
+// Note: sporophyte selfing occurs by gametophytes finding mates from same parent.
 
 
 // executes after reproduction block in NONWF (after offspring are generated).
@@ -67,7 +67,7 @@ initialize() {
 1 early() {
     sim.addSubpop('p1', SPO_POP_SIZE);
     sim.addSubpop('p0', 0);
-    p1.individuals.tag = 0;
+    p1.individuals.tag = 3;
 }
 
 
@@ -76,9 +76,10 @@ early() {
     // this generation will calculate fitness and apply selection on them.
     if (sim.generation % 2 == 0) {
 
-        // fitness is scaled relative to non-males in p0
-        num_males = length(p0.individuals[p0.individuals.tag == 2]);
-        p0.fitnessScaling = (GAM_POP_SIZE / (p0.individualCount - num_males));
+        // fitness is scaled relative to ...
+        num_females = length(p0.individuals[p0.individuals.tag == 2]);
+        num_females = num_females + length(p0.individuals[p0.individuals.tag == 22]);
+        p0.fitnessScaling = (GAM_POP_SIZE / (num_females));
 
         // set mutation rate to gametophyte rate
         sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
@@ -167,21 +168,24 @@ early() {
 
 
 // alternate to other generation.
-// remove p1 individuals unless it is a clone and/or selfed, in which case keep as tag=0
+// remove p1 individuals unless it is a clone
 s1 survival(p1) {
-    if ((individual.tag == 44) | (individual.tag == 5) | (individual.tag == 45)) {
-        individual.tag = 0;
+    if (individual.tag == 33) {
+        individual.tag = 3;
         return T;
     }
     return F;
 }
 
-// used to be s4
 // alternate to other generation.
-// remove p0 individuals unless it is a clone or self, in which case keep as tag=0
+// remove p0 individuals unless it is a clone.
 s2 survival(p0) {
-    if ((individual.tag == 4) | (individual.tag == 6)) {
-        individual.tag = 0;
+    if (individual.tag == 11) {
+        individual.tag = 1;
+        return T;
+    }
+    else if (individual.tag == 22) {
+        individual.tag = 2;
         return T;
     }
     return F;
@@ -219,17 +223,35 @@ s4 survival(p1) {
 }
 
 
-// generates offspring
-// reproduction in p1: eggs or sperm are created.
+// each sporophyte (2N) undergoes meiosis to create spores (1N) that 
+// are recombinant products and develop within special structures 
+// as microspores (tag=01) or megaspores (tag=02).
 s5 reproduction(p1) {
 
-    // report();
-    
-    //  is hermaphroditic non-clonal and non-selfing
-    if (individual.tag == 0) {
+    // sporophyte is non-clonal and non-selfing
+    if (individual.tag == 3) {
+
+        // probability this individual makes sporophyte clones
+
+
+        // probability this individual makes sporophytic selfed offspring
+
+
+        // individual can create gametophytes with remaining non-selfed 
         make_megaspores(individual, SPO_MEGASPORES_PER);
         make_microspores(individual, max(4, SPO_MICROSPORES_PER));
     }
+
+    // sporophytic clone
+    else if (individual.tag == 11) {
+        make_megaspores(individual, SPO_MEGASPORES_PER);
+        make_microspores(individual, max(4, SPO_MICROSPORES_PER));
+        for (i in 1:SPO_CLONES_PER)
+            p1.addCloned(individual).tag = 11;
+    }
+
+    // sporophyte with (some) selfing and some 
+    else if (individual.tag == 10) {}
 
     // sporophyte creates clones for next generation
     // and also creates eggs & sperms this generation
@@ -253,20 +275,24 @@ s5 reproduction(p1) {
 }
 
 
+// gametophyte gametes are joined to form new 2N sporophytes.
+// 
 // generates p1 offspring and p0 clones
 // reproduction in p0: eggs are fertilized by sperm.
 s6 reproduction(p0) {
 
     // female gametophyte (megaspore)
-    if (individual.tag == 1) {
+    if (individual.tag == 2) {
                
         // can produce multiple mitotically identical eggs
         for (rep in 1:GAM_ARCHEGONIA_PER) {
 
-            // sample a male gametophyte (microspore) that can produce 
-            // many antheridia giving rise to thousands of clonal sperm,
-            // because of this, sperm is not removed from the mating pool when used.
-            sperm = p0.sampleIndividuals(1, tag=2);
+            // gametophytic selfing: NONE; heterosporous fern cannot.
+
+            // sporophytic selfing: same-sporo-parent as male gametophyte sperm donor.
+
+            // outcrossing: random male gametophyte (microspore) as a sperm donor.
+            sperm = p0.sampleIndividuals(1, tag=01);
 
             // add new p1 sporophyte tag=0 (hermaph)
             child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
@@ -323,47 +349,53 @@ s82 fitness(m1) {
 
 // executes after selection occurs
 // end of sim; save .trees file
-20001 late() {
-    // sim.treeSeqRememberIndividuals(sim.subpopulations.individuals);
+101 late() {
     report();
     sim.treeSeqRememberIndividuals(p1.individuals);
-    sim.treeSeqOutput(path='/tmp/fern-time20K-pops5K.trees');
-    // metadata=Dictionary("spo_mutation_rate", SPO_MUTATION_RATE, "recombination_rate", 5e-8, "spo_population_size", 1000, "gam_population_size", 1000),
+    sim.treeSeqOutput(
+        path='/tmp/target-fern-hetero.trees',
+        metadata=Dictionary(
+            "spo_mutation_rate", SPO_MUTATION_RATE,
+            "recombination_rate", 1e-7,
+            "spo_population_size", SPO_POP_SIZE,
+            "gam_population_size", GAM_POP_SIZE)
+    );
 }
 
-
-// executes after selection occurs
-// fixes mutations in haploid gen
+// executes after selection occurs. Retagging of individuals to act
+// as cloners or selfers in the next generation, and fixes removes
+// fixed mutations for speed/mem purposes.
 late() {
     // gametophytes have just undergone fitness selection
     if (sim.generation % 2 == 0) {
 
-        // get the total number of genomes (p1 is empty right now)
-        p0_size = p0.individualCount;
+        // tag individuals that will make male gametophytes clones
+        nsamples = asInteger(size(p0.individuals) * GAM_CLONE_RATE);
+        clones = p0.sampleIndividuals(nsamples, tag=01);
+        clones.tag = 011;
 
-        // tag gametophytes that will clone
-        clones = p0.sampleIndividuals(asInteger(p0_size * GAM_CLONE_RATE));
-        clones.tag = 4;
+        // tag individuals that will make female gametophytes clones
+        nsamples = asInteger(size(p0.individuals) * GAM_CLONE_RATE);
+        clones = p0.sampleIndividuals(nsamples, tag=02);
+        clones.tag = 022;
     }
 
     // sporophytes have just undergone fitness selection
     else {
-        p1_size = length(p1.individuals);
-        // print(format('p1_size=%i', p1_size));
+        // tag sporophytes that will clone (11)
+        nsamples = asInteger(size(p1.individuals) * SPO_CLONE_RATE);
+        clones = p1.sampleIndividuals(nsamples, tag=1);
+        clones.tag = 11;
 
-        // tag sporophytes that will clone (44)
-        clones = p1.sampleIndividuals(asInteger(p1_size * SPO_CLONE_RATE));
-        clones.tag = 44;
-
-        // tag sporophytes that will clone and self (45)
-        selfed_inds = p1.sampleIndividuals(asInteger(p1_size * SPO_SELF_RATE_PER_IND));
-        selfed_cloned = selfed_inds[selfed_inds.tag == 44];
-        selfed_cloned.tag = 45;
-
-        // tag sporophytes that will self (5)
-        selfed = selfed_inds[selfed_inds.tag == 0];
-        selfed.tag = 5;
+        // tag sporophytes that will self (10)
+        nsamples = asInteger(size(p1.individuals) * SPO_SELF_RATE_PER_IND);        
+        selfed = p1.sampleIndividuals(nsamples, tag=1);
+        selfed.tag = 10;
     }
+
+    // logger
+    if (sim.generation % 10 == 0)
+        report();
 }
 
 
@@ -372,45 +404,37 @@ late() {
 // DEBUGGING and removing fixed mutations.
 function (void)report(void) {
 
-    // only check occasionally for fixation
-    if (sim.generation % 10 == 0) {
+    // get the total number of genomes
+    ngenomes = (2 * size(p1.individuals)) + size(p0.individuals);
+    cat(format('gen=%i, ', sim.generation));
+    cat(format('ngenomes=%i, ', ngenomes));
+    cat(format('(p1.tag0=%i, ', 2 * p1.individuals.size()));
+    cat(format('p1.tag44=%i, ', sum(p1.individuals.tag == 44)));
+    cat(format('p1.tag5=%i, ', sum(p1.individuals.tag == 5)));
+    cat(format('p1.tag45=%i, ', sum(p1.individuals.tag == 45)));
+    cat(format('p0.tag0=%i, ', sum(p0.individuals.tag == 0)));
+    cat(format('p0.tag1=%i, ', sum(p0.individuals.tag == 1)));
+    cat(format('p0.tag2=%i, ', sum(p0.individuals.tag == 2)));
+    cat(format('p0.tag4=%i, ', sum(p0.individuals.tag == 4)));
+    cat(format('p0.tag6=%i)\n', sum(p0.individuals.tag == 6)));
 
-        // get the total number of genomes
-        ngenomes = (2 * size(p1.individuals)) + size(p0.individuals);
-        cat(format('gen=%i, ', sim.generation));
-        cat(format('ngenomes=%i, ', ngenomes));
-        cat(format('(p1.tag0=%i, ', 2 * p1.individuals.size()));
-        cat(format('p1.tag44=%i, ', sum(p1.individuals.tag == 44)));
-        cat(format('p1.tag5=%i, ', sum(p1.individuals.tag == 5)));
-        cat(format('p1.tag45=%i, ', sum(p1.individuals.tag == 45)));
-        cat(format('p0.tag0=%i, ', sum(p0.individuals.tag == 0)));
-        cat(format('p0.tag1=%i, ', sum(p0.individuals.tag == 1)));
-        cat(format('p0.tag2=%i, ', sum(p0.individuals.tag == 2)));
-        cat(format('p0.tag4=%i, ', sum(p0.individuals.tag == 4)));
-        cat(format('p0.tag6=%i)\n', sum(p0.individuals.tag == 6)));
+    // iterate over mutationTypes in the simulation
+    for (mtype in sim.mutationTypes) {
 
-        // iterate over mutationTypes in the simulation
-        for (mtype in sim.mutationTypes) {
+        // get all mutations of this type
+        muts = sim.mutationsOfType(mtype);
 
-            // get all mutations of this type
-            muts = sim.mutationsOfType(mtype);
-
-            // 
-            for (mut in muts) {
-                counts = sim.mutationCounts(NULL, mut);
-                cat(mut);
-                cat(format('; counts=%i\n', counts));
-                if (counts == ngenomes) {
-                    sim.subpopulations.genomes.removeMutations(mut, T);
-                }
+        // 
+        for (mut in muts) {
+            counts = sim.mutationCounts(NULL, mut);
+            cat(mut);
+            cat(format('; counts=%i\n', counts));
+            if (counts == ngenomes) {
+                sim.subpopulations.genomes.removeMutations(mut, T);
             }
         }
-        cat("\n-------------------------- fixed=" + sim.substitutions.size() + "\n\n");
     }
-}
-
-late() {
-    report();
+    cat("\n-------------------------- fixed=" + sim.substitutions.size() + "\n\n");
 }
 
 
@@ -431,7 +455,7 @@ function (void)make_microspores(object<Individual>$ ind, integer$ reps) {
 
         // create vector of all recombined children genomes
         children = c(child1, child2, child3, child4);
-        children.tag = 2;
+        children.tag = 01;
 
         // set fitness so that mother affects gametophyte fitness; see survival()
         if (SPO_MATERNAL_EFFECT > 0)
@@ -445,7 +469,7 @@ function (void)make_megaspores(object<Individual>$ ind, integer$ reps) {
     for (rep in 1:reps){
         breaks = sim.chromosome.drawBreakpoints(individual);
         child1 = p0.addRecombinant(individual.genome1, individual.genome2, breaks, NULL, NULL, NULL);
-        child1.tag = 1;
+        child1.tag = 02;
 
         // set fitness so that mother affects gametophyte fitness; see survival()
         if (SPO_MATERNAL_EFFECT > 0)
@@ -473,6 +497,8 @@ function (void)sporophyte_selfs(object<Individual>$ ind) {
             if (runif(1) < SPO_SELF_RATE_PER_EGG) {
                 selfed_eggs = selfed_eggs + 1;
                 
+                // NOTE: this seems odd...
+
                 // create 4 self sperm, use one of them to create new p1 zygote,
                 // put other 3 sperm into the gamete pool.
                 breaks1 = sim.chromosome.drawBreakpoints(individual);

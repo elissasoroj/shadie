@@ -10,7 +10,7 @@ initialize() {
   // config
   initializeRecombinationRate(1e-07, 15000000);
   initializeMutationRate(5e-7);
-  initializeTreeSeq(simplificationInterval=200);
+  initializeTreeSeq(recordMutations=F, simplificationInterval=200);
 
   // MutationType init
   initializeMutationType('m1', 0.5, 'f', 0.1);
@@ -25,20 +25,27 @@ initialize() {
   initializeGenomicElement(g2, 10000001, 10001000);
 
   // constants (Population sizes and others)
+  defineConstant('OUTPATH', '/tmp/target-bryo-dio.trees');
+
   defineConstant('SPO_POP_SIZE', 3000);
   defineConstant('GAM_POP_SIZE', 3000);
   defineConstant('SPO_MUTATION_RATE', 5e-07);
   defineConstant('GAM_MUTATION_RATE', 5e-07);
+
   defineConstant('GAM_CLONE_RATE', 0.10);
   defineConstant('GAM_CLONES_PER', 1);
+
   defineConstant('GAM_SELF_RATE_PER_IND', 0.10);
   defineConstant('GAM_SELF_RATE_PER_EGG', 0.10);
+
   defineConstant('SPO_RANDOM_DEATH_CHANCE', 0);
   defineConstant('GAM_RANDOM_DEATH_CHANCE', 0);
+
   defineConstant('GAM_MATERNAL_EFFECT', 0);
+
+  defineConstant('SPO_SPORES_PER', 20);
   defineConstant('GAM_ARCHEGONIA_PER', 10);
   defineConstant('GAM_FEMALE_TO_MALE_RATIO', 0.5);
-  defineConstant('SPO_SPORES_PER', 20);  // larger relative to popsize increases prob of inbreeding (ntergemetic selfing)
 
   // extra scripts (Optional)
   
@@ -48,15 +55,15 @@ initialize() {
 // p0 = haploid population
 // p1 = diploid population
 
-// 1 = gametophyte male
-// 2 = gametophyte female
-// 3 = gametophyte male clone
-// 4 = gemetophyte female clone
-// 5 = sporophyte
-
+// shadie DEFINITIONS
+// p0 = haploid population
+// p1 = diploid population
+// >2000000 = male gametophyte (1N)
+// <2000000 = female gametophyte (1N)
+// 2 = gametophyte clones (1N)
+// 3 = sporophyte (2N)
+// >1M- tmp tags
 // Note: sporophytes cannot clone here.
-// Note: sporophyte selfing is left to chance based on size of gametophyte pop.
-
 
 // executes after reproduction block in NONWF (after offspring are generated).
 // define subpops: p1=diploid sporophytes, p0=haploid gametophytes
@@ -73,10 +80,11 @@ early() {
     if (sim.generation % 2 == 0) {
 
         // fitness is scaled relative to num female gametophytes
-        num_females = length(p0.individuals[p0.individuals.tag == 2]);
-        num_females = num_females + length(p0.individuals[p0.individuals.tag == 4]);
-        p0.fitnessScaling = (GAM_POP_SIZE / (num_females));
-
+        // num_females = length(p0.individuals[p0.individuals.tag == 2]);
+        // num_females = num_females + length(p0.individuals[p0.individuals.tag == 4]);
+        // p0.fitnessScaling = (GAM_POP_SIZE / (num_females));
+        p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
+        
         // set mutation rate to gametophyte rate
         sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
 
@@ -199,9 +207,9 @@ s3 survival(p0) {
 s4 survival(p1) {
     if (runif(1) < SPO_RANDOM_DEATH_CHANCE)
         return F;
-    maternal_effect = individual.getValue("maternal_fitness");
-    if (!isNULL(maternal_effect)) {
-        corrected_fitness = (maternal_effect * GAM_MATERNAL_EFFECT) + fitness * (1 - GAM_MATERNAL_EFFECT);
+    maternal_fitness = individual.getValue("maternal_fitness");
+    if (!isNULL(maternal_fitness)) {
+        corrected_fitness = (maternal_fitness * GAM_MATERNAL_EFFECT) + fitness * (1 - GAM_MATERNAL_EFFECT);
         return (runif(1) < corrected_fitness);
     }
     return NULL;
@@ -245,19 +253,21 @@ s6 reproduction(p0) {
     // clonal individual get added to the p0 pool for next round.
     // NOTE: this doesn't allow clones to reproduce this round.
     if (individual.tag == 3) {
-        p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 1;
+        child = p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL)
+        child.tag = 1;
         // maternal effect is removed from clones.
         if (GAM_MATERNAL_EFFECT > 0)
-            child.setValue("maternal_fitness", 1.0);
+            child.setValue("maternal_fitness", NULL);
     }
 
     // clonal individual get added to the p0 pool for next round.
     // NOTE: this doesn't allow clones to reproduce this round.
     else if (individual.tag == 4) {
-        p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 2;
+        child = p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL);
+        child.tag = 2;
         // maternal effect is removed from clones.
         if (GAM_MATERNAL_EFFECT > 0)
-            child.setValue("maternal_fitness", 1.0);
+            child.setValue("maternal_fitness", NULL);
     }
 
     // non-clones get to reproduce.
