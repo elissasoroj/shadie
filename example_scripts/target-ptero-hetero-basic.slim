@@ -49,7 +49,7 @@ initialize() {
     defineConstant('GAM_RANDOM_DEATH_CHANCE', 0.00);
 
     // TODO: needs further testing in GUI
-    defineConstant('SPO_MATERNAL_EFFECT', 0.5);
+    defineConstant('SPO_MATERNAL_EFFECT', 0.0);
 
     // this defines the total number of gams that will be produced prior to selection
     // culling it down to the K population size. Larger numbers runs slower, but also
@@ -95,6 +95,7 @@ early() {
     if (sim.generation % 2 == 0) {
 
         // fitness is scaled so that enough females survive to next gen.
+        // maybe this needs to incorporate maternal effects (cached fitness?)
         p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
         // strob_fem_ratio = GAM_ARCHEGONIA_PER / (GAM_ARCHEGONIA_PER + GAM_ANTHERIDIA_PER);
         // p0.fitnessScaling = GAM_POP_SIZE * (1 / strob_fem_ratio) / p0.individualCount;
@@ -227,7 +228,7 @@ s4 survival(p1) {
 // sporophyte (2N) undergoes meiosis to release 4 1N gametophytes for each spore
 s5 reproduction(p1) {
     ind = individual;
-    strob_fem_ratio = GAM_ARCHEGONIA_PER/(GAM_ARCHEGONIA_PER+GAM_ANTHERIDIA_PER);
+    // strob_fem_ratio = GAM_ARCHEGONIA_PER/(GAM_ARCHEGONIA_PER+GAM_ANTHERIDIA_PER);
 
     // clonal individual get added to the p0 pool for next round.
     // NOTE: this doesn't allow clones to reproduce this round.
@@ -257,10 +258,10 @@ s5 reproduction(p1) {
         child2 = p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL);
         child3 = p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL);
         child4 = p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL);
-        child1.tag = ifelse(runif(1) < strob_fem_ratio, ftag, mtag);
-        child2.tag = ifelse(runif(1) < strob_fem_ratio, ftag, mtag);
-        child3.tag = ifelse(runif(1) < strob_fem_ratio, ftag, mtag);
-        child4.tag = ifelse(runif(1) < strob_fem_ratio, ftag, mtag);
+        child1.tag = ifelse(runif(1) < GAM_FEM_RATIO, ftag, mtag);
+        child2.tag = ifelse(runif(1) < GAM_FEM_RATIO, ftag, mtag);
+        child3.tag = ifelse(runif(1) < GAM_FEM_RATIO, ftag, mtag);
+        child4.tag = ifelse(runif(1) < GAM_FEM_RATIO, ftag, mtag);
         children = c(child1, child2, child3, child4);
         if (SPO_MATERNAL_EFFECT > 0)
             children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
@@ -289,20 +290,11 @@ s6 reproduction(p0) {
         // A female could produce multiple eggs per arch, but they are identical, 
         // so we do not bother to model that for now ...
         for (rep in 1:GAM_ARCHEGONIA_PER) {
-            // weighted sampling: each egg gets gam-selfed, spo-selfed, or outcrossed.
-            // Note: shadie enforces that GAM_SELF_RATE + SPO_SELF_RATE !> 1
-            // mode 1 = gametophytic selfing
-            // mode 2 = sporophytic selfing
-            // mode 3 = out-crossing
-            mode = sample(
-                x=c(2, 3),
-                size=1,
-                weights=c(SPO_SELF_RATE_PER_EGG, 1 - (SPO_SELF_RATE_PER_EGG))
-            );
-        
+
+
             // inter-gametophytic selfed individual (same sporo parent)
             // only occurs IF a sibling gametophyte is still alive.
-            if (mode == 2) {
+            if (runif(1) < SPO_SELF_RATE_PER_EGG) {
                 // sibling = p0.sampleIndividuals(1, tag=1000000 + individual.tag);
                 if (siblings.size() > 0) {
                     sibling = sample(siblings, 1);
