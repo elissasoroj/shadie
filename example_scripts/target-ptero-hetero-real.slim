@@ -90,7 +90,7 @@ early() {
     if (sim.generation % 2 == 0) {
         
         // fitness is scaled so that enough females survive to next gen.
-        p0.fitnessScaling = (GAM_POP_SIZE * GAM_FEM_RATIO) / p0.individualCount;
+        p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
         // strob_fem_ratio = GAM_ARCHEGONIA_PER / (GAM_ARCHEGONIA_PER + GAM_ANTHERIDIA_PER);
         // p0.fitnessScaling = GAM_POP_SIZE * (1 / strob_fem_ratio) / p0.individualCount;
         
