@@ -12,8 +12,8 @@ initialize() {
     initializeTreeSeq(recordMutations=F, simplificationInterval=100);
     
     // MutationType init
-    initializeMutationType('m1', 0.5, 'f', 0.01);
-    initializeMutationType('m2', 0.5, 'f', 0.01);
+    initializeMutationType('m1', 0.5, 'f', 0.05);
+    initializeMutationType('m2', 0.5, 'f', 0.05);
     
     // ElementType init
     initializeGenomicElementType('g1', m1, 1.0);
@@ -26,7 +26,7 @@ initialize() {
     // constants (Population sizes and others)
     defineConstant('SPO_POP_SIZE', 3000);
     defineConstant('GAM_POP_SIZE', 3000);
-    defineConstant('GAM_FEM_RATIO', 0.01);
+    defineConstant('GAM_FEM_RATIO', 0.1);
     defineConstant('SPO_MUTATION_RATE', 5e-07);
     defineConstant('GAM_MUTATION_RATE', 5e-07);
     
@@ -90,7 +90,9 @@ early() {
     if (sim.generation % 2 == 0) {
         
         // fitness is scaled so that enough females survive to next gen.
-        p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
+        // p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
+        // makes at least 2X as many sporophytes as the carrying capacity
+        p0.fitnessScaling = (GAM_POP_SIZE * (1 / GAM_FEM_RATIO)) * (2 / GAM_ARCHEGONIA_PER) / p0.individualCount;
         // strob_fem_ratio = GAM_ARCHEGONIA_PER / (GAM_ARCHEGONIA_PER + GAM_ANTHERIDIA_PER);
         // p0.fitnessScaling = GAM_POP_SIZE * (1 / strob_fem_ratio) / p0.individualCount;
         
