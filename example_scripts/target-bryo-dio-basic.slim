@@ -12,8 +12,8 @@ initialize() {
 	initializeTreeSeq(recordMutations=F, simplificationInterval=50);
 	
 	// MutationType init
-	initializeMutationType('m1', 0.5, 'f', 0.1);
-	initializeMutationType('m2', 0.5, 'f', 0.1);
+	initializeMutationType('m1', 0.5, 'f', 0.01);
+	initializeMutationType('m2', 0.5, 'f', 0.01);
 	
 	// ElementType init
 	initializeGenomicElementType('g1', m1, 1.0);
@@ -48,7 +48,7 @@ initialize() {
 	defineConstant('GAM_RANDOM_DEATH_CHANCE', 0.0);
 	
 	// TODO: needs further testing in GUI
-	defineConstant('GAM_MATERNAL_EFFECT', 0.5);
+	defineConstant('GAM_MATERNAL_EFFECT', 0.0);
 	
 	// this defines the total number of gams that will be produced prior to selection
 	// culling it down to the K population size. Larger numbers runs slower, but also
@@ -367,7 +367,7 @@ s82 fitness(m1) {
 		"recombination_rate", 1e-7,
 		"spo_population_size", SPO_POP_SIZE,
 		"gam_population_size", GAM_POP_SIZE)
-		);
+	);
 }
 
 
@@ -376,6 +376,7 @@ late() {
 	
 	if (sim.generation % 10 == 0)
 		report('late');
+
 }
 
 
