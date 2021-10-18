@@ -50,7 +50,7 @@ initialize() {
     // culling it down to the K population size. Larger numbers runs slower, but also
     // represents a larger number of recombinant gamete genomes for selection to act on.
     // only the post-selection p0 population reproduces in reproduction(p1).
-    defineConstant('SPO_SPORES_PER', 10);
+    defineConstant('SPO_SPORES_PER', 20);
     
     // of the surviving gametophytes, this defines their reproductive potential to 
     // make up the following generation. If one individual can produce a million eggs,x
@@ -199,14 +199,16 @@ s2 survival(p0) {
 // X2. maternal effect. (There are no SPO maternal effects)
 // 3. returns NULL, meaning use the standard fitness prob.
 s3 survival(p0) {
-    if (runif(1) < GAM_RANDOM_DEATH_CHANCE)
-        return F;
-    maternal_fitness = individual.getValue("maternal_fitness");
-    if (!isNULL(maternal_fitness)) {
-        corrected_fitness = (maternal_fitness * SPO_MATERNAL_EFFECT) + fitness * (1 - SPO_MATERNAL_EFFECT);
-        return (runif(1) < corrected_fitness);
-    }
     return NULL;
+    // TEMPORARY
+    // if (runif(1) < GAM_RANDOM_DEATH_CHANCE)
+    //     return F;
+    // maternal_fitness = individual.getValue("maternal_fitness");
+    // if (!isNULL(maternal_fitness)) {
+    //     corrected_fitness = (maternal_fitness * SPO_MATERNAL_EFFECT) + fitness * (1 - SPO_MATERNAL_EFFECT);
+    //     return (runif(1) < corrected_fitness);
+    // }
+    // return NULL;
 }
 
 
@@ -215,8 +217,9 @@ s3 survival(p0) {
 // 2. using fitness re-calculated to include maternal effect.
 // 3. returns NULL, meaning use the standard fitness prob.
 s4 survival(p1) {
-    if (runif(1) < SPO_RANDOM_DEATH_CHANCE)
-        return F;
+    // TEMPORARY
+    // if (runif(1) < SPO_RANDOM_DEATH_CHANCE)
+        // return F;
     return NULL;
 }
 
@@ -256,10 +259,10 @@ s5 reproduction(p1) {
         child2 = p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL);
         child3 = p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL);
         child4 = p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL);
+        child1.tag = ifelse(runif(1) < GAM_FEM_RATIO, ftag, mtag);
         child2.tag = ifelse(runif(1) < GAM_FEM_RATIO, ftag, mtag);
         child3.tag = ifelse(runif(1) < GAM_FEM_RATIO, ftag, mtag);
         child4.tag = ifelse(runif(1) < GAM_FEM_RATIO, ftag, mtag);    
-        child1.tag = ifelse(runif(1) < GAM_FEM_RATIO, ftag, mtag);
         children = c(child1, child2, child3, child4);
         if (SPO_MATERNAL_EFFECT > 0)
             children.setValue("maternal_fitness", subpop.cachedFitness(ind.index));
@@ -374,7 +377,7 @@ s82 fitness(m1) {
 // executes after selection occurs
 late() {
     
-    if (sim.generation % 10 == 0)
+    if (sim.generation % 50 == 0)
         report('late');
     
     // if a cloned gametophyte survived to late then it can now be
