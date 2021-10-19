@@ -9,7 +9,7 @@ initialize() {
 	// config
 	initializeRecombinationRate(1e-07, 15000000);
 	initializeMutationRate(5e-7);
-	initializeTreeSeq(recordMutations=F, simplificationInterval=50);
+	initializeTreeSeq(recordMutations=F, simplificationInterval=100);
 	
 	// MutationType init
 	initializeMutationType('m1', 0.5, 'f', 0.01);
@@ -40,7 +40,7 @@ initialize() {
 	// gametophytes from the same sporophyte will get unique tags
 	// that will be used to specify mating later. Because bryos
 	// have only one egg per archegon this is actually per-archeg.
-	defineConstant('SPO_SELF_RATE_PER_EGG', 0.22);
+	defineConstant('SPO_SELF_RATE_PER_EGG', 0.4);
 	
 	// affects fitness and survival
 	defineConstant('SPO_RANDOM_DEATH_CHANCE', 0.0);
@@ -88,7 +88,9 @@ early() {
 	if (sim.generation % 2 == 0) {
 		
 		// fitness is scaled relative to all p0s.
-		p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
+		// p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
+        p0.fitnessScaling = (GAM_POP_SIZE * (1 / GAM_FEM_RATIO)) * (2 / GAM_ARCHEGONIA_PER) / p0.individualCount;		
+		// p0.fitnessScaling = (GAM_POP_SIZE * (1 / GAM_FEM_RATIO)) / p0.individualCount;   		
 		
 		// set mutation rate to gametophyte rate
 		sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
@@ -218,13 +220,13 @@ s4 survival(p1) {
 // sporophyte (2N) undergoes meiosis to release 4 1N gametophytes for each spore
 s5 reproduction(p1) {
 	ind = individual;
-	
+
 	// parent tag is 1M + the parents unique index
 	//female tags start with 1
 	ftag = 1000000 + ind.index;
 	//male tags start with 2
 	mtag = 2000000 + ind.index;
-	
+
 	// each spore produces its own recombinant breakpoints 
 	for (rep in 1:SPO_SPORES_PER) {
 		breaks1 = sim.chromosome.drawBreakpoints(ind);
@@ -249,7 +251,16 @@ s5 reproduction(p1) {
 
 // gametophyte gametes are joined to form new 2N sporophytes.
 s6 reproduction(p0) {
-	
+
+	// TODO:
+	// min re-scale output of this individual. Example, instead of 
+	// producing 10 clones, 2 spo-selfs, and 2 outcrosses, 
+	// it will produce 5 clones, 1 spo-self and 1 outcross.
+	// The target size is keep the 
+
+	// I see tag=2 in here which doesn't seem right ...
+	// print(individual.tag);
+
 	// clonal individual get added to the p0 pool for next round.
 	// NOTE: this doesn't allow clones to reproduce this round.
 	if (runif(1) < GAM_CLONE_RATE) {
@@ -373,7 +384,7 @@ s82 fitness(m1) {
 
 // executes after selection occurs
 late() {
-	if (sim.generation % 10 == 0)
+	if (sim.generation % 1 == 0)
 		report('late');
 }
 
@@ -403,11 +414,13 @@ function (void)report(s$ title) {
 			}
 		}
 	}
+
 	
 	cat(format('gen=%i, ', sim.generation));
 	cat(format('ngenomes=%i, ', ngenomes));
 	cat(format('(p1=%i, ', 2 * p1.individuals.size()));
-	cat(format('p0=%i, ', p0.individuals.size()));
+	cat(format('p0=%i, ', sum(p0.individuals.tag != 1)));
+    cat(format('p0.male=%i, ',  sum(p0.individuals.tag > 2000000)));	
 	cat(format('p0 clone=%i)\n', sum(p0.individuals.tag == 2)));
 	cat("\n---------------------- fixed=" + sim.substitutions.size() + "\n\n");
 }

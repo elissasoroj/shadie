@@ -12,8 +12,8 @@ initialize() {
 	initializeTreeSeq(recordMutations=F, simplificationInterval=50);
 	
 	// MutationType init
-	initializeMutationType('m1', 0.5, 'f', 0.01);
-	initializeMutationType('m2', 0.5, 'f', 0.01);
+	initializeMutationType('m1', 0.5, 'f', 0.1);
+	initializeMutationType('m2', 0.5, 'f', 0.1);
 	
 	// ElementType init
 	initializeGenomicElementType('g1', m1, 1.0);
@@ -89,8 +89,10 @@ early() {
 	if (sim.generation % 2 == 0) {
 		
 		// fitness is scaled relative to all p0s, b/c all monoicous bryos are hermaphroditic
-		p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
-		
+		// p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
+        p0.fitnessScaling = (GAM_POP_SIZE * (1 / GAM_FEM_RATIO)) * (2 / GAM_ARCHEGONIA_PER) / p0.individualCount;
+		// p0.fitnessScaling = (GAM_POP_SIZE * (1 / GAM_FEM_RATIO)) / p0.individualCount;
+
 		// set mutation rate to gametophyte rate
 		sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
 		
@@ -410,6 +412,7 @@ function (void)report(s$ title) {
 	cat(format('ngenomes=%i, ', ngenomes));
 	cat(format('(p1=%i, ', 2 * p1.individuals.size()));
 	cat(format('p0=%i, ', sum(p0.individuals.tag != 1)));
+    cat(format('p0.male=%i, ',  sum(p0.individuals.tag > 2000000)));	
 	cat(format('p0 clone=%i)\n', sum(p0.individuals.tag == 1)));
 	cat("\n---------------------- fixed=" + sim.substitutions.size() + "\n\n");
 }
