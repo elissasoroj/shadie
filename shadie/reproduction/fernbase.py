@@ -13,18 +13,17 @@ from shadie.reproduction.scripts import (
     SPO_MATERNAL_EFFECT_ON_P0,
     SUBSTITUTION,
     EARLY,
+    P0_FITNESS_SCALE_DEFAULT,
+    P1_FITNESS_SCALE_DEFAULT
 )
 from shadie.reproduction.fern_scripts import (
     REPRO_PTER_HOMOSPORE_P1, 
     REPRO_PTER_HOMOSPORE_P0,
-    LATE_PTER_HOMOSPORE,
     REPRO_PTER_HETEROSPORE_P1, 
     REPRO_PTER_HETEROSPORE_P0,
-    LATE_PTER_HETEROSPORE,
-    PTER_HETERO_FITNESS_SCALE,
-    FUNCTIONS_PTER_HOMOSPORE,
-    FUNCTIONS_PTER_HETEROSPORE,
-    S4_TAG,
+    PTER_FITNESS_SCALE,
+    DEFS_PTER_HOMOSPORE,
+    DEFS_PTER_HETEROSPORE,
 )
 
 DTYPES = ("dioicy", "dioicous", "heterosporous")
@@ -41,13 +40,21 @@ class PteridophyteBase(NonWrightFisher):
     gam_clones_per: int
     spo_clone_rate: float
     spo_clones_per: int
-    egg_spo_self_rate: float
-    spo_self_chance: float
+    spo_self_rate: float
+    spo_self_rate_per_egg: float
+    spo_spores_per: int
     spo_random_death_chance: float
     gam_random_death_chance: float
     spo_maternal_effect: float
     gam_archegonia_per: int
     gam_k: int
+    gam_female_to_male_ratio: Tuple[float,float]
+
+    def __post_init__(self):
+        """Convert tuple ratio to a float."""
+        sum_ratio = sum(self.gam_female_to_male_ratio)
+        float_ratio = self.gam_female_to_male_ratio[0] / sum_ratio
+        self.gam_female_to_male_ratio = float_ratio
 
     #TODO?
     #optional (lineage-specific params that correspon to generalized ones)
@@ -70,27 +77,16 @@ class PteridophyteBase(NonWrightFisher):
     def _add_shared_mode_scripts(self):
         """Adds scripts shared by homosp and heterosp superclasses.
 
-        Adds shadie-defined functions and a survival script to define 
-        the random_chance_of_death, maternal effects, and survival=0 for 
-        alternation of generations.
+        Adds shadie-defined functions
         """
-        survival_script = (
-                    SURV.format(
-                        p0_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
-                        p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
-                        p0survival="",
-                        s4_tag = S4_TAG,
-                    ))
-        self.model.custom(survival_script, comment="maternal effects and survival")
 
 @dataclass
 class PteridophyteHomosporous(PteridophyteBase):
     """Reproduction mode based on homosporoous ferns and lycophytes"""
     mode: str = field(default="homosporous", init=False)
-    spo_spores_per: int
-    gam_maternal_effect: float
     gam_self_rate: float
-
+    gam_self_rate_per_egg: float
+    gam_maternal_effect: float
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
         # methods inherited from parent Pteridophyte class
@@ -101,48 +97,72 @@ class PteridophyteHomosporous(PteridophyteBase):
         self._define_subpopulations()
         self._add_alternation_of_generations()
         self._set_gametophyte_k()
-        self._add_early_script()
         self._add_initialize_constants()
         self._write_trees_file()
 
         # mode-specific functions
         self._add_mode_scripts()
+        self._add_early_script()
+
+    def _add_early_script(self):
+        """
+        Defines the early() callbacks for each gen.
+        This overrides the NonWrightFisher class function of same name.
+        """
+        early_script = (EARLY.format(
+            p0_fitnessScaling= PTER_FITNESS_SCALE,
+            p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
+            # activate=self._activate_str,
+            # deactivate=self._deactivate_str
+            )
+        )
+
+        self.model.early(
+            time=None,
+            scripts=early_script,
+            comment="alternation of generations",
+        )
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
-        self.model.custom(scripts=FUNCTIONS_PTER_HOMOSPORE, comment = "shadie DEFINITIONS")
+        # survival script to define the random_chance_of_death, 
+        #maternal effects, and survival=0 for alternation of generations.
+        survival_script = (
+                    SURV.format(
+                        p0_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
+                        p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+                    ))
+        self.model.custom(survival_script, comment="maternal effects and survival")
+
+        self.model.custom(scripts=DEFS_PTER_HOMOSPORE, comment = "shadie DEFINITIONS")
 
         self.model.repro(
             idx = "s5",
-            population="p1",
-            scripts=REPRO_PTER_HOMOSPORE_P1,
-            comment="generates gametes from sporophytes"
-        )
-        self.model.repro(
-            idx = "s6",
             population="p0",
             scripts=REPRO_PTER_HOMOSPORE_P0,
             comment="generates gametes from sporophytes"
         )
+        self.model.repro(
+            idx = "s6",
+            population="p1",
+            scripts=REPRO_PTER_HOMOSPORE_P1,
+            comment="generates gametes from sporophytes"
+        )
         
-        # add late call
-        substitution_script = (
-            SUBSTITUTION.format(**{'muts': self._substitution_str,
-                'late': LATE_PTER_HOMOSPORE}).lstrip())
+        # add late call - CHECKING WITH BEN
+        # substitution_script = (
+        #     SUBSTITUTION.format(**{'muts': self._substitution_str,
+        #         'late': LATE_PTER_HOMOSPORE}).lstrip())
 
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-            )
+        # self.model.late(
+        #     time=None,
+        #     scripts=substitution_script,
+        #     comment="fixes mutations in haploid gen"
+        #     )
 
 @dataclass
 class PteridophyteHeterosporous(PteridophyteBase):
     mode: str = field(default="heterosporous", init=False)
-    rs_megasporangia_per: int
-    rs_microsporangia_per: int
-    megasporangia_megaspores_per: int
-    microsporangia_microspores_per: int
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
@@ -167,9 +187,10 @@ class PteridophyteHeterosporous(PteridophyteBase):
         This overrides the NonWrightFisher class function of same name.
         """
         early_script = (EARLY.format(
-            p0_fitnessScaling= PTER_HETERO_FITNESS_SCALE,
-            activate=self._activate_str,
-            deactivate=self._deactivate_str
+            p0_fitnessScaling= PTER_FITNESS_SCALE,
+            p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
+            # activate=self._activate_str,
+            # deactivate=self._deactivate_str
             )
         )
 
@@ -181,31 +202,40 @@ class PteridophyteHeterosporous(PteridophyteBase):
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
-        self.model.custom(scripts=FUNCTIONS_PTER_HETEROSPORE, comment = "shadie DEFINITIONS")
+         # survival script to define the random_chance_of_death, 
+        #maternal effects, and survival=0 for alternation of generations.
+        survival_script = (
+                    SURV.format(
+                        p0_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
+                        p1_maternal_effect="",
+                    ))
+        self.model.custom(survival_script, comment="maternal effects and survival")
+
+        self.model.custom(scripts=DEFS_PTER_HETEROSPORE, comment = "shadie DEFINITIONS")
 
         self.model.repro(
-            population="p1",
-            idx = "s5",
-            scripts=REPRO_PTER_HETEROSPORE_P1,
-            comment="generates gametes from sporophytes"
-        )
-        self.model.repro(
             population="p0",
-            idx = "s6",
+            idx = "s5",
             scripts=REPRO_PTER_HETEROSPORE_P0,
             comment="generates gametes from sporophytes"
         )
+        self.model.repro(
+            population="p1",
+            idx = "s6",
+            scripts=REPRO_PTER_HETEROSPORE_P1,
+            comment="generates gametes from sporophytes"
+        )
         
-        # add late call
-        substitution_script = (
-            SUBSTITUTION.format(**{'muts': self._substitution_str,
-                'late': LATE_PTER_HETEROSPORE}).lstrip())
+        # add late call - CHECKING WITH BEN
+        # substitution_script = (
+        #     SUBSTITUTION.format(**{'muts': self._substitution_str,
+        #         'late': LATE_PTER_HETEROSPORE}).lstrip())
 
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-            )
+        # self.model.late(
+        #     time=None,
+        #     scripts=substitution_script,
+        #     comment="fixes mutations in haploid gen"
+        #     )
 
 
 if __name__ == "__main__":
