@@ -26,12 +26,9 @@ from shadie.reproduction.scripts import (
 from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_DIO_P1,
     REPRO_BRYO_DIO_P0,
-    LATE_BRYO_DIO,
     REPRO_BRYO_MONO_P1,
     REPRO_BRYO_MONO_P0,
-    LATE_BRYO_MONO,
-    S4_TAG,
-    FUNCTIONS_BRYO,
+    DEFS_BRYO,
 )
 
 DTYPES = ("dioicy", "dioicous", "heterosporous")
@@ -47,8 +44,10 @@ class BryophyteBase(NonWrightFisher):
     gam_mutation_rate: Optional[float]
     gam_clone_rate: float
     gam_clones_per: int
-    egg_spo_self_rate: float
-    spo_self_chance: float
+    gam_self_rate_per_egg: float
+    gam_self_rate: float
+    spo_self_rate_per_egg: float
+    spo_self_rate: float
     spo_random_death_chance: float
     gam_random_death_chance: float
     spo_spores_per: int
@@ -78,12 +77,10 @@ class BryophyteBase(NonWrightFisher):
         survival_script = (
             SURV.format(
                 p0_maternal_effect="",
-                p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
-                p0survival="",
-                s4_tag = S4_TAG,
+                p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1
             )
         )
-        self.model.custom(survival_script, comment="maternal effects and survival")
+        self.model.custom(survival_script, comment="SURVIVAL CALLBACKS for alternation of generations")
 
 
 @dataclass
@@ -116,36 +113,24 @@ class BryophyteDioicous(BryophyteBase):
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
-        self.model.custom(scripts=FUNCTIONS_BRYO, comment = "shadie DEFINITIONS")
+        self.model.custom(scripts=DEFS_BRYO, comment = "shadie DEFINITIONS")
         self.model.repro(
             population="p1",
             scripts=REPRO_BRYO_DIO_P1,
-            idx = "s5",
+            idx = "s6",
             comment="generates gametes from sporophytes"
         )
         self.model.repro(
             population="p0",
             scripts=REPRO_BRYO_DIO_P0,
-            idx = "s6",
+            idx = "s5",
             comment="generates gametes from sporophytes"
         )
-        
-        # add late call
-        substitution_script = (
-            SUBSTITUTION.format(**{'muts': self._substitution_str,
-                'late': LATE_BRYO_DIO}).lstrip())
-
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-            )
 
 
 @dataclass
 class BryophyteMonoicous(BryophyteBase):
     mode: str = field(default="monoicous", init=False)
-    gam_self_rate: float=0.2
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
@@ -167,7 +152,7 @@ class BryophyteMonoicous(BryophyteBase):
     def _add_mode_scripts(self):
         """fills the model.map block with bryophyte-monoicous scripts."""
         # add reproduction scripts
-        self.model.custom(scripts=FUNCTIONS_BRYO, comment = "shadie DEFINITIONS")
+        self.model.custom(scripts=DEFS_BRYO, comment = "shadie DEFINITIONS")
         self.model.repro(
             population="p1",
             scripts=REPRO_BRYO_MONO_P1,
@@ -180,17 +165,6 @@ class BryophyteMonoicous(BryophyteBase):
             idx="s6",
             comment="generates gametes from sporophytes"
         )
-        
-        # add late call
-        substitution_script = (
-            SUBSTITUTION.format(**{'muts': self._substitution_str,
-                'late': LATE_BRYO_MONO}).lstrip())
-
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-            )
 
 
 
@@ -216,7 +190,7 @@ if __name__ == "__main__":
 
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=50, file_out="/tmp/test.trees")
-        mod.reproduction.bryophyte_monoicous(
+        mod.reproduction.bryophyte_dioicous(
             spo_pop_size=100,
             gam_pop_size=100,
         )

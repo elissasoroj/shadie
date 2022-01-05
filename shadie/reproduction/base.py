@@ -14,8 +14,10 @@ from shadie.reproduction.scripts import (
     SUBSTITUTION,
     SUB_MUTS,
     P0_FITNESS_SCALE_DEFAULT,
+    P1_FITNESS_SCALE_DEFAULT,
     EARLY,
     EARLY_WITH_GAM_K,
+    METADATA,
 )
 
 
@@ -60,7 +62,7 @@ class ReproductionBase:
                 time=resched_end,
                 scripts=[
                     "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)",
-                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}')"],
+                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}', {METADATA})"],
                 comment="end of sim; save .trees file",
             )
         # write output at last generation of this simulation.
@@ -69,7 +71,7 @@ class ReproductionBase:
                 time=endtime,
                 scripts=[
                     "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)",
-                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}')"],
+                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}', {METADATA})"],
                 comment="end of sim; save .trees file",
             )
 
@@ -94,7 +96,7 @@ class NonWrightFisher(ReproductionBase):
     def _define_subpopulations(self):
         """add haploid and diploid life stages as subpopulations."""
         if self.model.metadata['file_in']:
-            self.model._read_from_file(tag_scripts =["p1.individuals.tag=0;", 
+            self.model._read_from_file(tag_scripts =["p1.individuals.tag=3;", 
                 "tags = rbinom(1, p0.individualCount, 0.5);", "p0.individuals.tag = tags;"])
         else:
             self.model.early(
@@ -102,7 +104,7 @@ class NonWrightFisher(ReproductionBase):
                 scripts=[
                     "sim.addSubpop('p1', SPO_POP_SIZE)",
                     "sim.addSubpop('p0', 0)",
-                    "p1.individuals.tag = 0",],
+                    "p1.individuals.tag = 3",],
                 comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
             )
 
@@ -186,6 +188,7 @@ class NonWrightFisher(ReproductionBase):
         """
         early_script = (EARLY_WITH_GAM_K.format(
             p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
+            p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
             activate= self._activate_str,
             deactivate= self._deactivate_str
             )
