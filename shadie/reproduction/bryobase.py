@@ -115,15 +115,15 @@ class BryophyteDioicous(BryophyteBase):
         """Add reproduction scripts unique to heterosporous bryo."""
         self.model.custom(scripts=DEFS_BRYO, comment = "shadie DEFINITIONS")
         self.model.repro(
-            population="p1",
-            scripts=REPRO_BRYO_DIO_P1,
-            idx = "s6",
-            comment="generates gametes from sporophytes"
-        )
-        self.model.repro(
             population="p0",
             scripts=REPRO_BRYO_DIO_P0,
             idx = "s5",
+            comment="generates sporophytes from gametes"
+        )
+        self.model.repro(
+            population="p1",
+            scripts=REPRO_BRYO_DIO_P1,
+            idx = "s6",
             comment="generates gametes from sporophytes"
         )
 
@@ -154,14 +154,14 @@ class BryophyteMonoicous(BryophyteBase):
         # add reproduction scripts
         self.model.custom(scripts=DEFS_BRYO, comment = "shadie DEFINITIONS")
         self.model.repro(
-            population="p1",
-            scripts=REPRO_BRYO_MONO_P1,
-            idx = "s5",
-            comment="generates gametes from sporophytes"
-        )
-        self.model.repro(
             population="p0",
             scripts=REPRO_BRYO_MONO_P0,
+            idx = "s5",
+            comment="generates sporophytes from gametes"
+        )
+        self.model.repro(
+            population="p1",
+            scripts=REPRO_BRYO_MONO_P1,
             idx="s6",
             comment="generates gametes from sporophytes"
         )
@@ -190,7 +190,7 @@ if __name__ == "__main__":
 
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=50, file_out="/tmp/test.trees")
-        mod.reproduction.bryophyte_dioicous(
+        mod.reproduction.bryophyte_monoicous(
             spo_pop_size=100,
             gam_pop_size=100,
         )
