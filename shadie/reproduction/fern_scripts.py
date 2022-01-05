@@ -13,14 +13,13 @@ PTER_FITNESS_SCALE = """p0.fitnessScaling = (GAM_POP_SIZE *
 DEFS_PTER_HOMOSPORE = """
 // p0 = haploid population
 // p1 = diploid population
-// >1M- tmp parental tags
+// >1M- tmp sex tags
 // <2000000 = female gametophyte (1N)
 // >2000000 = male gametophyte (1N)
 // 2 = gametophyte clones (1N) tag
 // 3 = sporophyte (2N) tag
 // 4 = sporophyte clones (2N) tag
 """
-
 # ==PARAMETERS==
 #SPO_CLONE_RATE
 #SPO_CLONES_PER
@@ -168,7 +167,7 @@ REPRO_PTER_HOMOSPORE_P0 = """
 DEFS_PTER_HETEROSPORE = """
 // p0 = haploid population
 // p1 = diploid population
-// >1M- tmp parental tags
+// >1M- tmp sex tags
 // <2000000 = female gametophyte (1N)
 // >2000000 = male gametophyte (1N)
 // 2 = gametophyte clones (1N) tag -------------- None in this model
