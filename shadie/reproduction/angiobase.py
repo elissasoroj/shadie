@@ -22,17 +22,17 @@ from shadie.reproduction.scripts import (
     SUBSTITUTION,
     P0_FITNESS_SCALE_DEFAULT,
     EARLY,
+    P1_FITNESS_SCALE_DEFAULT,
+    P0_FITNESS_SCALE_DEFAULT,
 )
-from shadie.reproduction.angio_scripts_opt import (
+from shadie.reproduction.angio_scripts import (
     REPRO_ANGIO_DIO_P1,
     REPRO_ANGIO_DIO_P0,
-    LATE_ANGIO_DIO,
     REPRO_ANGIO_MONO_P1,
     REPRO_ANGIO_MONO_P0,
-    LATE_ANGIO_MONO,
-    EARLY1_ANGIO,
-    ANGIO_P0_SURV,
+    EARLY1_ANGIO_DIO,
     ANGIO_DIO_FITNESS_SCALE,
+    DEFS_ANGIO,
 )
 
 DTYPES = ("d", "dio", "dioecy", "dioecious",)
@@ -50,19 +50,16 @@ class AngiospermBase(NonWrightFisher):
     spo_random_death_chance: float
     gam_random_death_chance: float
     spo_maternal_effect: float
-    spo_flowers_per: int
-    flower_ovules_per: int
-    flower_anthers_per: int
-    anther_pollen_per: int
-    ovule_success_rate: float
+    spo_pollen_per: int
+    spo_archegonia_per: int
+    fertilization_rate: float
     pollen_success_rate: float
-    pollen_comp: Union[bool, str]
-    pollen_comp_stigma_pollen_per: int
-    pollen_control: int
+    pollen_competition: str
+    stigma_pollen_per: int
 
     def _set_mutation_rates(self):
         """Checks parameters after init."""
-        # Set mutation rates for both, or use Model rate / 2 for both.
+        # Set mutation rates for both, or use Model rate for sporo, 0 for gam.
         if self.spo_mutation_rate or self.gam_mutation_rate:
             require_spo = self.spo_mutation_rate is not None
             require_gam = self.gam_mutation_rate is not None
@@ -82,9 +79,7 @@ class AngiospermBase(NonWrightFisher):
         survival_script = (
             SURV.format(
                 p0_maternal_effect="",
-                p1_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
-                p0survival=ANGIO_P0_SURV,
-                s4_tag = "",            )
+                p1_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0)
         )
         self.model.custom(survival_script, comment="maternal effects and survival")
 
@@ -101,11 +96,11 @@ class AngiospermDioecious(AngiospermBase):
         self.spo_female_to_male_ratio = (
             self.spo_female_to_male_ratio[0] / ratio_sum)
 
-        if self.pollen_comp and self.pollen_comp != "F":
-            self.pollen_comp = "T"
+        if self.pollen_competition and self.pollen_competition != "F":
+            self.pollen_competition = "T"
         else:
-            self.pollen_comp = "F"
-            self.pollen_comp_stigma_pollen_per = int(1)
+            self.pollen_competition = "F"
+            self.stigma_pollen_per = int(1)
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
@@ -132,7 +127,7 @@ class AngiospermDioecious(AngiospermBase):
         else:
             self.model.early(
                 time=1,
-                scripts=EARLY1_ANGIO,
+                scripts=EARLY1_ANGIO_DIO,
                 comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
             )
 
@@ -142,9 +137,10 @@ class AngiospermDioecious(AngiospermBase):
         This overrides the NonWrightFisher class function of same name.
         """
         early_script = (EARLY.format(
-            p0_fitnessScaling= ANGIO_DIO_FITNESS_SCALE,
-            activate=self._activate_str,
-            deactivate=self._deactivate_str
+            p0_fitnessScaling = ANGIO_DIO_FITNESS_SCALE,
+            p1_fitnessScaling = P1_FITNESS_SCALE_DEFAULT,
+            # activate=self._activate_str,
+            # deactivate=self._deactivate_str
             )
         )
 
@@ -160,44 +156,44 @@ class AngiospermDioecious(AngiospermBase):
 
         # add reproduction calls
         self.model.repro(
-            population="p1",
-            scripts=REPRO_ANGIO_DIO_P1,
-            idx = "s5",
-            comment="generates gametes from sporophytes"
-        )
-        self.model.repro(
             population="p0",
             scripts=REPRO_ANGIO_DIO_P0,
+            idx = "s5",
+            comment="generates sporophytes from gametes"
+        )
+        self.model.repro(
+            population="p1",
+            scripts=REPRO_ANGIO_DIO_P1,
             idx = "s6",
             comment="generates gametes from sporophytes"
         )
         
-        # add late call
-        substitution_script = (
-            SUBSTITUTION.format(**{'muts': self._substitution_str,
-                'late': LATE_ANGIO_DIO}).lstrip())
+        # # add late call
+        # substitution_script = (
+        #     SUBSTITUTION.format(**{'muts': self._substitution_str,
+        #         'late': LATE_ANGIO_DIO}).lstrip())
 
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-            )
+        # self.model.late(
+        #     time=None,
+        #     scripts=substitution_script,
+        #     comment="fixes mutations in haploid gen"
+        #     )
 
 
 @dataclass
 class AngiospermMonoecious(AngiospermBase):
     """Superclass of Spermatophyte base with dioecious functions."""
     mode: str = field(default="monecious", init=False)
-    egg_spo_self_rate: float
-    spo_self_chance: float
+    spo_self_rate_per_egg: float
+    spo_self_rate: float
 
     def __post_init__(self):
         #set pollen competition as string
-        if self.pollen_comp and self.pollen_comp != "F":
-            self.pollen_comp = "T"
+        if self.pollen_competition and self.pollen_competition != "F":
+            self.pollen_competition = "T"
         else:
-            self.pollen_comp = "F"
-            self.pollen_comp_stigma_pollen_per = int(1)
+            self.pollen_competition = "F"
+            self.stigma_pollen_per = int(1)
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
@@ -221,9 +217,10 @@ class AngiospermMonoecious(AngiospermBase):
         This overrides the NonWrightFisher class function of same name.
         """
         early_script = (EARLY.format(
-            p0_fitnessScaling= ANGIO_DIO_FITNESS_SCALE,
-            activate=self._activate_str,
-            deactivate=self._deactivate_str
+            p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
+            p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
+            # activate=self._activate_str,
+            # deactivate=self._deactivate_str
             )
         )
 
@@ -238,28 +235,28 @@ class AngiospermMonoecious(AngiospermBase):
         #self.model.custom(scripts=FUNCTIONS_ANGIO_MONO, comment = "shadie DEFINITIONS")
 
         self.model.repro(
-            population="p1",
-            scripts=REPRO_ANGIO_MONO_P1,
-            idx = "s5",
-            comment="generates gametes from sporophytes"
-        )
-        self.model.repro(
             population="p0",
             scripts=REPRO_ANGIO_MONO_P0,
+            idx = "s5",
+            comment="generates sporophytes from gametes"
+        )
+        self.model.repro(
+            population="p1",
+            scripts=REPRO_ANGIO_MONO_P1,
             idx = "s6",
             comment="generates gametes from sporophytes"
         )
 
-        # add late call
-        substitution_script = (
-            SUBSTITUTION.format(**{'muts': self._substitution_str,
-                'late': LATE_ANGIO_MONO}).lstrip())
+        # # add late call
+        # substitution_script = (
+        #     SUBSTITUTION.format(**{'muts': self._substitution_str,
+        #         'late': LATE_ANGIO_MONO}).lstrip())
 
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-            )
+        # self.model.late(
+        #     time=None,
+        #     scripts=substitution_script,
+        #     comment="fixes mutations in haploid gen"
+        #     )
 
 
 if __name__ == "__main__":
@@ -291,11 +288,9 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.angiosperm_dioecious(
+        mod.reproduction.angiosperm_monoecious(
             spo_pop_size=1000, 
             gam_pop_size=1000,
-            pollen_control=0.5,
-            spo_female_to_male_ratio = (1,1),
         )
 
     print(mod.script)
