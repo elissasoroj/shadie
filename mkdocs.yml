@@ -1,11 +1,90 @@
 site_name: shadie Docs
+repo_url: https://github.com/elissasoroj/shadie
+site_author: Elissa Sorojsrisom
+#to deploy: mkdocs gh-deploy
+#to see dummy site: mkdocs serve
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: red
+      accent: amber
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: teal
+      accent: yellow
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    #text: Quicksand
+  icon:
+    logo: octicons/codespaces-24
+    admonition:
+      note: octicons/tag-16
+      abstract: octicons/checklist-16
+      info: octicons/info-16
+      tip: octicons/squirrel-16
+      success: octicons/check-16
+      question: octicons/unverified-16
+      warning: octicons/alert-16
+      failure: octicons/x-circle-16
+      danger: octicons/zap-16
+      bug: octicons/bug-16
+      example: octicons/beaker-16
+      quote: octicons/quote-16
+  features:
+    - navigation.instant
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.expand
+
 nav:
     - Overview: overview.md
     - Installation: install.md
     - Tutorial: tutorial.md
-theme: readthedocs
-extra_css: [extra.css]
-repo_url: https://github.com/elissasoroj/shadie
-site_author: Elissa Sorojsrisom
-docs_dir: docs
 
+markdown_extensions:
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - toc:
+      toc_depth: 4
+  - markdown.extensions.codehilite:
+      guess_lang: false      
+  - admonition
+  - footnotes
+  - codehilite
+  - tables
+  - attr_list
+  - md_in_html
+  # - extra
+  - pymdownx.superfences:
+      #custom_fences:
+      #- name: mermaid
+      #  class: mermaid
+      #  format: !!python/name:pymdownx.superfences.fence_div_format ''
+  - pymdownx.tabbed      
+  - pymdownx.details
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde  
+
+extra_javascript:
+  - js/custom.js 
+  # - https://unpkg.com/mermaid@8.9.2/dist/mermaid.min.js
+  # - https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.0.9/mermaid.min.js
+  # - js/termynal.js
+  # - js/mermaid.js
+
+extra_css:
+  # - https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.0.9/mermaid.neutral.css
+  # - css/termynal.css
+  # - css/custom.css
+  # [extra.css]
