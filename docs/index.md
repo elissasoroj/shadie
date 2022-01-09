@@ -1,2 +1,2 @@
-<h1> <center> shadie </center> </h1>
-<h2> <center> "Simulating Haploid-Diploid Evolution" </center> </h2>
+# Welcome to the `shadie` docs
+## "Simulating Haploid-Diploid Evolution"
