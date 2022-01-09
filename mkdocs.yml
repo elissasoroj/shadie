@@ -7,18 +7,18 @@ site_author: Elissa Sorojsrisom
 theme:
   name: material
   palette:
+     - scheme: slate
+      primary: teal
+      accent: yellow
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
     - scheme: default
       primary: red
       accent: amber
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
-    - scheme: slate
-      primary: teal
-      accent: yellow
-      toggle:
-        icon: material/weather-sunny
-        name: Switch to light mode
   font:
     #text: Quicksand
   icon:
