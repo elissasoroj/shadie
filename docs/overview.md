@@ -23,11 +23,11 @@ Finally, `shadie` was first developed with the intention of modelling realistic 
 ### Dependencies
 
 **General**
-* subprocess
-* numpy
-* pandas
+- subprocess
+- numpy
+- pandas
 
 **Plotting:**
-* toyplot: for static plots
-* altair: for interactive plots
-* IPython: for displaying plots in Jupyter Notebooks
+- toyplot: for static plots
+- altair: for interactive plots
+- IPython: for displaying plots in Jupyter Notebooks
