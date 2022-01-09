@@ -1,4 +1,4 @@
-site_name: shadie Docs
+site_name: `shadie` docs
 repo_url: https://github.com/elissasoroj/shadie
 site_author: Elissa Sorojsrisom
 #to deploy: mkdocs gh-deploy
@@ -44,9 +44,18 @@ theme:
     - navigation.expand
 
 nav:
-    - Overview: overview.md
+    - Welcome: welcome.md
     - Installation: install.md
-    - Tutorial: tutorial.md
+    - Technical Docs: techdocs.md
+        - techdocs/overview.md
+    - Tutorials: tutorials/tutintro.md
+        - Full Work Flow: tutorials/fullworkflow.md
+        - Custom Mutation Types: tutorials/mutations.md
+        - Custom Chromosome: tutorials/chromosome.md
+        - Custom Eidos Code: tutorials/customcode.md
+        - Differential Expression: tutorials/diffexpr.md
+    - Education Module: education/eduintro.md
+        - Plant Life Cycles: education/lifecycles.md
 
 markdown_extensions:
   - pymdownx.emoji:
