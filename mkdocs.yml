@@ -7,7 +7,7 @@ site_author: Elissa Sorojsrisom
 theme:
   name: material
   palette:
-     - scheme: slate
+    - scheme: slate
       primary: teal
       accent: yellow
       toggle:
