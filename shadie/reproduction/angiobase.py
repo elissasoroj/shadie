@@ -139,8 +139,10 @@ class AngiospermDioecious(AngiospermBase):
         early_script = (EARLY.format(
             p0_fitnessScaling = ANGIO_DIO_FITNESS_SCALE,
             p1_fitnessScaling = P1_FITNESS_SCALE_DEFAULT,
-            # activate=self._activate_str,
-            # deactivate=self._deactivate_str
+            p0activate= self._p0activate_str,
+            p0deactivate= self._p0deactivate_str,
+            p1activate= self._p1activate_str,
+            p1deactivate= self._p1deactivate_str
             )
         )
 
@@ -219,8 +221,10 @@ class AngiospermMonoecious(AngiospermBase):
         early_script = (EARLY.format(
             p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
             p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
-            # activate=self._activate_str,
-            # deactivate=self._deactivate_str
+            p0activate= self._p0activate_str,
+            p0deactivate= self._p0deactivate_str,
+            p1activate= self._p1activate_str,
+            p1deactivate= self._p1deactivate_str
             )
         )
 

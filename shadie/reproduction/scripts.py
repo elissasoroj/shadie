@@ -9,7 +9,7 @@ Generic scripts.
 
 #standard early script
 EARLY = """
-// diploids (p1) just generated haploid gametophytes
+// diploids (p1) just generated haploid gametophytes into p0
     if (sim.generation % 2 == 0) {{
 
         // fitness affects gametophyte survival
@@ -35,6 +35,9 @@ EARLY = """
         // activate reproduction(p0) haploids reproduce, diploids don't.        
         s5.active = 1;
         s6.active = 0;
+
+        {p0activate}
+        {p0deactivate}
     }}
 
 
@@ -63,12 +66,15 @@ EARLY = """
         // deactivate reproduction(p0) haploids reproduce, diploids don't.        
         s5.active = 0;
         s6.active = 1;
+
+        {p1activate}
+        {p1deactivate}
     }}
 """
 
 
-P0_FITNESS_SCALE_DEFAULT = "p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;"
-P1_FITNESS_SCALE_DEFAULT = "p1.fitnessScaling = SPO_POP_SIZE / p1.individualCount;"
+P0_FITNESS_SCALE_DEFAULT = "p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount"
+P1_FITNESS_SCALE_DEFAULT = "p1.fitnessScaling = SPO_POP_SIZE / p1.individualCount"
 
 # GAM_K
 # GAM_MUTATION_RATE
@@ -102,6 +108,9 @@ EARLY_WITH_GAM_K = """
         // activate reproduction(p0) haploids reproduce, diploids don't.        
         s5.active = 1;
         s6.active = 0;
+
+        {p0activate}
+        {p0deactivate}
     }}
 
 
@@ -132,6 +141,9 @@ EARLY_WITH_GAM_K = """
         // deactivate reproduction(p0) haploids reproduce, diploids don't.        
         s5.active = 0;
         s6.active = 1;
+
+        {p1activate}
+        {p1deactivate}
     }}
 """
 

@@ -175,10 +175,12 @@ if __name__ == "__main__":
     # define mutation types
     m0 = shadie.mtype(0.5, 'n', 0, 0.4)
     m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
+    m2 = shadie.mtype(0.5, 'g', 0.8, 0.75, diffexpr="diploid")
+    m3 = shadie.mtype(0.5, 'n', 0, 0.4, diffexpr="haploid")
 
     # define elements types
-    e0 = shadie.etype([m0, m1], [1, 2])
-    e1 = shadie.etype([m1], [1])
+    e0 = shadie.etype([m0, m2], [1, 2])
+    e1 = shadie.etype([m3], [1])
 
     # design chromosome of elements
     chrom = shadie.chromosome.random(

@@ -250,6 +250,8 @@ if __name__ == "__main__":
     #chrom.to_slim_mutation_types()
     test = chrom.mutations
     print(chrom.data.head())
+
+    print(chrom.data)
     # chrom.inspect()
     # print(test)
     # chrom.to_slim_elements()

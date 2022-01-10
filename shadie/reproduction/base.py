@@ -117,7 +117,8 @@ class NonWrightFisher(ReproductionBase):
         """
         # exclude parent class attributes
         exclude = ["lineage", "mode", "model", "_substitution_str", 
-                    "_activate_str", "_deactivate_str"]
+                    "_p0activate_str", "_p0deactivate_str",
+                    "_p1activate_str", "_p1deactivate_str"]
         asdict = {
             i: j for (i, j) in self.__dict__.items()
             if i not in exclude
@@ -135,51 +136,69 @@ class NonWrightFisher(ReproductionBase):
         # in the model.chromosome.
         # this will map to sx-sy survival callbacks.
         idx = 6
-        activate_scripts = []
-        deactivate_scripts = []
+        p0activate_scripts = []
+        p0deactivate_scripts = []
+        p1activate_scripts = []
+        p1deactivate_scripts = []
         substitutions = []
 
         # iterate over MutationTypes
         for mut in self.model.chromosome.mutations:
+            if mut._expr != "None":
 
-            # refer to mutations by s{idx}
-            idx += 1
-            sidx = str("s" + str(idx))
+                # refer to mutations by s{idx}
+                idx += 1
+                sidx = str("s" + str(idx))
 
-            # add fitness callback function (e.g., s5 fitness(m1) {...})
-            # for each MutationType. This callback will be activated or
-            # deactivated (below) by early scripts based on whether
-            # it is the haploid or diploid subpopulation's generation.
-            self.model.fitness(
-                idx=sidx,
-                mutation=mut.name,
-                scripts="return 1 + mut.selectionCoeff",
-                comment="gametophytes have no dominance effects",
-            )
+                # add fitness callback function (e.g., s5 fitness(m1) {...})
+                # for each MutationType. This callback will be activated or
+                # deactivated (below) by early scripts based on whether
+                # it is the haploid or diploid subpopulation's generation.
+                self.model.fitness(
+                        idx=sidx,
+                        mutation=mut.name,
+                        scripts="return 1.0",
+                        comment="turns expression off",
+                    )
 
-            # store script to activate or deactivate this mutationtype
-            activate_scripts.append(f"{sidx}.active = 1;")
-            deactivate_scripts.append(f"{sidx}.active = 0;")
+                # store script to activate or deactivate this mutationtype
+                if mut._expr == "haploid":
+                    p0activate_scripts.append(f"{sidx}.active = 1;")
+                    p1deactivate_scripts.append(f"{sidx}.active = 0;")
+                elif mut._expr == "diploid":
+                    p1activate_scripts.append(f"{sidx}.active = 1;")
+                    p0deactivate_scripts.append(f"{sidx}.active = 0;")
+                elif mut._expr == "None":
+                    pass
+                else:
+                    print("Differental expression must be set to 'haploid'"
+                        "or 'diploid")
 
-            # add reference to this mutation to be added to a late call
-            # for checking whether a mutation has become a substitution.
-            sub_muts = SUB_MUTS.format(idx=sidx, mut=mut.name).lstrip()
-            substitutions.append(sub_muts)
+                # add reference to this mutation to be added to a late call
+                # for checking whether a mutation has become a substitution.
+                #CHECK - SHOULD NOT BE NECESSARY ANYMORE
+                # sub_muts = SUB_MUTS.format(idx=sidx, mut=mut.name).lstrip()
+                # substitutions.append(sub_muts)
 
         # insert references to fitness callbacks into an early script
         # that will alternately activate or deactivate them on
         # alternating generations to only apply to gameto or sporo.
-        activate_str = "\n        ".join(activate_scripts)
-        deactivate_str = "\n        ".join(deactivate_scripts)
+        p0activate_str = "\n        ".join(p0activate_scripts)
+        p0deactivate_str = "\n        ".join(p0deactivate_scripts)
+        p1activate_str = "\n        ".join(p1activate_scripts)
+        p1deactivate_str = "\n        ".join(p1deactivate_scripts)
 
         #save activate and deactivate scripts for later
-        self._activate_str = activate_str
-        self._deactivate_str = deactivate_str
+        self._p0activate_str = p0activate_str
+        self._p0deactivate_str = p0deactivate_str
+        self._p1activate_str = p1activate_str
+        self._p1deactivate_str = p1deactivate_str
 
-        # insert the substitution-checking scripts into larger context
-        substitution_str = "\n    ".join(substitutions)
-        #save subsitutions for late call in model-specific scripts
-        self._substitution_str = substitution_str
+        #CHECK - SHOULD NOT BE NECESSARY ANYMORE
+        # # insert the substitution-checking scripts into larger context
+        # substitution_str = "\n    ".join(substitutions)
+        # #save subsitutions for late caldl in model-specific scripts
+        # self._substitution_str = substitution_str
 
     def _add_early_script(self):
         """
@@ -189,8 +208,10 @@ class NonWrightFisher(ReproductionBase):
         early_script = (EARLY_WITH_GAM_K.format(
             p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
             p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
-            activate= self._activate_str,
-            deactivate= self._deactivate_str
+            p0activate= self._p0activate_str,
+            p0deactivate= self._p0deactivate_str,
+            p1activate= self._p1activate_str,
+            p1deactivate= self._p1deactivate_str
             )
         )
 
@@ -252,7 +273,7 @@ if __name__ == "__main__":
 
     # define mutation types
     m0 = shadie.mtype(0.5, 'n', 0, 0.4)
-    m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
+    m1 = shadie.mtype(0.5, 'g', 0.8, 0.75, diffexpr="diploid")
 
     # define elements types
     e0 = shadie.etype([m0, m1], [1, 2])
@@ -266,8 +287,11 @@ if __name__ == "__main__":
         exon=e1,
     )
 
+    print(m1._expr)
+
     with shadie.Model() as mod:
-        mod.initialize(chromosome=chrom, sim_time=1000, file_in = "/tmp/test.trees")
+        mod.initialize(chromosome=chrom, sim_time=1000, #file_in = "/tmp/test.trees"
+            )
         mod.reproduction.wright_fisher(pop_size=1000)
 
     #mod.write("/tmp/slim.slim")
