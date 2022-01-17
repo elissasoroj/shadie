@@ -1,10 +1,10 @@
 <h1>Welcome to the SHaDiE Documentation</h1>
 
-## Introduction
+## Overview
 
-`shadie` (Simulating Haploid-Diploid Evolution) is a Python API wrapper for the forward-in-time evolutionary simulation software, SLiM3. `shadie` simulates non-neutral mutations in SLiM, then uses `pyslim` to overlay neutral mutations using coalescent. 
+`shadie` (Simulating Haploid-Diploid Evolution) is a Python API wrapper for the forward-in-time evolutionary simulation software, SLiM3. `shadie` simulates non-neutral mutations in SLiM, then uses `pyslim` to overlay neutral mutations using coalescent in `msprime`. 
 
-`shadie` also provides a user-friendly Python API framework for using SLiM3. This is meant to make SLiM a little more approachable for users with prior Python knowledge, however it does not incorporate all the functionality of SLiM and it is hightly encouraged for users to familiarize themselves with the SLiMgui and the SliM Manual. 
+`shadie` also provides a user-friendly Python API framework for using SLiM3. This is meant to make SLiM a little more approachable for users with prior Python knowledge, however it does not incorporate all the functionality of SLiM and it is hightly encouraged for users to familiarize themselves with the SLiMgui and the SliM Manual. The [Messer Lab](https://messerlab.org/slim/) provides excellent documentationi for learning SLiM. 
 
 Finally, `shadie` was first developed with the intention of modelling realistic plant lifecycles in SLiM.
 
@@ -26,6 +26,11 @@ Finally, `shadie` was first developed with the intention of modelling realistic 
 	- subprocess
 	- numpy
 	- pandas
+	- SLiM
+	- msprime
+	- pyslim
+	- tskit
+	- loguru
 
 **Plotting:**
 	- toyplot: for static plots
