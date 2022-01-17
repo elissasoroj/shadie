@@ -275,6 +275,7 @@ class Model(AbstractContextManager):
             'recombination_rate': f"{recomb_rate}, {int(self.chromosome.genome_size)}",
             'genome_size': self.chromosome.genome_size,
             'mutations': self.chromosome.to_slim_mutation_types(),
+            'mutation_names':self.chromosome.mutation_list(),
             'elements': self.chromosome.to_slim_element_types(),
             'chromosome': self.chromosome.to_slim_elements(),
             'constants': constants,

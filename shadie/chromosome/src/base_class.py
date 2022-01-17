@@ -102,6 +102,22 @@ class ChromosomeBase:
             return self.data.coding.any()
         return bool(self.data.loc[idx].coding)
 
+    def mutation_list(self) -> str:
+        """Returns a string of mutation names for haploidDominanceCoeff.
+
+        Example
+        -------
+        >>> chrom.mutation_list()
+        'c(m1, m2).haploidDominanceCoeff=1.0;'
+        """
+        # gets muts     
+        mutations = []
+        for elem in self.elements:
+            for mutation in elem.mlist:
+                mutations.append(mutation.name)
+        unique_muts = list(set(mutations))
+        return ', '.join(unique_muts)
+
     def to_slim_mutation_types(self) -> str:
         """Returns a string with newline separated SLIM commands to 
         initialize all MutationType objects in the chromosome data.

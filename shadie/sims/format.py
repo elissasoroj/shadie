@@ -20,6 +20,7 @@ initialize() {{
 
   // MutationType init
   {mutations}
+  c({mutation_names}).haploidDominanceCoeff = 1.0;
 
   // ElementType init
   {elements}
