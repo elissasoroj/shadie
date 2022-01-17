@@ -4,7 +4,7 @@
 Convenience functions for constructing chromosome objects.
 """
 
-from typing import Union
+from typing import Union, Optional
 from shadie.base.elements import ElementType
 from shadie.chromosome.src.classes import (
     ChromosomeRandom, Chromosome, ChromosomeExplicit
@@ -80,6 +80,7 @@ def random(
 
 def explicit(
     data, 
+    genome_size: Optional[int]=None,
     use_nucleotides: bool=False,
     use_synonymous_sites_in_coding: bool=True,
     ):
