@@ -60,7 +60,7 @@ class MutationTypeBase:
 
         self.dom = dominance
         self.dist = distribution
-        self.distparams = params
+        self.distparams = params[:-1]
         self.neutralwarning = False
         
         if self.dist == 'f':
