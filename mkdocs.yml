@@ -1,4 +1,4 @@
-site_name: `shadie` docs
+site_name: shadie {UNDER ACTIVE DEVELOPMENT}
 repo_url: https://github.com/elissasoroj/shadie
 site_author: Elissa Sorojsrisom
 #to deploy: mkdocs gh-deploy
@@ -6,19 +6,18 @@ site_author: Elissa Sorojsrisom
 
 theme:
   name: material
+  custom-dir: overrides
   palette:
-    - scheme: slate
-      primary: teal
-      accent: yellow
-      toggle:
-        icon: material/weather-sunny
-        name: Switch to light mode
-    - scheme: default
-      primary: red
-      accent: amber
+    - scheme: shadie-light
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
+    - scheme: slate
+      primary: hsl(145, 41%, 64%)
+      secondary:
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
   font:
     #text: Quicksand
   icon:
@@ -44,17 +43,19 @@ theme:
     - navigation.expand
 
 nav:
-    - Welcome: welcome.md
+    #- Welcome: index.md
     - Installation: install.md
-    - Technical Docs: techdocs.md
-        - techdocs/overview.md
-    - Tutorials: tutorials/tutintro.md
+    - Technical Docs:
+        - Overview: techdocs/overview.md
+    - Tutorials: 
+        - Intro: tutorials/tutintro.md
         - Full Work Flow: tutorials/fullworkflow.md
         - Custom Mutation Types: tutorials/mutations.md
         - Custom Chromosome: tutorials/chromosome.md
         - Custom Eidos Code: tutorials/customcode.md
         - Differential Expression: tutorials/diffexpr.md
-    - Education Module: education/eduintro.md
+    - Education Module:
+        - Intro: education/eduintro.md
         - Plant Life Cycles: education/lifecycles.md
 
 markdown_extensions:
@@ -93,7 +94,4 @@ extra_javascript:
   # - js/mermaid.js
 
 extra_css:
-  # - https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.0.9/mermaid.neutral.css
-  # - css/termynal.css
-  # - css/custom.css
-  # [extra.css]
+  - stylesheets/extra.css
