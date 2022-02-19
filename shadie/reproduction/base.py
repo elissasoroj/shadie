@@ -210,8 +210,8 @@ class NonWrightFisher(ReproductionBase):
             p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
             p0activate= self._p0activate_str,
             p0deactivate= self._p0deactivate_str,
+            p1deactivate= self._p1deactivate_str,
             p1activate= self._p1activate_str,
-            p1deactivate= self._p1deactivate_str
             )
         )
 
