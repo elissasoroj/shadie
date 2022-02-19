@@ -67,8 +67,8 @@ EARLY = """
         s5.active = 0;
         s6.active = 1;
 
-        {p1activate}
         {p1deactivate}
+        {p1activate}
     }}
 """
 

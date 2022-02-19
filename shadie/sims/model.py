@@ -220,6 +220,7 @@ class Model(AbstractContextManager):
         file_in: Union[None, str]=None,
         file_out: str="shadie.trees",
         skip_neutral_mutations: bool=False,
+        _simplification_interval: Optional[int] = None,
         ):
         """Add an initialize() block to the SLiM code map.
 
@@ -271,6 +272,7 @@ class Model(AbstractContextManager):
         })
 
         self.map['initialize'].append({
+            'simplification_interval': _simplification_interval,
             'mutation_rate': mutation_rate,
             'recombination_rate': f"{recomb_rate}, {int(self.chromosome.genome_size)}",
             'genome_size': self.chromosome.genome_size,
