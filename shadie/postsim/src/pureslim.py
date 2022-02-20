@@ -14,7 +14,7 @@ import scipy.stats
 from loguru import logger
 
 import toyplot
-from toytree.utils.src import toytree_sequence, ScrollableCanvas
+from toytree.utils import ToyTreeSequence, ScrollableCanvas
 from shadie.chromosome.src.classes import ChromosomeBase
 
 class PureSlim:
