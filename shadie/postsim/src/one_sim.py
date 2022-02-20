@@ -16,7 +16,7 @@ import tskit
 import scipy.stats
 from loguru import logger
 
-from toytree.utils import toytree_sequence, ScrollableCanvas
+from toytree.utils.src import toytree_sequence, ScrollableCanvas
 from shadie.chromosome.src.classes import ChromosomeBase
 
 logger = logger.bind(name='shadie')
