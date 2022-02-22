@@ -252,7 +252,7 @@ metadata=Dictionary(
 "spo_population_size", SPO_POP_SIZE,
 "gam_population_size", GAM_POP_SIZE,
 "fixed m4 muts", sum(sim.substitutions.mutationType == m4),
-"fixed m5 muts", sum(sim.substitutions.mutationType == m5))
+"fixed m5 muts", sum(sim.substitutions.mutationType == m5)
 """
 
 DEBUG = """
