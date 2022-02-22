@@ -254,7 +254,6 @@ metadata=Dictionary(
 "fixed m4 muts", sum(sim.substitutions.mutationType == m4),
 "fixed m5 muts", sum(sim.substitutions.mutationType == m5))
 """
-"""
 
 DEBUG = """
 // DEBUGGING
