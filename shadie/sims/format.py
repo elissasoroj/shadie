@@ -120,10 +120,8 @@ def format_event_dicts_to_strings(event: Dict):
         ])
 
     if 'simglobals' in event:
-        print(event['simglobals'].items())
         for (key, val) in event['simglobals'].items():
             if isinstance(val, dict):
-                print("val is dict")
                 dictlist = []
                 for (i,j) in val.items():
                     dictlist.append(str(i))
