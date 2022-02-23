@@ -120,6 +120,17 @@ def format_event_dicts_to_strings(event: Dict):
         ])
 
     if 'simglobals' in event:
+        print(event['simglobals'].items())
+        for (key, val) in event['simglobals'].items():
+            if isinstance(val, dict):
+                print("val is dict")
+                dictlist = []
+                for (i,j) in val.items():
+                    dictlist.append(str(i))
+                    dictlist.append(str(j))
+                string = "Dictionary"+str(tuple(dictlist))
+                event['simglobals'].update({key:str(string)})
+
         event['simglobals'] = "\n  ".join([
             f"defineGlobal('{str(key).upper()}', {val});" for key, val
             in event['simglobals'].items()
