@@ -71,7 +71,8 @@ class ReproductionBase:
                 time=endtime,
                 scripts=[
                     "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)",
-                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}', {METADATA})"],
+                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}')"],
+                    #f"sim.treeSeqOutput('{self.model.metadata['file_out']}', {METADATA})"],
                 comment="end of sim; save .trees file",
             )
 
@@ -257,7 +258,8 @@ class WrightFisher(ReproductionBase):
         )
         self.model.repro(
             population="p1",
-            scripts="subpop.addCrossed(individual,subpop.sampleIndividuals(1));",
+            scripts=("subpop.addCrossed(individual,subpop.sampleIndividuals(1));\n"
+                    "\tindividual.fitnessScaling = 0.0;"),
             comment="hermaphroditic random mating."
         )
 
@@ -293,6 +295,6 @@ if __name__ == "__main__":
         mod.initialize(chromosome=chrom, sim_time=1000, #file_in = "/tmp/test.trees"
             )
         mod.reproduction.wright_fisher(pop_size=1000)
-
+    print(mod.script)
     #mod.write("/tmp/slim.slim")
     #mod.run(binary="/usr/local/bin/slim")
