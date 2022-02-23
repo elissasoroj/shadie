@@ -107,6 +107,25 @@ class NonWrightFisher(ReproductionBase):
                 comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
             )
 
+    def _add_initialize_globals(self):
+        """Add defineGlobal calls to init variables.
+
+        When this is called by different superclasses that have
+        different attributes unique to each it stores only their
+        unique set of attributes into a metadata dictionary that
+        will be saved into the .trees file at the end of the sim.
+        Includes parent attrs like model.
+        """
+        # exclude parent class attributes
+        exclude = ["_substitution_str", "model",
+                    "_p0activate_str", "_p0deactivate_str",
+                    "_p1activate_str", "_p1deactivate_str"]
+        asdict = {
+            i: j for (i, j) in self.__dict__.items()
+            if i not in exclude
+        }
+        self.model.map["initialize"][0]['simglobals']['METADATA'] = asdict
+
     def _add_initialize_constants(self):
         """Add defineConstant calls to init variables.
 

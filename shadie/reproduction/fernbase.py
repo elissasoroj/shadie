@@ -97,6 +97,7 @@ class PteridophyteHomosporous(PteridophyteBase):
         self._define_subpopulations()
         self._add_alternation_of_generations()
         self._set_gametophyte_k()
+        self._add_initialize_globals()
         self._add_initialize_constants()
         self._write_trees_file()
 
@@ -176,6 +177,7 @@ class PteridophyteHeterosporous(PteridophyteBase):
         self._define_subpopulations()
         self._add_alternation_of_generations()
         self._set_gametophyte_k()
+        self._add_initialize_globals()
         self._add_initialize_constants()
         self._write_trees_file()
 

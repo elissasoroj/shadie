@@ -105,6 +105,7 @@ class BryophyteDioicous(BryophyteBase):
         self._add_alternation_of_generations()
         self._add_early_script()
         self._set_gametophyte_k()
+        self._add_initialize_globals()
         self._add_initialize_constants()
         self._write_trees_file()
 
@@ -143,6 +144,7 @@ class BryophyteMonoicous(BryophyteBase):
         self._add_alternation_of_generations()
         self._add_early_script()
         self._set_gametophyte_k()
+        self._add_initialize_globals()
         self._add_initialize_constants()
         self._write_trees_file()
 
@@ -166,7 +168,9 @@ class BryophyteMonoicous(BryophyteBase):
             comment="generates gametes from sporophytes"
         )
 
-
+        # add model type to metadata
+        modeldict = {'model': 'shadie', 'lineage': 'bryophyte', 'mode': 'monoicous'}
+        self.model.map["initialize"][0]['simglobals']['METADATA'].update(modeldict)
 
 if __name__ == "__main__":
 

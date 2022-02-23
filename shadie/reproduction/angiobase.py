@@ -109,6 +109,7 @@ class AngiospermDioecious(AngiospermBase):
         self._add_shared_mode_scripts()
 
         # methods inherited from parent NonWrightFisher class
+        self._add_initialize_globals()
         self._add_initialize_constants()
         self._add_alternation_of_generations()
         self._write_trees_file()
@@ -204,6 +205,7 @@ class AngiospermMonoecious(AngiospermBase):
         self._add_shared_mode_scripts()
 
         # methods inherited from parent NonWrightFisher class
+        self._add_initialize_globals()
         self._add_initialize_constants()
         self._add_alternation_of_generations()
         self._write_trees_file()
