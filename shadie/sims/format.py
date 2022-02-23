@@ -31,6 +31,9 @@ initialize() {{
   // constants (Population sizes and others)
   {constants}
 
+  // globals (metadata dictionary)
+  {simglobals}
+
   // extra scripts (Optional)
   {scripts}
 }}
@@ -114,6 +117,12 @@ def format_event_dicts_to_strings(event: Dict):
         event['constants'] = "\n  ".join([
             f"defineConstant('{str(key).upper()}', {val});" for key, val
             in event['constants'].items()
+        ])
+
+    if 'simglobals' in event:
+        event['simglobals'] = "\n  ".join([
+            f"defineGlobal('{str(key).upper()}', {val});" for key, val
+            in event['simglobals'].items()
         ])
 
     if 'scripts' in event:

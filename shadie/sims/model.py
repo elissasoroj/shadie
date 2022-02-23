@@ -216,6 +216,7 @@ class Model(AbstractContextManager):
         mutation_rate: float=1e-8,
         recomb_rate: float=1e-9,
         constants: Union[None, dict]=None,
+        simglobals: Union[None, dict]=None,
         scripts: Union[None, list]=None,
         file_in: Union[None, str]=None,
         file_out: str="shadie.trees",
@@ -244,6 +245,8 @@ class Model(AbstractContextManager):
             This is applied in the sporophyte generation during meiosis.
         constants: dict[str,Any]
             Custom constants defined by user
+        simglobals: dict[str,Any]
+            Custom globals defined by user
         scripts: list[str]
             Customo scripts provided by the user
         file_in: str
@@ -258,6 +261,7 @@ class Model(AbstractContextManager):
         """
         logger.debug("initializing Model")
         constants = {} if constants is None else constants
+        simglobals = {} if simglobals is None else simglobals
         scripts = [] if scripts is None else scripts
 
         # store a copy of the chromosome and set to keep or exclude neutral.
@@ -281,6 +285,7 @@ class Model(AbstractContextManager):
             'elements': self.chromosome.to_slim_element_types(),
             'chromosome': self.chromosome.to_slim_elements(),
             'constants': constants,
+            'simglobals': simglobals,
             'scripts': scripts,
         })
     

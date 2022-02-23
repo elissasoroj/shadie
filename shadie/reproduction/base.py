@@ -17,7 +17,6 @@ from shadie.reproduction.scripts import (
     P1_FITNESS_SCALE_DEFAULT,
     EARLY,
     EARLY_WITH_GAM_K,
-    METADATA,
 )
 
 
@@ -62,7 +61,7 @@ class ReproductionBase:
                 time=resched_end,
                 scripts=[
                     "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)",
-                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}', {METADATA})"],
+                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}', METADATA)"],
                 comment="end of sim; save .trees file",
             )
         # write output at last generation of this simulation.
@@ -71,8 +70,7 @@ class ReproductionBase:
                 time=endtime,
                 scripts=[
                     "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)",
-                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}')"],
-                    #f"sim.treeSeqOutput('{self.model.metadata['file_out']}', {METADATA})"],
+                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}', METADATA)"],
                 comment="end of sim; save .trees file",
             )
 
@@ -265,8 +263,17 @@ class WrightFisher(ReproductionBase):
 
     def _add_initialize_constants(self):
         """Add defineConstant calls to init for new variables."""
-        self.model.map["initialize"][0]['constants']["K"] = self.pop_size
+        metadata_dict = {
+            'model': "shadie WF",
+            'length': self.model.sim_time,
+            'spo_pop_size': 'K',
+            'gam_pop_size': "NA",
+            'spo_mutation_rate': self.model.metadata['mutation_rate'],
+            'recombination_rate': self.model.metadata['recomb_rate']
+        }
 
+        self.model.map["initialize"][0]['constants']["K"] = self.pop_size
+        self.model.map["initialize"][0]['simglobals']["METADATA"] = metadata_dict
 
 
 if __name__ == "__main__":

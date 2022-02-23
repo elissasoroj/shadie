@@ -257,7 +257,7 @@ s4 survival(p1) {{
 
 METADATA = """
 metadata=Dictionary(
-"spo_mutation_rate", sim.chromosome.mutationRates,
+"spo_mutation_rate", ifelse(SPO_MUTATION_RATE, sim.chromosome.mutationRates,
 "recombination_rate", sim.chromosome.recombinationRates,
 "fixed m4 muts", sum(sim.substitutions.mutationType == m4),
 "fixed m5 muts", sum(sim.substitutions.mutationType == m5))
