@@ -61,7 +61,7 @@ class ReproductionBase:
                 time=resched_end,
                 scripts=[
                     "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)",
-                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}', metadata = METADATA"],
+                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}', metadata = METADATA)"],
                 comment="end of sim; save .trees file",
             )
         # write output at last generation of this simulation.
