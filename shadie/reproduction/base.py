@@ -70,7 +70,7 @@ class ReproductionBase:
                 time=endtime,
                 scripts=[
                     "sim.treeSeqRememberIndividuals(sim.subpopulations.individuals)",
-                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}', metadata = METADATA"],
+                    f"sim.treeSeqOutput('{self.model.metadata['file_out']}', metadata = METADATA)"],
                 comment="end of sim; save .trees file",
             )
 
