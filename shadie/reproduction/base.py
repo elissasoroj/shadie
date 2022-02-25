@@ -17,6 +17,7 @@ from shadie.reproduction.scripts import (
     P1_FITNESS_SCALE_DEFAULT,
     EARLY,
     EARLY_WITH_GAM_K,
+    SURV_WF,
 )
 
 
@@ -239,6 +240,7 @@ class NonWrightFisher(ReproductionBase):
             comment="alternation of generations",
         )
 
+
 @dataclass
 class WrightFisher(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model."""
@@ -249,10 +251,11 @@ class WrightFisher(ReproductionBase):
         """
         Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
-        """
+        """b
         self._define_subpopulations()
         self._add_initialize_constants()
         self._add_scripts()
+        self._add_survival_script()
         self._write_trees_file()
 
     def _define_subpopulations(self):
@@ -270,13 +273,12 @@ class WrightFisher(ReproductionBase):
         """fitness and mating of diploid population."""
         self.model.early(
             time=None,
-            scripts="p1.fitnessScaling = K / p1.individualCount;",
+            scripts="p1.fitnessScaling = K / p1.individualCount",
             comment="calculate relative fitness.",
         )
         self.model.repro(
             population="p1",
-            scripts=("subpop.addCrossed(individual,subpop.sampleIndividuals(1));\n"
-                    "\tindividual.fitnessScaling = 0.0;"),
+            scripts=("subpop.addCrossed(individual,subpop.sampleIndividuals(1));\n"),
             comment="hermaphroditic random mating."
         )
 
@@ -293,6 +295,17 @@ class WrightFisher(ReproductionBase):
 
         self.model.map["initialize"][0]['constants']["K"] = self.pop_size
         self.model.map["initialize"][0]['simglobals']["METADATA"] = metadata_dict
+
+    def _add_survival_script(self):
+        """
+        Defines the late() callbacks for each gen.
+        This overrides the NonWrightFisher class function of same name.
+        """
+        self.model.survival(
+            population=None,
+            scripts=SURV_WF,
+            comment="non-overlapping generations",
+        )
 
 
 if __name__ == "__main__":
