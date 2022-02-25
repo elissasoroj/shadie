@@ -251,7 +251,7 @@ class WrightFisher(ReproductionBase):
         """
         Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
-        """b
+        """
         self._define_subpopulations()
         self._add_initialize_constants()
         self._add_scripts()
