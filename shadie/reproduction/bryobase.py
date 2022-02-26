@@ -21,7 +21,8 @@ from shadie.reproduction.scripts import (
     GAM_MATERNAL_EFFECT_ON_P1,
     SUBSTITUTION,
     P0_FITNESS_SCALE_DEFAULT,
-    EARLY_WITH_GAM_K,
+    #EARLY_WITH_GAM_K,
+    EARLY,
 )
 from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_DIO_P1,
@@ -44,10 +45,9 @@ class BryophyteBase(NonWrightFisher):
     gam_mutation_rate: Optional[float]
     gam_clone_rate: float
     gam_clones_per: int
-    gam_self_rate_per_egg: float
-    gam_self_rate: float
+    #gam_self_rate: float
     spo_self_rate_per_egg: float
-    spo_self_rate: float
+    #spo_self_rate: float
     spo_random_death_chance: float
     gam_random_death_chance: float
     spo_spores_per: int
@@ -132,6 +132,7 @@ class BryophyteDioicous(BryophyteBase):
 @dataclass
 class BryophyteMonoicous(BryophyteBase):
     mode: str = field(default="monoicous", init=False)
+    gam_self_rate_per_egg: float
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
@@ -199,7 +200,8 @@ if __name__ == "__main__":
         mod.reproduction.bryophyte_monoicous(
             spo_pop_size=100,
             gam_pop_size=100,
+            gam_self_rate_per_egg=0.8,
         )
     print(mod.script)
     #mod.write("/tmp/slim.slim")
-    # mod.run(binary="/usr/local/bin/slim", seed=123)
+    #mod.run(seed=123)

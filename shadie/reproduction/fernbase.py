@@ -36,6 +36,8 @@ class PteridophyteBase(NonWrightFisher):
     gam_pop_size: int
     spo_mutation_rate: Optional[float]
     gam_mutation_rate: Optional[float]
+    spo_clone_rate: float
+    spo_clones_per: int
     spo_self_rate: float
     spo_self_rate_per_egg: float
     spo_spores_per: int
