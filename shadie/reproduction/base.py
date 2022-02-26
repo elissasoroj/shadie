@@ -18,6 +18,8 @@ from shadie.reproduction.scripts import (
     EARLY,
     EARLY_WITH_GAM_K,
     SURV_WF,
+    HAP_MUT_FITNESS,
+    DIP_MUT_FITNESS
 )
 
 
@@ -173,20 +175,20 @@ class NonWrightFisher(ReproductionBase):
                 # for each MutationType. This callback will be activated or
                 # deactivated (below) by early scripts based on whether
                 # it is the haploid or diploid subpopulation's generation.
-                self.model.fitness(
-                        idx=sidx,
-                        mutation=mut.name,
-                        scripts="return 1.0",
-                        comment="turns expression off",
-                    )
-
-                # store script to activate or deactivate this mutationtype
                 if mut._expr == "haploid":
-                    p0activate_scripts.append(f"{sidx}.active = 1;")
-                    p1deactivate_scripts.append(f"{sidx}.active = 0;")
+                    self.model.fitness(
+                        idx = None,
+                        mutation = mut.name,
+                        scripts = HAP_MUT_FITNESS,
+                        comment = "mutation only expressed in haploid"
+                        )
                 elif mut._expr == "diploid":
-                    p1activate_scripts.append(f"{sidx}.active = 1;")
-                    p0deactivate_scripts.append(f"{sidx}.active = 0;")
+                    self.model.fitness(
+                        idx = None,
+                        mutation = mut.name,
+                        scripts = DIP_MUT_FITNESS,
+                        comment = "mutation only expressed in diploid"
+                        )
                 elif mut._expr == "None":
                     pass
                 else:
@@ -287,7 +289,7 @@ class WrightFisher(ReproductionBase):
         metadata_dict = {
             'model': "shadie WF",
             'length': self.model.sim_time,
-            'spo_pop_size': 'K',
+            'spo_pop_size': self.pop_size,
             'gam_pop_size': "NA",
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
             'recombination_rate': self.model.metadata['recomb_rate']

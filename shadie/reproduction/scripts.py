@@ -255,6 +255,21 @@ s4 survival(p1) {{
 }}
 """
 
+HAP_MUT_FITNESS = """
+    if (individual.subpopulation == p1)
+        return 1.0;
+    else
+        return relFitness;
+"""
+
+DIP_MUT_FITNESS = """
+    if (individual.subpopulation == p0)
+        return 1.0;
+    else
+        return relFitness;
+"""
+
+
 # METADATA = """
 # metadata=Dictionary(
 # "spo_mutation_rate", SPO_MUTATION_RATE,
