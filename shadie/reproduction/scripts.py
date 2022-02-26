@@ -214,7 +214,7 @@ s1 survival(p1) {{
     //clones survive to next gen and are re-tagged with parental tag
     if (individual.tag == 4) {{
             individual.tag = individual.getValue("parentid");
-            return T;
+            return NULL;
         }}
     return F;
 }}
@@ -225,7 +225,7 @@ s2 survival(p0) {{
     // allow clones to persist until next generation, tag is reset to parent tag.
     if (individual.tag == 2) {{
         individual.tag = individual.getValue("parentid");
-        return T;
+        return NULL;
     }}
     return F;
 }}
