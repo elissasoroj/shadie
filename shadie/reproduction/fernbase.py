@@ -36,10 +36,6 @@ class PteridophyteBase(NonWrightFisher):
     gam_pop_size: int
     spo_mutation_rate: Optional[float]
     gam_mutation_rate: Optional[float]
-    gam_clone_rate: float
-    gam_clones_per: int
-    spo_clone_rate: float
-    spo_clones_per: int
     spo_self_rate: float
     spo_self_rate_per_egg: float
     spo_spores_per: int
@@ -87,6 +83,8 @@ class PteridophyteHomosporous(PteridophyteBase):
     gam_self_rate: float
     gam_self_rate_per_egg: float
     gam_maternal_effect: float
+    gam_clone_rate: float
+    gam_clones_per: int
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
         # methods inherited from parent Pteridophyte class
