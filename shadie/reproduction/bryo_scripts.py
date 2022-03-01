@@ -89,7 +89,7 @@ REPRO_BRYO_DIO_P0 = """
             mode = sample(
                 x=c(1, 2, 3),
                 size=1,
-                weights=c(0.0, SPO_SELF_RATE_PER_EGG, 1 - (GAM_SELF_RATE_PER_EGG + SPO_SELF_RATE_PER_EGG))
+                weights=c(0.0, SPO_SELF_RATE_PER_EGG, 1 - (0.0 + SPO_SELF_RATE_PER_EGG))
                 );
             
             // intra-gametic selfed (only possible in monoicous)
