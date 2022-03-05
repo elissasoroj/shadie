@@ -9,6 +9,7 @@ histories into SLiM scripts using the shadie Model context.
 from typing import Union, Tuple, Optional
 
 from shadie.reproduction.base import WrightFisher
+from shadie.reproduction.wfspecial import ClonalHaploidWF, AltGenWF
 from shadie.reproduction.bryobase import BryophyteMonoicous, BryophyteDioicous
 from shadie.reproduction.angiobase import AngiospermMonoecious, AngiospermDioecious
 from shadie.reproduction.fernbase import PteridophyteHomosporous, PteridophyteHeterosporous
@@ -553,8 +554,8 @@ class ReproductionApi:
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
         ):
         """
-        Generate scripts appropriate for basic SLiM nonWF model, set up
-        as a WF model.
+        Generate scripts appropriate for basic WF model, set up as a 
+        SLiM nonWF model
 
         Parameters:
         -----------
@@ -567,5 +568,56 @@ class ReproductionApi:
         WrightFisher(
             model=self.model,
             pop_size=pop_size,
+            sexes=sexes,
+        ).run()
+
+    def wright_fisher_haploid(
+        self,
+        pop_size: int,
+        sexes: bool=False,  # mono/hetero terms is more consistent with others...
+        ):
+        """
+        Generate scripts appropriate for basic SLiM nonWF model, set up
+        as a WF model.
+
+        Parameters:
+        -----------
+        pop_size: 
+            Size of the population in number of haploids.
+        sexes: bool
+            default = False; individuals are hemraphroditic. If True,
+            individuals will be male and female
+        """
+        ClonalHaploidWF(
+            model=self.model,
+            pop_size=pop_size,
+            sexes=sexes,
+        ).run()
+
+    def wright_fisher_altgen(
+        self,
+        spo_pop_size: int,
+        gam_pop_size: int,
+        sexes: bool=False,  # mono/hetero terms is more consistent with others...
+        ):
+        """
+        Generate scripts appropriate for an altered Wright-Fisher model 
+        with alternation of generations. Each generation reproduces and
+        experiences fitness effects.
+
+        Parameters:
+        -----------
+        spo_pop_size: 
+            Size of the population in number of diploids in diploid life stage
+        gam_pop_size:
+            Size of the population in number of haploids in the haploid life stage
+        sexes: bool
+            default = False; individuals are hemraphroditic. If True,
+            individuals will be male and female
+        """
+        AltGenWF(
+            model=self.model,
+            spo_pop_size=spo_pop_size,
+            gam_pop_size=gam_pop_size,
             sexes=sexes,
         ).run()

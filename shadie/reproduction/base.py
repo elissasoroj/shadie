@@ -17,7 +17,7 @@ from shadie.reproduction.scripts import (
     P1_FITNESS_SCALE_DEFAULT,
     EARLY,
     EARLY_WITH_GAM_K,
-    SURV_WF,
+    WF_REPRO,
     HAP_MUT_FITNESS,
     DIP_MUT_FITNESS
 )
@@ -273,14 +273,10 @@ class WrightFisher(ReproductionBase):
 
     def _add_scripts(self):
         """fitness and mating of diploid population."""
-        self.model.early(
-            time=None,
-            scripts="p1.fitnessScaling = K / p1.individualCount",
-            comment="calculate relative fitness.",
-        )
+
         self.model.repro(
             population="p1",
-            scripts=("subpop.addCrossed(individual,subpop.sampleIndividuals(1));\n"),
+            scripts= WF_REPRO,
             comment="hermaphroditic random mating."
         )
 
@@ -305,7 +301,7 @@ class WrightFisher(ReproductionBase):
         """
         self.model.survival(
             population=None,
-            scripts=SURV_WF,
+            scripts="return (individual.age == 0);",
             comment="non-overlapping generations",
         )
 

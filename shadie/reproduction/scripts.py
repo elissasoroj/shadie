@@ -73,18 +73,22 @@ EARLY = """
 """
 
 #
-#------------
-SURV_WF = """
-    if (individual.age>1) 
-        return F;
-    else
-        return NULL;
-"""
 
 P0_FITNESS_SCALE_DEFAULT = "p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount"
 P1_FITNESS_SCALE_DEFAULT = "p1.fitnessScaling = SPO_POP_SIZE / p1.individualCount"
 WF_FITNESS_SCALE = """inds = sim.subpopulations.individuals;
     p1.fitnessScaling = K / sum(inds.fitnessScaling);"""
+
+WF_REPRO = """
+    // parents are chosen proportional to fitness
+    inds = p1.individuals;
+    fitness = p1.cachedFitness(NULL);
+    parents1 = sample(inds, K, replace=T, weights=fitness);
+    parents2 = sample(inds, K, replace=T, weights=fitness);
+    for (i in seqLen(K))
+        p1.addCrossed(parents1[i], parents2[i]);
+    self.active = 0;
+"""
 
 # GAM_K
 # GAM_MUTATION_RATE
