@@ -168,6 +168,40 @@ class AltGenWF(ReproductionBase):
             scripts="return (individual.age == 0);",
             comment="non-overlapping generations",
         )
+
+    def _add_fitness_script(self):
+        # iterate over MutationTypes
+        for mut in self.model.chromosome.mutations:
+            if mut._expr != "None":
+
+                # refer to mutations by s{idx}
+                idx += 1
+                sidx = str("s" + str(idx))
+
+                # add fitness callback function (e.g., s5 fitness(m1) {...})
+                # for each MutationType. This callback will be activated or
+                # deactivated (below) by early scripts based on whether
+                # it is the haploid or diploid subpopulation's generation.
+                if mut._expr == "haploid":
+                    self.model.fitness(
+                        idx = None,
+                        mutation = mut.name,
+                        scripts = HAP_MUT_FITNESS,
+                        comment = "mutation only expressed in haploid"
+                        )
+                elif mut._expr == "diploid":
+                    self.model.fitness(
+                        idx = None,
+                        mutation = mut.name,
+                        scripts = DIP_MUT_FITNESS,
+                        comment = "mutation only expressed in diploid"
+                        )
+                elif mut._expr == "None":
+                    pass
+                else:
+                    print("Differental expression must be set to 'haploid'"
+                        "or 'diploid")
+
 @dataclass
 class OLDWrightFisher(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model."""
