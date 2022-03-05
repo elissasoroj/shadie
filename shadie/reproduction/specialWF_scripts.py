@@ -24,7 +24,7 @@ REPRO_WF = """
 
 REPRO_CLONAL_WF = """
     // parents are chosen proportional to fitness. Two haploid genomes 
-    come together and immediately produce a haploid child with recombination
+    //come together and immediately produce a haploid child with recombination
 
     fitness = p1.cachedFitness(NULL);
     parent1 = sample(p1.individuals, K, replace=T, weights=fitness);
