@@ -123,7 +123,7 @@ class AltGenWF(ReproductionBase):
         else:
             self.model.early(
                 time=1,
-                scripts=("sim.addSubpop('p1', SPO_POP_SIZE, haploid=T);\n"
+                scripts=("sim.addSubpop('p1', SPO_POP_SIZE);\n"
                 		 "sim.addSubpop('p0', 0);"),
                 comment="define starting haploid population.",
             )
