@@ -23,6 +23,8 @@ from shadie.reproduction.scripts import (
     P0_FITNESS_SCALE_DEFAULT,
     #EARLY_WITH_GAM_K,
     EARLY,
+    HAP_MUT_FITNESS,
+    DIP_MUT_FITNESS
 )
 from shadie.reproduction.specialWF_scripts import (
     REPRO_CLONAL_WF,
@@ -114,6 +116,7 @@ class AltGenWF(ReproductionBase):
         self._add_initialize_constants()
         self._add_scripts()
         self._add_survival_script()
+        self._add_fitness_script()
         self._write_trees_file()
 
     def _define_subpopulations(self):
@@ -170,6 +173,7 @@ class AltGenWF(ReproductionBase):
         )
 
     def _add_fitness_script(self):
+        idx = 6
         # iterate over MutationTypes
         for mut in self.model.chromosome.mutations:
             if mut._expr != "None":
@@ -292,10 +296,10 @@ if __name__ == "__main__":
 
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=50, file_out="/tmp/test.trees")
-        mod.reproduction.wright_fisher_haploid(
-            pop_size = 500,
-            #spo_pop_size=100,
-            #gam_pop_size=100,
+        mod.reproduction.wright_fisher_altgen(
+            #pop_size = 500,
+            spo_pop_size=100,
+            gam_pop_size=100,
         )
     print(mod.script)
     #mod.write("/tmp/slim.slim")
