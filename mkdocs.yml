@@ -36,27 +36,21 @@ theme:
       example: octicons/beaker-16
       quote: octicons/quote-16
   features:
-    - navigation.instant
+    # - navigation.instant
+    - navigation.indexes
     - navigation.sections
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.expand
 
 nav:
-    #- Welcome: index.md
-    - Installation: install.md
-    - Technical Docs:
-        - Overview: techdocs/overview.md
-    - Tutorials: 
-        - Intro: tutorials/tutintro.md
-        - Full Work Flow: tutorials/fullworkflow.md
-        - Custom Mutation Types: tutorials/mutations.md
-        - Custom Chromosome: tutorials/chromosome.md
-        - Custom Eidos Code: tutorials/customcode.md
-        - Differential Expression: tutorials/diffexpr.md
-    - Education Module:
-        - Intro: education/eduintro.md
-        - Plant Life Cycles: education/lifecycles.md
+  - Home: index.md
+  - Installation: install.md
+  - Tutorials:
+    - Intro: tutorials/tutintro.md
+    - Full Work Flow: tutorials/fullworkflow.md
+  - Education Module:
+    - Intro: education/eduintro.md
 
 markdown_extensions:
   - pymdownx.emoji:

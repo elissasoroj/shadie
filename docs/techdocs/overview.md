@@ -6,7 +6,9 @@
 
 `shadie` also provides a user-friendly Python API framework for using SLiM3. This is meant to make SLiM a little more approachable for users with prior Python knowledge, however it does not incorporate all the functionality of SLiM and it is hightly encouraged for users to familiarize themselves with the SLiMgui and the SliM Manual. The [Messer Lab](https://messerlab.org/slim/) provides excellent documentationi for learning SLiM. 
 
-Finally, `shadie` was first developed with the intention of modelling realistic plant lifecycles in SLiM.
+Finally, `shadie` was first developed with the intention of modeling realistic plant lifecycles in SLiM.
+
+---
 
 ## Use
 
@@ -23,6 +25,7 @@ Finally, `shadie` was first developed with the intention of modelling realistic 
 ### Dependencies
 
 **General**
+
 	- subprocess
 	- numpy
 	- pandas
@@ -33,6 +36,7 @@ Finally, `shadie` was first developed with the intention of modelling realistic 
 	- loguru
 
 **Plotting:**
+
 	- toyplot: for static plots
 	- altair: for interactive plots
 	- IPython: for displaying plots in Jupyter Notebooks
