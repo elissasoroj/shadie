@@ -10,6 +10,7 @@ You must have Jupyter Notebooks and `shadie` installed locally to use these note
 ## binder Tutorials
 Finally, if you do not have Jupyter on your machine, you are able to run the notebooks in your web broswer using binder. This is a great way to use `shadie` for teaching applications, with students that do not need to learn how to Jupyter or run SLiM themselves. However, keep in mind that any changes made in binder cannot be saved for later use. 
 
-*Note:* the notebooks hosted by binder will be able to perform most of the functionality of `shadie`, however it will *not* be able to run SLiM unless you have installed SLiM separately on your machine. `.trees` files are provided in the `trees files` folder to allow you to use the post-sim module of `shadie` without having to run simulations in SLiM.  
+*Note:* the notebooks hosted by binder will be able to perform most of the functionality of `shadie`, but memory limitations make it difficult to run anythign but the simplest SLiM simulations.
+`.trees` files are provided in the `trees files` folder on GitHub to allow you to use the post-sim module of `shadie` without having to run simulations in SLiM.  
 
 [Launch binder](https://mybinder.org/v2/gh/elissasoroj/shadie/HEAD?filepath=shadie%2Fnotebooks).
