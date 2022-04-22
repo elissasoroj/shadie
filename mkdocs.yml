@@ -81,7 +81,7 @@ markdown_extensions:
   - pymdownx.tilde  
 
 extra_javascript:
-  - js/custom.js 
+  # - js/custom.js 
   # - https://unpkg.com/mermaid@8.9.2/dist/mermaid.min.js
   # - https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.0.9/mermaid.min.js
   # - js/termynal.js
