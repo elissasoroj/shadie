@@ -194,8 +194,8 @@ class TwoSims:
         if self._nts > 2:
             raise ValueError("you cannot enter >2 tree sequences.") 
         # Merge two tree sequences
-        ts0 = modded_trees[0]
-        ts1 = modded_trees[1]
+        ts0 = self._tree_sequences[0]
+        ts1 = self._tree_sequences[1]
         merged_ts = ts0.union(
             ts1,
             node_mapping=[tskit.NULL for i in range(ts1.num_nodes)],
