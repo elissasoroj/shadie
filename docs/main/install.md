@@ -17,4 +17,4 @@ pip install -e .
 
 ## Troubleshooting
 
-If you need help, please use the [Discussions](https://github.com/elissasoroj/shadie/discussions) on GitHub. If you want to request a feature or report a bug, please open an [issue](https://github.com/elissasoroj/shadie/issues)
+If you need help, please use the [Discussions](https://github.com/elissasoroj/shadie/discussions) on GitHub. If you want to request a feature or report a bug, please open an [issue](https://github.com/elissasoroj/shadie/issues).
