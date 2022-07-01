@@ -1,0 +1,10 @@
+#requirements for binder
+
+pandas
+numpy
+toyplot
+loguru
+toytree
+altair
+pyslim
+tskit
