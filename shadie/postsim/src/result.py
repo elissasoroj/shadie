@@ -429,7 +429,7 @@ class TwoSims:
 
         """
         # load as a ToyTreeSequence
-        tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
+        tts = toytree.toytree.utils.src.toytree_sequence(self.tree_sequence, sample=sample, seed=seed)
 
         # get auto-dimensions from tree size
         height = height if height is not None else 325
