@@ -67,6 +67,9 @@ class TwoSims:
         """Extract self attributes from shadie .trees file metadata.
 
         TODO: can more of this be saved in SLiM metadata?
+        YES, it is now saved - but since we are combining two sims
+        and the spo/gam values can be different, we may want to assess
+        how this metadata is read in
         """
         gens = [i.metadata["SLiM"]["generation"] for i in self._tree_sequences]
         assert len(set(gens)) == 1, ("simulations must be same length (gens).")
@@ -83,8 +86,8 @@ class TwoSims:
         self._merge_ts_pops()
         self._report_ninds()
         # self._divide_tree_height()
-        self._recapitate()
-        self._mutate()
+        #self._recapitate()
+        #self._mutate()
 
     def _update_tables(self):
         """DEPRECATED.
