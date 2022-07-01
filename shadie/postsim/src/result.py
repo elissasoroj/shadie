@@ -86,8 +86,8 @@ class TwoSims:
         self._merge_ts_pops()
         self._report_ninds()
         # self._divide_tree_height()
-        #self._recapitate()
-        #self._mutate()
+        self._recapitate()
+        self._mutate()
 
     def _update_tables(self):
         """DEPRECATED.
@@ -150,7 +150,7 @@ class TwoSims:
 
             # modify the tables to set population to 0 for all
             nnodes = tables.nodes.num_rows
-            tables.nodes.population = np.zeros(nnodes, dtype=np.int32)
+            tables.nodes.population = np.full(nnodes, idx, dtype=np.int32)
 
             # modify table metadata for SLiM sim length
             # tables.metadata["SLiM"]["generation"] = int(
@@ -194,14 +194,7 @@ class TwoSims:
         if self._nts > 2:
             raise ValueError("you cannot enter >2 tree sequences.") 
         # Merge two tree sequences
-        ts0 = self._tree_sequences[0]
-        ts1 = self._tree_sequences[1]
-        merged_ts = ts0.union(
-            ts1,
-            node_mapping=[tskit.NULL for i in range(ts1.num_nodes)],
-            add_populations=True,
-        )
-        self.tree_sequence = pyslim.SlimTreeSequence(merged_ts)
+        a
 
     def _report_ninds(self):
         """Report number of inds in each population."""
