@@ -15,19 +15,19 @@ def draw_altair_chrom_canvas(chrom: 'ChromosomeBase', width: int=700):
 
     # collect data from chromosome
     data = chrom.data.copy()
-    data['category'] = chrom.data.name
+    #data['category'] = chrom.data.name
     data['altname'] = chrom.data.script.apply(lambda x: x.altname)
     data['length'] = chrom.data.end - chrom.data.start
 
     # if name was empty then infer type from coding status
     for idx in data.index:
-        if pd.isna(data.category[idx]):
-            if data.coding[idx] or ("ex" in data.name[idx]):
-                data.loc[idx, "category"] = "exon"
-            elif ("intron" in data.name[idx]) or ("int" in data.name[idx]):
-                data.loc[idx, "category"] = "intron"
-            else:
-                data.loc[idx, "category"] = "noncds"
+        #if pd.isna(data.category[idx]):
+        if data.coding[idx] or ("ex" in data.name[idx]):
+            data.loc[idx, "category"] = "exon"
+        elif ("intron" in data.name[idx]) or ("int" in data.name[idx]):
+            data.loc[idx, "category"] = "intron"
+        else:
+            data.loc[idx, "category"] = "noncds"
 
     # subset to the data used for plotting
     genome = data[["eltype", "category", "altname", "length"]].copy()
