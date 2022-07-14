@@ -4,6 +4,25 @@ site_author: Elissa Sorojsrisom
 #to deploy: mkdocs gh-deploy
 #to see dummy site: mkdocs serve
 
+nav:
+  - Introduction: 
+    - Overview: main/overview.md
+    - About: main/about.md
+  - Installation: main/install.md
+  - Tutorials: 
+    - Getting Started: tutorials/getting_started.md
+    - mtypes: notebooks/1-mtypes_gtypes.ipynb
+    - chromosome: drafts/under-construction.md
+    - model setup: drafts/under-construction.md
+    - v0.1.1 Demo: notebooks/shadie-v0_1_1-demo.ipynb
+    - Full Work Flow: tutorials/fullworkflow.md
+  - Examples:
+    - Single-Site: drafts/under-construction.md
+    - Differential Expression: drafts/under-construction.md
+  - Understory:
+    - Intro: education/eduintro.md
+
+#Theme Settings
 theme:
   name: material
   custom-dir: overrides
@@ -42,44 +61,52 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.expand
+    - content.code.annotate
 
-nav:
-  - Home: index.md
-  - Installation: install.md
-  - Tutorials:
-    - Intro: tutorials/tutintro.md
-    - Full Work Flow: tutorials/fullworkflow.md
-  - Education Module:
-    - Intro: education/eduintro.md
+#Plugins
+plugins:
+  - mkdocs-jupyter
 
 markdown_extensions:
+
+# Python Markdown
+  - admonition
+  - attr_list
+  - codehilite
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+#Python Markdown Extentions
+  - pymdownx.tabbed      
+  - pymdownx.details
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
-  - toc:
-      toc_depth: 4
-  - markdown.extensions.codehilite:
-      guess_lang: false      
-  - admonition
-  - footnotes
-  - codehilite
-  - tables
-  - attr_list
-  - md_in_html
-  # - extra
-  - pymdownx.superfences:
-      #custom_fences:
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences
+    #custom_fences:
       #- name: mermaid
       #  class: mermaid
       #  format: !!python/name:pymdownx.superfences.fence_div_format ''
-  - pymdownx.tabbed      
-  - pymdownx.details
-  - pymdownx.critic
-  - pymdownx.caret
-  - pymdownx.keys
-  - pymdownx.mark
-  - pymdownx.tilde  
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
 
+#Javascript Extentions
 extra_javascript:
   # - js/custom.js 
   # - https://unpkg.com/mermaid@8.9.2/dist/mermaid.min.js
@@ -89,3 +116,5 @@ extra_javascript:
 
 extra_css:
   - stylesheets/extra.css
+
+

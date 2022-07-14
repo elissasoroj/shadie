@@ -4,7 +4,7 @@
 
 Currently, the only way to install `shadie` is through a local install:
 
-``` bash
+```bash title="installation instructions"
 #dependencies:
 conda install pandas, numpy, toyplot, toytree, altair, msprime, pyslim, tskit, \
 	loguru, ipython -c conda-forge
