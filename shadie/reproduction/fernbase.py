@@ -276,6 +276,7 @@ if __name__ == "__main__":
         mod.reproduction.pteridophyte_heterosporous(
             spo_pop_size=1000, 
             gam_pop_size=1000,
+            spo_self_rate_per_egg=0.0,
             #spo_spores_per = 100
         )
 
