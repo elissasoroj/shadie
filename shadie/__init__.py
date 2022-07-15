@@ -8,8 +8,8 @@ phylogeny into SLiM3-compatible subpopulation demography
 
 __version__ = "0.1.0"
 
-from shadie import base
-from shadie import sims
+import shadie.base
+import shadie.sims
 from shadie.base.defaults import NONCDS, EXON, INTRON, NEUT, DEL, BEN
 from shadie.base.mutations import mtype
 from shadie.base.mutations import MutationList as mlist
