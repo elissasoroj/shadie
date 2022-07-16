@@ -20,7 +20,12 @@ with open("shadie/__init__.py") as init:
 # build command
 setup(
     name="shadie",
-    packages=["shadie"],
+    packages=["shadie",
+            "shadie.base",
+            "shadie.chromosome",
+            "shadie.postsim",
+            "shadie.reproduction",
+            "shadie.sims"],
     version=CUR_VERSION,
     author="Elissa Sorojsrisom",
     author_email="ess2239@columbia.edu",
