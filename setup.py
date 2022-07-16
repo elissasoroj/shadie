@@ -31,6 +31,15 @@ setup(
     author_email="ess2239@columbia.edu",
     license="GPLv3",
     description="SLiM3 Wrapper Program, 'Simulating Haploid-Diploid Evolution'",
-    install_requires = ["pandas", "numpy", "toyplot", "loguru", "toytree", "altair", "pyslim", "tskit"],
+    install_requires = [
+                    "altair",
+                    "loguru",
+                    "numpy", 
+                    "pandas", 
+                    "pyslim",  
+                    "scipy",
+                    "toyplot",
+                    "toytree",
+                    "tskit"]
     classifiers=["Programming Language :: Python :: 3"],
 )
