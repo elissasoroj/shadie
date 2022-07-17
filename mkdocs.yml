@@ -100,11 +100,9 @@ markdown_extensions:
   - pymdownx.snippets
   - pymdownx.superfences:
     custom_fences:
-      - pymdownx.superfences:
-      custom_fences:
         - name: mermaid
           class: mermaid
-          format: !!python/name:mermaid2.fence_mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.tasklist:
