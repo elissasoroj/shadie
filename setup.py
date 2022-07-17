@@ -23,7 +23,9 @@ setup(
     packages=["shadie",
             "shadie.base",
             "shadie.chromosome",
+            "shadie.chromosome.src"
             "shadie.postsim",
+            "shadie.postsim.src"
             "shadie.reproduction",
             "shadie.sims"],
     version=CUR_VERSION,
