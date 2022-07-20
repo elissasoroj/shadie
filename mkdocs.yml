@@ -73,12 +73,10 @@ plugins:
   - mkdocs-jupyter:
       include_source: True
 
-
 markdown_extensions:
 # Python Markdown
   - admonition
   - attr_list
-  - codehilite
   - footnotes
   - md_in_html
   - tables
