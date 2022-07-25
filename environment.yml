@@ -14,8 +14,8 @@ dependencies:
   - toyplot
   - pyslim
   - tskit
+  
   # - toytree>=3.0
   - pip
   - pip:
-    - git+https://github.com/elissasoroj/shadie.git@main#egg=shadie
     - git+https://github.com/eaton-lab/toytree.git@toy3#egg=toytree
