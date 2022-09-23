@@ -1,6 +1,6 @@
 ## First...
 
-a. make sure you have SliM3 and Jupyter notebooks installed on your machine. 
+a. make sure you have SliM3, Python, and Jupyter notebooks installed on your machine.
 
 b. Deploy a Jupyter in terminal and create a new notebook.
 
