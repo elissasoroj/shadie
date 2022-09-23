@@ -1,9 +1,11 @@
 # SHaDiE (Simulating Haploid-Diploid Evolution)
 
-`shadie` is a wrapper around SLiM3 that provides a user-friendly python API interface, implements selection on alternating hapliod/diploid lifecycles,
-and converts user-provided phylogeny into SLiM3-compatible subpopulation demography. 
+`shadie` is a wrapper around **SLiM3** that provides a user-friendly python API interface, implements selection on alternating hapliod/diploid lifecycles.
 
-Documentation is forthcoming.
+A newer version of SLiM, SLiM4 has been released. `shadie` is being updated for compatibility with SLiM4. For now, if you want to use `shadie` you should wait to upgrade. 
+
+Docs (under construction): https://elissasoroj.github.io/shadie/
+
 
 ### *`shadie` is Under Active Development*
 
@@ -18,7 +20,7 @@ cd ./shadie
 pip install -e .
 ```
 
-You can install SLiM3 [here](https://messerlab.org/slim/). For development purposes you can refer to the `example_scripts` folder in the `shadie` directory for examples of SLiM scripts. It is  highly recommended you also familiarize yourself with the SliM language `Eidos`; the SLiMgui is included with the Mac OS install and may be of tremendous help in this regard.  *You must install SliM3 for most of the functionality of `shadie` to work*
+You can install SLiM3 [here](https://messerlab.org/slim/). *You must install SliM3 for most of the functionality of `shadie` to work.* Note: `shadie` does *not* yet work with the newest release, SLiM4. 
 
 ~
 
@@ -33,3 +35,7 @@ You can install SLiM3 [here](https://messerlab.org/slim/). For development purpo
 * tskit
 
 ~
+
+Planned implementation:
+* convert user-provided phylogeny into SLiM3-compatible subpopulation demography. 
+* post-sim analysis module
