@@ -47,9 +47,18 @@ REPRODUCTION = """
 }}
 """
 
+MUT_EFFECT = """
+// adjusts mutationEffect calculation 
+//(specific mutation in specific ind)
+{comment}{idx}mutationEffect({mutation}) {{
+    {scripts}
+}}
+"""
+
 FITNESS = """
-// adjusts fitness calculation
-{comment}{idx}fitness({mutation}) {{
+// adjusts fitnessEffect calculation 
+//(fitness recalc for specific ind)
+{comment}{idx}fitnessEffect({target}) {{
     {scripts}
 }}
 """

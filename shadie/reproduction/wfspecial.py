@@ -172,7 +172,7 @@ class AltGenWF(ReproductionBase):
             comment="non-overlapping generations",
         )
 
-    def _add_fitness_script(self):
+    def _add_muteffect_script(self):
         idx = 6
         # iterate over MutationTypes
         for mut in self.model.chromosome.mutations:
@@ -187,14 +187,14 @@ class AltGenWF(ReproductionBase):
                 # deactivated (below) by early scripts based on whether
                 # it is the haploid or diploid subpopulation's generation.
                 if mut._expr == "haploid":
-                    self.model.fitness(
+                    self.model.muteffect(
                         idx = None,
                         mutation = mut.name,
                         scripts = HAP_MUT_FITNESS,
                         comment = "mutation only expressed in haploid"
                         )
                 elif mut._expr == "diploid":
-                    self.model.fitness(
+                    self.model.muteffect(
                         idx = None,
                         mutation = mut.name,
                         scripts = DIP_MUT_FITNESS,

@@ -344,7 +344,7 @@ class Model(AbstractContextManager):
             'comment': comment,
         })
 
-    def fitness(
+    def muteffect(
         self,
         mutation:Union[str, None],
         scripts:Union[str, list],
@@ -357,6 +357,22 @@ class Model(AbstractContextManager):
         self.map['fitness'].append({
             'idx': idx,
             'mutation': mutation,
+            'scripts': scripts,
+            'comment': comment,
+        })
+
+        def fitness(
+        self,
+        target:str, #subpop or ind
+        scripts:Union[str, list],
+        idx:Union[str, None]=None,
+        comment:Union[str,None]=None,
+        ):
+        """
+        Add event that adjusts fitness values before fitness calc.
+        """
+        self.map['fitness'].append({
+            'target': target,
             'scripts': scripts,
             'idx': idx,
             'comment': comment,
