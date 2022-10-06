@@ -171,19 +171,19 @@ class NonWrightFisher(ReproductionBase):
                 idx += 1
                 sidx = str("s" + str(idx))
 
-                # add fitness callback function (e.g., s5 fitness(m1) {...})
+                # add mutEffect callback function (e.g., s5 mutEffect(m1) {...})
                 # for each MutationType. This callback will be activated or
                 # deactivated (below) by early scripts based on whether
                 # it is the haploid or diploid subpopulation's generation.
                 if mut._expr == "haploid":
-                    self.model.fitness(
+                    self.model.muteffect(
                         idx = None,
                         mutation = mut.name,
                         scripts = HAP_MUT_FITNESS,
                         comment = "mutation only expressed in haploid"
                         )
                 elif mut._expr == "diploid":
-                    self.model.fitness(
+                    self.model.muteffect(
                         idx = None,
                         mutation = mut.name,
                         scripts = DIP_MUT_FITNESS,

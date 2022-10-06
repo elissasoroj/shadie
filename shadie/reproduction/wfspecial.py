@@ -182,7 +182,7 @@ class AltGenWF(ReproductionBase):
                 idx += 1
                 sidx = str("s" + str(idx))
 
-                # add fitness callback function (e.g., s5 fitness(m1) {...})
+                # add mutEffect callback function (e.g., s5 mutEffect(m1) {...})
                 # for each MutationType. This callback will be activated or
                 # deactivated (below) by early scripts based on whether
                 # it is the haploid or diploid subpopulation's generation.
