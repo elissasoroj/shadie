@@ -361,7 +361,7 @@ class Model(AbstractContextManager):
             'comment': comment,
         })
 
-        def fitness(
+    def fitness(
         self,
         target:str, #subpop or ind
         scripts:Union[str, list],
@@ -490,7 +490,7 @@ class Model(AbstractContextManager):
             if proc.returncode:
                 logger.error(out.decode())
                 self.write("/tmp/slim.slim")
-                raise SyntaxError("SLiM3 error, see script at /tmp/slim.slim")
+                raise SyntaxError("SLiM4 error, see script at /tmp/slim.slim")
 
         # todo: parse stdout to store, and send warnings to logger
         self.stdout = out.decode()
