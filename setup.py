@@ -35,11 +35,11 @@ setup(
     description="SLiM3 Wrapper Program, 'Simulating Haploid-Diploid Evolution'",
     install_requires = [
         "altair",
-        "numpy"
+        "numpy",
         "pandas",
-        "pyslim"
-        "scipy"
-        "toyplot"
+        "pyslim",
+        "scipy",
+        "toyplot",
         "toytree",
         "tskit",
     ],
