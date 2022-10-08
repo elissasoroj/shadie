@@ -10,7 +10,7 @@ Generic scripts.
 #standard early script
 EARLY = """
 // diploids (p1) just generated haploid gametophytes into p0
-    if (sim.generation % 2 == 0) {{
+    if (community.tick % 2 == 0) {{
 
         // fitness affects gametophyte survival
         {p0_fitnessScaling};
@@ -97,7 +97,7 @@ WF_REPRO = """
 
 EARLY_WITH_GAM_K = """
 // diploids (p1) just generated haploid gametophytes
-    if (sim.generation % 2 == 0) {{
+    if (community.tick % 2 == 0) {{
 
         // fitness affects gametophyte survival
         {p0_fitnessScaling};
@@ -173,7 +173,7 @@ DEACTIVATE = "{idx}.active = 0;"
 #must be repreated for every mut
 SUBSTITUTION = """
     // gametophytes have just undergone fitness selection
-    if (sim.generation % 2 == 0) {{
+    if (community.tick % 2 == 0) {{
         {muts}
     {late}
 """
@@ -301,7 +301,7 @@ function (void)report(s$ title) {
     
     // get the total number of genomes
     
-    cat(format('gen=%i, ', sim.generation));
+    cat(format('gen=%i, ', community.tick));
     cat(format('ngenomes=%i, ', sim.subpopulations.genomesNonNull.size())); // BCH 
     cat(format('(p1=%i, ', 2 * p1.individuals.size()));
     cat(format('p0=%i, ', sum(p0.individuals.tag != 1)));
