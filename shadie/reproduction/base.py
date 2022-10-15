@@ -9,7 +9,7 @@ ReproductionBase -> NonWrightFisher -> BryophyteBase
 """
 
 from dataclasses import dataclass
-import pyslim
+import tskit
 from shadie.reproduction.scripts import (
     SUBSTITUTION,
     SUB_MUTS,
