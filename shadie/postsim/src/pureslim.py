@@ -29,7 +29,7 @@ class PureSlim:
         ):
 
         # hidden attributes
-        self._tree_sequence = pyslim.load(tree_file)
+        self._tree_sequence = tskit.load(tree_file)
 
         # attributes to be parsed from the slim metadata
         self.generations: int=0
