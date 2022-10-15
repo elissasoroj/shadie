@@ -57,7 +57,7 @@ class ReproductionBase:
 
         # calculate end based on this sim AND the loaded parent sim.
         if self.model.metadata['file_in']:
-            ts_start = pyslim.load(self.model.metadata['file_in'])
+            ts_start = tskit.load(self.model.metadata['file_in'])
             sim_start = ts_start.max_root_time
             resched_end = int(endtime + sim_start)
             self.model.late(
