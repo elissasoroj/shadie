@@ -111,7 +111,7 @@ def draw_stats(
         """
         # select a supported statistic to measure
         if stat == "diversity":
-            func = ts.diversity
+            func = tree_sequence.diversity
         else:
             raise NotImplementedError(f"stat {stat} on the TODO list...")
 
@@ -119,7 +119,7 @@ def draw_stats(
         rng = np.random.default_rng(seed)
         rep_values = []
         for _ in range(reps):
-            ndt = ts.tables.nodes
+            ndt = tree_sequence.tables.nodes
             mask = (ndt.population == 0) & (ndt.time == 0) & (ndt.flags == 1)
             arr = np.arange(mask.shape[0])[mask]
             size = min(arr.size, sample)
@@ -129,8 +129,8 @@ def draw_stats(
                 sample_sets=samples,
                 windows=np.linspace(
                     start=0, 
-                    stop=ts.sequence_length, 
-                    num=round(ts.sequence_length / window_size)
+                    stop=tree_sequence.sequence_length, 
+                    num=round(tree_sequence.sequence_length / window_size)
                 )
             )
             rep_values.append(values)
