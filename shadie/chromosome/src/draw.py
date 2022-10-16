@@ -16,7 +16,7 @@ def draw_altair_chrom_canvas(chrom: 'ChromosomeBase', width: int=700):
     # collect data from chromosome
     data = chrom.data.copy()
     data['altname'] = chrom.data.script.apply(lambda x: x.altname)
-    data['length'] = chrom.data.end - chrom.data.start
+    data['length'] = chrom.data.end - chrom.data.start + 1
 
     # if name was empty then infer type from coding status
     for idx in data.index:
