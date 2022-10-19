@@ -31,10 +31,10 @@ class ReproductionBase:
 
     Example
     -------
-    with shadie.Model() as model:
-        model.initialize(...)
-        model.early(...)
-        model.reproduction.bryophyte(...)
+    >>> with shadie.Model() as model:
+    >>>     model.initialize(...)
+    >>>     model.early(...)
+    >>>     model.reproduction.bryophyte(...)
     """
     model: 'shadie.Model'
 
@@ -260,7 +260,7 @@ class WrightFisher(ReproductionBase):
         )
         self.model.repro(
             population="p1",
-            scripts="subpop.addCrossed(individual,subpop.sampleIndividuals(1));",
+            scripts="subpop.addCrossed(individual, subpop.sampleIndividuals(1));",
             comment="hermaphroditic random mating."
         )
 
