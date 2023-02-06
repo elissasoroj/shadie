@@ -1,7 +1,7 @@
 site_name: shadie {UNDER ACTIVE DEVELOPMENT}
 repo_url: https://github.com/elissasoroj/shadie
 site_author: Elissa Sorojsrisom
-#to deploy: mkdocs gh-deploy --force
+#to deploy: 
 #to see dummy site: mkdocs serve
 
 # Copyright
@@ -84,26 +84,22 @@ markdown_extensions:
       permalink: true
 
 #pymdownx
-  - pymdownx.tabbed      
+# Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
   - pymdownx.details
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
-  - pymdownx.critic
-  - pymdownx.caret
-  - pymdownx.details
-  # - pymdownx.highlight:
-  #     anchor_linenums: true
+  - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.keys
   - pymdownx.mark
   - pymdownx.smartsymbols
-  - pymdownx.snippets
   - pymdownx.superfences
-      # custom_fences:
-      #   - name: mermaid
-      #     class: mermaid
-      #     format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.tasklist:
