@@ -177,7 +177,8 @@ def plot(seqs, length=20000, gen=2000, interval=100, burnin = 10000, scale = 1.0
     axes.y.domain.min = 0.000
     axes.y.domain.max = 0.0035
     """
-
+    canvas = toyplot.Canvas(width=800, height=500)
+    axes = canvas.cartesian()
     mark = axes.vlines(gen)
     
     for ts in seqs:
