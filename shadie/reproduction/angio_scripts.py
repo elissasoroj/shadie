@@ -4,8 +4,8 @@
 Spermatophyte (just angiosperm currently) string substitutions.
 """
 
+#shadie DEFINITIONS
 DEFS_ANGIO="""
-// shadie DEFINITIONS
 // p0 = haploid population
 // p1 = diploid population
 // >1M- tmp parental tags

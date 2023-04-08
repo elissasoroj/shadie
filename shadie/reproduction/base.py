@@ -127,7 +127,12 @@ class NonWrightFisher(ReproductionBase):
             i: j for (i, j) in self.__dict__.items()
             if i not in exclude
         }
-        self.model.map["initialize"][0]['simglobals']['METADATA'] = asdict
+
+        #save initalize metadata
+        self.model.map["initialize"][0]['simglobals']['METADATA'] = self.model.metadata
+
+        #update with globals dict
+        self.model.map["initialize"][0]['simglobals']['METADATA'].update(asdict)
 
     def _add_initialize_constants(self):
         """Add defineConstant calls to init variables.
