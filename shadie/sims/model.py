@@ -104,6 +104,7 @@ class Model(AbstractContextManager):
             'reproduction': [],
             'early': [],
             'late': [],
+            'muteffect': [],
             'fitness': [],
             'survival': [],
             'custom': [],
@@ -151,7 +152,7 @@ class Model(AbstractContextManager):
         """
         sorted_keys = [
             'initialize', 'shadie', 'reproduction', 'early',
-            'custom', 'survival', 'fitness', 'late',
+            'custom', 'muteffect', 'survival', 'fitness', 'late',
         ]
 
         # copy map and split timed events to a new key list
@@ -183,6 +184,8 @@ class Model(AbstractContextManager):
                 events = sorted(mapped[key], key=lambda x: str(x['time']))
             elif key == "late":
                 events = sorted(mapped[key], key=lambda x: str(x['time']))
+            elif key == "muteffect":
+                events = sorted(mapped[key], key=lambda x: x['idx'])
             elif key == "fitness":
                 events = sorted(mapped[key], key=lambda x: -1 * float('inf') if x['idx'] is None else x['idx'])
             elif key == "survival":
@@ -354,29 +357,29 @@ class Model(AbstractContextManager):
         """
         Add event that adjusts fitness values before fitness calc.
         """
-        self.map['fitness'].append({
+        self.map['muteffect'].append({
             'idx': idx,
             'mutation': mutation,
             'scripts': scripts,
             'comment': comment,
         })
 
-    # def fitness(
-    #     self,
-    #     target:str, #subpop or ind
-    #     scripts:Union[str, list],
-    #     idx:Union[str, None]=None,
-    #     comment:Union[str,None]=None,
-    #     ):
-    #     """
-    #     Add event that adjusts fitness values before fitness calc.
-    #     """
-    #     self.map['fitness'].append({
-    #         'target': target,
-    #         'scripts': scripts,
-    #         'idx': idx,
-    #         'comment': comment,
-    #     })
+    def fitness(
+        self,
+        population:str, #subpop or ind
+        scripts:Union[str, list],
+        idx:Union[str, None]=None,
+        comment:Union[str,None]=None,
+        ):
+        """
+        Add event that adjusts fitness values before fitness calc.
+        """
+        self.map['fitness'].append({
+            'idx': idx,
+            'population': population,
+            'scripts': scripts,
+            'comment': comment,
+        })
 
     def survival(
         self,
@@ -534,7 +537,7 @@ if __name__ == "__main__":
 
         # define mutation types
         m0 = shadie.mtype(0.5, 'n', 2.0, 1.0)
-        m1 = shadie.mtype(0.5, 'g', 3.0, 1.0)
+        m1 = shadie.mtype(0.5, 'g', 3.0, 1.0, diffexpr="haploid")
 
         # define elements types
         e0 = shadie.etype([m0, m1], [1, 2])
@@ -554,7 +557,8 @@ if __name__ == "__main__":
         # init the model
 
         model.initialize(chromosome=chrom,)
-        model.reproduction.wright_fisher(pop_size=1000)
+        model.reproduction.bryophyte_monoicous(spo_pop_size = 1000,
+                                               gam_pop_size = 2000)
 
         model.early(
             time=1000,
@@ -562,15 +566,16 @@ if __name__ == "__main__":
             comment="diploid sporophytes",
         )
         model.fitness(
-            mutation="m4",
+            population='p1',
             scripts="return 1 + mut.selectionCoeff",
-            comment="gametophytes have no dominance effects, s1",
+            comment="gametophytes have no dominance effects",
+            idx = 1
         )
 
-        model.custom(
-            scripts="s2 fitness(m5) {\n    return 1 + mut.selectionCoeff;\n}",
-            comment="gametophytes have no dominance effects",
-        )
+        # model.custom(
+        #     scripts="s2 fitness(m5) {\n    return 1 + mut.selectionCoeff;\n}",
+        #     comment="gametophytes have no dominance effects",
+        # )
 
 
     print(model.script)

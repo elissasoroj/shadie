@@ -58,7 +58,7 @@ MUT_EFFECT = """
 FITNESS = """
 // adjusts fitnessEffect calculation 
 //(fitness recalc for specific ind)
-{comment}{idx}fitnessEffect({target}) {{
+{comment}{idx}fitnessEffect({population}) {{
     {scripts}
 }}
 """
@@ -94,6 +94,7 @@ EVENT_TO_FORMATTER = {
     "initialize": INITIALIZE,
     "early": EARLY,
     "late": LATE,
+    'muteffect': MUT_EFFECT,
     'fitness': FITNESS,
     'survival': SURVIVAL,
     'custom': CUSTOM,

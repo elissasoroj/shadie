@@ -149,11 +149,11 @@ class NonWrightFisher(ReproductionBase):
     def _add_alternation_of_generations(self):
         """Alternation of generations scripts.
 
-        This writes fitness, early, and late functions that activate
-        or deactivate fitness effects of mutations in alternating
+        This writes mutEffect, early, and late functions that activate
+        or deactivate mutEffect effects of mutations in alternating
         generations.
         """
-        # add fitness callback for gametophytes based on MutationTypes
+        # add mutEffect callback for gametophytes based on MutationTypes
         # in the model.chromosome.
         # this will map to sx-sy survival callbacks.
         idx = 6

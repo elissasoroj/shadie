@@ -77,6 +77,8 @@ class OneSim:
         TODO: can more of this be saved in SLiM metadata?
         """
         self.generations = self.tree_sequence.metadata["SLiM"]["tick"]
+        self.mut = self.tree_sequence.metadata["SLiM"]["mut"]
+        self.recomb = self.tree_sequence.metadata["SLiM"]["recomb"]
         assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
         assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
