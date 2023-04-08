@@ -361,22 +361,22 @@ class Model(AbstractContextManager):
             'comment': comment,
         })
 
-    def fitness(
-        self,
-        target:str, #subpop or ind
-        scripts:Union[str, list],
-        idx:Union[str, None]=None,
-        comment:Union[str,None]=None,
-        ):
-        """
-        Add event that adjusts fitness values before fitness calc.
-        """
-        self.map['fitness'].append({
-            'target': target,
-            'scripts': scripts,
-            'idx': idx,
-            'comment': comment,
-        })
+    # def fitness(
+    #     self,
+    #     target:str, #subpop or ind
+    #     scripts:Union[str, list],
+    #     idx:Union[str, None]=None,
+    #     comment:Union[str,None]=None,
+    #     ):
+    #     """
+    #     Add event that adjusts fitness values before fitness calc.
+    #     """
+    #     self.map['fitness'].append({
+    #         'target': target,
+    #         'scripts': scripts,
+    #         'idx': idx,
+    #         'comment': comment,
+    #     })
 
     def survival(
         self,
