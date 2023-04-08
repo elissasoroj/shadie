@@ -37,10 +37,10 @@ class OneSim:
     def __init__(
         self,
         trees_file: str, #'tskit.trees.TreeSequence',
-        ancestral_Ne: int,
-        mut: float,
-        recomb: float,
         chromosome: 'shadie.Chromosome',
+        ancestral_Ne: Optional[int]=None,
+        mut: Optional[float]=None,
+        recomb: Optional[float]=None,
         seed: Optional[int]=None,
         recapitate: bool=False,
         add_neutral_mutations: bool=False,
@@ -84,7 +84,7 @@ class OneSim:
             self.recomb = self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"]
         if self.ancestral_Ne is None:
             self.ancestral_Ne = self.generations
-        
+
         assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
         assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
