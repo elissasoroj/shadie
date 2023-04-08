@@ -156,3 +156,74 @@ def draw_stats(
         axes.label.offset = 20
         axes.label.text = f"{stat} in {int(window_size)}bp windows"
         return canvas, axes, mark
+
+def plot(seqs, length=20000, gen=2000, interval=100, burnin = 10000, scale = 1.0, sample=50,):
+    """
+    Function outputs toyplot marks objects 
+    Defaults are alt-gen model params. Divide by 2 for WF
+    
+    
+    seqs = tree sequencess
+    length = length of the sim in gens
+    gen = which generation the mutation was introduced in (1000 for WF, otherwise 2000)
+    interval = interval populations were saved (50 for WF, otherwise 100)
+    burnin = length of burnin (read from different file)
+    scale = scales gens to match wf and alt-gen models. Set to 2 for WF
+    sample = number of samples for diversity calculation
+    
+    Use the following for plotting:
+    canvas = toyplot.Canvas(width=800, height=500)
+    axes = canvas.cartesian()
+    axes.y.domain.min = 0.000
+    axes.y.domain.max = 0.0035
+    """
+
+    mark = axes.vlines(gen)
+    
+    for ts in seqs:
+        sample_times = []
+        range2 = int(length/interval)
+
+        for num in range (1, range2):
+            prime_time = (num*interval)
+            slim_time = (burnin+length)-prime_time
+            sample_times.append(prime_time)
+
+        x = []
+        y = []
+
+        #choose the samples
+        for i in sample_times:
+            size = len(ts.individuals_alive_at(i))
+            allinds = list(range(0,size))
+            samples = random.sample(allinds, sample)
+
+            ids = []
+            nodes = []
+
+            #find the individual ids
+            for samp in samples:
+                ids.append(ts.individuals_alive_at(i)[samp])
+
+            #save the nodes
+            for idx in ids:
+                nodes.append(ts.individual(idx).nodes[0])
+                nodes.append(ts.individual(idx).nodes[1])
+
+            #save each set of nodes to the samplelist
+            nodeslist = []
+            for node in nodes:
+                if node not in nodeslist:
+                    nodeslist.append(node)
+
+            samplelist = []
+            samplelist.append(nodeslist)
+
+            #save coordinates
+            windows = [0, 200000, 300000 ,500001]
+            div = ts.diversity(samplelist, windows=windows)
+            x.append(scale*(length-i))
+            y.append(div[1])
+        
+        mark = axes.plot(x, y)
+
