@@ -6,6 +6,7 @@ A returned object class from a shadie simulation call.
 
 from typing import Optional, Union, Iterable, List
 from dataclasses import dataclass, field
+import random
 import numpy as np
 import pandas as pd
 import pyslim
