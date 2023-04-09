@@ -111,7 +111,7 @@ class PteridophyteHomosporous(PteridophyteBase):
         This overrides the NonWrightFisher class function of same name.
         """
         early_script = (EARLY.format(
-            p0_fitnessScaling= PTER_FITNESS_SCALE,
+            p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
             p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
             p0activate= self._p0activate_str,
             p0deactivate= self._p0deactivate_str,
