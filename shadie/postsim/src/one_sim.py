@@ -92,7 +92,7 @@ class OneSim:
     def _update_tables(self):
         """Remove extra psuedopopulation nodes."""
         # get mutable tskit.TableCollection
-        tables = self.tree_sequence.dump_tables()
+        tables = self.dump_tables()
         nnodes = tables.nodes.time.size
 
         # there is a null SLiM population (0) that doesnt really exist
@@ -120,7 +120,8 @@ class OneSim:
         )
 
         # turn it back into a treesequence
-        self.tree_sequence = pyslim.load_tables(tables)
+        #self.tree_sequence = pyslim.load_tables(tables) #deprecated
+        self.tree_sequence = tables.tree_sequence()
 
     def _recapitate(self):
         """Merge pops backwards in time and simulate ancestry.
