@@ -92,7 +92,7 @@ class OneSim:
     def _update_tables(self):
         """Remove extra psuedopopulation nodes."""
         # get mutable tskit.TableCollection
-        tables = self.dump_tables()
+        tables = self.tree_sequence.dump_tables()
         nnodes = tables.nodes.time.size
 
         # there is a null SLiM population (0) that doesnt really exist
