@@ -259,18 +259,19 @@ s4 survival(p1) {{
 }}
 """
 
+#note relFitness was replaced by `effect` in SLiM 4.0
 HAP_MUT_FITNESS = """
     if (individual.subpopulation == p1)
         return 1.0;
     else
-        return relFitness;
+        return effect;
 """
 
 DIP_MUT_FITNESS = """
     if (individual.subpopulation == p0)
         return 1.0;
     else
-        return relFitness;
+        return effect;
 """
 
 
