@@ -10,7 +10,9 @@ PTER_FITNESS_SCALE = """p0.fitnessScaling = (GAM_POP_SIZE *
 # -------------------------
 # TAGS
 # 2, 3, 4, >1M
+
 DEFS_PTER_HOMOSPORE = """
+// model: homosporous pteridophyte
 // p0 = haploid population
 // p1 = diploid population
 // >1M- tmp sex tags
@@ -165,6 +167,7 @@ REPRO_PTER_HOMOSPORE_P0 = """
 # 2, 3, 4, >1M-
 #-----------------------------------------------------------------------
 DEFS_PTER_HETEROSPORE = """
+// model: heterosporous pteridophyte
 // p0 = haploid population
 // p1 = diploid population
 // >1M- tmp sex tags

@@ -7,7 +7,7 @@ Special case Wright-Fisher specific SLIM script snippets used for string substit
 # ==PARAMETERS==
 #K
 # -------------------------
-
+#typical Wright-Fisher 
 REPRO_WF = """
     // parents are chosen proportional to fitness
     fitness = p1.cachedFitness(NULL);

@@ -52,7 +52,7 @@ class ChromosomeBase:
         """write MutationTypes init with use_nucleotides=True."""
         self.use_synonymous_sites_in_coding = use_synonymous_sites_in_coding
         """encodes neutral mutations at third codon sites."""
-        self._skip_neutral_mutations: bool = False
+        self._skip_neutral_mutations: bool = True
         """hidden attr set in :ref:`shadie.Model.initialize`."""
         self.data = pd.DataFrame(
             columns=['name', 'start', 'end', 'eltype', 'script', 'coding'],

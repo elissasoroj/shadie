@@ -65,7 +65,7 @@ FITNESS = """
 
 SURVIVAL = """
 // implements survival adjustments
-{idx}survival({population}) {{
+{comment}{idx}survival({population}) {{
     {scripts}
 }}
 """

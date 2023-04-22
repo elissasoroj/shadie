@@ -297,7 +297,7 @@ class WrightFisher(ReproductionBase):
         }
 
         self.model.map["initialize"][0]['constants']["K"] = self.pop_size
-        self.model.map["initialize"][0]['simglobals']["METADATA"] = metadata_dict
+        self.model.map["initialize"][0]['simglobals']["METADATA"].update(metadata_dict)
 
     def _add_survival_script(self):
         """

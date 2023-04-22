@@ -5,6 +5,7 @@ Bryophyte specific SLIM script snippets used for string substitution.
 """
 #shadie DEFINITIONS
 DEFS_BRYO = """
+// model: bryophyte
 // p0 = haploid population
 // p1 = diploid population
 // >1M- tmp sex tags

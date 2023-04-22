@@ -62,6 +62,7 @@ class MutationTypeBase:
         self.dist = distribution
         self.distparams = params[:-1]
         self.neutralwarning = False
+        self.diffexpr = diffexpr
         
         if self.dist == 'f':
             if self.distparams == (0,):
