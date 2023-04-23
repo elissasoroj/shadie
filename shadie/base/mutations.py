@@ -52,10 +52,14 @@ class MutationTypeBase:
         distribution: str,
         *params: float,
         diffexpr: Optional[str]=None,
+        _forceidx: Optional[str]=None,
         ):
 
         MutationTypeBase.idx += 1
-        self.idx = MutationTypeBase.idx
+        if _forceidx:
+            self.idx = _forceidx
+        else:
+            self.idx = MutationTypeBase.idx
         self.name = f"m{self.idx}"
 
         self.dom = dominance
