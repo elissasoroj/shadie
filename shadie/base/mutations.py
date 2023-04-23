@@ -51,15 +51,16 @@ class MutationTypeBase:
         dominance: float,
         distribution: str,
         *params: float,
+        forceidx: Optional[int]=None,
         diffexpr: Optional[str]=None,
-        _forceidx: Optional[int]=None,
         ):
 
         MutationTypeBase.idx += 1
-        if _forceidx:
-            self.idx = _forceidx
-        else:
+        
+        if forceidx == "None":
             self.idx = MutationTypeBase.idx
+        else:
+           self.idx = forceidx
         self.name = f"m{self.idx}"
 
         self.dom = dominance
@@ -215,8 +216,8 @@ class MutationTypeBase:
 
 
 class MutationNormal(MutationTypeBase):
-    def __init__(self, dominance, shape, scale, diffexpr):
-        super().__init__(dominance, 'n', shape, scale, diffexpr)
+    def __init__(self, dominance, shape, scale, diffexpr, forceidx):
+        super().__init__(dominance, 'n', shape, scale, diffexpr, forceidx)
         self._dist = stats.norm
         self._neg = 1
         self._params = {"loc": shape, "scale": scale}
@@ -224,8 +225,8 @@ class MutationNormal(MutationTypeBase):
 
 
 class MutationGamma(MutationTypeBase):
-    def __init__(self, dominance, shape, scale, diffexpr):
-        super().__init__(dominance, 'g', shape, scale, diffexpr)
+    def __init__(self, dominance, shape, scale, diffexpr, forceidx):
+        super().__init__(dominance, 'g', shape, scale, diffexpr, forceidx)
         self._dist = stats.gamma
         self._neg = (-1 if shape < 0 else 1)
         self._params = {"a": abs(shape), "scale": scale}
@@ -233,8 +234,8 @@ class MutationGamma(MutationTypeBase):
 
 
 class MutationFixed(MutationTypeBase):
-    def __init__(self, dominance, shape, diffexpr):
-        super().__init__(dominance, 'f', shape, diffexpr)
+    def __init__(self, dominance, shape, diffexpr, forceidx):
+        super().__init__(dominance, 'f', shape, diffexpr, forceidx)
         self._dist = stats.uniform
         self._neg = 1
         self._params = {"loc": shape, "scale": 1e-9}
@@ -242,8 +243,8 @@ class MutationFixed(MutationTypeBase):
 
 
 class MutationExponential(MutationTypeBase):
-    def __init__(self, dominance, scale, diffexpr):
-        super().__init__(dominance, 'e', scale, diffexpr)
+    def __init__(self, dominance, scale, diffexpr, forceidx):
+        super().__init__(dominance, 'e', scale, diffexpr, forceidx)
         self._dist = stats.expon
         self._neg = (-1 if scale < 0 else 1)
         self._params = {"loc": 0.0, "scale": abs(scale)}
@@ -259,7 +260,7 @@ class MutationExponential(MutationTypeBase):
 
 
 
-def mtype(dominance, distribution, *params, diffexpr=None):
+def mtype(dominance, distribution, *params, diffexpr=None, _forceidx=None,):
     """
     MutationType class constructor. Returns a MutationType subclass 
     instance for the selected 'distribution' type.
@@ -275,6 +276,14 @@ def mtype(dominance, distribution, *params, diffexpr=None):
     else:
         diffexpr = "None"
 
+    if _forceidx is not None:
+        forceidx = _forceidx
+    
+    else:
+        forceidx = "None"
+
+    print(forceidx)
+
     if distribution not in DISTOPTS:
         logger.info("Distribution type options: \n"
             "'f' = fixed fitness effect\n"
@@ -287,16 +296,16 @@ def mtype(dominance, distribution, *params, diffexpr=None):
 
     if distribution == 'n':
         assert len(params) == 2, "normal dist requires two params (loc, scale)"
-        return MutationNormal(dominance, *params, diffexpr)
+        return MutationNormal(dominance, *params, diffexpr, forceidx)
     if distribution == 'g':
         assert len(params) == 2, "gamma dist requires two params (a, scale)"
-        return MutationGamma(dominance, *params, diffexpr)
+        return MutationGamma(dominance, *params, diffexpr, forceidx)
     if distribution == 'f':
         assert len(params) == 1, "fixed (uniform) dist requires one param"
-        return MutationFixed(dominance, *params, diffexpr)
+        return MutationFixed(dominance, *params, diffexpr, forceidx)
     if distribution == 'e':
         assert len(params) == 1, "exponential dist requires one param"
-        return MutationExponential(dominance, *params, diffexpr)
+        return MutationExponential(dominance, *params, diffexpr, forceidx)
     raise NotImplementedError("distribution not yet supported; TODO")
 
 
@@ -356,6 +365,7 @@ if __name__ == "__main__":
         shadie.mtype(0.5, 'n', 0.5, 0.25),
         shadie.mtype(0.5, 'g', 2.0, 0.1),
         shadie.mtype(0.1, 'e', 2.5, diffexpr = "diploid"),
+        shadie.mtype(0.1, 'f', 4.0, diffexpr = "diploid", _forceidx = 50)
     )
     for muta in mlist:
         muta.summary()
@@ -368,8 +378,8 @@ if __name__ == "__main__":
         test.append(mut.name)
         expr.append(mut._expr)
     print(test)
-    print(mlist[0].to_slim())
+    print(mlist[4].to_slim())
 
-    mut2 = shadie.mtype(0.5, 'f', 0.1, diffexpr="diploid")
-    print(mut2._expr)
-    print(expr)
+    #mut2 = shadie.mtype(0.5, 'f', 0.1, diffexpr="diploid")
+    #print(mut2._expr)
+    #print(expr)
