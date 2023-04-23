@@ -52,7 +52,7 @@ class MutationTypeBase:
         distribution: str,
         *params: float,
         diffexpr: Optional[str]=None,
-        _forceidx: Optional[str]=None,
+        _forceidx: Optional[int]=None,
         ):
 
         MutationTypeBase.idx += 1
