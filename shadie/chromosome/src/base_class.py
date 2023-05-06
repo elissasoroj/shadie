@@ -55,7 +55,7 @@ class ChromosomeBase:
         self._skip_neutral_mutations: bool = True
         """hidden attr set in :ref:`shadie.Model.initialize`."""
         self.data = pd.DataFrame(
-            columns=['name', 'start', 'end', 'eltype', 'script', 'coding'],
+            columns=['name', 'start', 'end', 'eltype', 'script', 'is_coding'],
             data=None,
         )
         """DataFrame summary of the chromosome."""
@@ -71,7 +71,7 @@ class ChromosomeBase:
         for elem in self.elements:
             for mutation in elem.mlist:
                 mutations.append(mutation)
-        return list(set(mutations))
+        return list(mutations) #list(set(mutations))
 
     @property
     def elements(self):
@@ -81,7 +81,7 @@ class ChromosomeBase:
         neutral elements (contains only neutral mut) in the list.
         """
         if self._skip_neutral_mutations:
-            return list(set(i for i in self.data.script if i.coding))
+            return list(set(i for i in self.data.script if i.is_coding))
         else:
             return list(set(self.data.script))
 
@@ -100,8 +100,8 @@ class ChromosomeBase:
         bool
         """
         if idx is None:
-            return self.data.coding.any()
-        return bool(self.data.loc[idx].coding)
+            return self.data.is_coding.any()
+        return bool(self.data.loc[idx].is_coding)
 
     def mutation_list(self) -> str:
         """Returns a string of mutation names for haploidDominanceCoeff.

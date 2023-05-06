@@ -35,15 +35,15 @@ class Chromosome(ChromosomeBase):
             use_synonymous_sites_in_coding=use_synonymous_sites_in_coding,
         )
         self.data.loc[0] = (
-            NONCDS.altname, 0, 2000, NONCDS.name, NONCDS, NONCDS.coding)
+            NONCDS.altname, 0, 2000, NONCDS.name, NONCDS, NONCDS.is_coding)
         self.data.loc[2001] = (
-            EXON.altname, 2001, 4000, EXON.name, EXON, EXON.coding)
+            EXON.altname, 2001, 4000, EXON.name, EXON, EXON.is_coding)
         self.data.loc[4001] = (
-            INTRON.altname, 4001, 6000, INTRON.name, INTRON, INTRON.coding)
+            INTRON.altname, 4001, 6000, INTRON.name, INTRON, INTRON.is_coding)
         self.data.loc[6001] = (
-            EXON.altname, 6001, 8000, EXON.name, EXON, EXON.coding)
+            EXON.altname, 6001, 8000, EXON.name, EXON, EXON.is_coding)
         self.data.loc[8001] = (
-            NONCDS.altname, 8001, 10000, NONCDS.name, NONCDS, NONCDS.coding)
+            NONCDS.altname, 8001, 10000, NONCDS.name, NONCDS, NONCDS.is_coding)
 
 
 class ChromosomeRandom(ChromosomeBase): 
@@ -127,7 +127,7 @@ class ChromosomeRandom(ChromosomeBase):
                 idx + 1, 
                 min(idx + 1 + span, self.genome_size), 
                 self.noncds.name, self.noncds,
-                self.noncds.coding,
+                self.noncds.is_coding,
             )
             idx += span + 1
             
@@ -156,7 +156,7 @@ class ChromosomeRandom(ChromosomeBase):
                     idx + 1, 
                     idx + span + 1, 
                     ele.name, ele,
-                    ele.coding,
+                    ele.is_coding,
                 )
                 idx += span + 1
         self.data = self.data.sort_index()
@@ -211,7 +211,7 @@ class ChromosomeExplicit(ChromosomeBase):
                     end, 
                     data[key].name, 
                     data[key], 
-                    data[key].coding,
+                    data[key].is_coding,
                 )
 
 
@@ -220,9 +220,9 @@ if __name__ == "__main__":
     import shadie
 
     # define mutation types
-    m0 = shadie.mtype(0.5, 'n', 2.0, 1.0)
-    m1 = shadie.mtype(0.5, 'g', 3.0, 1.0)
-    m2 = shadie.mtype(0.5, 'f', 0)
+    m0 = shadie.mtype(0.5, 'n', [2.0, 1.0])
+    m1 = shadie.mtype(0.5, 'g', [3.0, 1.0])
+    m2 = shadie.mtype(0.5, 'f', [0])
     
     # define elements types
     e0 = shadie.etype([m0, m1], [1, 2])
