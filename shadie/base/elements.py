@@ -15,7 +15,8 @@ from typing import List
 import numpy as np
 import scipy.stats as stats
 import toyplot
-from shadie.base.mutations import MutationList, MutationTypeBase
+from shadie.base.mutations import MutationType
+from shadie.base.mutation_list import MutationList
 
 
 class ElementType:
@@ -35,7 +36,7 @@ class ElementType:
     idx = 0
     def __init__(
         self,
-        mutations: List[MutationTypeBase],
+        mutations: List[MutationType],
         frequencies: List[float],
         altname=None,
         ):
@@ -48,18 +49,18 @@ class ElementType:
         # convert to a MutationList regardless of input type
         self.mlist = (
             MutationList(*mutations) 
-            if isinstance(mutations, (list, tuple, MutationTypeBase))
+            if isinstance(mutations, (list, tuple, MutationType))
             else mutations
         )
 
         #store coding attribute (0 = noncoding)
         test = 0
         for mut in self.mlist:
-            test += mut.coding
+            test += mut.is_coding
         if test > 0:
-            self.coding = 1
+            self.is_coding = 1
         else:
-            self.coding = 0
+            self.is_coding = 0
 
         self.freq = frequencies
 
@@ -179,7 +180,7 @@ if __name__ == "__main__":
     # create mutationlist
     mlist = shadie.mlist(
         shadie.mtype(0.5, 'f', 0.1),
-        shadie.mtype(0.5, 'n', 0.05, 0.02),
+        shadie.mtype(0.5, 'n', [0.05, 0.02]),
     )
 
     # create elements (a mutation list with frequencies)
@@ -188,10 +189,10 @@ if __name__ == "__main__":
     print(ele1.mlist)
     print(ele2)
     print(ele2.to_slim())
-    print(ele2.coding)
+    print(ele2.is_coding)
 
     for mut in ele1.mlist:
-        print(mut._expr)
+        print(mut.affects_diploid)
 
     # create an ElementList ()
 

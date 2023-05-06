@@ -82,7 +82,8 @@ class ChromosomeBase:
         """
         if self._skip_neutral_mutations:
             return list(set(i for i in self.data.script if i.coding))
-        return list(set(self.data.script))
+        else:
+            return list(set(self.data.script))
 
     def is_coding(self, idx: int=None) -> bool:
         """Return True if a genomic region is coding (includes selection).

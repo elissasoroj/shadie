@@ -10,7 +10,7 @@ __version__ = "0.2.0"
 
 from shadie.base.defaults import NONCDS, EXON, INTRON, NEUT, DEL, BEN
 from shadie.base.mutations import mtype
-from shadie.base.mutations import MutationList as mlist
+from shadie.base.mutation_list import MutationList as mlist
 from shadie.base.elements import ElementType as etype
 from shadie.base.elements import ElementList as elist
 from shadie import chromosome

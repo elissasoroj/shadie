@@ -247,7 +247,7 @@ if __name__ == "__main__":
         (2000, 3000): e0,
         (3001, 5000): e1,
         }, 
-        use_synonymous_sites_in_coding=True,
+        use_synonymous_sites_in_coding=False,
         use_nucleotides=False,
     )
 
@@ -259,4 +259,8 @@ if __name__ == "__main__":
     print(chrom.data)
     # chrom.inspect()
     # print(test)
-    # chrom.to_slim_elements()
+    print(chrom.to_slim_elements())
+
+    print(chrom._skip_neutral_mutations)
+
+

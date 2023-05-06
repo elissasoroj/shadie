@@ -10,12 +10,13 @@ MutationTypes.
 
 from loguru import logger
 from shadie.base.mutations import mtype as MutationType
+from shadie.base.mutation_list import MutationList
 from shadie.base.elements import ElementType
 
 
 # MutationTypes: selection coefficient distributions
 NEUT = MutationType(0.5, "f", 0.0,)      # neutral mutation
-DEL = MutationType(0.1, "g", -3.0, 1.5)  # deleterious
+DEL = MutationType(0.1, "g", [-3.0, 1.5])  # deleterious
 BEN = MutationType(0.8, "e", 0.04)       # beneficial
 
 # EXON has 80X more deleterious (-Gamma underdominant) than it has

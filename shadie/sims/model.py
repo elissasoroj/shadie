@@ -44,7 +44,7 @@ from contextlib import AbstractContextManager
 from concurrent.futures import ProcessPoolExecutor
 from loguru import logger
 import numpy as np
-from shadie.base.mutations import MutationTypeBase
+from shadie.base.mutations import MutationType
 from shadie.base.elements import ElementType
 from shadie.reproduction.api import ReproductionApi
 from shadie.sims.format import (
@@ -140,7 +140,7 @@ class Model(AbstractContextManager):
         On entry the Class counters of mutation and element types
         is reset to zero. The .map dictionary is also cleared.
         """
-        MutationTypeBase.idx = 0
+        MutationType.idx = 0
         ElementType.idx = 0
         self.map = {i: [] for i in self.map}
         return self
