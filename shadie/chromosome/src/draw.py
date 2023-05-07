@@ -22,7 +22,7 @@ def draw_altair_chrom_canvas(chrom: 'ChromosomeBase', width: int=700):
     for idx in data.index:
         if ("int" in data.name[idx]):
             data.loc[idx, "category"] = "intron"
-        elif data.coding[idx] or ("ex" in data.name[idx]):
+        elif data.is_coding[idx] or ("ex" in data.name[idx]):
             data.loc[idx, "category"] = "exon"
         else:
             data.loc[idx, "category"] = "noncds"
@@ -138,7 +138,7 @@ def draw_toyplot_chrom(
                 f"name: {chrom.data.loc[pos, 'name']}\n"
                 f"interval: ({dat.start}, {dat.end})\n"
                 f"ElementType: {dat.eltype}\n" 
-                f"coding: {bool(dat.coding)}"
+                f"is coding: {bool(dat.is_coding)}"
             )
         )
 
