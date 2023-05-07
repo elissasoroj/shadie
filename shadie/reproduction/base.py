@@ -170,7 +170,7 @@ class NonWrightFisher(ReproductionBase):
 
         # iterate over MutationTypes
         for mut in self.model.chromosome.mutations:
-            if not mut.affects_diploid or mut.affects_haploid:
+            if not mut.affects_diploid or not mut.affects_haploid:
 
                 # refer to mutations by s{idx}
                 idx += 1
@@ -187,18 +187,13 @@ class NonWrightFisher(ReproductionBase):
                         scripts = HAP_MUT_FITNESS,
                         comment = "mutation only expressed in haploid"
                         )
-                elif not mut.affects_haploid:
+                if not mut.affects_haploid:
                     self.model.muteffect(
                         idx = None,
                         mutation = mut.name,
                         scripts = DIP_MUT_FITNESS,
                         comment = "mutation only expressed in diploid"
                         )
-                elif mut.affects_haploid and mut.affects_diploid:
-                    pass
-                else:
-                    print("Differental expression must be set to 'haploid'"
-                        "or 'diploid")
 
                 # add reference to this mutation to be added to a late call
                 # for checking whether a mutation has become a substitution.
@@ -323,6 +318,7 @@ if __name__ == "__main__":
     # define mutation types
     m0 = shadie.mtype(0.5, 'n', [0, 0.4])
     m1 = shadie.mtype(0.5, 'g', [0.8, 0.75], affects_haploid=False)
+    m0 = shadie.mtype(0.5, 'f', [2], affects_diploid=False)
 
     # define elements types
     e0 = shadie.etype([m0, m1], [1, 2])
@@ -341,7 +337,7 @@ if __name__ == "__main__":
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=1000, #file_in = "/tmp/test.trees"
             )
-        mod.reproduction.wright_fisher(pop_size=1000)
+        mod.reproduction.pteridophyte_homosporous(spo_pop_size=1000, gam_pop_size=500)
     print(mod.script)
     #mod.write("/tmp/slim.slim")
     #mod.run(binary="/usr/local/bin/slim")
