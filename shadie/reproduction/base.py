@@ -170,7 +170,7 @@ class NonWrightFisher(ReproductionBase):
 
         # iterate over MutationTypes
         for mut in self.model.chromosome.mutations:
-            if mut._expr != "None":
+            if not mut.affects_diploid or mut.affects_haploid:
 
                 # refer to mutations by s{idx}
                 idx += 1
@@ -297,7 +297,12 @@ class WrightFisher(ReproductionBase):
         }
 
         self.model.map["initialize"][0]['constants']["K"] = self.pop_size
-        self.model.map["initialize"][0]['simglobals']["METADATA"].update(metadata_dict)
+
+        #save initalize metadata
+        self.model.map["initialize"][0]['simglobals']['METADATA'] = self.model.metadata
+
+        #update the metadata
+        self.model.map["initialize"][0]['simglobals']['METADATA'].update(metadata_dict)
 
     def _add_survival_script(self):
         """
@@ -316,8 +321,8 @@ if __name__ == "__main__":
     import shadie
 
     # define mutation types
-    m0 = shadie.mtype(0.5, 'n', 0, 0.4)
-    m1 = shadie.mtype(0.5, 'g', 0.8, 0.75, diffexpr="diploid")
+    m0 = shadie.mtype(0.5, 'n', [0, 0.4])
+    m1 = shadie.mtype(0.5, 'g', [0.8, 0.75], affects_haploid=False)
 
     # define elements types
     e0 = shadie.etype([m0, m1], [1, 2])
@@ -331,7 +336,7 @@ if __name__ == "__main__":
         exon=e1,
     )
 
-    print(m1._expr)
+    print(m1.affects_haploid)
 
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=1000, #file_in = "/tmp/test.trees"
