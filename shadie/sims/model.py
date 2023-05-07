@@ -536,8 +536,8 @@ if __name__ == "__main__":
     with shadie.Model() as model:
 
         # define mutation types
-        m0 = shadie.mtype(0.5, 'n', 2.0, 1.0)
-        m1 = shadie.mtype(0.5, 'g', 3.0, 1.0, diffexpr="haploid")
+        m0 = shadie.mtype(0.5, 'n', [2.0, 1.0])
+        m1 = shadie.mtype(0.5, 'g', [3.0, 1.0], affects_diploid=False)
 
         # define elements types
         e0 = shadie.etype([m0, m1], [1, 2])
@@ -552,7 +552,7 @@ if __name__ == "__main__":
         )
 
         # print(chrom.data.iloc[:, :4,])
-        # print(chrom.mutations)
+        print(chrom.mutations)
 
         # init the model
 
@@ -578,5 +578,5 @@ if __name__ == "__main__":
         # )
 
 
-    print(model.script)
+    #print(model.script)
     #model.run()

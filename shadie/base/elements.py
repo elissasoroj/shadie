@@ -192,7 +192,10 @@ if __name__ == "__main__":
     print(ele2.is_coding)
 
     for mut in ele1.mlist:
-        print(mut.affects_diploid)
+        print(mut)
+
+    print(type(ele1.mlist[1]))
+
 
     # create an ElementList ()
 

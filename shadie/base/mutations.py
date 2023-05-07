@@ -49,7 +49,7 @@ Distribution type options: \n"
     "'s' = Script-based distribution"
 """
 
-@dataclass
+@dataclass(eq=False)
 class MutationType:
     """MutationType Class for fitness effects.
 
@@ -78,7 +78,7 @@ class MutationType:
     affects_diploid: bool
         Affects diploid fitness. Default=True.
     affects_haploid: bool
-        Affects haploid fitness. Default=False.
+        Affects haploid fitness. Default=True.
     idx: int
         Set a unique integer index for this MutationType.
 
@@ -153,7 +153,8 @@ class MutationType:
         """Return a string reprentation of the object."""
         value = (
             f"MutationType({self.name}, {self.dominance}, "
-            f"{self.distribution}, {self.params})"
+            f"{self.distribution}, {self.params},"
+            f"{self.affects_diploid}, {self.affects_haploid})"
         )
         return value
 
@@ -301,7 +302,7 @@ def mtype(
     distribution: str,
     params: Sequence[float],
     affects_diploid: bool = True,
-    affects_haploid: bool = False,
+    affects_haploid: bool = True,
     force_idx: Optional[int] = None,
 ) -> MutationType:
     """MutationType class constructor function.

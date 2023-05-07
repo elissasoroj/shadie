@@ -180,21 +180,21 @@ class NonWrightFisher(ReproductionBase):
                 # for each MutationType. This callback will be activated or
                 # deactivated (below) by early scripts based on whether
                 # it is the haploid or diploid subpopulation's generation.
-                if mut._expr == "haploid":
+                if not mut.affects_diploid:
                     self.model.muteffect(
                         idx = None,
                         mutation = mut.name,
                         scripts = HAP_MUT_FITNESS,
                         comment = "mutation only expressed in haploid"
                         )
-                elif mut._expr == "diploid":
+                elif not mut.affects_haploid:
                     self.model.muteffect(
                         idx = None,
                         mutation = mut.name,
                         scripts = DIP_MUT_FITNESS,
                         comment = "mutation only expressed in diploid"
                         )
-                elif mut._expr == "None":
+                elif mut.affects_haploid and mut.affects_diploid:
                     pass
                 else:
                     print("Differental expression must be set to 'haploid'"

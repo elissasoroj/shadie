@@ -71,7 +71,7 @@ class ChromosomeBase:
         for elem in self.elements:
             for mutation in elem.mlist:
                 mutations.append(mutation)
-        return list(mutations) #list(set(mutations))
+        return list(set(mutations)) #list(mutations)
 
     @property
     def elements(self):
