@@ -10,7 +10,7 @@ conda install pandas, numpy, toyplot, toytree, altair, msprime, pyslim, tskit, \
 	loguru, ipython -c conda-forge
 
 #clone and install from GitHub
-git clone [https://github.com/elissasoroj/shadie.git]
+git clone https://github.com/elissasoroj/shadie.git
 cd ./shadie
 pip install -e .
 ```
