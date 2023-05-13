@@ -1,13 +1,14 @@
 site_name: shadie {UNDER ACTIVE DEVELOPMENT}
 repo_url: https://github.com/elissasoroj/shadie
 site_author: Elissa Sorojsrisom
-#to deploy: 
+#to deploy: mkdocs gh-deploy --force
 #to see dummy site: mkdocs serve
 
 # Copyright
-copyright: Copyright &copy; 2022 Elissa Sorojsrisom
+copyright: Copyright &copy; 2023 Elissa Sorojsrisom
 
 nav:
+  - Home: index.md
   - Introduction: 
     - Overview: main/overview.md
     - About: main/about.md
@@ -19,9 +20,9 @@ nav:
     - model setup: drafts/under-construction.md
     - v0.1.1 Demo: notebooks/shadie-v0_1_1-demo.ipynb
     - Full Work Flow: tutorials/fullworkflow.md
-  - Examples:
-    - Single-Site: drafts/under-construction.md
-    - Differential Expression: drafts/under-construction.md
+  # - Examples:
+  #   - Single-Site: drafts/under-construction.md
+  #   - Differential Expression: drafts/under-construction.md
   - Understory:
     - Intro: education/eduintro.md
 
@@ -107,7 +108,7 @@ markdown_extensions:
   - pymdownx.tilde
 
 #Javascript Extentions
-extra_javascript:
+#extra_javascript:
   # - js/custom.js 
   # - https://unpkg.com/mermaid@8.9.2/dist/mermaid.min.js
   # - https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.0.9/mermaid.min.js
