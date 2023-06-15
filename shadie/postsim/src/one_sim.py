@@ -38,6 +38,7 @@ class OneSim:
         self,
         trees_file: str, #'tskit.trees.TreeSequence',
         chromosome: 'shadie.Chromosome',
+        altgen: bool , #requires user to input because it's too risky otherwise
         ancestral_Ne: Optional[int]=None,
         mut: Optional[float]=None,
         recomb: Optional[float]=None,
@@ -62,7 +63,7 @@ class OneSim:
         self.chromosome: ChromosomeBase=chromosome
         """The shadie.Chromosome class representing the SLiM genome."""
         self.rng: np.random.Generator=np.random.default_rng(seed)
-
+ 
         # try to fill attributes by extracting metadata from the tree files.
         self._extract_metadata()
         self._update_tables()
@@ -76,6 +77,7 @@ class OneSim:
 
         TODO: can more of this be saved in SLiM metadata?
         """
+
         if self.generations is None :
             self.generations = self.tree_sequence.metadata["SLiM"]["cycle"][0]
         if self.mut is None:
@@ -84,6 +86,11 @@ class OneSim:
             self.recomb = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"][0])
         if self.ancestral_Ne is None:
             self.ancestral_Ne = self.generations
+
+        if self.altgen is True:
+            self.mutrate = mutrate/2
+        else:
+            self.mutrate = mutrate
 
         assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
@@ -154,7 +161,9 @@ class OneSim:
             keep=True,  # whether to keep existing mutations.
             model=msprime.SLiMMutationModel(type=0),
         )
-        self.tree_sequence = pyslim.SlimTreeSequence(self.tree_sequence)
+        
+        #No longer needed after update to tskit and SLiM4
+        #self.tree_sequence = pyslim.SlimTreeSequence(self.tree_sequence)
 
         # logger report after adding mutations
         self._report_mutations(allow_m0=True)
