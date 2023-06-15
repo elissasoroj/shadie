@@ -16,7 +16,7 @@ import tskit
 import scipy.stats
 from loguru import logger
 
-from toytree.utils.src.toytree_sequence import ToyTreeSequence, ScrollableCanvas
+from toytree.utils.src.toytree_sequence import ToyTreeSequence
 from shadie.chromosome.src.classes import ChromosomeBase
 
 logger = logger.bind(name='shadie')
@@ -330,10 +330,7 @@ class OneSim:
         ))        
 
         # create an axis for the chromosome. +100 height for chrom.
-        if scrollable:
-            canvas = ScrollableCanvas(height=height, width=width)
-        else:
-            canvas = toyplot.Canvas(height=height, width=width)
+        canvas = toyplot.Canvas(height=height, width=width)
         ax0 = canvas.cartesian(bounds=(50, -50, 50, 75), padding=5)
         ax1 = canvas.cartesian(bounds=(50, -50, 100, -50))        
 
