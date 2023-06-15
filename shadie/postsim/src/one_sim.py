@@ -16,7 +16,7 @@ import tskit
 import scipy.stats
 from loguru import logger
 
-from toytree.utils.src.toytree_sequence import ToyTreeSequence
+from toytree.utils.src.toytree_sequence import ToyTreeSequence, ScrollableCanvas
 from shadie.chromosome.src.classes import ChromosomeBase
 
 logger = logger.bind(name='shadie')
@@ -311,7 +311,7 @@ class OneSim:
         height: Optional[int]=None,
         width: Optional[int]=None,
         show_generation_line: bool=True,
-        scrollable: bool=True,
+        #scrollable: bool=True,
         axes: Optional['toyplot.coordinates.Cartesian']=None,
         **kwargs,
         ):
