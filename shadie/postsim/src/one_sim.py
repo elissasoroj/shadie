@@ -330,7 +330,7 @@ class OneSim:
         ))        
 
         # create an axis for the chromosome. +100 height for chrom.
-        canvas = toyplot.Canvas(height=height, width=width)
+canvas = toyplot.Canvas(height=height, width=width)
         ax0 = canvas.cartesian(bounds=(50, -50, 50, 75), padding=5)
         ax1 = canvas.cartesian(bounds=(50, -50, 100, -50))        
 
@@ -370,7 +370,8 @@ class OneSim:
         sample: Union[int, Iterable[int]]=6,
         reps: int=1,
         seed: Optional[int]=None,
-        color: Optional[str]="lightseagreen"
+        color: Optional[str]="lightseagreen",
+        time: Optional[int]=0,
         ):
         """Return a toyplot drawing of a statistic across the genome.
         
@@ -392,7 +393,8 @@ class OneSim:
         rep_values = []
         for _ in range(reps):
             ndt = self.tree_sequence.tables.nodes
-            mask = (ndt.population == 0) & (ndt.time == 0) & (ndt.flags == 1)
+            #mask = (ndt.population == 0) & (ndt.time == 0) & (ndt.flags == 1)
+            mask = (ndt.time == time) #allows sampling at a specific time
             arr = np.arange(mask.shape[0])[mask]
             size = min(arr.size, sample)
             samples = rng.choice(arr, size=size, replace=False)
