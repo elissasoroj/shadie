@@ -92,9 +92,9 @@ class OneSim:
             self.ancestral_Ne = self.generations
 
         if self.altgen is True:
-            self.mutrate = mutrate/2
+            self.mut = mut/2
         else:
-            self.mutrate = mutrate
+            self.mut = mut
 
         assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
