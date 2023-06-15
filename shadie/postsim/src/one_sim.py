@@ -277,7 +277,7 @@ class OneSim:
         ...
         """
         # load as a ToyTreeSequence
-        tts = toytree_sequence(self.tree_sequence, sample=sample, seed=seed)
+        tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
 
         # draw tree and mutations with a pre-set style
         base_style = {
@@ -319,7 +319,7 @@ class OneSim:
 
         """
         # load as a ToyTreeSequence (TODO: make faster)
-        tts = toytree_sequence(self.tree_sequence, sample=sample, seed=seed)
+        tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
 
         # get auto-dimensions from tree size
         height = height if height is not None else 325
@@ -758,41 +758,42 @@ class TwoSims:
 
 
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
 
-    import glob
-    import shadie
-    shadie.set_log_level("DEBUG")
+    # import glob
+    # import shadie
+    # shadie.set_log_level("DEBUG")
 
-    TREEFILES = sorted(glob.glob(
-        "/home/deren/Desktop/standard-params/bryo-mono/"
-        "bryo_mono_run1[0-9]_from_smallchrom_2000spo.trees")
-    )
+    # TREEFILES = sorted(glob.glob(
+    #     "/home/deren/Desktop/standard-params/bryo-mono/"
+    #     "bryo_mono_run1[0-9]_from_smallchrom_2000spo.trees")
+    # )
 
-    post = OneSim(TREEFILES[0], ancestral_Ne=500, mut=1e-7, recomb=1e-8, chromosome=None)
-    print(post.stats())
+    # post = OneSim(TREEFILES[0], ancestral_Ne=500, mut=1e-7, recomb=1e-8, chromosome=None)
+    # print(post.stats())
 
-    post = TwoSims(
-        trees_files=[TREEFILES[0], TREEFILES[1]],
-        ancestral_ne=200,
-        mut=1e-7 / 2.,
-        recomb=1e-8,
-        chromosome=None,
-    )
-    print(post.stats(sample=20, reps=20))
+    # post = TwoSims(
+    #     trees_files=[TREEFILES[0], TREEFILES[1]],
+    #     ancestral_ne=200,
+    #     mut=1e-7 / 2.,
+    #     recomb=1e-8,
+    #     chromosome=None,
+    # )
+    # print(post.stats(sample=20, reps=20))
 
 
-    TREEFILES = sorted(glob.glob(
-        "/home/deren/Desktop/standard-params/pter-hetero/"
-        "pter_hetero_run2[0-9]_from_smallchrom_2000spo.trees")
-    )
-    post = TwoSims(
-        trees_files=[TREEFILES[0], TREEFILES[1]],
-        ancestral_ne=200,
-        mut=1e-7 / 2.,
-        recomb=1e-8,
-        chromosome=None,
-    )
-    print(post.stats(sample=20, reps=20))
+    # TREEFILES = sorted(glob.glob(
+    #     "/home/deren/Desktop/standard-params/pter-hetero/"
+    #     "pter_hetero_run2[0-9]_from_smallchrom_2000spo.trees")
+    # )
+    # post = TwoSims(
+    #     trees_files=[TREEFILES[0], TREEFILES[1]],
+    #     ancestral_ne=200,
+    #     mut=1e-7 / 2.,
+    #     recomb=1e-8,
+    #     chromosome=None,
+    # )
+    # print(post.stats(sample=20, reps=20))
 
-    print(post.draw_stats())
+    # print(post.draw_stats())
+    
