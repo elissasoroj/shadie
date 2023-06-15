@@ -51,6 +51,10 @@ class OneSim:
         self.tree_sequence = tskit.load(trees_file)
         """A SlimTreeSequence that has been recapitated and mutated."""
 
+        # user needs to tell shadie whether this is an altgen model so
+        #mutation rate can be adjusted accordingly
+        self.altgen: bool=altgen
+
         # attributes to be parsed from the slim metadata
         self.generations: int=0
         """The SLiM simulated length of time in diploid generations."""
