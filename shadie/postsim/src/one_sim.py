@@ -77,11 +77,11 @@ class OneSim:
         TODO: can more of this be saved in SLiM metadata?
         """
         if self.generations is None :
-            self.generations = self.tree_sequence.metadata["SLiM"]["generation"]
+            self.generations = self.tree_sequence.metadata["SLiM"]["cycle"][0]
         if self.mut is None:
-            self.mut = self.tree_sequence.metadata["SLiM"]["user_metadata"]["mutation_rate"]
+            self.mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["mutation_rate"][0])
         if self.recomb is None:
-            self.recomb = self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"]
+            self.recomb = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"][0])
         if self.ancestral_Ne is None:
             self.ancestral_Ne = self.generations
 
@@ -342,7 +342,7 @@ class OneSim:
 
         # add generation line showing where SLiM simulation ended.
         # only add if not much higher than highest tree height.
-        # thsi could be faster by not building all these trees...
+        # this could be faster by not building all these trees...
         top_root = max([i.treenode.height for i in tts][start:start+max_trees])
         if show_generation_line:
             if self.generations < top_root + top_root * 0.1:
