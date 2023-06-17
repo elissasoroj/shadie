@@ -24,12 +24,11 @@ logger = logger.bind(name='shadie')
 
 
 class OneSim:
-    """"Load and merge one TreeSequence files from SLiM.
+    """"Load a single SLiM simulation .trees output file 
 
-    SliM has been run for two populations with the same genome type
-    for T generations starting from different seeds and perhaps
-    with different selection or demographic histories. Each ts
-    includes N haploid individuals at time_start and time_end.
+    Some functionality (e.g. plotting change in diversity
+    over time) requires that you saved individuals at
+    given time points. 
 
     SLiM was run with the argument keep_input_roots=True so that it
     preserves the first-generation ancestors so they can be used for
@@ -154,6 +153,10 @@ class OneSim:
         Does it know which regions to mutate or not mutate? For example,
         all recapitated edges should be mutated, but also the neutral
         genomic regions of the SLiM time frame should be mutated.
+        --yes, it wil mutate the whole ts, but one thing to check
+        is if the user does have a portion of the chromsome that SLiM
+        adds neutral mutations to. I think this is something the user 
+        should manage rather than shadie
         """
         # logger report before adding mutations
         self._report_mutations(allow_m0=False)
@@ -188,6 +191,84 @@ class OneSim:
         logger.info(
             f"Keeping {self.tree_sequence.num_mutations} existing "
             f"mutations of type(s) {mut_types}.")
+
+    def batch_recapitate(
+        dirpath:str, 
+        storepath:str,
+        chromosome:'shadie.Chromosome',
+        altgen:bool,
+        ancestral_Ne: int,
+        mutate:bool,
+        recapitate:bool=True,
+        ):
+        """
+        Utility function for batch recapitating all the .trees files
+        in a folder. Option to add neutral mutations as well
+
+        Will ignore internal folders. User provides output folder.
+        This function saves the output with the same filename appended
+        with `_recap` and `_mut` if the user also added neutral mutations. 
+
+        Parameters
+        ----------
+        dirpath: str
+            The directory that holds all the .trees files to be processed
+        storepath: str
+            The directory where procesed files will be saved out
+        chromosome: shade.Chromosome
+            The shadie.Chromosome object that was used in the simulations
+        altgen: bool
+            Was this a simulation using an alternation of generations model?
+            If so, the msprime mutation rate needs to be 1/2 the `mutation rate`
+            in the SLiM metadata. User just needs to provide True of False.
+        ancestral_Ne: int
+            What was the size of the DIPLOID ancestral population? Usually this 
+            Should be the same as the `spo_pop_size` parameter given to shadie
+        mutate: bool
+            True will add neutral mutations after recapitation is complete. 
+        recapitate: bool
+            Default = True. Option to make false is to allow a batch mutation of
+            already recapitated sims, if the user decided not the mutate them at
+            the time of recapitation. 
+        """
+
+        # assign the WD (holds all replicate sims)
+        directory = dirpath
+        
+        for filename in os.listdir(directory):
+            print(filename)
+            #generate the full path
+            f = os.path.join(directory, filename)
+            # check if it is a file (ignores internal folders)
+            if os.path.isfile(f):
+                #load the file
+                ts = tskit.load(f)
+
+                #get the treesfile
+                treesfile = ts.metadata['SLiM']['user_metadata']['file_out'][0]
+                
+                #recapitate and mutate 
+                ts_rm = shadie.postsim.OneSim(trees_file=treesfile, 
+                                              chromosome=chromosome, 
+                                              altgen = altgen,
+                                              ancestral_Ne = ancestral_Ne,
+                                              recapitate = True,
+                                              add_neutral_mutations = mutate)
+                
+                #make the new filepath
+                append_string = ""
+                if recapitate:
+                    append_string = (append_string + "_recap")
+                if mutate:
+                    append_string = (append_string + "_mut")
+                append_string = (append_string + ".trees")
+
+                newfilename = (filename[:-6] + "_recap.trees")
+                print(newfilename)
+                new_file = os.path.join(storepath, newfilename)
+                print(new_file)
+                #save the new, mutated tree file
+                ts_rm.tree_sequence.dump(new_file)
 
     def stats(
         self,
