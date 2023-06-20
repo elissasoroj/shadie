@@ -50,7 +50,8 @@ REPRO_PTER_HOMOSPORE_P1 = """
     mtag = 2000000 + ind.index;
     
     // fitness-based determination of how many spores are created by this ind
-    spores = sample(c(0,1), SPO_MAX_SPORES_PER, replace = T, weights = c((1.0-ind.fitnessScaling), ind.fitnessScaling))
+    spore_vector = sample(c(0,1), SPO_SPORES_PER, replace = T, weights = c((1.0-ind.fitnessScaling), ind.fitnessScaling));
+    spores = sum(spore_vector);
 
     // each spore produces its own recombinant breakpoints 
     for (rep in 1:spores) {
