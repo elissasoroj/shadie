@@ -189,7 +189,7 @@ class Model(AbstractContextManager):
             elif key == "fitness":
                 events = sorted(mapped[key], key=lambda x: -1 * float('inf') if x['idx'] is None else x['idx'])
             elif key == "survival":
-                events = sorted(mapped[key], key=lambda x: x['idx'])
+                events = sorted(mapped[key], key=lambda x: -1 * float('inf') if x['idx'] is None else x['idx'])
             else:
                 events = mapped[key]
 
