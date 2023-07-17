@@ -337,7 +337,7 @@ if __name__ == "__main__":
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=1000, #file_in = "/tmp/test.trees"
             )
-        mod.reproduction.pteridophyte_homosporous(spo_pop_size=1000, gam_pop_size=500)
+        mod.reproduction.wright_fisher_haploid(pop_size=1000) #spo_pop_size=1000, gam_pop_size=500
     print(mod.script)
     #mod.write("/tmp/slim.slim")
     #mod.run(binary="/usr/local/bin/slim")

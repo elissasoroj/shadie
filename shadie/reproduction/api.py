@@ -9,7 +9,7 @@ histories into SLiM scripts using the shadie Model context.
 from typing import Union, Tuple, Optional
 
 from shadie.reproduction.base import WrightFisher
-from shadie.reproduction.wfspecial import ClonalHaploidWF, AltGenWF
+from shadie.reproduction.wfspecial import ClonalHaploidWF, AltGenWF, HaploidWF
 from shadie.reproduction.bryobase import BryophyteMonoicous, BryophyteDioicous
 from shadie.reproduction.angiobase import AngiospermMonoecious, AngiospermDioecious
 from shadie.reproduction.fernbase import PteridophyteHomosporous, PteridophyteHeterosporous
@@ -571,7 +571,30 @@ class ReproductionApi:
             sexes=sexes,
         ).run()
 
-    def wright_fisher_haploid(
+    def wright_fisher_haploid_sexual(
+        self,
+        pop_size: int,
+        sexes: bool=False,  # mono/hetero terms is more consistent with others...
+        ):
+        """
+        Generate scripts appropriate for basic SLiM nonWF model, set up
+        as a WF model.
+
+        Parameters:
+        -----------
+        pop_size: 
+            Size of the population in number of haploids.
+        sexes: bool
+            default = False; individuals are hemraphroditic. If True,
+            individuals will be male and female
+        """
+        HaploidWF(
+            model=self.model,
+            pop_size=pop_size,
+            sexes=sexes,
+        ).run()
+
+    def wright_fisher_haploid_clonal(
         self,
         pop_size: int,
         sexes: bool=False,  # mono/hetero terms is more consistent with others...

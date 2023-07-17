@@ -22,7 +22,7 @@ REPRO_WF = """
 #K
 # -------------------------
 
-REPRO_CLONAL_WF = """
+REPRO_HAPLOID_WF = """
     // parents are chosen proportional to fitness. Two haploid genomes 
     //come together and immediately produce a haploid child with recombination
 
@@ -32,6 +32,19 @@ REPRO_CLONAL_WF = """
     for (i in seqLen(K)){
         breaks = sim.chromosome.drawBreakpoints(parent1[i]);
         p1.addRecombinant(parent1.genome1[i], parent2.genome1[i], breaks, NULL, NULL, NULL);
+    }
+    
+    self.active = 0;
+"""
+
+REPRO_CLONAL_WF = """
+    // parents are chosen proportional to fitness, produce one offpsring each time. 
+
+    fitness = p1.cachedFitness(NULL);
+    parent1 = sample(p1.individuals, K, replace=T, weights=fitness);
+
+    for (i in seqLen(K)){
+        p1.addRecombinant(parent1.genome1[i], NULL, NULL, NULL, NULL, NULL);
     }
     
     self.active = 0;
