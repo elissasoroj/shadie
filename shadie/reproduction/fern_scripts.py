@@ -115,7 +115,7 @@ REPRO_PTER_HOMOSPORE_P0 = """
         
         // if selfing is possible then get all sibling males
         if (SPO_SELF_RATE_PER_EGG > 0)
-            siblings = males[males.tag == 1000000 + individual.tag];
+            siblings = males[males.tag == (1000000 + individual.tag | individual.tag)];
         
         // iterate over each reproductive opportunity (archegonia) in this hermaphrodite.
         // A hermaphrodite could produce multiple eggs per arch, but they are identical, 
