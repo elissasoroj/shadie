@@ -251,8 +251,8 @@ if __name__ == "__main__":
     with shadie.Model() as mod:
         
         # define mutation types
-        m0 = shadie.mtype(0.5, 'n', 0, 0.4)
-        m1 = shadie.mtype(0.5, 'g', 0.8, 0.75, diffexpr="diploid")
+        m0 = shadie.mtype(0.5, 'n', (0, 0.4))
+        m1 = shadie.mtype(0.5, 'g', (0.8, 0.75), affects_haploid=False)
         #I suggest we add a checkpoint that calculates the average
         #fitness of mutations input by the user. If fitness is too high
         #the simuulation will lag tremendously. 
@@ -273,7 +273,7 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.pteridophyte_heterosporous(
+        mod.reproduction.pteridophyte_homosporous(
             spo_pop_size=1000, 
             gam_pop_size=1000,
             spo_self_rate_per_egg=0.0,
@@ -285,7 +285,7 @@ if __name__ == "__main__":
     #print(m1._expr)
     for elem in chrom.elements:
         for mut in elem.mlist:
-            print(mut._expr)
+            print(mut.affects_haploid)
 
 
     #mod.run()

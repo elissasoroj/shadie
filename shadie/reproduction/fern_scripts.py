@@ -16,7 +16,7 @@ DEFS_PTER_HOMOSPORE = """
 // p0 = haploid population
 // p1 = diploid population
 // >1M- tmp sex tags
-// <2000000 = female gametophyte (1N)
+// <2000000 = hermaphroditic gametophyte (1N)
 // >2000000 = male gametophyte (1N)
 // 2 = gametophyte clones (1N) tag
 // 3 = sporophyte (2N) tag
@@ -44,8 +44,8 @@ REPRO_PTER_HOMOSPORE_P1 = """
     }
     
     // parent tag is 1M + the parent's unique index
-    //female tags start with 1
-    ftag = 1000000 + ind.index;
+    //hermaphrodite tags start with 1
+    htag = 1000000 + ind.index;
     //male tags start with 2
     mtag = 2000000 + ind.index;
     
@@ -69,10 +69,10 @@ REPRO_PTER_HOMOSPORE_P1 = """
         child2 = p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL);
         child3 = p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL);
         child4 = p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL);
-        child1.tag = ifelse(runif(1) < GAM_FEMALE_TO_MALE_RATIO, ftag, mtag);
-        child2.tag = ifelse(runif(1) < GAM_FEMALE_TO_MALE_RATIO, ftag, mtag);
-        child3.tag = ifelse(runif(1) < GAM_FEMALE_TO_MALE_RATIO, ftag, mtag);
-        child4.tag = ifelse(runif(1) < GAM_FEMALE_TO_MALE_RATIO, ftag, mtag);
+        child1.tag = ifelse(runif(1) < GAM_FEMALE_TO_MALE_RATIO, htag, mtag);
+        child2.tag = ifelse(runif(1) < GAM_FEMALE_TO_MALE_RATIO, htag, mtag);
+        child3.tag = ifelse(runif(1) < GAM_FEMALE_TO_MALE_RATIO, htag, mtag);
+        child4.tag = ifelse(runif(1) < GAM_FEMALE_TO_MALE_RATIO, htag, mtag);
         children = c(child1, child2, child3, child4);
         if (SPO_MATERNAL_EFFECT > 0)
             children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
@@ -105,18 +105,20 @@ REPRO_PTER_HOMOSPORE_P0 = """
     // NOTE: each gametophyte gives rise to antheridia that produce thousands of
     // clonal sperm. Because of this, sperm is not removed from the mating pool when used. 
     
-    //Reproduction scripts run only female gametophytes
+    //Reproduction scripts run only hermaphroditic gametophytes
     if (individual.tag < 2000000) {
         
-        // get all males that could fertilize an egg of this female
-        males = p0.individuals[p0.individuals.tag > 2000000];
+        // get all males that could fertilize an egg of this hermaphrodite
+        //In homosporous ferns, most gametophytes are hermaphroditic or male, 
+        //so "males" includes all the hermaphrodites as well as male gametophytes
+        males = p0.individuals; 
         
         // if selfing is possible then get all sibling males
         if (SPO_SELF_RATE_PER_EGG > 0)
             siblings = males[males.tag == 1000000 + individual.tag];
         
-        // iterate over each reproductive opportunity (archegonia) in this female.
-        // A female could produce multiple eggs per arch, but they are identical, 
+        // iterate over each reproductive opportunity (archegonia) in this hermaphrodite.
+        // A hermaphrodite could produce multiple eggs per arch, but they are identical, 
         // so we do not bother to model that for now ...
         for (rep in 1:GAM_ARCHEGONIA_PER) {
             
