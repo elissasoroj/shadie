@@ -155,10 +155,9 @@ REPRO_PTER_HOMOSPORE_P0 = """
             // only occurs if a non-sib gametophyte is still alive.
             else {
                 // try at most 10 times to find a non-sib sperm, then skip.
-                // males = p0.individuals[p0.individuals.tag > 2000000];
                 for (trial in 1:10) {
                     sperm = sample(males, 1);
-                    if (sperm.tag != individual.tag + 1000000) {
+                    if (sperm.tag != (individual.tag | individual.tag + 1000000)) {
                         child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
                         child.tag = 3;
                         if (GAM_MATERNAL_EFFECT > 0)
