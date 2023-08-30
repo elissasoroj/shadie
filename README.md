@@ -20,7 +20,7 @@ cd ./shadie
 pip install -e .
 ```
 
-You can install SLiM3 [here](https://messerlab.org/slim/). *You must install SliM3 for most of the functionality of `shadie` to work.* Note: `shadie` does *not* yet work with the newest release, SLiM4. 
+You can install SLiM4 [here](https://messerlab.org/slim/).
 
 ~
 
