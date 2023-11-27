@@ -101,6 +101,7 @@ class Model(AbstractContextManager):
         # }
         self.map = {
             'initialize': [],
+            'first':[],
             'reproduction': [],
             'early': [],
             'late': [],
@@ -151,7 +152,7 @@ class Model(AbstractContextManager):
         order and runs checks on the script.
         """
         sorted_keys = [
-            'initialize', 'shadie', 'reproduction', 'early',
+            'initialize', 'shadie', 'first', 'reproduction', 'early',
             'custom', 'muteffect', 'survival', 'fitness', 'late',
         ]
 
@@ -180,6 +181,8 @@ class Model(AbstractContextManager):
             # sort events within key type
             if key == "shadie":
                 events = mapped[key]
+            elif key == "first":
+                events = sorted(mapped[key], key=lambda x: str(x['time']))
             elif key == "early":
                 events = sorted(mapped[key], key=lambda x: str(x['time']))
             elif key == "late":
@@ -300,11 +303,31 @@ class Model(AbstractContextManager):
         """
         scripts = [f"sim.readFromPopulationFile('{self.metadata['file_in']}')"]
         scripts.extend(tag_scripts)
-        self.early(
+        self.first(
             time=1,
             scripts=scripts,
             comment="read starting populations from file_in"
         )
+
+    def first(
+        self,
+        time: Union[int, None],
+        scripts: Union[str, list],
+        idx: Union[str,None]= None,
+        comment: Union[str,None]=None,
+        ):
+        """Add an first() block to the SLiM code map.
+
+        Events in `first` blocks occur before reproduction in every
+        generation if time=None, or only in a specified generation if
+        a time arg is entered.
+        """
+        self.map['first'].append({
+            'time': time,
+            'scripts': scripts,
+            'idx': idx,
+            'comment': comment,
+        })
 
     def early(
         self,
@@ -565,6 +588,13 @@ if __name__ == "__main__":
             scripts="sim.addSubpop('p1', 1000)",
             comment="diploid sporophytes",
         )
+
+        model.first(
+            time=100,
+            scripts="sim.addSubpop('p0', 100)",
+            comment="add haploid gametos",
+        )
+
         model.fitness(
             population='p1',
             scripts="return 1 + mut.selectionCoeff",
@@ -578,5 +608,5 @@ if __name__ == "__main__":
         # )
 
 
-    #print(model.script)
+    print(model.script)
     #model.run()

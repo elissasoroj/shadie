@@ -70,6 +70,14 @@ SURVIVAL = """
 }}
 """
 
+FIRST = """
+// executes before offspring are generated
+{comment}
+{idx}{time}first() {{
+    {scripts}
+}}
+"""
+
 
 EARLY = """
 // executes after offspring are generated
@@ -92,6 +100,7 @@ CUSTOM = """{comment}{scripts}"""
 
 EVENT_TO_FORMATTER = {
     "initialize": INITIALIZE,
+    "first": FIRST,
     "early": EARLY,
     "late": LATE,
     'muteffect': MUT_EFFECT,
