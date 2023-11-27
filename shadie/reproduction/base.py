@@ -15,6 +15,7 @@ from shadie.reproduction.scripts import (
     SUB_MUTS,
     P0_FITNESS_SCALE_DEFAULT,
     P1_FITNESS_SCALE_DEFAULT,
+    FIRST,
     EARLY,
     EARLY_WITH_GAM_K,
     WF_REPRO,
@@ -98,8 +99,8 @@ class NonWrightFisher(ReproductionBase):
         generation, to avoid lagging in the simulation. Automatically sets
         to 10x user-defined popsize
         """
-        if not self.gam_k:
-            self.gam_k = 10*self.gam_pop_size
+        if not self.gam_ceiling:
+            self.gam_ceiling = 10*self.gam_pop_size
 
     def _define_subpopulations(self):
         """add haploid and diploid life stages as subpopulations."""
@@ -229,10 +230,21 @@ class NonWrightFisher(ReproductionBase):
         # #save subsitutions for late caldl in model-specific scripts
         # self._substitution_str = substitution_str
 
+    def _add_first_script(self):
+        """
+        Defines the first() callbacks for each gen.
+        This will be overridden by any callbacks of the same name in subclasses
+        """
+        self.model.first(
+            time=None,
+            scripts=FIRST,
+            comment="alternation of generations",
+        )
+
     def _add_early_script(self):
         """
         Defines the early() callbacks for each gen.
-        This overrides the NonWrightFisher class function of same name.
+        This will be overridden by any callbacks of the same name in subclasses
         """
         early_script = (EARLY_WITH_GAM_K.format(
             p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
@@ -247,7 +259,7 @@ class NonWrightFisher(ReproductionBase):
         self.model.early(
             time=None,
             scripts=early_script,
-            comment="alternation of generations",
+            comment="events after reproduction",
         )
 
 

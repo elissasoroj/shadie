@@ -26,6 +26,12 @@ from shadie.reproduction.fern_scripts import (
     DEFS_PTER_HETEROSPORE,
 )
 
+from shadie.reproduction.vittaria_scripts import (
+    REPRO_PTER_VITTARIA_P0,
+    REPRO_PTER_VITTARIA_P1,
+    DEFS_PTER_VITTARIA,
+    )
+
 DTYPES = ("dioicy", "dioicous", "heterosporous")
 MTYPES = ("monoicy", "monoicous", "homosporous")
 
@@ -45,7 +51,7 @@ class PteridophyteBase(NonWrightFisher):
     gam_random_death_chance: float
     spo_maternal_effect: float
     gam_archegonia_per: int
-    gam_k: int
+    gam_ceiling: int
     gam_female_to_male_ratio: Tuple[float,float]
     _gens_per_lifecycle: int = field(default=2, init=False)
 
@@ -98,6 +104,7 @@ class PteridophyteHomosporous(PteridophyteBase):
         # methods inherited from parent Pteridophyte class
         self._set_mutation_rates()
         self._add_shared_mode_scripts()
+        self._add_first_script()
 
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
@@ -146,13 +153,13 @@ class PteridophyteHomosporous(PteridophyteBase):
         self.model.custom(scripts=DEFS_PTER_HOMOSPORE, comment = "shadie DEFINITIONS")
 
         self.model.repro(
-            idx = "s5",
+            idx = "s0",
             population="p0",
             scripts=REPRO_PTER_HOMOSPORE_P0,
             comment="generates gametes from sporophytes"
         )
         self.model.repro(
-            idx = "s6",
+            idx = "s1",
             population="p1",
             scripts=REPRO_PTER_HOMOSPORE_P1,
             comment="generates gametes from sporophytes"
@@ -227,27 +234,79 @@ class PteridophyteHeterosporous(PteridophyteBase):
 
         self.model.repro(
             population="p0",
-            idx = "s5",
+            idx = "s0",
             scripts=REPRO_PTER_HETEROSPORE_P0,
             comment="generates gametes from sporophytes"
         )
         self.model.repro(
             population="p1",
-            idx = "s6",
+            idx = "s1",
             scripts=REPRO_PTER_HETEROSPORE_P1,
             comment="generates gametes from sporophytes"
         )
         
-        # add late call - CHECKING WITH BEN
-        # substitution_script = (
-        #     SUBSTITUTION.format(**{'muts': self._substitution_str,
-        #         'late': LATE_PTER_HETEROSPORE}).lstrip())
 
-        # self.model.late(
-        #     time=None,
-        #     scripts=substitution_script,
-        #     comment="fixes mutations in haploid gen"
-        #     )
+@dataclass
+class PteridophyteVittaria(PteridophyteBase):
+    mode: str = field(default="vittaria", init=False)
+    gam_self_rate: float
+    gam_self_rate_per_egg: float
+    gam_maternal_effect: float
+    gam_clone_rate: float
+    gam_clones_per: int
+    sex: str
+    sex_rate: float
+
+    def run(self):
+        """Fill self.model.map with SLiM script snippets."""
+        # methods inherited from parent Bryophyte class
+        self._set_mutation_rates()
+        self._add_shared_mode_scripts()
+        self._add_first_script()
+
+        # methods inherited from parent NonWrightFisher class
+        self._define_subpopulations()
+        self._add_alternation_of_generations()
+        self._set_gametophyte_k()
+        self._add_initialize_globals()
+        self._add_initialize_constants()
+        self._write_trees_file()
+
+        # mode-specific functions
+        self._add_mode_scripts()
+        self._add_early_script()
+
+    def _add_early_script(self):
+        """
+        Defines the early() callbacks for each gen.
+        This overrides the NonWrightFisher class function of same name.
+        """
+
+        #unless I add customization back into early, the formatting
+        #block is gone
+
+        self.model.early(
+            time=None,
+            scripts=EARLY,
+        )
+
+    def _add_mode_scripts(self):
+        """Add reproduction scripts unique to Vittaria."""
+
+        self.model.custom(scripts=DEFS_PTER_VITTARIA, comment = "shadie DEFINITIONS")
+
+        self.model.repro(
+            population="p0",
+            idx = "s0",
+            scripts=REPRO_PTER_VITTARIA_P0,
+            comment="generates gametes from gametophytes"
+        )
+        self.model.repro(
+            population="p1",
+            idx = "s1",
+            scripts=REPRO_PTER_VITTARIA_P1,
+            comment="generates spores from sporophytes"
+        )
 
 
 if __name__ == "__main__":
@@ -279,7 +338,7 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.pteridophyte_homosporous(
+        mod.reproduction.pteridophyte_vittaria(
             spo_pop_size=1000, 
             gam_pop_size=1000,
             spo_self_rate_per_egg=0.0,

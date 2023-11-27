@@ -22,6 +22,7 @@ DEFS_PTER_HOMOSPORE = """
 // 3 = sporophyte (2N) tag
 // 4 = sporophyte clones (2N) tag
 """
+
 # ==PARAMETERS==
 #SPO_CLONE_RATE
 #SPO_CLONES_PER
