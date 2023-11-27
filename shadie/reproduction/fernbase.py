@@ -31,7 +31,7 @@ MTYPES = ("monoicy", "monoicous", "homosporous")
 
 @dataclass
 class PteridophyteBase(NonWrightFisher):
-    lineage: str = field(default="Bryophyte", init=False)
+    lineage: str = field(default="Pteridophyte", init=False)
     spo_pop_size: int
     gam_pop_size: int
     spo_mutation_rate: Optional[float]
@@ -47,15 +47,20 @@ class PteridophyteBase(NonWrightFisher):
     gam_archegonia_per: int
     gam_k: int
     gam_female_to_male_ratio: Tuple[float,float]
+    _gens_per_lifecycle: int = field(default=2, init=False)
 
     def __post_init__(self):
         """Convert tuple ratio to a float."""
         sum_ratio = sum(self.gam_female_to_male_ratio)
         float_ratio = self.gam_female_to_male_ratio[0] / sum_ratio
         self.gam_female_to_male_ratio = float_ratio
+        self.model_source = "shadie"
+        self.lineage = self.lineage
+        self.mode = self.mode
+        self.gens_per_lifecycle = self._gens_per_lifecycle
 
     #TODO?
-    #optional (lineage-specific params that correspon to generalized ones)
+    #optional (lineage-specific params that correspond to generalized ones)
     # cone_megasporangia_per: Optional[int]
     # cone_microsporangia_per: Optional[int]
 
@@ -87,6 +92,7 @@ class PteridophyteHomosporous(PteridophyteBase):
     gam_maternal_effect: float
     gam_clone_rate: float
     gam_clones_per: int
+
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
         # methods inherited from parent Pteridophyte class
@@ -97,9 +103,9 @@ class PteridophyteHomosporous(PteridophyteBase):
         self._define_subpopulations()
         self._add_alternation_of_generations()
         self._set_gametophyte_k()
+        self._write_trees_file()
         self._add_initialize_globals()
         self._add_initialize_constants()
-        self._write_trees_file()
 
         # mode-specific functions
         self._add_mode_scripts()

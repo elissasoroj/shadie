@@ -41,6 +41,7 @@ class HaploidWF(ReproductionBase):
      haploid individuals."""
     
     pop_size: int #number of haploid individuals
+    _gens_per_lifecycle: int = 1
     sexes: bool = False  # not yet used?
 
     def run(self):
@@ -111,6 +112,7 @@ class ClonalHaploidWF(ReproductionBase):
      haploid individuals."""
     
     pop_size: int #number of haploid individuals
+    _gens_per_lifecycle: int = 1
     sexes: bool = False  # not yet used?
 
     def run(self):
@@ -176,6 +178,7 @@ class AltGenWF(ReproductionBase):
     
     spo_pop_size: int #number of diploid individuals
     gam_pop_size: int #number of haploid individuals
+    _gens_per_lifecycle: int = 2
     sexes: bool = False  # not yet used?
 
     def run(self):
@@ -281,6 +284,7 @@ class OLDWrightFisher(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
     sexes: bool = False  # not yet used?
+    _gens_per_lifecycle: int = 1
 
     def run(self):
         """

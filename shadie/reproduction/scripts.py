@@ -7,6 +7,23 @@ Generic scripts.
 # early ()
 # GAM_MUTATION_RATE
 
+#standard first script
+FIRST = """
+// alternate generations
+    if (community.tick % 2 == 0) {{
+
+        // set reproduction function to be used when next generation starts.
+        // deactivate reproduction(p1) diploids reproduce, haploids don't.
+        // activate reproduction(p0) haploids reproduce, diploids don't.        
+        s5.active = 1;
+        s6.active = 0;
+
+        {p0activate}
+        {p1deactivate}
+    }}
+
+"""
+
 #standard early script
 EARLY = """
 // diploids (p1) just generated haploid gametophytes into p0
@@ -36,7 +53,7 @@ EARLY = """
         s5.active = 1;
         s6.active = 0;
 
-        {p0activate}
+        {p1activate}
         {p0deactivate}
     }}
 
@@ -68,7 +85,7 @@ EARLY = """
         s6.active = 1;
 
         {p1deactivate}
-        {p1activate}
+        {p0activate}
     }}
 """
 

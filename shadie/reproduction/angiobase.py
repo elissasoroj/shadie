@@ -56,6 +56,13 @@ class AngiospermBase(NonWrightFisher):
     pollen_success_rate: float
     pollen_competition: str
     stigma_pollen_per: int
+    _gens_per_lifecycle: int = field(default=2, init=False)
+
+    def __post_init__(self):
+        """Add extra params to metadata"""
+        self.gens_per_lifecycle = self._gens_per_lifecycle
+        self.lineage = self.lineage
+        self.mode = self.mode
 
     def _set_mutation_rates(self):
         """Checks parameters after init."""
@@ -109,8 +116,6 @@ class AngiospermDioecious(AngiospermBase):
         self._add_shared_mode_scripts()
 
         # methods inherited from parent NonWrightFisher class
-        self._add_initialize_globals()
-        self._add_initialize_constants()
         self._add_alternation_of_generations()
         self._write_trees_file()
 
@@ -118,6 +123,10 @@ class AngiospermDioecious(AngiospermBase):
         self._define_subpopulations()
         self._add_mode_scripts()
         self._add_early_script()
+
+        #save metadata
+        self._add_initialize_globals()
+        self._add_initialize_constants()
 
     def _define_subpopulations(self):
         """Defines the subpopulations and males/females.
@@ -205,8 +214,6 @@ class AngiospermMonoecious(AngiospermBase):
         self._add_shared_mode_scripts()
 
         # methods inherited from parent NonWrightFisher class
-        self._add_initialize_globals()
-        self._add_initialize_constants()
         self._add_alternation_of_generations()
         self._write_trees_file()
 
@@ -214,6 +221,10 @@ class AngiospermMonoecious(AngiospermBase):
         self._define_subpopulations()
         self._add_mode_scripts()
         self._add_early_script()
+
+        #add metadata
+        self._add_initialize_globals()
+        self._add_initialize_constants()
 
     def _add_early_script(self):
         """
@@ -272,8 +283,8 @@ if __name__ == "__main__":
     with shadie.Model() as mod:
         
         # define mutation types
-        m0 = shadie.mtype(0.5, 'n', 0, 0.4)
-        m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
+        m0 = shadie.mtype(0.5, 'n', (0, 0.4))
+        m1 = shadie.mtype(0.5, 'g', [0.8, 0.75])
         #I suggest we add a checkpoint that calculates the average
         #fitness of mutations input by the user. If fitness is too high
         #the simuulation will lag tremendously. 

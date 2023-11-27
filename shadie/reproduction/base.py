@@ -53,7 +53,11 @@ class ReproductionBase:
         whether the start point was loaded from a previous file.
         """
         # get time AFTER the last even generation.
-        endtime = int(self.model.sim_time + 1)
+
+        gens = self._gens_per_lifecycle
+        endtime = int((self.model.sim_time*gens) + 1)
+        self.full_lifecycles = self.model.sim_time
+        self.slim_gens = endtime
 
         # calculate end based on this sim AND the loaded parent sim.
         if self.model.metadata['file_in']:
@@ -67,6 +71,7 @@ class ReproductionBase:
                     f"sim.treeSeqOutput('{self.model.metadata['file_out']}', metadata = METADATA)"],
                 comment="end of sim; save .trees file",
             )
+
         # write output at last generation of this simulation.
         else:
             self.model.late(
@@ -87,6 +92,7 @@ class NonWrightFisher(ReproductionBase):
     include alternation of generations (p0 and p1 subpops). The
     alternative is to implement a WF model.
     """
+
     def _set_gametophyte_k(self):
         """Sets a carrying capacity for gametophyte holding pop (during p1
         generation, to avoid lagging in the simulation. Automatically sets
@@ -142,7 +148,9 @@ class NonWrightFisher(ReproductionBase):
         unique set of attributes. Excludes parent attrs like model.
         """
         # exclude parent class attributes
-        exclude = ["lineage", "mode", "model", "_substitution_str", 
+        exclude = ["lineage", "mode", "model", "gens_per_lifecycle",
+                    "full_lifecycles", "slim_gens",
+                    "model_source", "_substitution_str", 
                     "_p0activate_str", "_p0deactivate_str",
                     "_p1activate_str", "_p1deactivate_str"]
         asdict = {
@@ -247,6 +255,7 @@ class NonWrightFisher(ReproductionBase):
 class WrightFisher(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
+    _gens_per_lifecycle: int = 1  #internal param
     sexes: bool = False  # not yet used?
 
     def run(self):
@@ -337,7 +346,7 @@ if __name__ == "__main__":
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=1000, #file_in = "/tmp/test.trees"
             )
-        mod.reproduction.wright_fisher_haploid(pop_size=1000) #spo_pop_size=1000, gam_pop_size=500
+        mod.reproduction.wright_fisher_haploid_sexual(pop_size=1000) #spo_pop_size=1000, gam_pop_size=500
     print(mod.script)
     #mod.write("/tmp/slim.slim")
     #mod.run(binary="/usr/local/bin/slim")

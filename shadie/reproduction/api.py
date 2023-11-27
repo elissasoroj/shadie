@@ -41,7 +41,7 @@ class ReproductionApi:
         gam_random_death_chance: float=0.0,
         spo_spores_per: int=500,
         gam_archegonia_per: int=5,
-        gam_k: int=None
+        gam_k: int=None,
         ):
         """Adds Monoicous Bryophyte life history to model.
 
@@ -296,7 +296,6 @@ class ReproductionApi:
         # megasporangia_megaspores_per: int=1,
         # microsporangia_microspores_per: int=100,
         gam_k: int =None,
-
         ):
         """
         Generate scripts appropriate for an pteridophyte (lycophytes
@@ -446,7 +445,6 @@ class ReproductionApi:
             pollen_success_rate=pollen_success_rate,
             pollen_competition=pollen_competition,
             stigma_pollen_per=stigma_pollen_per,
-            
         ).run()
     # def gymnosperm_monosporous(...)
     # def gymnosperm_heterosporous(...)    

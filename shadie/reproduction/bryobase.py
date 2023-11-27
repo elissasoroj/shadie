@@ -54,6 +54,14 @@ class BryophyteBase(NonWrightFisher):
     gam_maternal_effect: float
     gam_archegonia_per: int
     gam_k: int
+    _gens_per_lifecycle: int = field(default=2, init=False)
+
+    def __post_init__(self):
+        """Add extra params to metadata"""
+        self.model_source = "shadie"
+        self.lineage = self.lineage
+        self.mode = self.mode
+        self.gens_per_lifecycle = self._gens_per_lifecycle
 
     def _set_mutation_rates(self):
         """Checks parameters after init."""
@@ -105,9 +113,9 @@ class BryophyteDioicous(BryophyteBase):
         self._add_alternation_of_generations()
         self._add_early_script()
         self._set_gametophyte_k()
+        self._write_trees_file()
         self._add_initialize_globals()
         self._add_initialize_constants()
-        self._write_trees_file()
 
         # mode-specific functions
         self._add_mode_scripts()
@@ -145,9 +153,9 @@ class BryophyteMonoicous(BryophyteBase):
         self._add_alternation_of_generations()
         self._add_early_script()
         self._set_gametophyte_k()
+        self._write_trees_file()
         self._add_initialize_globals()
         self._add_initialize_constants()
-        self._write_trees_file()
 
         # mode-specific functions
         self._add_mode_scripts()
@@ -169,19 +177,15 @@ class BryophyteMonoicous(BryophyteBase):
             comment="generates gametes from sporophytes"
         )
 
-        # add model type to metadata
-        modeldict = {'model': 'shadie', 'lineage': 'bryophyte', 'mode': 'monoicous'}
-        self.model.map["initialize"][0]['simglobals']['METADATA'].update(modeldict)
-
 if __name__ == "__main__":
 
     import shadie
 
     # define mutation types
-    m0 = shadie.mtype(0.5, 'n', 0, 0.4)
-    m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
-    m2 = shadie.mtype(0.5, 'g', 0.8, 0.75, diffexpr="diploid")
-    m3 = shadie.mtype(0.5, 'n', 0, 0.4, diffexpr="haploid")
+    m0 = shadie.mtype(0.5, 'n', [0, 0.4])
+    m1 = shadie.mtype(0.5, 'g', [0.8, 0.75])
+    m2 = shadie.mtype(0.5, 'g', [0.8, 0.75], affects_diploid = False)
+    m3 = shadie.mtype(0.5, 'n', [0, 0.4], affects_haploid = False)
 
     # define elements types
     e0 = shadie.etype([m0, m2], [1, 2])
