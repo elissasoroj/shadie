@@ -166,7 +166,7 @@ class MutationType:
     @property
     def name(self) -> str:
         """Returns a unique name for this MutationType.
-
+s
         When called from within a chromosome object MutationTypes
         are renamed with unique numbering.
         """

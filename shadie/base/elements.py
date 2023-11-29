@@ -195,6 +195,7 @@ if __name__ == "__main__":
         print(mut)
 
     print(type(ele1.mlist[1]))
+    print(shadie.NONCDS.name)
 
 
     # create an ElementList ()
