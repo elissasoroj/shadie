@@ -243,7 +243,8 @@ class OneSim:
             # check if it is a file (ignores internal folders)
             if os.path.isfile(f):
                 #load the file
-                ts = tskit.load(f)
+                #ts = tskit.load(f)
+                trees_file = f
 
                 #get the treesfile
                 #treesfile = ts.metadata['SLiM']['user_metadata']['file_out'][0]
@@ -251,7 +252,7 @@ class OneSim:
                 #    filename = treesfile.split("/")[-1]
 
                 #recapitate and mutate 
-                ts_rm = OneSim(trees_file=ts, 
+                ts_rm = OneSim(trees_file=f, 
                               chromosome=chromosome, 
                               altgen = altgen,
                               ancestral_Ne = ancestral_Ne,
@@ -270,7 +271,7 @@ class OneSim:
                 #print(newfilename)
                 newfilename = (filename + append_string)
                 new_file = os.path.join(storepath, newfilename)
-                
+
                 #save the new, mutated tree file
                 ts_rm.tree_sequence.dump(new_file)
 
