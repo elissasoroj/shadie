@@ -249,7 +249,7 @@ class OneSim:
                 treesfile = ts.metadata['SLiM']['user_metadata']['file_out'][0]
                 
                 #recapitate and mutate 
-                ts_rm = shadie.postsim.OneSim(trees_file=treesfile, 
+                ts_rm = postsim.OneSim(trees_file=treesfile, 
                                               chromosome=chromosome, 
                                               altgen = altgen,
                                               ancestral_Ne = ancestral_Ne,
