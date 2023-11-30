@@ -246,17 +246,17 @@ class OneSim:
                 ts = tskit.load(f)
 
                 #get the treesfile
-                treesfile = ts.metadata['SLiM']['user_metadata']['file_out'][0]
-                if "/" in treesfile:
-                    treesfile = treesfile.split("/")[-1]
+                #treesfile = ts.metadata['SLiM']['user_metadata']['file_out'][0]
+                #if "/" in treesfile:
+                #    filename = treesfile.split("/")[-1]
 
                 #recapitate and mutate 
-                ts_rm = OneSim(trees_file=treesfile, 
-                                              chromosome=chromosome, 
-                                              altgen = altgen,
-                                              ancestral_Ne = ancestral_Ne,
-                                              recapitate = True,
-                                              add_neutral_mutations = mutate)
+                ts_rm = OneSim(trees_file=ts, 
+                              chromosome=chromosome, 
+                              altgen = altgen,
+                              ancestral_Ne = ancestral_Ne,
+                              recapitate = True,
+                              add_neutral_mutations = mutate)
                 
                 #make the new filepath
                 append_string = ""
@@ -266,10 +266,11 @@ class OneSim:
                     append_string = (append_string + "_mut")
                 append_string = (append_string + ".trees")
 
-                newfilename = (filename[:-6] + "_recap.trees")
-                print(newfilename)
+                #newfilename = (filename[:-6] + "_recap.trees")
+                #print(newfilename)
+                newfilename = (filename + append_string)
                 new_file = os.path.join(storepath, newfilename)
-                print(new_file)
+                
                 #save the new, mutated tree file
                 ts_rm.tree_sequence.dump(new_file)
 
