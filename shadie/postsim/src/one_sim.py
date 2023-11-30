@@ -247,7 +247,9 @@ class OneSim:
 
                 #get the treesfile
                 treesfile = ts.metadata['SLiM']['user_metadata']['file_out'][0]
-                
+                if "/" in treesfile:
+                    treesfile = treesfile.split("/")[-1]
+
                 #recapitate and mutate 
                 ts_rm = OneSim(trees_file=treesfile, 
                                               chromosome=chromosome, 
