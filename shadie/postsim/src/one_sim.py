@@ -269,7 +269,7 @@ class OneSim:
 
                 #newfilename = (filename[:-6] + "_recap.trees")
                 #print(newfilename)
-                newfilename = (filename + append_string)
+                newfilename = (filename[:-6] + append_string)
                 new_file = os.path.join(storepath, newfilename)
 
                 #save the new, mutated tree file
