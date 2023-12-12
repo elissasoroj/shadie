@@ -46,6 +46,7 @@ class OneSim:
         seed: Optional[int]=None,
         recapitate: bool=False,
         add_neutral_mutations: bool=False,
+        custom_mutrate: Optional[float]=None,
         ):
 
         # hidden attributes
@@ -69,13 +70,20 @@ class OneSim:
         """The shadie.Chromosome class representing the SLiM genome."""
         self.rng: np.random.Generator=np.random.default_rng(seed)
  
+        self.custom_mutrate: float = custom_mutrate
+
         # try to fill attributes by extracting metadata from the tree files.
         self._extract_metadata()
         self._update_tables()
+        
         if recapitate:
-            self._recapitate()
+            self.recapitate()
+        
         if add_neutral_mutations:
-            self._mutate()
+            if custom_mutrate:
+                self._mutate(custom_mutrate=self.custom_mutrate)
+            else:
+                self._mutate()
 
     def _extract_metadata(self):
         """Extract self attributes from shadie .trees file metadata.
@@ -86,7 +94,13 @@ class OneSim:
         if self.generations is None :
             self.generations = self.tree_sequence.metadata["SLiM"]["cycle"][0]
         if self.mut is None:
-            self.mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["mutation_rate"][0])
+            if self.tree_sequence.metadata["SLiM"]["user_metadata"]["gam_mutation_rate"][0]:
+                gam_mut = self.tree_sequence.metadata["SLiM"]["user_metadata"]["gam_mutation_rate"][0]
+                spo_mut = self.tree_sequence.metadata["SLiM"]["user_metadata"]["spo_mutation_rate"][0]
+
+                self.mut = (gam_mut+spo_mut)/2
+            else:
+                self.mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["mutation_rate"][0])
         if self.recomb is None:
             self.recomb = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"][0])
         if self.ancestral_Ne is None:
@@ -147,7 +161,7 @@ class OneSim:
             recombination_rate=self.recomb,
         )
 
-    def _mutate(self):
+    def _mutate(self, custom_mutrate:Optional[float]=None):
         """Mutatates the recapitated TreeSequence.
 
         This applies a mutation model to edges of the tree sequence.
@@ -162,10 +176,16 @@ class OneSim:
         # logger report before adding mutations
         self._report_mutations(allow_m0=False)
 
+        #check for custom mutation rate
+        if custom_mutrate:
+            rate = custom_mutrate
+        else:
+            rate = self.mut
+
         # add mutations
         self.tree_sequence = msprime.sim_mutations(
             self.tree_sequence,
-            rate=self.mut,
+            rate=rate,
             random_seed=self.rng.integers(2**31),
             keep=True,  # whether to keep existing mutations.
             model=msprime.SLiMMutationModel(type=0),
@@ -201,6 +221,7 @@ class OneSim:
         ancestral_Ne: int,
         mutate:bool,
         recapitate:bool=True,
+        custom_mutrate:Optional[float]=None,
         ):
         """
         Utility function for batch recapitating all the .trees files
