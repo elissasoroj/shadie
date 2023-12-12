@@ -95,8 +95,8 @@ class OneSim:
             self.generations = self.tree_sequence.metadata["SLiM"]["cycle"][0]
         if self.mut is None:
             if self.tree_sequence.metadata["SLiM"]["user_metadata"]["gam_mutation_rate"][0]:
-                gam_mut = self.tree_sequence.metadata["SLiM"]["user_metadata"]["gam_mutation_rate"][0]
-                spo_mut = self.tree_sequence.metadata["SLiM"]["user_metadata"]["spo_mutation_rate"][0]
+                gam_mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gam_mutation_rate"][0])
+                spo_mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["spo_mutation_rate"][0])
 
                 self.mut = (gam_mut+spo_mut)/2
             else:
