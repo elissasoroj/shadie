@@ -77,7 +77,7 @@ class OneSim:
         self._update_tables()
         
         if recapitate:
-            self.recapitate()
+            self._recapitate()
         
         if add_neutral_mutations:
             if custom_mutrate:
