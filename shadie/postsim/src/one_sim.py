@@ -97,8 +97,9 @@ class OneSim:
             if self.tree_sequence.metadata["SLiM"]["user_metadata"]["gam_mutation_rate"][0]:
                 gam_mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gam_mutation_rate"][0])
                 spo_mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["spo_mutation_rate"][0])
+                gens = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
 
-                self.mut = (gam_mut+spo_mut)/2
+                self.mut = (gam_mut+spo_mut)/gens
             else:
                 self.mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["mutation_rate"][0])
         if self.recomb is None:
@@ -182,6 +183,8 @@ class OneSim:
         else:
             rate = self.mut
 
+        self.rate = rate
+
         # add mutations
         self.tree_sequence = msprime.sim_mutations(
             self.tree_sequence,
@@ -210,6 +213,7 @@ class OneSim:
 
         # report to logger the existing mutations
         logger.info(
+            f"Using mutation rate {self.rate}"
             f"Keeping {self.tree_sequence.num_mutations} existing "
             f"mutations of type(s) {mut_types}.")
 
