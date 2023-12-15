@@ -34,13 +34,13 @@ class MutationList(list):
     @property
     def slim_dict(self) -> Dict[str, str]:
         """Return dict mapping MutationType names to SLiM code for MutationType."""
-        self.slim_dict = {}
+        slim_dict = {}
         for mut in self:
             # build a string representation of muttype for slim
             params = ", ".join(map(str, mut.params))
             srep = f"'{mut.name}', {mut.dominance}, '{mut.distribution}', {params}"
             self.slim_dict[mut.name] = srep
-        return self.slim_dict
+        return slim_dict
 
     @property
     def min(self):
