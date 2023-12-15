@@ -320,7 +320,10 @@ if __name__ == "__main__":
         )
 
         # init the model
-        mod.initialize(chromosome=chrom)
+        mod.initialize(
+            chromosome=chrom,
+            sim_time=20,
+            )
 
         # mod.reproduction.pteridophyte_vittaria(
         #     spo_pop_size=1000, 
@@ -348,4 +351,4 @@ if __name__ == "__main__":
             print(mut.affects_haploid)
 
 
-    #mod.run()
+    mod.run()
