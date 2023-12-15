@@ -35,7 +35,7 @@ def draw_altair_chrom_canvas(chrom: 'ChromosomeBase', width: int=700):
     genome["y2"] = 1
 
     # set the colors
-    cmap_in = ['mediumaquamarine','olivedrab', 'limegreen', 'darkgreen','palegreen',]
+    cmap_in = ['mediumaquamarine', 'limegreen', 'darkgreen','palegreen', 'olivedrab',]
     cmap_ex = ['cornflowerblue', 'mediumblue','dodgerblue', 'darkslateblue', 'skyblue']
     cmap_nc = ['lemonchiffon', 'gold', 'orange',  'yellow', 'khaki']
 

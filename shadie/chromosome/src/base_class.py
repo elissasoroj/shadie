@@ -223,7 +223,10 @@ class ChromosomeBase:
         altair.VConcatChart
             An HTML element that will display in a jupyter notebook.
         """
-        return draw_altair_chrom_canvas_interactive(self, width, outfile)
+
+        plot = draw_altair_chrom_canvas_interactive(self, width, outfile)
+
+        return plot
 
     def draw(self, width: int=700, axes: Optional['toyplot.coordinates.Cartesian']=None):
         """Return a toyplot drawing of the chromosome."""
