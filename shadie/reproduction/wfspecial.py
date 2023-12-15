@@ -17,9 +17,7 @@ from typing import Tuple, Optional
 from dataclasses import dataclass, field
 from shadie.reproduction.base import ReproductionBase
 from shadie.reproduction.scripts import (
-    SURV,
     GAM_MATERNAL_EFFECT_ON_P1,
-    SUBSTITUTION,
     P0_FITNESS_SCALE_DEFAULT,
     #EARLY_WITH_GAM_K,
     EARLY,

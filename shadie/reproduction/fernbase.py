@@ -8,13 +8,17 @@ from dataclasses import dataclass, field
 import pyslim
 from shadie.reproduction.base import NonWrightFisher
 from shadie.reproduction.scripts import (
-    SURV,
-    GAM_MATERNAL_EFFECT_ON_P1,
-    SPO_MATERNAL_EFFECT_ON_P0,
-    SUBSTITUTION,
     EARLY,
     P0_FITNESS_SCALE_DEFAULT,
-    P1_FITNESS_SCALE_DEFAULT
+    P1_FITNESS_SCALE_DEFAULT,
+    SPO_CLONES,
+    NO_SPO_CLONES,
+    SPO_MATERNAL_EFFECT_ON_P0,
+    NO_SPO_MATERNAL_EFFECT,
+    GAM_CLONES,
+    NO_GAM_CLONES,
+    GAM_MATERNAL_EFFECT_ON_P1,
+    NO_GAM_MATERNAL_EFFECT
 )
 from shadie.reproduction.fern_scripts import (
     REPRO_PTER_HOMOSPORE_P1, 
@@ -73,6 +77,7 @@ class PteridophyteBase(NonWrightFisher):
     def _set_mutation_rates(self):
         """Checks parameters after init."""
         # Set mutation rates for both, or use Model rate / 2 for both.
+
         if self.spo_mutation_rate or self.gam_mutation_rate:
             require_spo = self.spo_mutation_rate is not None
             require_gam = self.gam_mutation_rate is not None
@@ -126,10 +131,10 @@ class PteridophyteHomosporous(PteridophyteBase):
         early_script = (EARLY.format(
             p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
             p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
-            p0activate= self._p0activate_str,
-            p0deactivate= self._p0deactivate_str,
-            p1activate= self._p1activate_str,
-            p1deactivate= self._p1deactivate_str
+            gametophyte_clones=GAM_CLONES,
+            gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+            sporophyte_clones=SPO_CLONES,
+            spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
             )
         )
 
@@ -140,15 +145,7 @@ class PteridophyteHomosporous(PteridophyteBase):
         )
 
     def _add_mode_scripts(self):
-        """Add reproduction scripts unique to heterosporous bryo."""
-        # survival script to define the random_chance_of_death, 
-        #maternal effects, and survival=0 for alternation of generations.
-        survival_script = (
-                    SURV.format(
-                        p0_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
-                        p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
-                    ))
-        self.model.custom(survival_script, comment="maternal effects and survival")
+        """Add reproduction scripts unique to homosporous pteridophyte."""
 
         self.model.custom(scripts=DEFS_PTER_HOMOSPORE, comment = "shadie DEFINITIONS")
 
@@ -164,17 +161,6 @@ class PteridophyteHomosporous(PteridophyteBase):
             scripts=REPRO_PTER_HOMOSPORE_P1,
             comment="generates gametes from sporophytes"
         )
-        
-        # add late call - CHECKING WITH BEN
-        # substitution_script = (
-        #     SUBSTITUTION.format(**{'muts': self._substitution_str,
-        #         'late': LATE_PTER_HOMOSPORE}).lstrip())
-
-        # self.model.late(
-        #     time=None,
-        #     scripts=substitution_script,
-        #     comment="fixes mutations in haploid gen"
-        #     )
 
 @dataclass
 class PteridophyteHeterosporous(PteridophyteBase):
@@ -204,12 +190,12 @@ class PteridophyteHeterosporous(PteridophyteBase):
         This overrides the NonWrightFisher class function of same name.
         """
         early_script = (EARLY.format(
-            p0_fitnessScaling= PTER_FITNESS_SCALE,
-            p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
-            p0activate= self._p0activate_str,
-            p0deactivate= self._p0deactivate_str,
-            p1activate= self._p1activate_str,
-            p1deactivate= self._p1deactivate_str
+            p0_fitnessScaling=PTER_FITNESS_SCALE,
+            p1_fitnessScaling=P1_FITNESS_SCALE_DEFAULT,
+            gametophyte_clones=NO_GAM_CLONES,
+            gam_maternal_effect=NO_GAM_MATERNAL_EFFECT,
+            sporophyte_clones=SPO_CLONES,
+            spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
             )
         )
 
@@ -221,15 +207,6 @@ class PteridophyteHeterosporous(PteridophyteBase):
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
-         # survival script to define the random_chance_of_death, 
-        #maternal effects, and survival=0 for alternation of generations.
-        survival_script = (
-                    SURV.format(
-                        p0_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
-                        p1_maternal_effect="",
-                    ))
-        self.model.custom(survival_script, comment="maternal effects and survival")
-
         self.model.custom(scripts=DEFS_PTER_HETEROSPORE, comment = "shadie DEFINITIONS")
 
         self.model.repro(
@@ -259,7 +236,7 @@ class PteridophyteVittaria(PteridophyteBase):
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
-        # methods inherited from parent Bryophyte class
+        # methods inherited from parent Pteridophyte class
         self._set_mutation_rates()
         self._add_shared_mode_scripts()
         self._add_first_script()
@@ -282,12 +259,19 @@ class PteridophyteVittaria(PteridophyteBase):
         This overrides the NonWrightFisher class function of same name.
         """
 
-        #unless I add customization back into early, the formatting
-        #block is gone
+        early_script = (EARLY.format(
+            p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
+            p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
+            gametophyte_clones=GAM_CLONES,
+            gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+            sporophyte_clones=SPO_CLONES,
+            spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
+            )
+        )
 
         self.model.early(
             time=None,
-            scripts=EARLY,
+            scripts= early_script,
         )
 
     def _add_mode_scripts(self):
@@ -338,10 +322,21 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.pteridophyte_vittaria(
+        # mod.reproduction.pteridophyte_vittaria(
+        #     spo_pop_size=1000, 
+        #     gam_pop_size=1000,
+        #     spo_self_rate_per_egg=0.0,
+        #     gam_clones_per=10,
+        #     gam_clone_rate=0.99,
+        #     #spo_spores_per = 100
+        # )
+
+        mod.reproduction.pteridophyte_heterosporous(
             spo_pop_size=1000, 
             gam_pop_size=1000,
             spo_self_rate_per_egg=0.0,
+            spo_clones_per=2,
+            spo_clone_rate=0.02,
             #spo_spores_per = 100
         )
 

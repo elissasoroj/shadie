@@ -17,9 +17,7 @@ from typing import Tuple, Optional, Union
 from dataclasses import dataclass, field
 from shadie.reproduction.base import NonWrightFisher
 from shadie.reproduction.scripts import (
-    SURV,
     SPO_MATERNAL_EFFECT_ON_P0,
-    SUBSTITUTION,
     P0_FITNESS_SCALE_DEFAULT,
     EARLY,
     P1_FITNESS_SCALE_DEFAULT,
@@ -80,15 +78,7 @@ class AngiospermBase(NonWrightFisher):
     def _add_shared_mode_scripts(self):
         """Adds scripts shared by homosp and heterosp superclasses.
 
-        Adds a survival script to define the random_chance_of_death,
-        maternal effects, and survival=0 for alternation of generations.
         """
-        survival_script = (
-            SURV.format(
-                p0_maternal_effect="",
-                p1_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0)
-        )
-        self.model.custom(survival_script, comment="maternal effects and survival")
 
 
 @dataclass
@@ -179,17 +169,6 @@ class AngiospermDioecious(AngiospermBase):
             idx = "s6",
             comment="generates gametes from sporophytes"
         )
-        
-        # # add late call
-        # substitution_script = (
-        #     SUBSTITUTION.format(**{'muts': self._substitution_str,
-        #         'late': LATE_ANGIO_DIO}).lstrip())
-
-        # self.model.late(
-        #     time=None,
-        #     scripts=substitution_script,
-        #     comment="fixes mutations in haploid gen"
-        #     )
 
 
 @dataclass

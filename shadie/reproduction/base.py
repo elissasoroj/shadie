@@ -11,13 +11,10 @@ ReproductionBase -> NonWrightFisher -> BryophyteBase
 from dataclasses import dataclass
 import tskit
 from shadie.reproduction.scripts import (
-    SUBSTITUTION,
-    SUB_MUTS,
     P0_FITNESS_SCALE_DEFAULT,
     P1_FITNESS_SCALE_DEFAULT,
     FIRST,
     EARLY,
-    EARLY_WITH_GAM_K,
     WF_REPRO,
     HAP_MUT_FITNESS,
     DIP_MUT_FITNESS
@@ -108,12 +105,14 @@ class NonWrightFisher(ReproductionBase):
             self.model._read_from_file(tag_scripts =["p1.individuals.tag=3;", 
                 "tags = rbinom(1, p0.individualCount, 0.5);", "p0.individuals.tag = tags;"])
         else:
-            self.model.early(
+            self.model.first(
                 time=1,
                 scripts=[
                     "sim.addSubpop('p1', SPO_POP_SIZE)",
                     "sim.addSubpop('p0', 0)",
-                    "p1.individuals.tag = 3",],
+                    "p1.individuals.tag = 3",
+                    "p1.individuals.setValue('maternal_fitness', 1.0);",
+                    "p1.individuals.tagL0 = (runif(p1.individualCount) < GAM_FEMALE_TO_MALE_RATIO);"],
                 comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
             )
 
@@ -167,16 +166,7 @@ class NonWrightFisher(ReproductionBase):
         or deactivate mutEffect effects of mutations in alternating
         generations.
         """
-        # add mutEffect callback for gametophytes based on MutationTypes
-        # in the model.chromosome.
-        # this will map to sx-sy survival callbacks.
         idx = 6
-        p0activate_scripts = []
-        p0deactivate_scripts = []
-        p1activate_scripts = []
-        p1deactivate_scripts = []
-        substitutions = []
-
         # iterate over MutationTypes
         for mut in self.model.chromosome.mutations:
             if not mut.affects_diploid or not mut.affects_haploid:
@@ -204,32 +194,6 @@ class NonWrightFisher(ReproductionBase):
                         comment = "mutation only expressed in diploid"
                         )
 
-                # add reference to this mutation to be added to a late call
-                # for checking whether a mutation has become a substitution.
-                #CHECK - SHOULD NOT BE NECESSARY ANYMORE
-                # sub_muts = SUB_MUTS.format(idx=sidx, mut=mut.name).lstrip()
-                # substitutions.append(sub_muts)
-
-        # insert references to fitness callbacks into an early script
-        # that will alternately activate or deactivate them on
-        # alternating generations to only apply to gameto or sporo.
-        p0activate_str = "\n        ".join(p0activate_scripts)
-        p0deactivate_str = "\n        ".join(p0deactivate_scripts)
-        p1activate_str = "\n        ".join(p1activate_scripts)
-        p1deactivate_str = "\n        ".join(p1deactivate_scripts)
-
-        #save activate and deactivate scripts for later
-        self._p0activate_str = p0activate_str
-        self._p0deactivate_str = p0deactivate_str
-        self._p1activate_str = p1activate_str
-        self._p1deactivate_str = p1deactivate_str
-
-        #CHECK - SHOULD NOT BE NECESSARY ANYMORE
-        # # insert the substitution-checking scripts into larger context
-        # substitution_str = "\n    ".join(substitutions)
-        # #save subsitutions for late caldl in model-specific scripts
-        # self._substitution_str = substitution_str
-
     def _add_first_script(self):
         """
         Defines the first() callbacks for each gen.
@@ -246,13 +210,13 @@ class NonWrightFisher(ReproductionBase):
         Defines the early() callbacks for each gen.
         This will be overridden by any callbacks of the same name in subclasses
         """
-        early_script = (EARLY_WITH_GAM_K.format(
+        early_script = (EARLY.format(
             p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
             p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
-            p0activate= self._p0activate_str,
-            p0deactivate= self._p0deactivate_str,
-            p1deactivate= self._p1deactivate_str,
-            p1activate= self._p1activate_str,
+            gametophyte_clones=GAM_CLONES,
+            gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+            sporophyte_clones=SPO_CLONES,
+            spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
             )
         )
 
