@@ -39,7 +39,7 @@ class MutationList(list):
             # build a string representation of muttype for slim
             params = ", ".join(map(str, mut.params))
             srep = f"'{mut.name}', {mut.dominance}, '{mut.distribution}', {params}"
-            self.slim_dict[mut.name] = srep
+            slim_dict[mut.name] = srep
         return slim_dict
 
     @property
