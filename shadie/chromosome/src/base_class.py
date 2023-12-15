@@ -224,9 +224,7 @@ class ChromosomeBase:
             An HTML element that will display in a jupyter notebook.
         """
 
-        plot = draw_altair_chrom_canvas_interactive(self, width, outfile)
-
-        return plot
+        return draw_altair_chrom_canvas_interactive(self, width, outfile)
 
     def draw(self, width: int=700, axes: Optional['toyplot.coordinates.Cartesian']=None):
         """Return a toyplot drawing of the chromosome."""

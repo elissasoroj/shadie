@@ -101,6 +101,7 @@ def draw_altair_chrom_canvas_interactive(
     # optionally write to disk
     if outfile:
         zoom.save(outfile.strip('.html') + '.html')
+    
     return zoom
 
 
