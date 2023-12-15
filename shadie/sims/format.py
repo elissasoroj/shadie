@@ -21,6 +21,9 @@ initialize() {{
   // MutationType init
   {mutations}
   c({mutation_names}).haploidDominanceCoeff = 1.0;
+  c({mutation_names}).convertToSubstitution = T;
+
+  
 
   // ElementType init
   {elements}
