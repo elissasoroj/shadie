@@ -31,7 +31,7 @@ from shadie.chromosome.src.base_class import ChromosomeBase
 
 
 class PostSim:
-    "Merges tree sequeces and recapitates"
+    "Merges tree sequences and recapitates"
 
     def __init__(
         self,

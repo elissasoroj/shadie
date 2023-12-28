@@ -21,6 +21,9 @@ initialize() {{
   // MutationType init
   {mutations}
   c({mutation_names}).haploidDominanceCoeff = 1.0;
+  c({mutation_names}).convertToSubstitution = T;
+
+  
 
   // ElementType init
   {elements}
@@ -70,6 +73,14 @@ SURVIVAL = """
 }}
 """
 
+FIRST = """
+// executes before offspring are generated
+{comment}
+{idx}{time}first() {{
+    {scripts}
+}}
+"""
+
 
 EARLY = """
 // executes after offspring are generated
@@ -92,6 +103,7 @@ CUSTOM = """{comment}{scripts}"""
 
 EVENT_TO_FORMATTER = {
     "initialize": INITIALIZE,
+    "first": FIRST,
     "early": EARLY,
     "late": LATE,
     'muteffect': MUT_EFFECT,
