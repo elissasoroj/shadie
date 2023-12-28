@@ -17,9 +17,7 @@ from typing import Tuple, Optional, Union
 from dataclasses import dataclass, field
 from shadie.reproduction.base import NonWrightFisher
 from shadie.reproduction.scripts import (
-    SURV,
     SPO_MATERNAL_EFFECT_ON_P0,
-    SUBSTITUTION,
     P0_FITNESS_SCALE_DEFAULT,
     EARLY,
     P1_FITNESS_SCALE_DEFAULT,
@@ -56,6 +54,13 @@ class AngiospermBase(NonWrightFisher):
     pollen_success_rate: float
     pollen_competition: str
     stigma_pollen_per: int
+    _gens_per_lifecycle: int = field(default=2, init=False)
+
+    def __post_init__(self):
+        """Add extra params to metadata"""
+        self.gens_per_lifecycle = self._gens_per_lifecycle
+        self.lineage = self.lineage
+        self.mode = self.mode
 
     def _set_mutation_rates(self):
         """Checks parameters after init."""
@@ -73,15 +78,7 @@ class AngiospermBase(NonWrightFisher):
     def _add_shared_mode_scripts(self):
         """Adds scripts shared by homosp and heterosp superclasses.
 
-        Adds a survival script to define the random_chance_of_death,
-        maternal effects, and survival=0 for alternation of generations.
         """
-        survival_script = (
-            SURV.format(
-                p0_maternal_effect="",
-                p1_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0)
-        )
-        self.model.custom(survival_script, comment="maternal effects and survival")
 
 
 @dataclass
@@ -109,8 +106,6 @@ class AngiospermDioecious(AngiospermBase):
         self._add_shared_mode_scripts()
 
         # methods inherited from parent NonWrightFisher class
-        self._add_initialize_globals()
-        self._add_initialize_constants()
         self._add_alternation_of_generations()
         self._write_trees_file()
 
@@ -118,6 +113,10 @@ class AngiospermDioecious(AngiospermBase):
         self._define_subpopulations()
         self._add_mode_scripts()
         self._add_early_script()
+
+        #save metadata
+        self._add_initialize_globals()
+        self._add_initialize_constants()
 
     def _define_subpopulations(self):
         """Defines the subpopulations and males/females.
@@ -170,17 +169,6 @@ class AngiospermDioecious(AngiospermBase):
             idx = "s6",
             comment="generates gametes from sporophytes"
         )
-        
-        # # add late call
-        # substitution_script = (
-        #     SUBSTITUTION.format(**{'muts': self._substitution_str,
-        #         'late': LATE_ANGIO_DIO}).lstrip())
-
-        # self.model.late(
-        #     time=None,
-        #     scripts=substitution_script,
-        #     comment="fixes mutations in haploid gen"
-        #     )
 
 
 @dataclass
@@ -205,8 +193,6 @@ class AngiospermMonoecious(AngiospermBase):
         self._add_shared_mode_scripts()
 
         # methods inherited from parent NonWrightFisher class
-        self._add_initialize_globals()
-        self._add_initialize_constants()
         self._add_alternation_of_generations()
         self._write_trees_file()
 
@@ -214,6 +200,10 @@ class AngiospermMonoecious(AngiospermBase):
         self._define_subpopulations()
         self._add_mode_scripts()
         self._add_early_script()
+
+        #add metadata
+        self._add_initialize_globals()
+        self._add_initialize_constants()
 
     def _add_early_script(self):
         """
@@ -272,8 +262,8 @@ if __name__ == "__main__":
     with shadie.Model() as mod:
         
         # define mutation types
-        m0 = shadie.mtype(0.5, 'n', 0, 0.4)
-        m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
+        m0 = shadie.mtype(0.5, 'n', (0, 0.4))
+        m1 = shadie.mtype(0.5, 'g', [0.8, 0.75])
         #I suggest we add a checkpoint that calculates the average
         #fitness of mutations input by the user. If fitness is too high
         #the simuulation will lag tremendously. 

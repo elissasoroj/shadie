@@ -11,12 +11,10 @@ ReproductionBase -> NonWrightFisher -> BryophyteBase
 from dataclasses import dataclass
 import tskit
 from shadie.reproduction.scripts import (
-    SUBSTITUTION,
-    SUB_MUTS,
     P0_FITNESS_SCALE_DEFAULT,
     P1_FITNESS_SCALE_DEFAULT,
+    FIRST,
     EARLY,
-    EARLY_WITH_GAM_K,
     WF_REPRO,
     HAP_MUT_FITNESS,
     DIP_MUT_FITNESS
@@ -53,7 +51,12 @@ class ReproductionBase:
         whether the start point was loaded from a previous file.
         """
         # get time AFTER the last even generation.
-        endtime = int(self.model.sim_time + 1)
+
+        gens = self._gens_per_lifecycle
+        print(gens)
+        endtime = int((self.model.sim_time*gens) + 1)
+        self.full_lifecycles = self.model.sim_time
+        self.slim_gens = endtime
 
         # calculate end based on this sim AND the loaded parent sim.
         if self.model.metadata['file_in']:
@@ -67,6 +70,7 @@ class ReproductionBase:
                     f"sim.treeSeqOutput('{self.model.metadata['file_out']}', metadata = METADATA)"],
                 comment="end of sim; save .trees file",
             )
+
         # write output at last generation of this simulation.
         else:
             self.model.late(
@@ -87,13 +91,14 @@ class NonWrightFisher(ReproductionBase):
     include alternation of generations (p0 and p1 subpops). The
     alternative is to implement a WF model.
     """
+
     def _set_gametophyte_k(self):
         """Sets a carrying capacity for gametophyte holding pop (during p1
         generation, to avoid lagging in the simulation. Automatically sets
         to 10x user-defined popsize
         """
-        if not self.gam_k:
-            self.gam_k = 10*self.gam_pop_size
+        if not self.gam_ceiling:
+            self.gam_ceiling = 10*self.gam_pop_size
 
     def _define_subpopulations(self):
         """add haploid and diploid life stages as subpopulations."""
@@ -101,12 +106,14 @@ class NonWrightFisher(ReproductionBase):
             self.model._read_from_file(tag_scripts =["p1.individuals.tag=3;", 
                 "tags = rbinom(1, p0.individualCount, 0.5);", "p0.individuals.tag = tags;"])
         else:
-            self.model.early(
+            self.model.first(
                 time=1,
                 scripts=[
                     "sim.addSubpop('p1', SPO_POP_SIZE)",
                     "sim.addSubpop('p0', 0)",
-                    "p1.individuals.tag = 3",],
+                    "p1.individuals.tag = 3",
+                    "p1.individuals.setValue('maternal_fitness', 1.0);",
+                    "p1.individuals.tagL0 = (runif(p1.individualCount) < GAM_FEMALE_TO_MALE_RATIO);"],
                 comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
             )
 
@@ -142,7 +149,9 @@ class NonWrightFisher(ReproductionBase):
         unique set of attributes. Excludes parent attrs like model.
         """
         # exclude parent class attributes
-        exclude = ["lineage", "mode", "model", "_substitution_str", 
+        exclude = ["lineage", "mode", "model", "gens_per_lifecycle",
+                    "full_lifecycles", "slim_gens",
+                    "model_source", "_substitution_str", 
                     "_p0activate_str", "_p0deactivate_str",
                     "_p1activate_str", "_p1deactivate_str"]
         asdict = {
@@ -158,16 +167,7 @@ class NonWrightFisher(ReproductionBase):
         or deactivate mutEffect effects of mutations in alternating
         generations.
         """
-        # add mutEffect callback for gametophytes based on MutationTypes
-        # in the model.chromosome.
-        # this will map to sx-sy survival callbacks.
         idx = 6
-        p0activate_scripts = []
-        p0deactivate_scripts = []
-        p1activate_scripts = []
-        p1deactivate_scripts = []
-        substitutions = []
-
         # iterate over MutationTypes
         for mut in self.model.chromosome.mutations:
             if not mut.affects_diploid or not mut.affects_haploid:
@@ -195,51 +195,36 @@ class NonWrightFisher(ReproductionBase):
                         comment = "mutation only expressed in diploid"
                         )
 
-                # add reference to this mutation to be added to a late call
-                # for checking whether a mutation has become a substitution.
-                #CHECK - SHOULD NOT BE NECESSARY ANYMORE
-                # sub_muts = SUB_MUTS.format(idx=sidx, mut=mut.name).lstrip()
-                # substitutions.append(sub_muts)
-
-        # insert references to fitness callbacks into an early script
-        # that will alternately activate or deactivate them on
-        # alternating generations to only apply to gameto or sporo.
-        p0activate_str = "\n        ".join(p0activate_scripts)
-        p0deactivate_str = "\n        ".join(p0deactivate_scripts)
-        p1activate_str = "\n        ".join(p1activate_scripts)
-        p1deactivate_str = "\n        ".join(p1deactivate_scripts)
-
-        #save activate and deactivate scripts for later
-        self._p0activate_str = p0activate_str
-        self._p0deactivate_str = p0deactivate_str
-        self._p1activate_str = p1activate_str
-        self._p1deactivate_str = p1deactivate_str
-
-        #CHECK - SHOULD NOT BE NECESSARY ANYMORE
-        # # insert the substitution-checking scripts into larger context
-        # substitution_str = "\n    ".join(substitutions)
-        # #save subsitutions for late caldl in model-specific scripts
-        # self._substitution_str = substitution_str
+    def _add_first_script(self):
+        """
+        Defines the first() callbacks for each gen.
+        This will be overridden by any callbacks of the same name in subclasses
+        """
+        self.model.first(
+            time=None,
+            scripts=FIRST,
+            comment="alternation of generations",
+        )
 
     def _add_early_script(self):
         """
         Defines the early() callbacks for each gen.
-        This overrides the NonWrightFisher class function of same name.
+        This will be overridden by any callbacks of the same name in subclasses
         """
-        early_script = (EARLY_WITH_GAM_K.format(
+        early_script = (EARLY.format(
             p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
             p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
-            p0activate= self._p0activate_str,
-            p0deactivate= self._p0deactivate_str,
-            p1deactivate= self._p1deactivate_str,
-            p1activate= self._p1activate_str,
+            gametophyte_clones=GAM_CLONES,
+            gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+            sporophyte_clones=SPO_CLONES,
+            spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
             )
         )
 
         self.model.early(
             time=None,
             scripts=early_script,
-            comment="alternation of generations",
+            comment="events after reproduction",
         )
 
 
@@ -247,6 +232,7 @@ class NonWrightFisher(ReproductionBase):
 class WrightFisher(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
+    _gens_per_lifecycle: int = 1  #internal param
     sexes: bool = False  # not yet used?
 
     def run(self):
@@ -337,7 +323,7 @@ if __name__ == "__main__":
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=1000, #file_in = "/tmp/test.trees"
             )
-        mod.reproduction.pteridophyte_homosporous(spo_pop_size=1000, gam_pop_size=500)
+        mod.reproduction.wright_fisher_haploid_sexual(pop_size=1000) #spo_pop_size=1000, gam_pop_size=500
     print(mod.script)
     #mod.write("/tmp/slim.slim")
     #mod.run(binary="/usr/local/bin/slim")

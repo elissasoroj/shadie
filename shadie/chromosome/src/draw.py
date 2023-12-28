@@ -35,7 +35,7 @@ def draw_altair_chrom_canvas(chrom: 'ChromosomeBase', width: int=700):
     genome["y2"] = 1
 
     # set the colors
-    cmap_in = ['mediumaquamarine','olivedrab', 'limegreen', 'darkgreen','palegreen',]
+    cmap_in = ['mediumaquamarine', 'limegreen', 'darkgreen','palegreen', 'olivedrab',]
     cmap_ex = ['cornflowerblue', 'mediumblue','dodgerblue', 'darkslateblue', 'skyblue']
     cmap_nc = ['lemonchiffon', 'gold', 'orange',  'yellow', 'khaki']
 
@@ -95,12 +95,13 @@ def draw_altair_chrom_canvas_interactive(
         alt.X('x1:Q', title=None, scale=alt.Scale(domain=brush))
         ).properties(height=80)
     # the second view has the brush selector active.
-    view2 = ichrom.add_selection(brush).properties(height=40)
+    view2 = ichrom.add_params(brush).properties(height=40)
     zoom = alt.vconcat(view1, view2, data=ichrom.data)
 
     # optionally write to disk
     if outfile:
         zoom.save(outfile.strip('.html') + '.html')
+    
     return zoom
 
 

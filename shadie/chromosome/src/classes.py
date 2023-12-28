@@ -14,7 +14,7 @@ import numpy as np
 
 # internal imports
 from shadie.base.elements import ElementType
-from shadie.base.defaults import SYN, NONCDS, INTRON, EXON, NEUT
+from shadie.base.defaults import SYN, NONCDS, INTRON, EXON, NEUT, BEN, DEL, EMPTY
 from shadie.chromosome.src.base_class import ChromosomeBase
 
 
@@ -240,27 +240,32 @@ if __name__ == "__main__":
     # design chromosome of elements
     # Do we want users to be able to put in a chromosome like this 
     # and have the gaps filled with neutral portions? YES.
-    chrom = shadie.chromosome.explicit(
-        data = {
-        (0, 500): shadie.NONCDS,
-        (500, 1000): e1,
-        (2000, 3000): e0,
-        (3001, 5000): e1,
-        }, 
-        use_synonymous_sites_in_coding=False,
-        use_nucleotides=False,
-    )
+    # chrom = shadie.chromosome.explicit(
+    #     data = {
+    #     (0, 500): shadie.NONCDS,
+    #     (500, 1000): e1,
+    #     (2000, 3000): e0,
+    #     (3001, 5000): e1,
+    #     }, 
+    #     use_synonymous_sites_in_coding=False,
+    #     use_nucleotides=False,
+    # )
+    e0 = shadie.base.defaults.NONCDS
+
+    chrom2 = shadie.chromosome.explicit(
+        data = {(0,1000): NONCDS}
+        )
 
     #elem = chrom.data.loc[500]["eltype"]
     #chrom.to_slim_mutation_types()
-    test = chrom.mutations
-    print(chrom.data.head())
+    test = chrom2.mutations
+    #print(chrom.data.head())
 
-    print(chrom.data)
+    print(chrom2.data)
+    print(test)
+    print(chrom2.elements)
     # chrom.inspect()
     # print(test)
-    print(chrom.to_slim_elements())
+    print(chrom2.to_slim_elements())
 
-    print(chrom._skip_neutral_mutations)
-
-
+    #print(chrom._skip_neutral_mutations)

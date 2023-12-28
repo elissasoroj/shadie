@@ -115,7 +115,7 @@ class ElementType:
             yshow=False,
         )
         mixture = np.concatenate([
-            i._dist.rvs(**i._params, size=10000) * i._neg for i in self.mlist
+            i._dist.rvs(**i._params, size=10000) * i._sign for i in self.mlist
         ])
         weights = np.concatenate([
             np.repeat(self.freq[i], 10000) for i in range(len(self.mlist))
@@ -195,6 +195,7 @@ if __name__ == "__main__":
         print(mut)
 
     print(type(ele1.mlist[1]))
+    print(shadie.NONCDS.name)
 
 
     # create an ElementList ()

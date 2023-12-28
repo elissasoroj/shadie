@@ -17,9 +17,7 @@ from typing import Tuple, Optional
 from dataclasses import dataclass, field
 from shadie.reproduction.base import ReproductionBase
 from shadie.reproduction.scripts import (
-    SURV,
     GAM_MATERNAL_EFFECT_ON_P1,
-    SUBSTITUTION,
     P0_FITNESS_SCALE_DEFAULT,
     #EARLY_WITH_GAM_K,
     EARLY,
@@ -27,6 +25,7 @@ from shadie.reproduction.scripts import (
     DIP_MUT_FITNESS
 )
 from shadie.reproduction.specialWF_scripts import (
+    REPRO_HAPLOID_WF,
     REPRO_CLONAL_WF,
     REPRO_ALT_GEN_P1,
     REPRO_ALT_GEN_P0,
@@ -35,11 +34,83 @@ from shadie.reproduction.specialWF_scripts import (
 
 
 @dataclass
+class HaploidWF(ReproductionBase):
+    """Reproduction mode based on Wright-Fisher model with clonal
+     haploid individuals."""
+    
+    pop_size: int #number of haploid individuals
+    _gens_per_lifecycle: int = 1
+    sexes: bool = False  # not yet used?
+
+    def run(self):
+        """
+        Updates self.model.map with new component scripts for running
+        life history and reproduction based on input args.
+        """
+
+        """Fill self.model.map with SLiM script snippets."""
+
+        # methods inherited from parent Reproduction Base
+        self._write_trees_file()
+
+        self._define_subpopulations()
+        self._add_initialize_constants()
+        self._add_mode_scripts()
+        self._add_survival_script()
+        
+
+    def _define_subpopulations(self):
+        """Add a single diploid population. See NonWrightFisher for comparison."""
+        if self.model.metadata['file_in']:
+            self.model._read_from_file(tag_scripts="")
+        else:
+            self.model.early(
+                time=1,
+                scripts="sim.addSubpop('p1', K, haploid=T);",
+                comment="define starting haploid population.",
+            )
+
+    def _add_mode_scripts(self):
+        """fitness and mating of diploid population."""
+
+        self.model.repro(
+            population="p1",
+            scripts= REPRO_HAPLOID_WF,
+            comment="haploid random mating; mating success weighted by fitness."
+        )
+
+    def _add_initialize_constants(self):
+        """Add defineConstant calls to init for new variables."""
+        metadata_dict = {
+            'model': "shadie haploid WF with sex",
+            'length': self.model.sim_time,
+            'spo_pop_size': "NA",
+            'gam_pop_size': self.pop_size,
+            'spo_mutation_rate': self.model.metadata['mutation_rate'],
+            'recombination_rate': self.model.metadata['recomb_rate']
+        }
+
+        self.model.map["initialize"][0]['constants']["K"] = self.pop_size
+        self.model.map["initialize"][0]['simglobals']["METADATA"] = metadata_dict
+
+    def _add_survival_script(self):
+        """
+        Defines the late() callbacks for each gen.
+        This overrides the NonWrightFisher class function of same name.
+        """
+        self.model.survival(
+            population=None,
+            scripts="return (individual.age == 0);",
+            comment="non-overlapping generations",
+        )
+
+@dataclass
 class ClonalHaploidWF(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model with clonal
      haploid individuals."""
     
     pop_size: int #number of haploid individuals
+    _gens_per_lifecycle: int = 1
     sexes: bool = False  # not yet used?
 
     def run(self):
@@ -70,7 +141,7 @@ class ClonalHaploidWF(ReproductionBase):
         self.model.repro(
             population="p1",
             scripts= REPRO_CLONAL_WF,
-            comment="clonal random mating; mating success weighted by fitness."
+            comment="clonal reproduction; reproduction success weighted by fitness."
         )
 
     def _add_initialize_constants(self):
@@ -105,6 +176,7 @@ class AltGenWF(ReproductionBase):
     
     spo_pop_size: int #number of diploid individuals
     gam_pop_size: int #number of haploid individuals
+    _gens_per_lifecycle: int = 2
     sexes: bool = False  # not yet used?
 
     def run(self):
@@ -116,7 +188,6 @@ class AltGenWF(ReproductionBase):
         self._add_initialize_constants()
         self._add_scripts()
         self._add_survival_script()
-        self._add_fitness_script()
         self._write_trees_file()
 
     def _define_subpopulations(self):
@@ -211,6 +282,7 @@ class OLDWrightFisher(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
     sexes: bool = False  # not yet used?
+    _gens_per_lifecycle: int = 1
 
     def run(self):
         """
@@ -277,10 +349,10 @@ if __name__ == "__main__":
     import shadie
 
     # define mutation types
-    m0 = shadie.mtype(0.5, 'n', 0, 0.4)
-    m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
-    m2 = shadie.mtype(0.5, 'g', 0.8, 0.75, diffexpr="diploid")
-    m3 = shadie.mtype(0.5, 'n', 0, 0.4, diffexpr="haploid")
+    m0 = shadie.mtype(0.5, 'n', [0, 0.4])
+    m1 = shadie.mtype(0.5, 'g', [0.8, 0.75])
+    m2 = shadie.mtype(0.5, 'g', [0.8, 0.75], affects_haploid = False)
+    m3 = shadie.mtype(0.5, 'n', [0, 0.4], affects_diploid = False)
 
     # define elements types
     e0 = shadie.etype([m0, m2], [1, 2])
@@ -296,10 +368,10 @@ if __name__ == "__main__":
 
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=50, file_out="/tmp/test.trees")
-        mod.reproduction.wright_fisher_altgen(
-            #pop_size = 500,
-            spo_pop_size=100,
-            gam_pop_size=100,
+        mod.reproduction.wright_fisher_haploid_clonal(
+            pop_size = 500,
+            #spo_pop_size=100,
+            #gam_pop_size=100,
         )
     print(mod.script)
     #mod.write("/tmp/slim.slim")

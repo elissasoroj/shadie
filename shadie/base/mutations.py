@@ -98,9 +98,11 @@ class MutationType:
     params: Sequence[float]
     """: Parameters of the distribution of fitness effects."""
     affects_diploid: bool
-    """: ..."""
+    """: Mutation will affect diploid fitness"""
     affects_haploid: bool
-    """: ..."""
+    """: Mutation will affect haploid fitness"""
+    convert_to_substitution: bool = False
+    """: Determines whether a Mutation is converted to a Substitution object in SLiM"""
 
     # Class variable
     idx: ClassVar[int] = field(default=0, init=True)
@@ -164,7 +166,7 @@ class MutationType:
     @property
     def name(self) -> str:
         """Returns a unique name for this MutationType.
-
+s
         When called from within a chromosome object MutationTypes
         are renamed with unique numbering.
         """
@@ -189,8 +191,17 @@ class MutationType:
         inner = f"'{self.name}', {self.dominance}, '{self.distribution}', "
         inner += ", ".join(map(str, self.params))
         if nuc:
-            return f"initializeMutationTypeNuc({inner});"
-        return f"initializeMutationType({inner});"
+            initialize = f"initializeMutationTypeNuc({inner});"
+        else:
+            initialize = f"initializeMutationType({inner});"
+
+        if self.convert_to_substitution:
+            convert = f"\n{self.name}.convertToSubstitution = T;"
+            to_slim_string = initialize + convert
+        else:
+            to_slim_string = initialize
+
+        return to_slim_string
 
     ###################################################################
     # Extract stats from distribution.
@@ -233,6 +244,7 @@ class MutationType:
             f"distribution_std: {self.std:.4f}\n"
             f"affects diploid fitness: {self.affects_diploid}\n"
             f"affects haploid fitness: {self.affects_haploid}\n"
+            f"convert to substitution: {self.convert_to_substitution}\n"
             # f"differential_expr: {self._expr}\n"
         )
 
@@ -303,6 +315,7 @@ def mtype(
     params: Sequence[float],
     affects_diploid: bool = True,
     affects_haploid: bool = True,
+    convert_to_substitution: bool = False,
     force_idx: Optional[int] = None,
 ) -> MutationType:
     """MutationType class constructor function.
@@ -330,6 +343,7 @@ def mtype(
         params=params,
         affects_diploid=affects_diploid,
         affects_haploid=affects_haploid,
+        convert_to_substitution=convert_to_substitution,
         _force_idx=force_idx,
     )
 
@@ -371,10 +385,12 @@ if __name__ == "__main__":
     m = mtype(0.5, 'e', (2.5), force_idx=0)
     m.print_summary()
 
-    m = mtype(0.5, 'g', (2, 0.1), force_idx=0, affects_diploid=False)
+    m = mtype(0.5, 'g', (2, 0.1), force_idx=0, affects_diploid=False, convert_to_substitution= True)
     m.print_summary()
 
-    print(m.__doc__)
+    print(m.to_slim())
+
+    #print(m.__doc__)
 
     # mlist = shadie.mlist(
     #     #shadie.mtype(0.5, 'f', 0.0),

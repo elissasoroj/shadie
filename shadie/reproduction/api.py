@@ -9,10 +9,10 @@ histories into SLiM scripts using the shadie Model context.
 from typing import Union, Tuple, Optional
 
 from shadie.reproduction.base import WrightFisher
-from shadie.reproduction.wfspecial import ClonalHaploidWF, AltGenWF
+from shadie.reproduction.wfspecial import ClonalHaploidWF, AltGenWF, HaploidWF
 from shadie.reproduction.bryobase import BryophyteMonoicous, BryophyteDioicous
 from shadie.reproduction.angiobase import AngiospermMonoecious, AngiospermDioecious
-from shadie.reproduction.fernbase import PteridophyteHomosporous, PteridophyteHeterosporous
+from shadie.reproduction.fernbase import PteridophyteHomosporous, PteridophyteHeterosporous, PteridophyteVittaria
 
 
 class ReproductionApi:
@@ -30,8 +30,9 @@ class ReproductionApi:
         gam_pop_size: int,
         spo_mutation_rate: Optional[float]=None,
         gam_mutation_rate: Optional[float]=None,
+        gam_female_to_male_ratio: Tuple[float,float]=(1, 0),
         gam_clone_rate: float=0.8,
-        gam_clones_per: int=100,
+        gam_clones_per: int=60,
         #gam_self_rate: float=0.2,
         gam_self_rate_per_egg: float=0.2,
         spo_self_rate_per_egg: float=0.0,
@@ -39,9 +40,9 @@ class ReproductionApi:
         gam_maternal_effect: float=0.0,
         spo_random_death_chance: float=0.0,
         gam_random_death_chance: float=0.0,
-        spo_spores_per: int=500,
-        gam_archegonia_per: int=5,
-        gam_k: int=None
+        spo_spores_per: int=100,
+        gam_archegonia_per: int=10,
+        gam_ceiling: int=None,
         ):
         """Adds Monoicous Bryophyte life history to model.
 
@@ -86,6 +87,7 @@ class ReproductionApi:
             gam_pop_size=gam_pop_size,
             spo_mutation_rate=spo_mutation_rate,
             gam_mutation_rate=gam_mutation_rate,
+            gam_female_to_male_ratio=gam_female_to_male_ratio,
             gam_clone_rate=gam_clone_rate,
             gam_clones_per=gam_clones_per,
             #gam_self_rate=gam_self_rate,
@@ -97,7 +99,7 @@ class ReproductionApi:
             gam_maternal_effect=gam_maternal_effect,
             spo_spores_per=spo_spores_per,
             gam_archegonia_per=gam_archegonia_per,
-            gam_k=gam_k,
+            gam_ceiling=gam_ceiling,
         ).run()
 
     def bryophyte_dioicous(
@@ -118,7 +120,7 @@ class ReproductionApi:
         gam_maternal_effect: float=0.5,
         spo_spores_per: int=10,
         gam_archegonia_per = 10,
-        gam_k=None,
+        gam_ceiling=None,
         ):
         """Adds Dioicous Bryophyte life history to model.
 
@@ -181,7 +183,7 @@ class ReproductionApi:
             gam_random_death_chance=gam_random_death_chance,
             spo_spores_per=spo_spores_per,
             gam_archegonia_per= gam_archegonia_per,
-            gam_k=gam_k,
+            gam_ceiling=gam_ceiling,
         ).run()        
 
     def pteridophyte_homosporous(
@@ -204,8 +206,8 @@ class ReproductionApi:
         spo_maternal_effect: float=0,
         gam_maternal_effect: float=0,
         spo_spores_per: int=100,
-        gam_archegonia_per = 10,
-        gam_k: int =None,
+        gam_archegonia_per = 1,
+        gam_ceiling: int =None,
         ):
         """
         Generate scripts appropriate for an pteridophyte (lycophytes
@@ -272,7 +274,7 @@ class ReproductionApi:
             spo_maternal_effect=spo_maternal_effect,
             spo_spores_per=spo_spores_per,
             gam_archegonia_per=gam_archegonia_per,
-            gam_k=gam_k,
+            gam_ceiling=gam_ceiling,
         ).run()
 
     def pteridophyte_heterosporous(
@@ -289,14 +291,13 @@ class ReproductionApi:
         spo_random_death_chance: float=0,
         gam_random_death_chance: float=0,
         spo_maternal_effect: float=0,
-        gam_archegonia_per = 10,
+        gam_archegonia_per = 1,
         spo_spores_per: int=100,
         # rs_megasporangia_per: int=1,
         # rs_microsporangia_per: int=1,
         # megasporangia_megaspores_per: int=1,
         # microsporangia_microspores_per: int=100,
-        gam_k: int =None,
-
+        gam_ceiling: int =None,
         ):
         """
         Generate scripts appropriate for an pteridophyte (lycophytes
@@ -362,7 +363,102 @@ class ReproductionApi:
             # rs_microsporangia_per=rs_microsporangia_per,
             # megasporangia_megaspores_per=megasporangia_megaspores_per,
             # microsporangia_microspores_per=microsporangia_microspores_per,
-            gam_k=gam_k,
+            gam_ceiling=gam_ceiling,
+        ).run()
+
+    def pteridophyte_vittaria(
+        self,
+        spo_pop_size: int,
+        gam_pop_size: int,
+        spo_mutation_rate: Union[None, float]=None,
+        gam_mutation_rate: Union[None, float]=None,
+        gam_female_to_male_ratio: Tuple[float,float]=(2, 1),
+        spo_clone_rate: float=0.0,
+        spo_clones_per: int=1,
+        gam_clone_rate: float=0.0,
+        gam_clones_per: int=1,
+        gam_self_rate_per_egg: float=0.1,
+        spo_self_rate_per_egg: float=0.1,
+        spo_self_rate: float=0.0,
+        gam_self_rate: float=0.0,
+        spo_random_death_chance: float=0,
+        gam_random_death_chance: float=0,
+        spo_maternal_effect: float=0,
+        gam_maternal_effect: float=0,
+        spo_spores_per: int=100,
+        gam_archegonia_per = 1,
+        gam_ceiling: int =None,
+        sex: str="F",
+        sex_rate: float=0.0001,
+        ):
+        """
+        Generate scripts appropriate for an pteridophyte (lycophytes
+        and ferns) life history.
+
+        Parameters:
+        -----------
+        mode: str
+            A life history strategy or "homo" or "hetero" -sporous.
+        spo_pop_size: int
+            Sporophyte (diploid) effective population size.
+        gam_pop_size: int
+            Gametophyte (haploid) effective population size.
+        spo_mutation_rate: float
+            Sporophyte mutation rate; chance mutations will arise during
+            the sporophyte generation
+        gam_mutation_rate: float
+            Gametophyte mutation rate; chance mutations will arise during
+            the gametophyte generation
+        spo_spores_per: int
+            Number of spores generated by each spororphyte.
+        spo_female_to_male_ratio: tuple
+            Sporophyte female:male ratio; e.g. (1,1)
+        gam_female_to_male_ratio: tuple
+            Gametophyte female:male ratio; e.g. (1,1)
+        spo_clone_rate: float
+            Chance a sporophyte will clone
+        gam_clone_rate: float
+            Chance a gametophyte will clone
+        gam_selfing_rate: float
+            Chance a gametophyte will engage in gametophytic selfing
+        gam_maternal_effect_weight: flat
+            Maternal contribution to diploid offspring fitness (as
+            weighted average)
+        spo_random_death_chance:float
+            Random chance a sporophyte will die before reproducing,
+            regardless of fitness.
+        gam_random_death_chance: float
+            Random chance a gametophyte will die before reproducing,
+            regardless of fitness
+        file_in: str
+            Provide a .trees file that will serve as the starting
+            point for the simulation
+        ...
+        """
+        PteridophyteVittaria(
+            model=self.model, 
+            spo_pop_size=spo_pop_size, 
+            gam_pop_size=gam_pop_size,
+            gam_female_to_male_ratio=gam_female_to_male_ratio,
+            spo_mutation_rate=spo_mutation_rate,
+            gam_mutation_rate=gam_mutation_rate,
+            spo_clone_rate=spo_clone_rate,
+            spo_clones_per = spo_clones_per,
+            gam_clone_rate=gam_clone_rate,
+            gam_clones_per=gam_clones_per,
+            gam_self_rate_per_egg=gam_self_rate_per_egg,
+            spo_self_rate_per_egg=spo_self_rate_per_egg,
+            spo_self_rate=spo_self_rate,
+            gam_self_rate=gam_self_rate,
+            spo_random_death_chance=spo_random_death_chance,
+            gam_random_death_chance=gam_random_death_chance,
+            gam_maternal_effect=gam_maternal_effect,
+            spo_maternal_effect=spo_maternal_effect,
+            spo_spores_per=spo_spores_per,
+            gam_archegonia_per=gam_archegonia_per,
+            gam_ceiling=gam_ceiling,
+            sex=sex,
+            sex_rate=sex_rate,
         ).run()
 
 
@@ -446,7 +542,6 @@ class ReproductionApi:
             pollen_success_rate=pollen_success_rate,
             pollen_competition=pollen_competition,
             stigma_pollen_per=stigma_pollen_per,
-            
         ).run()
     # def gymnosperm_monosporous(...)
     # def gymnosperm_heterosporous(...)    
@@ -571,7 +666,30 @@ class ReproductionApi:
             sexes=sexes,
         ).run()
 
-    def wright_fisher_haploid(
+    def wright_fisher_haploid_sexual(
+        self,
+        pop_size: int,
+        sexes: bool=False,  # mono/hetero terms is more consistent with others...
+        ):
+        """
+        Generate scripts appropriate for basic SLiM nonWF model, set up
+        as a WF model.
+
+        Parameters:
+        -----------
+        pop_size: 
+            Size of the population in number of haploids.
+        sexes: bool
+            default = False; individuals are hemraphroditic. If True,
+            individuals will be male and female
+        """
+        HaploidWF(
+            model=self.model,
+            pop_size=pop_size,
+            sexes=sexes,
+        ).run()
+
+    def wright_fisher_haploid_clonal(
         self,
         pop_size: int,
         sexes: bool=False,  # mono/hetero terms is more consistent with others...

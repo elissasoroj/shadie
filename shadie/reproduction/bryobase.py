@@ -17,19 +17,26 @@ from typing import Tuple, Optional
 from dataclasses import dataclass, field
 from shadie.reproduction.base import NonWrightFisher
 from shadie.reproduction.scripts import (
-    SURV,
+    SPO_CLONES,
+    NO_SPO_CLONES,
+    GAM_CLONES,
+    NO_GAM_CLONES,
     GAM_MATERNAL_EFFECT_ON_P1,
-    SUBSTITUTION,
+    NO_GAM_MATERNAL_EFFECT,
+    SPO_MATERNAL_EFFECT_ON_P0,
+    NO_SPO_MATERNAL_EFFECT,
     P0_FITNESS_SCALE_DEFAULT,
-    #EARLY_WITH_GAM_K,
     EARLY,
+    P0_FITNESS_SCALE_DEFAULT,
+    P1_FITNESS_SCALE_DEFAULT,
 )
 from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_DIO_P1,
     REPRO_BRYO_DIO_P0,
     REPRO_BRYO_MONO_P1,
     REPRO_BRYO_MONO_P0,
-    DEFS_BRYO,
+    DEFS_BRYO_MONO,
+    DEFS_BRYO_DIO,
 )
 
 DTYPES = ("dioicy", "dioicous", "heterosporous")
@@ -53,7 +60,15 @@ class BryophyteBase(NonWrightFisher):
     spo_spores_per: int
     gam_maternal_effect: float
     gam_archegonia_per: int
-    gam_k: int
+    gam_ceiling: int
+    _gens_per_lifecycle: int = field(default=2, init=False)
+
+    def __post_init__(self):
+        """Add extra params to metadata"""
+        self.model_source = "shadie"
+        self.lineage = self.lineage
+        self.mode = self.mode
+        self.gens_per_lifecycle = self._gens_per_lifecycle
 
     def _set_mutation_rates(self):
         """Checks parameters after init."""
@@ -70,17 +85,28 @@ class BryophyteBase(NonWrightFisher):
 
     def _add_shared_mode_scripts(self):
         """Adds scripts shared by homosp and heterosp superclasses.
-
-        Adds a survival script to define the random_chance_of_death,
-        maternal effects, and survival=0 for alternation of generations.
         """
-        survival_script = (
-            SURV.format(
-                p0_maternal_effect="",
-                p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1
+
+    def _add_early_script(self):
+        """
+        Defines the early() callbacks for each gen.
+        This will be overridden by any callbacks of the same name in subclasses
+        """
+        early_script = (EARLY.format(
+            p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
+            p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
+            gametophyte_clones=GAM_CLONES,
+            gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+            sporophyte_clones=NO_SPO_CLONES,
+            spo_maternal_effect=NO_SPO_MATERNAL_EFFECT,
             )
         )
-        self.model.custom(survival_script, comment="SURVIVAL CALLBACKS for alternation of generations")
+
+        self.model.early(
+            time=None,
+            scripts=early_script,
+            comment="events after reproduction",
+        )
 
 
 @dataclass
@@ -99,22 +125,23 @@ class BryophyteDioicous(BryophyteBase):
         # methods inherited from parent Bryophyte class
         self._set_mutation_rates()
         self._add_shared_mode_scripts()
+        self._add_early_script()
 
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
         self._add_alternation_of_generations()
         self._add_early_script()
         self._set_gametophyte_k()
+        self._write_trees_file()
         self._add_initialize_globals()
         self._add_initialize_constants()
-        self._write_trees_file()
 
         # mode-specific functions
         self._add_mode_scripts()
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
-        self.model.custom(scripts=DEFS_BRYO, comment = "shadie DEFINITIONS")
+        self.model.custom(scripts=DEFS_BRYO_DIO, comment = "shadie DEFINITIONS")
         self.model.repro(
             population="p0",
             scripts=REPRO_BRYO_DIO_P0,
@@ -133,6 +160,12 @@ class BryophyteDioicous(BryophyteBase):
 class BryophyteMonoicous(BryophyteBase):
     mode: str = field(default="monoicous", init=False)
     gam_self_rate_per_egg: float
+    gam_female_to_male_ratio: Tuple[float,float]
+    
+    def __post_init__(self):
+        sum_ratio = sum(self.gam_female_to_male_ratio)
+        float_ratio = self.gam_female_to_male_ratio[0] / sum_ratio
+        self.gam_female_to_male_ratio = float_ratio
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
@@ -145,9 +178,9 @@ class BryophyteMonoicous(BryophyteBase):
         self._add_alternation_of_generations()
         self._add_early_script()
         self._set_gametophyte_k()
+        self._write_trees_file()
         self._add_initialize_globals()
         self._add_initialize_constants()
-        self._write_trees_file()
 
         # mode-specific functions
         self._add_mode_scripts()
@@ -155,7 +188,7 @@ class BryophyteMonoicous(BryophyteBase):
     def _add_mode_scripts(self):
         """fills the model.map block with bryophyte-monoicous scripts."""
         # add reproduction scripts
-        self.model.custom(scripts=DEFS_BRYO, comment = "shadie DEFINITIONS")
+        self.model.custom(scripts=DEFS_BRYO_MONO, comment = "shadie DEFINITIONS")
         self.model.repro(
             population="p0",
             scripts=REPRO_BRYO_MONO_P0,
@@ -169,19 +202,15 @@ class BryophyteMonoicous(BryophyteBase):
             comment="generates gametes from sporophytes"
         )
 
-        # add model type to metadata
-        modeldict = {'model': 'shadie', 'lineage': 'bryophyte', 'mode': 'monoicous'}
-        self.model.map["initialize"][0]['simglobals']['METADATA'].update(modeldict)
-
 if __name__ == "__main__":
 
     import shadie
 
     # define mutation types
-    m0 = shadie.mtype(0.5, 'n', 0, 0.4)
-    m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
-    m2 = shadie.mtype(0.5, 'g', 0.8, 0.75, diffexpr="diploid")
-    m3 = shadie.mtype(0.5, 'n', 0, 0.4, diffexpr="haploid")
+    m0 = shadie.mtype(0.5, 'n', [0, 0.4])
+    m1 = shadie.mtype(0.5, 'g', [0.8, 0.75])
+    m2 = shadie.mtype(0.5, 'g', [0.8, 0.75], affects_diploid = False)
+    m3 = shadie.mtype(0.5, 'n', [0, 0.4], affects_haploid = False)
 
     # define elements types
     e0 = shadie.etype([m0, m2], [1, 2])

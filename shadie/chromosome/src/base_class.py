@@ -15,6 +15,9 @@ from shadie.chromosome.src.draw import (
 )
 
 
+#internal import
+from shadie.base.defaults import SYN, NONCDS, INTRON, EXON, NEUT, BEN, DEL, EMPTY
+
 class ChromosomeBase:
     """Base Chromosome class. 
 
@@ -80,6 +83,7 @@ class ChromosomeBase:
         If chromosome.skip_neutral_mutations=True this will skip any
         neutral elements (contains only neutral mut) in the list.
         """
+
         if self._skip_neutral_mutations:
             return list(set(i for i in self.data.script if i.is_coding))
         else:
@@ -167,9 +171,9 @@ class ChromosomeBase:
             #genomic element, so that SLiM doesn't complain
             start = int(self.genome_size-1)
             end = int(self.genome_size)
-            commands.append([
+            commands.append(
                     f"initializeGenomicElement({NONCDS.name}, {start}, {end});\n",
-                ])
+                )
             # raise ValueError(
             #     "Chromosome cannot have skip_neutral_mutations=True and "
             #     "be entirely neutral (non-coding).")
@@ -219,6 +223,7 @@ class ChromosomeBase:
         altair.VConcatChart
             An HTML element that will display in a jupyter notebook.
         """
+
         return draw_altair_chrom_canvas_interactive(self, width, outfile)
 
     def draw(self, width: int=700, axes: Optional['toyplot.coordinates.Cartesian']=None):
