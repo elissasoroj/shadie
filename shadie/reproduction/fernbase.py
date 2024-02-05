@@ -325,23 +325,35 @@ if __name__ == "__main__":
             sim_time=20,
             )
 
-        # mod.reproduction.pteridophyte_vittaria(
+        mod.reproduction.pteridophyte_homosporous(
+            spo_pop_size=500, 
+            gam_pop_size=1_000,
+            spo_spores_per=100,
+            gam_archegonia_per=1,
+            gam_female_to_male_ratio=(1,0),
+            spo_clone_rate = 0,
+            spo_clones_per = 0,
+            gam_clone_rate = 0,
+            gam_clones_per = 0,
+            spo_self_rate = 0,
+            spo_self_rate_per_egg = 0,
+            gam_self_rate = 0,
+            gam_self_rate_per_egg=0,
+            spo_random_death_chance=0,
+            gam_random_death_chance=0,
+            spo_maternal_effect=0.0,
+            gam_maternal_effect=0.0,
+            gam_ceiling = 3_000,
+              )
+
+        # mod.reproduction.pteridophyte_heterosporous(
         #     spo_pop_size=1000, 
         #     gam_pop_size=1000,
         #     spo_self_rate_per_egg=0.0,
-        #     gam_clones_per=10,
-        #     gam_clone_rate=0.99,
+        #     spo_clones_per=2,
+        #     spo_clone_rate=0.02,
         #     #spo_spores_per = 100
         # )
-
-        mod.reproduction.pteridophyte_heterosporous(
-            spo_pop_size=1000, 
-            gam_pop_size=1000,
-            spo_self_rate_per_egg=0.0,
-            spo_clones_per=2,
-            spo_clone_rate=0.02,
-            #spo_spores_per = 100
-        )
 
 
     print(mod.script)
@@ -351,4 +363,4 @@ if __name__ == "__main__":
             print(mut.affects_haploid)
 
 
-    mod.run()
+    #mod.run()
