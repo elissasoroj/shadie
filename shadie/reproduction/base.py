@@ -53,7 +53,6 @@ class ReproductionBase:
         # get time AFTER the last even generation.
 
         gens = self._gens_per_lifecycle
-        print(gens)
         endtime = int((self.model.sim_time*gens) + 1)
         self.full_lifecycles = self.model.sim_time
         self.slim_gens = endtime
