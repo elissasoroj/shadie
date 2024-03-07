@@ -39,7 +39,7 @@ class OneSim:
         self,
         trees_file: str, #'tskit.trees.TreeSequence',
         chromosome: 'shadie.Chromosome',
-        altgen: bool , #requires user to input because it's too risky otherwise
+        gens_per_lifecycle: int=None , #requires user to input because it's too risky otherwise
         ancestral_Ne: Optional[int]=None,
         mut: Optional[float]=None,
         recomb: Optional[float]=None,
@@ -55,7 +55,7 @@ class OneSim:
 
         # user needs to tell shadie whether this is an altgen model so
         #mutation rate can be adjusted accordingly
-        self.altgen: bool=altgen
+        self.gens_per_lifecycle: int=gens_per_lifecycle
 
         # attributes to be parsed from the slim metadata
         self.generations: int=0
