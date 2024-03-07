@@ -297,6 +297,7 @@ class WrightFisher(ReproductionBase):
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
             'recombination_rate': self.model.metadata['recomb_rate'],
             'selection': self.selection,
+            'gens_per_lifecycle': self._gens_per_lifecycle,
         }
 
         self.model.map["initialize"][0]['constants']["K"] = self.pop_size
