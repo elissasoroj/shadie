@@ -93,7 +93,7 @@ class OneSim:
         """
 
         if self.generations is None :
-            self.generations = self.tree_sequence.metadata["SLiM"]["cycle"][0]
+            self.generations = self.tree_sequence.metadata["SLiM"]["cycle"]
 
         if self.gens_per_lifecycle is None:
             self.gens_per_lifecycle = int(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
