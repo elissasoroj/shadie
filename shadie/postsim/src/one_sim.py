@@ -109,7 +109,7 @@ class OneSim:
             self.ancestral_Ne = self.generations
 
         if self.gens_per_lifecycle is None:
-            self.gens_per_lifecycle = int(self.tree_sequence.metadata["SLiM"]["user_metadata"][gens_per_lifecycle][0])
+            self.gens_per_lifecycle = int(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
 
         if self.altgen is True:
             self.mut = self.mut/2
