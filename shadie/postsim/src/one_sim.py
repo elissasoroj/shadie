@@ -39,6 +39,7 @@ class OneSim:
         self,
         trees_file: str, #'tskit.trees.TreeSequence',
         chromosome: 'shadie.Chromosome',
+        generations: int=None,
         gens_per_lifecycle: Optional[int]=None,
         ancestral_Ne: Optional[int]=None,
         mut: Optional[float]=None,
@@ -58,7 +59,7 @@ class OneSim:
         self.gens_per_lifecycle: int=gens_per_lifecycle
 
         # attributes to be parsed from the slim metadata
-        self.generations: int=0
+        self.generations: int=generations
         """The SLiM simulated length of time in diploid generations."""
         self.ancestral_Ne: int=ancestral_Ne
         """The SLiM simulated diploid carrying capacity"""
@@ -70,7 +71,7 @@ class OneSim:
         """The shadie.Chromosome class representing the SLiM genome."""
         self.rng: np.random.Generator=np.random.default_rng(seed)
  
-        self.custom_mutrate: float = custom_mutrate
+        self.custom_mutrate: float=custom_mutrate
 
         # try to fill attributes by extracting metadata from the tree files.
         self._extract_metadata()
@@ -99,6 +100,9 @@ class OneSim:
 
         if self.recomb is None:
             self.recomb = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"][0])
+
+        if self.ancestral_Ne is None:
+            self.ancestral_Ne = self.generations
         
         if self.mut is None:
             try:
@@ -111,11 +115,8 @@ class OneSim:
             except:
                 self.mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["mutation_rate"][0])
                 self.mut = self.mut/self.gens_per_lifecycle
-             
-        if self.ancestral_Ne is None:
-            self.ancestral_Ne = self.generations
 
-        #assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
+        assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
         assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
 
