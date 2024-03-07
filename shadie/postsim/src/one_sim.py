@@ -39,7 +39,7 @@ class OneSim:
         self,
         trees_file: str, #'tskit.trees.TreeSequence',
         chromosome: 'shadie.Chromosome',
-        gens_per_lifecycle: int=None , #requires user to input because it's too risky otherwise
+        gens_per_lifecycle: Optional[int]=None,
         ancestral_Ne: Optional[int]=None,
         mut: Optional[float]=None,
         recomb: Optional[float]=None,
@@ -93,6 +93,7 @@ class OneSim:
 
         if self.generations is None :
             self.generations = self.tree_sequence.metadata["SLiM"]["cycle"][0]
+        
         if self.mut is None:
             try:
                 #if no gam mutation rate, this will fail
@@ -103,8 +104,10 @@ class OneSim:
                 self.mut = (gam_mut+spo_mut)/gens
             except:
                 self.mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["mutation_rate"][0])
+        
         if self.recomb is None:
             self.recomb = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"][0])
+        
         if self.ancestral_Ne is None:
             self.ancestral_Ne = self.generations
 
@@ -114,7 +117,7 @@ class OneSim:
         else:
             self.mut = self.mut/self.gens_per_lifecycle
 
-        assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
+        #assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
         assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
 
