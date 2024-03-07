@@ -101,7 +101,7 @@ class OneSim:
                 gens = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
 
                 self.mut = (gam_mut+spo_mut)/gens
-            else:
+            except:
                 self.mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["mutation_rate"][0])
         if self.recomb is None:
             self.recomb = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"][0])
