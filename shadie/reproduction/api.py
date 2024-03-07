@@ -646,6 +646,7 @@ class ReproductionApi:
     def wright_fisher(
         self,
         pop_size: int,
+        selection: str="soft",
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
         ):
         """
@@ -668,13 +669,14 @@ class ReproductionApi:
         WrightFisher(
             model=self.model,
             pop_size=pop_size,
-            selection = "soft",
+            selection = selection,
             sexes=sexes,
         ).run()
 
     def moran(
         self,
         pop_size: int,
+        selection: str="soft",
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
         ):
         """
@@ -697,14 +699,14 @@ class ReproductionApi:
         Moran(
             model=self.model,
             pop_size=pop_size,
-            selection = "soft",
+            selection = selection,
             sexes=sexes,
         ).run()
 
     def wright_fisher_haploid_sexual(
         self,
         pop_size: int,
-        selection = "soft",
+        selection: str="soft",
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
         ):
         """
@@ -728,14 +730,14 @@ class ReproductionApi:
         HaploidWF(
             model=self.model,
             pop_size=pop_size,
-            selection = "soft",
+            selection = selection,
             sexes=sexes,
         ).run()
 
     def wright_fisher_haploid_clonal(
         self,
         pop_size: int,
-        selection = "soft",
+        selection: str="soft",
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
         ):
         """
@@ -759,7 +761,7 @@ class ReproductionApi:
         ClonalHaploidWF(
             model=self.model,
             pop_size=pop_size,
-            selection = "soft",
+            selection = selection,
             sexes=sexes,
         ).run()
 
@@ -767,7 +769,7 @@ class ReproductionApi:
         self,
         spo_pop_size: int,
         gam_pop_size: int,
-        selection = "soft",
+        selection: str="soft",
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
         ):
         """
@@ -794,5 +796,6 @@ class ReproductionApi:
             model=self.model,
             spo_pop_size=spo_pop_size,
             gam_pop_size=gam_pop_size,
+            selection = selection,
             sexes=sexes,
         ).run()

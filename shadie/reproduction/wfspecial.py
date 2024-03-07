@@ -40,6 +40,7 @@ class HaploidWF(ReproductionBase):
      haploid individuals."""
     
     pop_size: int #number of haploid individuals
+    selection: str = "soft"
     _gens_per_lifecycle: int = 1
     sexes: bool = False  # not yet used?
 
@@ -111,6 +112,7 @@ class ClonalHaploidWF(ReproductionBase):
      haploid individuals."""
     
     pop_size: int #number of haploid individuals
+    selection:str = "soft"
     _gens_per_lifecycle: int = 1
     sexes: bool = False  # not yet used?
 
@@ -177,6 +179,7 @@ class AltGenWF(ReproductionBase):
     
     spo_pop_size: int #number of diploid individuals
     gam_pop_size: int #number of haploid individuals
+    selection:str = "soft"
     _gens_per_lifecycle: int = 2
     sexes: bool = False  # not yet used?
 
@@ -185,11 +188,6 @@ class AltGenWF(ReproductionBase):
         Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
         """
-         # methods inherited from parent WrightFisher:
-        self._define_subpopulations()
-        self._add_initialize_constants()
-        self._add_scripts()
-        self._write_trees_file()
 
         #specific to Moran (remove survival; Moran had non-overlapping gens):
         self._add_survival_script()
