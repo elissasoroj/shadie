@@ -81,10 +81,10 @@ class OneSim:
 
         logger.info(
             f"shadie assumes sims were run without a burn-in and without "
-            f"neutral mutations, and will recapitate and mutate (add neutral mutations) "
-            f"to any loaded sims by default. Current settings:\n"
+            f"neutral mutations and will recapitate and mutate (add neutral mutations) "
+            f"any loaded sims by default. Current settings:\n"
             f"Recapitate: {recapitate}\n"
-            f"Add neutral mutations: {add_neutral_mutations}")
+            f"Add neutral mutations: {add_neutral_mutations}\n")
         
         if recapitate:
             self._recapitate()
@@ -214,7 +214,7 @@ class OneSim:
         #self.tree_sequence = pyslim.SlimTreeSequence(self.tree_sequence)
 
         # logger report after adding mutations
-        self._report_mutations(allow_m0=True)
+        self._report_new_mutations(allow_m0=True)
 
     def _report_mutations(self, allow_m0: bool=True):
         """Report to logger nmutations, mtypes, and check for m0 type."""
@@ -224,12 +224,26 @@ class OneSim:
             for mut in self.tree_sequence.mutations()
             for mutlist in mut.metadata['mutation_list']
         )
+
         if not allow_m0:
             assert 0 not in mut_types, "m0 mutation types already present."
 
+        logger.info(
+            f"Simulation currently has {self.tree_sequence.num_mutations} existing "
+            f"mutations of type(s) {mut_types}.")
+
+    def _report_new_mutations(self, allow_m0: bool=True):
+        """Report to logger nmutations, mtypes, and check for m0 type."""
+        # check type m0 is not used
+        mut_types = set(
+            mutlist['mutation_type']
+            for mut in self.tree_sequence.mutations()
+            for mutlist in mut.metadata['mutation_list']
+        )
+
         # report to logger the existing mutations
         logger.info(
-            f"Using mutation rate: {self.rate}. "
+            f"Mutating using mutation rate: {self.rate}. "
             f"Keeping {self.tree_sequence.num_mutations} existing "
             f"mutations of type(s) {mut_types}.")
 
