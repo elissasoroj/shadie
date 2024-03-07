@@ -40,7 +40,7 @@ class HaploidWF(ReproductionBase):
      haploid individuals."""
     
     pop_size: int #number of haploid individuals
-    selection: str = "soft"
+    selection: str = "none"
     _gens_per_lifecycle: int = 1
     sexes: bool = False  # not yet used?
 
@@ -114,7 +114,7 @@ class ClonalHaploidWF(ReproductionBase):
      haploid individuals."""
     
     pop_size: int #number of haploid individuals
-    selection:str = "soft"
+    selection:str = "none"
     _gens_per_lifecycle: int = 1
     sexes: bool = False  # not yet used?
 
@@ -183,7 +183,7 @@ class AltGenWF(ReproductionBase):
     
     spo_pop_size: int #number of diploid individuals
     gam_pop_size: int #number of haploid individuals
-    selection:str = "soft"
+    selection:str = "none"
     _gens_per_lifecycle: int = 2
     sexes: bool = False  # not yet used?
 

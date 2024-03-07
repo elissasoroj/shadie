@@ -232,7 +232,7 @@ class NonWrightFisher(ReproductionBase):
 class WrightFisher(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
-    selection: str = "soft" # soft selection on by default
+    selection: str = "none" # soft selection on by default
     _gens_per_lifecycle: int = 1  #internal param
     sexes: bool = False  # not yet used?
 

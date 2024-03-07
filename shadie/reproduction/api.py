@@ -646,7 +646,7 @@ class ReproductionApi:
     def wright_fisher(
         self,
         pop_size: int,
-        selection: str="soft",
+        selection: str="none",
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
         ):
         """
@@ -659,9 +659,9 @@ class ReproductionApi:
             Size of the population in number of diploids.
         selection:
             Defines what kind of selection occurs in the sim.
-            default = "soft"; fitness affects mating success
+            default =  "none": fitness has no effect; sim is effectively neutral
             "hard": fitenss affects survival only, mating is random
-            "none": fitness has no effect; sim is effectively neutral
+            "soft"; fitness affects mating success
         sexes: bool
             default = False; individuals are hemraphroditic. If True,
             individuals will be male and female
@@ -676,7 +676,7 @@ class ReproductionApi:
     def moran(
         self,
         pop_size: int,
-        selection: str="soft",
+        selection: str="none",
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
         ):
         """
@@ -689,9 +689,9 @@ class ReproductionApi:
             Size of the population in number of diploids.
         selection:
             Defines what kind of selection occurs in the sim.
-            default = "soft"; fitness affects mating success
+            default =  "none": fitness has no effect; sim is effectively neutral
             "hard": fitenss affects survival only, mating is random
-            "none": fitness has no effect; sim is effectively neutral
+            "soft"; fitness affects mating success
         sexes: bool
             default = False; individuals are hemraphroditic. If True,
             individuals will be male and female
@@ -706,7 +706,7 @@ class ReproductionApi:
     def wright_fisher_haploid_sexual(
         self,
         pop_size: int,
-        selection: str="soft",
+        selection: str="none",
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
         ):
         """
@@ -720,9 +720,9 @@ class ReproductionApi:
             Size of the population in number of haploids.
         selection:
             Defines what kind of selection occurs in the sim.
-            default = "soft"; fitness affects mating success
+            default =  "none": fitness has no effect; sim is effectively neutral
             "hard": fitenss affects survival only, mating is random
-            "none": fitness has no effect; sim is effectively neutral
+            "soft"; fitness affects mating success
         sexes: bool
             default = False; individuals are hemraphroditic. If True,
             individuals will be male and female
@@ -737,7 +737,7 @@ class ReproductionApi:
     def wright_fisher_haploid_clonal(
         self,
         pop_size: int,
-        selection: str="soft",
+        selection: str="none",
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
         ):
         """
@@ -751,9 +751,9 @@ class ReproductionApi:
             Size of the population in number of haploids.
         selection:
             Defines what kind of selection occurs in the sim.
-            default = "soft"; fitness affects mating success
+            default =  "none": fitness has no effect; sim is effectively neutral
             "hard": fitenss affects survival only, mating is random
-            "none": fitness has no effect; sim is effectively neutral
+            "soft"; fitness affects mating success
         sexes: bool
             default = False; individuals are hemraphroditic. If True,
             individuals will be male and female
@@ -769,7 +769,7 @@ class ReproductionApi:
         self,
         spo_pop_size: int,
         gam_pop_size: int,
-        selection: str="soft",
+        selection: str="none",
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
         ):
         """
@@ -785,9 +785,9 @@ class ReproductionApi:
             Size of the population in number of haploids in the haploid life stage
         selection:
             Defines what kind of selection occurs in the sim.
-            default = "soft"; fitness affects mating success
+            default =  "none": fitness has no effect; sim is effectively neutral
             "hard": fitenss affects survival only, mating is random
-            "none": fitness has no effect; sim is effectively neutral
+            "soft"; fitness affects mating success
         sexes: bool
             default = False; individuals are hemraphroditic. If True,
             individuals will be male and female
