@@ -7,6 +7,7 @@ A returned object class from a shadie simulation call.
 from typing import Optional, Union, Iterable, List
 from dataclasses import dataclass, field
 import os
+import warnings
 import numpy as np
 import pyslim
 # import tskit
@@ -21,6 +22,7 @@ from toytree.utils.src.toytree_sequence import ToyTreeSequence
 from toytree.utils.src.scrollable_canvas import ScrollableCanvas
 from shadie.chromosome.src.classes import ChromosomeBase
 
+warnings.simplefilter('ignore', msprime.TimeUnitsMismatchWarning)
 logger = logger.bind(name='shadie')
 
 
@@ -45,8 +47,8 @@ class OneSim:
         mut: Optional[float]=None,
         recomb: Optional[float]=None,
         seed: Optional[int]=None,
-        recapitate: bool=False,
-        add_neutral_mutations: bool=False,
+        recapitate: bool=True,
+        add_neutral_mutations: bool=True,
         custom_mutrate: Optional[float]=None,
         ):
 
@@ -76,6 +78,13 @@ class OneSim:
         # try to fill attributes by extracting metadata from the tree files.
         self._extract_metadata()
         self._update_tables()
+
+        logger.info(
+            f"shadie assumes sims were run without a burn-in and without "
+            f"neutral mutations, and will recapitate and mutate (add neutral mutations) "
+            f"to any loaded sims by default. Current settings:\n"
+            f"Recapitate: {recapitate}\n"
+            f"Add neutral mutations: {add_neutral_mutations}")
         
         if recapitate:
             self._recapitate()
@@ -157,7 +166,7 @@ class OneSim:
         self.tree_sequence = tables.tree_sequence()
 
     def _recapitate(self):
-        """Merge pops backwards in time and simulate ancestry.
+        """Simulate ancestry.
         """
         # recapitate: ts is passed to sim_ancestry as 'initial_state'.
         # this automatically merges everyone into new ancestral pop.
@@ -180,8 +189,6 @@ class OneSim:
         adds neutral mutations to. I think this is something the user 
         should manage rather than shadie
         """
-        # logger report before adding mutations
-        self._report_mutations(allow_m0=False)
 
         #check for custom mutation rate
         if custom_mutrate:
@@ -190,6 +197,9 @@ class OneSim:
             rate = self.mut
 
         self.rate = rate
+
+        # logger report before adding mutations
+        self._report_mutations(allow_m0=False)
 
         # add mutations
         self.tree_sequence = msprime.sim_mutations(
@@ -219,7 +229,7 @@ class OneSim:
 
         # report to logger the existing mutations
         logger.info(
-            f"Using mutation rate {self.rate}"
+            f"Using mutation rate: {self.rate}. "
             f"Keeping {self.tree_sequence.num_mutations} existing "
             f"mutations of type(s) {mut_types}.")
 
