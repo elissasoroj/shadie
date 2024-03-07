@@ -89,7 +89,9 @@ class HaploidWF(ReproductionBase):
             'spo_pop_size': "NA",
             'gam_pop_size': self.pop_size,
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
-            'recombination_rate': self.model.metadata['recomb_rate']
+            'recombination_rate': self.model.metadata['recomb_rate'],
+            'selection': self.selection,
+            'gens_per_lifecycle': self._gens_per_lifecycle,
         }
 
         self.model.map["initialize"][0]['constants']["K"] = self.pop_size
@@ -155,7 +157,9 @@ class ClonalHaploidWF(ReproductionBase):
             'spo_pop_size': "NA",
             'gam_pop_size': self.pop_size,
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
-            'recombination_rate': self.model.metadata['recomb_rate']
+            'recombination_rate': self.model.metadata['recomb_rate'],
+            'selection': self.selection,
+            'gens_per_lifecycle': self._gens_per_lifecycle,
         }
 
         self.model.map["initialize"][0]['constants']["K"] = self.pop_size
@@ -231,6 +235,7 @@ class AltGenWF(ReproductionBase):
             'spo_pop_size': self.spo_pop_size,
             'gam_pop_size': self.gam_pop_size,
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
+            'selection': self.selection,
             'recombination_rate': self.model.metadata['recomb_rate']
         }
 
