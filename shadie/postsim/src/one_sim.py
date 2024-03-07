@@ -111,10 +111,8 @@ class OneSim:
         if self.gens_per_lifecycle is None:
             self.gens_per_lifecycle = int(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
 
-        if self.altgen is True:
-            self.mut = self.mut/2
         else:
-            self.mut = self.mut
+            self.mut = self.mut/self.gens_per_lifecycle
 
         assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
