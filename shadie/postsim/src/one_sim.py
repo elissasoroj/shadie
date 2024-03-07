@@ -93,6 +93,12 @@ class OneSim:
 
         if self.generations is None :
             self.generations = self.tree_sequence.metadata["SLiM"]["cycle"][0]
+
+        if self.gens_per_lifecycle is None:
+            self.gens_per_lifecycle = int(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
+
+        if self.recomb is None:
+            self.recomb = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"][0])
         
         if self.mut is None:
             try:
@@ -104,18 +110,10 @@ class OneSim:
                 self.mut = (gam_mut+spo_mut)/gens
             except:
                 self.mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["mutation_rate"][0])
-        
-        if self.recomb is None:
-            self.recomb = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"][0])
-        
+                self.mut = self.mut/self.gens_per_lifecycle
+             
         if self.ancestral_Ne is None:
             self.ancestral_Ne = self.generations
-
-        if self.gens_per_lifecycle is None:
-            self.gens_per_lifecycle = int(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
-
-        else:
-            self.mut = self.mut/self.gens_per_lifecycle
 
         #assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
