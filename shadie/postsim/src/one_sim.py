@@ -98,8 +98,10 @@ class OneSim:
         if self.gens_per_lifecycle is None:
             self.gens_per_lifecycle = int(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
 
+        #print(f"Recombination Rate: {self.recomb}")
         if self.recomb is None:
             self.recomb = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"][0])
+            #print(f"Recombination Rate: {self.recomb}")
 
         if self.ancestral_Ne is None:
             self.ancestral_Ne = self.generations
@@ -118,7 +120,7 @@ class OneSim:
 
         assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
-        assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
+        #assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
 
     def _update_tables(self):
         """Remove extra psuedopopulation nodes."""
@@ -876,7 +878,13 @@ class TwoSims:
 
 
 
-#if __name__ == "__main__":
+if __name__ == "__main__":
+
+    import shadie
+
+    default = shadie.chromosome.default()
+    post = OneSim("/Users/elissa/code/git/hacks/shadie/docs/notebooks/WF.trees", default)
+
 
     # import glob
     # import shadie
