@@ -53,7 +53,7 @@ class OneSim:
         self.tree_sequence = tskit.load(trees_file)
         """A SlimTreeSequence that has been recapitated and mutated."""
 
-        # user needs to tell shadie whether this is an altgen model so
+        #read in number of SLiM generations per organism life cycle
         #mutation rate can be adjusted accordingly
         self.gens_per_lifecycle: int=gens_per_lifecycle
 
@@ -223,7 +223,7 @@ class OneSim:
         dirpath:str, 
         storepath:str,
         chromosome:'shadie.Chromosome',
-        altgen:bool,
+        gens_per_lifecycle:int,
         ancestral_Ne: int,
         mutate:bool,
         recapitate:bool=True,
@@ -245,7 +245,7 @@ class OneSim:
             The directory where procesed files will be saved out
         chromosome: shade.Chromosome
             The shadie.Chromosome object that was used in the simulations
-        altgen: bool
+        gens_per_lifecycle: int
             Was this a simulation using an alternation of generations model?
             If so, the msprime mutation rate needs to be 1/2 the `mutation rate`
             in the SLiM metadata. User just needs to provide True of False.
@@ -281,7 +281,7 @@ class OneSim:
                 #recapitate and mutate 
                 ts_rm = OneSim(trees_file=f, 
                               chromosome=chromosome, 
-                              altgen = altgen,
+                              gens_per_lifecycle = gens_per_lifecycle,
                               ancestral_Ne = ancestral_Ne,
                               recapitate = True,
                               add_neutral_mutations = mutate)
