@@ -226,7 +226,7 @@ class Model(AbstractContextManager):
         scripts: Union[None, list]=None,
         file_in: Union[None, str]=None,
         file_out: str="shadie.trees",
-        skip_neutral_mutations: bool=False,
+        skip_neutral_mutations: bool=True,
         _simplification_interval: Union[str, int] = "NULL",
         ):
         """Add an initialize() block to the SLiM code map.
