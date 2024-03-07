@@ -656,6 +656,11 @@ class ReproductionApi:
         -----------
         pop_size: 
             Size of the population in number of diploids.
+        selection:
+            Defines what kind of selection occurs in the sim.
+            default = "soft"; fitness affects mating success
+            "hard": fitenss affects survival only, mating is random
+            "none": fitness has no effect; sim is effectively neutral
         sexes: bool
             default = False; individuals are hemraphroditic. If True,
             individuals will be male and female
@@ -663,22 +668,59 @@ class ReproductionApi:
         WrightFisher(
             model=self.model,
             pop_size=pop_size,
+            selection = "soft",
+            sexes=sexes,
+        ).run()
+
+    def moran(
+        self,
+        pop_size: int,
+        sexes: bool=False,  # mono/hetero terms is more consistent with others...
+        ):
+        """
+        Generate scripts appropriate for Moran model. This is similar to 
+        a WF model, but with overalpping generations
+
+        Parameters:
+        -----------
+        pop_size: 
+            Size of the population in number of diploids.
+        selection:
+            Defines what kind of selection occurs in the sim.
+            default = "soft"; fitness affects mating success
+            "hard": fitenss affects survival only, mating is random
+            "none": fitness has no effect; sim is effectively neutral
+        sexes: bool
+            default = False; individuals are hemraphroditic. If True,
+            individuals will be male and female
+        """
+        Moran(
+            model=self.model,
+            pop_size=pop_size,
+            selection = "soft",
             sexes=sexes,
         ).run()
 
     def wright_fisher_haploid_sexual(
         self,
         pop_size: int,
+        selection = "soft",
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
         ):
         """
-        Generate scripts appropriate for basic SLiM nonWF model, set up
-        as a WF model.
+        Generate scripts for a clonal Wright-Fisher model. Each generation 
+        reproduces sexually and experiences fitness effects according to 
+        the fitness param.
 
         Parameters:
         -----------
         pop_size: 
             Size of the population in number of haploids.
+        selection:
+            Defines what kind of selection occurs in the sim.
+            default = "soft"; fitness affects mating success
+            "hard": fitenss affects survival only, mating is random
+            "none": fitness has no effect; sim is effectively neutral
         sexes: bool
             default = False; individuals are hemraphroditic. If True,
             individuals will be male and female
@@ -686,22 +728,30 @@ class ReproductionApi:
         HaploidWF(
             model=self.model,
             pop_size=pop_size,
+            selection = "soft",
             sexes=sexes,
         ).run()
 
     def wright_fisher_haploid_clonal(
         self,
         pop_size: int,
+        selection = "soft",
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
         ):
         """
-        Generate scripts appropriate for basic SLiM nonWF model, set up
-        as a WF model.
+        Generate scripts for a clonal Wright-Fisher model. Each generation 
+        reproduces clonally and experiences fitness effects according to 
+        the fitness param.
 
         Parameters:
         -----------
         pop_size: 
             Size of the population in number of haploids.
+        selection:
+            Defines what kind of selection occurs in the sim.
+            default = "soft"; fitness affects mating success
+            "hard": fitenss affects survival only, mating is random
+            "none": fitness has no effect; sim is effectively neutral
         sexes: bool
             default = False; individuals are hemraphroditic. If True,
             individuals will be male and female
@@ -709,6 +759,7 @@ class ReproductionApi:
         ClonalHaploidWF(
             model=self.model,
             pop_size=pop_size,
+            selection = "soft",
             sexes=sexes,
         ).run()
 
@@ -716,12 +767,13 @@ class ReproductionApi:
         self,
         spo_pop_size: int,
         gam_pop_size: int,
+        selection = "soft",
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
         ):
         """
-        Generate scripts appropriate for an altered Wright-Fisher model 
+        Generate scripts for an altered Wright-Fisher model 
         with alternation of generations. Each generation reproduces and
-        experiences fitness effects.
+        experiences fitness effects according to the fitness param.
 
         Parameters:
         -----------
@@ -729,6 +781,11 @@ class ReproductionApi:
             Size of the population in number of diploids in diploid life stage
         gam_pop_size:
             Size of the population in number of haploids in the haploid life stage
+        selection:
+            Defines what kind of selection occurs in the sim.
+            default = "soft"; fitness affects mating success
+            "hard": fitenss affects survival only, mating is random
+            "none": fitness has no effect; sim is effectively neutral
         sexes: bool
             default = False; individuals are hemraphroditic. If True,
             individuals will be male and female

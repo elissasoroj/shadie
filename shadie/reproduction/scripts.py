@@ -141,7 +141,7 @@ P1_FITNESS_SCALE_DEFAULT = "p1.fitnessScaling = SPO_POP_SIZE / p1.individualCoun
 WF_FITNESS_SCALE = """inds = sim.subpopulations.individuals;
     p1.fitnessScaling = K / sum(inds.fitnessScaling);"""
 
-WF_REPRO = """
+WF_REPRO_SOFT = """
     // parents are chosen proportional to fitness
     inds = p1.individuals;
     fitness = p1.cachedFitness(NULL);
@@ -151,6 +151,18 @@ WF_REPRO = """
         p1.addCrossed(parents1[i], parents2[i]);
     self.active = 0;
 """
+
+WF_REPRO_HARD = """
+    // parents are chosen raqndomly (irrespective of fitness)
+    inds = p1.individuals;
+    fitness = p1.cachedFitness(NULL);
+    parents1 = p1.sampleIndividuals(K, replace=T);
+    parents2 = p1.sampleIndividuals(K, replace=T);
+    for (i in seqLen(K))
+        p1.addCrossed(parents1[i], parents2[i]);
+    self.active = 0;
+"""
+
 #-----------------------------------------------
 #activate/deactivate fitness callbacks
 

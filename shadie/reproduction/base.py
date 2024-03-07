@@ -15,7 +15,8 @@ from shadie.reproduction.scripts import (
     P1_FITNESS_SCALE_DEFAULT,
     FIRST,
     EARLY,
-    WF_REPRO,
+    WF_REPRO_SOFT,
+    WF_REPRO_HARD,
     HAP_MUT_FITNESS,
     DIP_MUT_FITNESS
 )
@@ -231,6 +232,7 @@ class NonWrightFisher(ReproductionBase):
 class WrightFisher(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
+    selection: str = "soft" # soft selection on by default
     _gens_per_lifecycle: int = 1  #internal param
     sexes: bool = False  # not yet used?
 
@@ -250,7 +252,7 @@ class WrightFisher(ReproductionBase):
         if self.model.metadata['file_in']:
             self.model._read_from_file(tag_scripts="")
         else:
-            self.model.early(
+            self.model.first(
                 time=1,
                 scripts="sim.addSubpop('p1', K);",
                 comment="define starting diploid population.",
@@ -259,11 +261,31 @@ class WrightFisher(ReproductionBase):
     def _add_scripts(self):
         """fitness and mating of diploid population."""
 
-        self.model.repro(
-            population="p1",
-            scripts= WF_REPRO,
-            comment="hermaphroditic random mating."
-        )
+        if self.model.selection == "soft":
+            self.model.repro(
+                population="p1",
+                scripts= WF_REPRO_SOFT,
+                comment="WF model with soft selection (parent fitness determines mating success)"
+            )
+
+        elif self.model.selection == "hard":
+            self.model.repro(
+                population="p1",
+                scripts= WF_REPRO_HARD,
+                comment="WF model with hard selection ()"
+            )
+            self.model.early(
+                time=None,
+                scripts="p1.fitnessScaling = K / p1.individualCount",
+                comment="calculate relative fitness.",
+            )   
+
+        elif self.model.selection == "none":
+            self.model.repro(
+                population="p1",
+                scripts= "subpop.addCrossed(individual, subpop.sampleIndividuals(1));",
+                comment="WF model with no selection; random mating"
+            )
 
     def _add_initialize_constants(self):
         """Add defineConstant calls to init for new variables."""

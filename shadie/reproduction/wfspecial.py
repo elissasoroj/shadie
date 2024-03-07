@@ -16,6 +16,7 @@ ReproductionBase
 from typing import Tuple, Optional
 from dataclasses import dataclass, field
 from shadie.reproduction.base import ReproductionBase
+from shadie.reproduction.base import WrightFisher
 from shadie.reproduction.scripts import (
     GAM_MATERNAL_EFFECT_ON_P1,
     P0_FITNESS_SCALE_DEFAULT,
@@ -64,7 +65,7 @@ class HaploidWF(ReproductionBase):
         if self.model.metadata['file_in']:
             self.model._read_from_file(tag_scripts="")
         else:
-            self.model.early(
+            self.model.first(
                 time=1,
                 scripts="sim.addSubpop('p1', K, haploid=T);",
                 comment="define starting haploid population.",
@@ -129,7 +130,7 @@ class ClonalHaploidWF(ReproductionBase):
         if self.model.metadata['file_in']:
             self.model._read_from_file(tag_scripts="")
         else:
-            self.model.early(
+            self.model.first(
                 time=1,
                 scripts="sim.addSubpop('p1', K, haploid=T);",
                 comment="define starting haploid population.",
@@ -184,10 +185,17 @@ class AltGenWF(ReproductionBase):
         Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
         """
+         # methods inherited from parent WrightFisher:
         self._define_subpopulations()
         self._add_initialize_constants()
         self._add_scripts()
+        self._write_trees_file()
+
+        #specific to Moran (remove survival; Moran had non-overlapping gens):
         self._add_survival_script()
+        self._define_subpopulations()
+        self._add_initialize_constants()
+        self._add_scripts()
         self._write_trees_file()
 
     def _define_subpopulations(self):
@@ -195,7 +203,7 @@ class AltGenWF(ReproductionBase):
         if self.model.metadata['file_in']:
             self.model._read_from_file(tag_scripts="")
         else:
-            self.model.early(
+            self.model.first(
                 time=1,
                 scripts=("sim.addSubpop('p1', SPO_POP_SIZE);\n"
                 		 "sim.addSubpop('p0', 0);"),
@@ -277,8 +285,9 @@ class AltGenWF(ReproductionBase):
                     print("Differental expression must be set to 'haploid'"
                         "or 'diploid")
 
+
 @dataclass
-class OLDWrightFisher(ReproductionBase):
+class Moran(WrightFisher):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
     sexes: bool = False  # not yet used?
@@ -289,60 +298,18 @@ class OLDWrightFisher(ReproductionBase):
         Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
         """
+        # methods inherited from parent WrightFisher:
         self._define_subpopulations()
         self._add_initialize_constants()
         self._add_scripts()
-        self._add_survival_script()
         self._write_trees_file()
 
-    def _define_subpopulations(self):
-        """Add a single diploid population. See NonWrightFisher for comparison."""
-        if self.model.metadata['file_in']:
-            self.model._read_from_file(tag_scripts="")
-        else:
-            self.model.early(
-                time=1,
-                scripts="sim.addSubpop('p1', K);",
-                comment="define starting diploid population.",
-            )
-
-    def _add_scripts(self):
-        """fitness and mating of diploid population."""
-        self.model.early(
-            time=None,
-            scripts="p1.fitnessScaling = K / p1.individualCount",
-            comment="calculate relative fitness.",
-        )
-        self.model.repro(
-            population="p1",
-            scripts=("subpop.addCrossed(individual,subpop.sampleIndividuals(1));\n"),
-            comment="hermaphroditic random mating."
-        )
-
-    def _add_initialize_constants(self):
-        """Add defineConstant calls to init for new variables."""
-        metadata_dict = {
-            'model': "shadie WF",
-            'length': self.model.sim_time,
-            'spo_pop_size': self.pop_size,
-            'gam_pop_size': "NA",
-            'spo_mutation_rate': self.model.metadata['mutation_rate'],
-            'recombination_rate': self.model.metadata['recomb_rate']
-        }
-
-        self.model.map["initialize"][0]['constants']["K"] = self.pop_size
-        self.model.map["initialize"][0]['simglobals']["METADATA"] = metadata_dict
+        #specific to Moran (remove survival; Moran had non-overlapping gens):
+        self._add_survival_script()
 
     def _add_survival_script(self):
-        """
-        Defines the late() callbacks for each gen.
-        This overrides the NonWrightFisher class function of same name.
-        """
-        self.model.survival(
-            population=None,
-            scripts=OLD_SURV_WF,
-            comment="non-overlapping generations",
-        )
+        pass
+
 
 if __name__ == "__main__":
 

@@ -78,6 +78,14 @@ REPRO_ALT_GEN_P0 = """
 """
 
 #------------
+SURV_MORAN = """
+    if (individual.age>1) 
+        return F;
+    else
+        return NULL;
+"""
+
+#------------
 OLD_SURV_WF = """
     if (individual.age>1) 
         return F;
