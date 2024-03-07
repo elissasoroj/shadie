@@ -261,14 +261,14 @@ class WrightFisher(ReproductionBase):
     def _add_scripts(self):
         """fitness and mating of diploid population."""
 
-        if self.model.selection == "soft":
+        if selection == "soft":
             self.model.repro(
                 population="p1",
                 scripts= WF_REPRO_SOFT,
                 comment="WF model with soft selection (parent fitness determines mating success)"
             )
 
-        elif self.model.selection == "hard":
+        elif selection == "hard":
             self.model.repro(
                 population="p1",
                 scripts= WF_REPRO_HARD,
@@ -280,7 +280,7 @@ class WrightFisher(ReproductionBase):
                 comment="calculate relative fitness.",
             )   
 
-        elif self.model.selection == "none":
+        elif selection == "none":
             self.model.repro(
                 population="p1",
                 scripts= "subpop.addCrossed(individual, subpop.sampleIndividuals(1));",
@@ -295,7 +295,8 @@ class WrightFisher(ReproductionBase):
             'spo_pop_size': self.pop_size,
             'gam_pop_size': "NA",
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
-            'recombination_rate': self.model.metadata['recomb_rate']
+            'recombination_rate': self.model.metadata['recomb_rate'],
+            'selection': selection,
         }
 
         self.model.map["initialize"][0]['constants']["K"] = self.pop_size
