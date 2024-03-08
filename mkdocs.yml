@@ -17,9 +17,11 @@ nav:
     - Getting Started: tutorials/getting_started.md
     - mtypes: notebooks/1-mtypes_gtypes.ipynb
     - chromosome: notebooks/2-chrom.ipynb
+    - wright-fisher: notebooks/3-WFsim.ipynb
+    - default-models: notebooks/4-plantmodels.ipynb
     - model setup: drafts/under-construction.md
     - v0.1.1 Demo: notebooks/shadie-v0_1_1-demo.ipynb
-    - Full Work Flow: tutorials/fullworkflow.md
+  #  - Full Work Flow: tutorials/fullworkflow.md
   # - Examples:
   #   - Single-Site: drafts/under-construction.md
   #   - Differential Expression: drafts/under-construction.md
