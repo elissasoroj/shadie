@@ -305,6 +305,7 @@ class AltGenWF(ReproductionBase):
             )
 
             self.model.early(
+                time = None,
                 scripts=WF_ALTGEN_EARLY,
                 comment="Fitness scaling for hard selection"
                 )
