@@ -27,7 +27,7 @@ class Chromosome(ChromosomeBase):
     def __init__(
         self,
         use_nucleotides: bool=False,
-        use_synonymous_sites_in_coding: bool=True,
+        use_synonymous_sites_in_coding: bool=False,
         ):
         super().__init__(
             genome_size=10001,
@@ -70,7 +70,7 @@ class ChromosomeRandom(ChromosomeBase):
         noncds: ElementType=None,
         seed: Union[int, None]=None,
         use_nucleotides: bool=False,
-        use_synonymous_sites_in_coding: bool=True,
+        use_synonymous_sites_in_coding: bool=False,
         ):
 
         super().__init__(
@@ -182,7 +182,7 @@ class ChromosomeExplicit(ChromosomeBase):
         data, 
         genome_size: Optional[int]=None,
         use_nucleotides: bool=False,
-        use_synonymous_sites_in_coding: bool=True,
+        use_synonymous_sites_in_coding: bool=False,
         ):
         if genome_size is not None:
             genome_size = genome_size

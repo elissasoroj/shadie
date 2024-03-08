@@ -13,7 +13,7 @@ from shadie.chromosome.src.classes import (
 
 def default(
     use_nucleotides: bool=False,
-    use_synonymous_sites_in_coding: bool=True,
+    use_synonymous_sites_in_coding: bool=False,
     ):
     """Return the default 100Kb Chromosome (nonCDS-exon-intron-exon-nonCDS).
 
@@ -39,7 +39,7 @@ def random(
     noncds_scale: int=5000,
     seed: Union[int, None]=None,
     use_nucleotides: bool=False,
-    use_synonymous_sites_in_coding: bool=True,
+    use_synonymous_sites_in_coding: bool=False,
     ):
     """
     Build a chromosome of a set length composed randomly of intron,
@@ -82,7 +82,7 @@ def explicit(
     data, 
     genome_size: Optional[int]=None,
     use_nucleotides: bool=False,
-    use_synonymous_sites_in_coding: bool=True,
+    use_synonymous_sites_in_coding: bool=False,
     ):
     """Return a chromosome built from a dictionary.
 
