@@ -9,7 +9,7 @@ histories into SLiM scripts using the shadie Model context.
 from typing import Union, Tuple, Optional
 
 from shadie.reproduction.base import WrightFisher
-from shadie.reproduction.wfspecial import ClonalHaploidWF, AltGenWF, HaploidWF
+from shadie.reproduction.wfspecial import ClonalHaploidWF, AltGenWF, HaploidWF, Moran
 from shadie.reproduction.bryobase import BryophyteMonoicous, BryophyteDioicous
 from shadie.reproduction.angiobase import AngiospermMonoecious, AngiospermDioecious
 from shadie.reproduction.fernbase import PteridophyteHomosporous, PteridophyteHeterosporous, PteridophyteVittaria
