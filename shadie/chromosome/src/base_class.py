@@ -47,7 +47,7 @@ class ChromosomeBase:
     def __init__(self, 
         genome_size: int, 
         use_nucleotides: bool=False,
-        use_synonymous_sites_in_coding: bool=True,
+        use_synonymous_sites_in_coding: bool=False,
         ):
         self.genome_size = int(genome_size-1)
         """Size of the genome in discrete base pairs."""
