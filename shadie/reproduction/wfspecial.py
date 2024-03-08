@@ -26,11 +26,17 @@ from shadie.reproduction.scripts import (
     DIP_MUT_FITNESS
 )
 from shadie.reproduction.specialWF_scripts import (
+    REPRO_WF,
     REPRO_HAPLOID_WF,
+    REPRO_HAPLOID_SOFT_WF,
     REPRO_CLONAL_WF,
-    REPRO_ALT_GEN_P1,
-    REPRO_ALT_GEN_P0,
+    REPRO_CLONAL_SOFT_WF,
+    REPRO_ALTGEN_P1,
+    REPRO_ALTGEN_SOFT_P1,
+    REPRO_ALTGEN_P0,
+    REPRO_ALTGEN_SOFT_P0,
     OLD_SURV_WF,
+    WF_ALTGEN_EARLY,
 )
 
 
@@ -75,11 +81,32 @@ class HaploidWF(ReproductionBase):
     def _add_mode_scripts(self):
         """fitness and mating of diploid population."""
 
-        self.model.repro(
-            population="p1",
-            scripts= REPRO_HAPLOID_WF,
-            comment="haploid random mating; mating success weighted by fitness."
-        )
+        if self.selection == "none":
+            self.model.repro(
+                population="p1",
+                scripts= REPRO_HAPLOID_WF,
+                comment="haploid random mating; mating success weighted by fitness."
+            )
+
+        elif self.selection == "soft":
+            self.model.repro(
+                population="p1",
+                scripts= REPRO_HAPLOID_SOFT_WF,
+                comment="haploid random mating; mating success weighted by fitness."
+            )
+
+        elif self.selection == "hard":
+            self.model.repro(
+                population="p1",
+                scripts= REPRO_HAPLOID_WF,
+                comment="haploid random mating; mating success weighted by fitness."
+            )
+
+            self.model.early(
+                time=None,
+                scripts="p1.fitnessScaling = K / p1.individualCount",
+                comment="calculate relative fitness.",
+            ) 
 
     def _add_initialize_constants(self):
         """Add defineConstant calls to init for new variables."""
@@ -142,12 +169,32 @@ class ClonalHaploidWF(ReproductionBase):
 
     def _add_scripts(self):
         """fitness and mating of diploid population."""
+        if self.selection == "none":
+            self.model.repro(
+                population="p1",
+                scripts= REPRO_CLONAL_WF,
+                comment="haploid random mating; mating success weighted by fitness."
+            )
 
-        self.model.repro(
-            population="p1",
-            scripts= REPRO_CLONAL_WF,
-            comment="clonal reproduction; reproduction success weighted by fitness."
-        )
+        elif self.selection == "soft":
+            self.model.repro(
+                population="p1",
+                scripts= REPRO_CLONAL_SOFT_WF,
+                comment="haploid random mating; mating success weighted by fitness."
+            )
+
+        elif self.selection == "hard":
+            self.model.repro(
+                population="p1",
+                scripts= REPRO_CLONAL_WF,
+                comment="haploid random mating; mating success weighted by fitness."
+            )
+
+            self.model.early(
+                time=None,
+                scripts="p1.fitnessScaling = K / p1.individualCount",
+                comment="calculate relative fitness.",
+            ) 
 
     def _add_initialize_constants(self):
         """Add defineConstant calls to init for new variables."""
@@ -215,17 +262,52 @@ class AltGenWF(ReproductionBase):
     def _add_scripts(self):
         """fitness and mating of diploid population."""
 
-        self.model.repro(
-            population="p1",
-            scripts= REPRO_ALT_GEN_P1,
-            comment="clonal random mating; mating success weighted by fitness."
-        )
+        if self.selection == "none":
 
-        self.model.repro(
-            population="p0",
-            scripts= REPRO_ALT_GEN_P0,
-            comment="clonal random mating; mating success weighted by fitness."
-        )
+            self.model.repro(
+                population="p1",
+                scripts= REPRO_ALTGEN_P1,
+                comment="clonal random mating; mating success weighted by fitness."
+            )
+
+            self.model.repro(
+                population="p0",
+                scripts= REPRO_ALTGEN_P0,
+                comment="clonal random mating; mating success weighted by fitness."
+            )
+
+        elif self.selection == "soft":
+
+            self.model.repro(
+                population="p1",
+                scripts= REPRO_ALTGEN_SOFT_P1,
+                comment="clonal random mating; mating success weighted by fitness."
+            )
+
+            self.model.repro(
+                population="p0",
+                scripts= REPRO_ALTGEN_SOFT_P0,
+                comment="clonal random mating; mating success weighted by fitness."
+            )
+
+        elif self.selection == "hard":
+
+            self.model.repro(
+                population="p1",
+                scripts= REPRO_ALTGEN_P1,
+                comment="clonal random mating; mating success weighted by fitness."
+            )
+
+            self.model.repro(
+                population="p0",
+                scripts= REPRO_ALTGEN_P0,
+                comment="clonal random mating; mating success weighted by fitness."
+            )
+
+            self.model.early(
+                scripts=WF_ALTGEN_EARLY,
+                comment="Fitness scaling for hard selection"
+                )
 
     def _add_initialize_constants(self):
         """Add defineConstant calls to init for new variables."""
