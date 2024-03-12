@@ -63,6 +63,8 @@ class PteridophyteBase(NonWrightFisher):
         """Convert tuple ratio to a float."""
         sum_ratio = sum(self.gam_female_to_male_ratio)
         float_ratio = self.gam_female_to_male_ratio[0] / sum_ratio
+
+        #save params for metadata output
         self.gam_female_to_male_ratio = float_ratio
         self.model_source = "shadie"
         self.lineage = self.lineage
