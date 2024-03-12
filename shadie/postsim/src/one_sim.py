@@ -10,7 +10,6 @@ import os
 import warnings
 import numpy as np
 import pyslim
-# import tskit
 import msprime
 import toyplot
 import pandas as pd
@@ -44,8 +43,8 @@ class OneSim:
         generations: int=None,
         gens_per_lifecycle: Optional[int]=None,
         ancestral_Ne: Optional[int]=None,
-        mut: Optional[float]=None,
-        recomb: Optional[float]=None,
+        mutation_rate: Optional[float]=None,
+        recomb_rate: Optional[float]=None,
         seed: Optional[int]=None,
         recapitate: bool=True,
         add_neutral_mutations: bool=True,
@@ -57,17 +56,17 @@ class OneSim:
         """A SlimTreeSequence that has been recapitated and mutated."""
 
         #read in number of SLiM generations per organism life cycle
-        #mutation rate can be adjusted accordingly
+        #so that mutation rate can be adjusted accordingly
         self.gens_per_lifecycle: int=gens_per_lifecycle
 
-        # attributes to be parsed from the slim metadata
+        # attributes to be parsed from the SLiM metadata
         self.generations: int=generations
         """The SLiM simulated length of time in diploid generations."""
         self.ancestral_Ne: int=ancestral_Ne
         """The SLiM simulated diploid carrying capacity"""
-        self.recomb: float=recomb
+        self.recomb: float=recomb_rate
         """The recombination rate to use for recapitation."""
-        self.mut: float=mut
+        self.mut: float=mutation_rate
         """The mutation rate to use for recapitated treesequence."""
         self.chromosome: ChromosomeBase=chromosome
         """The shadie.Chromosome class representing the SLiM genome."""
@@ -77,12 +76,16 @@ class OneSim:
 
         # try to fill attributes by extracting metadata from the tree files.
         self._extract_metadata()
-        self._update_tables()
+
+        #removed this because it was messing up the recapitation process - 
+        #it may not be necessary with updates to pyslim?
+        #self._update_tables()
 
         logger.info(
             f"shadie assumes sims were run without a burn-in and without "
-            f"neutral mutations and will recapitate and mutate (add neutral mutations) "
-            f"any loaded sims by default. Current settings:\n"
+            f"neutral mutations and will recapitate (add ancestry simulation) "
+            f"and mutate (add neutral mutations) any loaded sims by default.\n"
+            f"Current settings -\n"
             f"Recapitate: {recapitate}\n"
             f"Add neutral mutations: {add_neutral_mutations}\n")
         
@@ -97,8 +100,6 @@ class OneSim:
 
     def _extract_metadata(self):
         """Extract self attributes from shadie .trees file metadata.
-
-        TODO: can more of this be saved in SLiM metadata?
         """
 
         if self.generations is None :
@@ -126,6 +127,8 @@ class OneSim:
             except:
                 self.mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["mutation_rate"][0])
                 self.mut = self.mut/self.gens_per_lifecycle
+        else:
+            self.mut = self.mut/self.gens_per_lifecycle
 
         assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
@@ -152,7 +155,7 @@ class OneSim:
             set(tables.edges.parent).union(tables.edges.child)
         )
 
-        # remove the empty population nodes by using simplify, which 
+        # remove the empty population nodes by using simplify
         tables.simplify(
             samples=nodes_in_edge_table,
             keep_input_roots=True,
@@ -209,9 +212,6 @@ class OneSim:
             keep=True,  # whether to keep existing mutations.
             model=msprime.SLiMMutationModel(type=0),
         )
-        
-        #No longer needed after update to tskit and SLiM4
-        #self.tree_sequence = pyslim.SlimTreeSequence(self.tree_sequence)
 
         # logger report after adding mutations
         self._report_new_mutations(allow_m0=True)
@@ -243,7 +243,7 @@ class OneSim:
 
         # report to logger the existing mutations
         logger.info(
-            f"Mutating using mutation rate: {self.rate}. "
+            f"Mutating using mutation rate: {self.rate*self.gens_per_lifecycle}. "
             f"Keeping {self.tree_sequence.num_mutations} existing "
             f"mutations of type(s) {mut_types}.")
 
@@ -575,7 +575,34 @@ class OneSim:
         axes.label.offset = 20
         axes.label.text = f"{stat} in {int(window_size / 1000)}kb windows"
         return canvas, axes, mark
+    
+    def dNdS(self):
+        "calculate dN/dS"
+        ranges = []
+        for index, row in self.chromosome.data.iterrows():
+            ranges.append(range(row['exonstart'], row['exonstop']))
+            
+        c_syn = []
+        c_non = []
+        nc_neut = []
+        for mut in self.tscoal.mutations():
+            if mut.derived_state != '1':
+                c_non.append(mut.id)      
+            elif mut.derived_state == '1':
+                position = int(mut.position)
+                for r in ranges:
+                    if position in r:
+                        c_syn.append(mut.id)
+                    elif position not in r:
+                        nc_neut.append(mut.id)
+        
+        dnds = len(c_non)/len(c_syn)
+        print(f"N:S for the coding regions in whole genome = {dnds}")
 
+
+    def mktest(self):
+        "Perform mk-test"
+        pass
 
 @dataclass
 class TwoSims:
