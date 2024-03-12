@@ -108,6 +108,11 @@ REPRO_BRYO_DIO_P0 = """
         //In monoicous bryophytes, gametophytes are either hermaphroditic or male, 
         //so "males" includes all the hermaphrodites as well as male gametophytes
         males = p0.individuals[p0.individuals.tagL0==F];
+
+        // if selfing is possible then get all sibling males
+        if (SPO_SELF_RATE_PER_EGG > 0)
+            //shared parent count for sibs is > 0 (1 or 2)
+            siblings = males[individual.sharedParentCount(males)!=0];
         
         for (rep in 1:eggs) {
             
@@ -239,6 +244,11 @@ REPRO_BRYO_MONO_P0 = """
         //In monoicous bryophytes, gametophytes are either hermaphroditic or male, 
         //so "males" includes all the hermaphrodites as well as male gametophytes
         males = p0.individuals;
+
+        // if selfing is possible then get all sibling males
+        if (SPO_SELF_RATE_PER_EGG > 0)
+            //shared parent count for sibs is > 0 (1 or 2)
+            siblings = males[individual.sharedParentCount(males)!=0];
         
         for (rep in 1:eggs) {
             
