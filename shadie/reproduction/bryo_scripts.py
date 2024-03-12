@@ -68,8 +68,6 @@ REPRO_BRYO_DIO_P1 = """
 # GAM_CLONE_RATE
 # GAM_CLONES_PER
 # GAM_ARCHEGONIA_PER
-# GAM_SELF_RATE
-# GAM_SELF_RATE_PER_EGG
 # SPO_SELF_RATE
 # SPO_SELF_RATE_PER_EGG
 # GAM_MATERNAL_EFFECT
@@ -119,7 +117,7 @@ REPRO_BRYO_DIO_P0 = """
             mode = sample(
                 x=c(1, 2, 3),
                 size=1,
-                weights=c(GAM_SELF_RATE_PER_EGG, SPO_SELF_RATE_PER_EGG, 1 - (GAM_SELF_RATE_PER_EGG + SPO_SELF_RATE_PER_EGG))
+                weights=c(0, SPO_SELF_RATE_PER_EGG, 1 - (SPO_SELF_RATE_PER_EGG))
                 );
             
             // intra-gametophytic selfed
