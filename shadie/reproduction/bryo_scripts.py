@@ -84,7 +84,8 @@ REPRO_BRYO_DIO_P0 = """
     // NOTE: this doesn't allow clones to reproduce this round.
     if (runif(1) < GAM_CLONE_RATE) {
         for (i in seqLen(GAM_CLONES_PER)) {
-            child = p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL, parent1 = individual); //only 1 parent recorded
+            child = p0.addRecombinant(individual.genome1, NULL, NULL, 
+            NULL, NULL, NULL, parent1 = individual); //only 1 parent recorded
             child.tag = 2; //marked as clone
             child.tagL0 = individual.tagL0; //inherits parent sex
             //gametophyte maternal effect not applicable for clones = neutral
@@ -123,7 +124,8 @@ REPRO_BRYO_DIO_P0 = """
             
             // intra-gametophytic selfed
             if (mode == 1) {
-                child = p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL, parent1 = individual);
+                child = p1.addRecombinant(individual.genome1, NULL, NULL, 
+                individual.genome1, NULL, NULL, parent1 = individual, parent2 = individual);
                 child.tag = 3; //sporophyte tag
                 //gametophyte maternal effect on new sporophyte
                 if (GAM_MATERNAL_EFFECT > 0)
@@ -135,7 +137,8 @@ REPRO_BRYO_DIO_P0 = """
             else if (mode == 2) {
                 if (siblings.size() > 0) {
                     sibling = sample(siblings, 1);
-                    child = p1.addRecombinant(individual.genome1, NULL, NULL, sibling.genome1, NULL, NULL, parent1 = individual);
+                    child = p1.addRecombinant(individual.genome1, NULL, NULL, 
+                    sibling.genome1, NULL, NULL, parent1 = individual, parent2=sibling);
                     child.tag = 3; //sporophyte tag
                     //gametophyte maternal effect on new sporophyte
                     if (GAM_MATERNAL_EFFECT > 0)
@@ -149,7 +152,8 @@ REPRO_BRYO_DIO_P0 = """
                 outcross_sperms = males[individual.sharedParentCount(males)==0];
                 if (! isNULL(outcross_sperms)) {
                     sperm = sample(outcross_sperms, 1);
-                    child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL, parent1 = individual, parent2=sperm);
+                    child = p1.addRecombinant(individual.genome1, NULL, NULL, 
+                    sperm.genome1, NULL, NULL, parent1 = individual, parent2=sperm);
                     child.tag = 3; //sporophyte tag
                     //gametophyte maternal effect on new sporophyte
                     if (GAM_MATERNAL_EFFECT > 0)
@@ -211,7 +215,8 @@ REPRO_BRYO_MONO_P0 = """
     // NOTE: this doesn't allow clones to reproduce this round.
     if (runif(1) < GAM_CLONE_RATE) {
         for (i in seqLen(GAM_CLONES_PER)) {
-            child = p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL, parent1 = individual); //only 1 parent recorded
+            child = p0.addRecombinant(individual.genome1, NULL, NULL, 
+            NULL, NULL, NULL, parent1 = individual); //only 1 parent recorded
             child.tag = 2; //marked as clone
             child.tagL0 = individual.tagL0; //inherits parent sex
             //gametophyte maternal effect not applicable for clones = neutral
@@ -250,7 +255,8 @@ REPRO_BRYO_MONO_P0 = """
             
             // intra-gametophytic selfed
             if (mode == 1) {
-                child = p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL, parent1 = individual);
+                child = p1.addRecombinant(individual.genome1, NULL, NULL, 
+                individual.genome1, NULL, NULL, parent1 = individual, parent2 = individual);
                 child.tag = 3; //sporophyte tag
                 //gametophyte maternal effect on new sporophyte
                 if (GAM_MATERNAL_EFFECT > 0)
@@ -262,7 +268,8 @@ REPRO_BRYO_MONO_P0 = """
             else if (mode == 2) {
                 if (siblings.size() > 0) {
                     sibling = sample(siblings, 1);
-                    child = p1.addRecombinant(individual.genome1, NULL, NULL, sibling.genome1, NULL, NULL, parent1 = individual);
+                    child = p1.addRecombinant(individual.genome1, NULL, NULL, 
+                    sibling.genome1, NULL, NULL, parent1 = individual, parent2 = sibling);
                     child.tag = 3; //sporophyte tag
                     //gametophyte maternal effect on new sporophyte
                     if (GAM_MATERNAL_EFFECT > 0)
@@ -276,7 +283,8 @@ REPRO_BRYO_MONO_P0 = """
                 outcross_sperms = males[individual.sharedParentCount(males)==0];
                 if (! isNULL(outcross_sperms)) {
                     sperm = sample(outcross_sperms, 1);
-                    child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL, parent1 = individual, parent2=sperm);
+                    child = p1.addRecombinant(individual.genome1, NULL, NULL, 
+                    sperm.genome1, NULL, NULL, parent1 = individual, parent2=sperm);
                     child.tag = 3; //sporophyte tag
                     //gametophyte maternal effect on new sporophyte
                     if (GAM_MATERNAL_EFFECT > 0)
