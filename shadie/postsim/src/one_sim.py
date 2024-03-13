@@ -79,7 +79,7 @@ class OneSim:
 
         #removed this because it was messing up the recapitation process - 
         #it may not be necessary with updates to pyslim?
-        #self._update_tables()
+        self._update_tables()
 
         logger.info(
             f"shadie assumes sims were run without a burn-in and without "
@@ -151,9 +151,13 @@ class OneSim:
 
         # drop nodes that are not connected to anything. This includes
         # the pseudo-nodes representing half of the haploid populations.
-        nodes_in_edge_table = list(
-            set(tables.edges.parent).union(tables.edges.child)
-        )
+        
+        #old code that drops too many nodes
+        #nodes_in_edge_table = list(set(tables.edges.parent).union(tables.edges.child))
+
+        max_edge = max(list(set(tables.edges.parent).union(tables.edges.child)))
+
+        nodes_in_edge_table = list(range(1,max_edge))
 
         # remove the empty population nodes by using simplify
         tables.simplify(
@@ -171,11 +175,39 @@ class OneSim:
     def _recapitate(self):
         """Simulate ancestry.
         """
+        #this is a TEMPORARY fix until we sort out the node age
+        #mismatch issue. I stole the recapitate code from pyslim
+        #to circumvent the error 
+        recap_time = self.tree_sequence.metadata['SLiM']['tick']
+        demography = msprime.Demography.from_tree_sequence(self.tree_sequence)
+        
+        # must set pop sizes to >0 even though we merge immediately
+        for pop in demography.populations:
+            pop.initial_size=1.0
+        ancestral_name = "ancestral"
+        derived_names = [pop.name for pop in demography.populations]
+        while ancestral_name in derived_names:
+            ancestral_name = (ancestral_name + "_ancestral")
+        demography.add_population(
+                name=ancestral_name,
+                description="ancestral population simulated by msprime",
+                initial_size=self.ancestral_Ne,
+        )
+        # the split has to come slightly longer ago than slim's tick
+        # since that's when all the linages are at, and otherwise the event
+        # won't apply to them
+        demography.add_population_split(
+                np.nextafter( recap_time, 2 * recap_time),
+                derived=derived_names,
+                ancestral=ancestral_name,
+        )
+
         # recapitate: ts is passed to sim_ancestry as 'initial_state'.
         # this automatically merges everyone into new ancestral pop.
         self.tree_sequence = pyslim.recapitate(
             ts=self.tree_sequence,
-            ancestral_Ne=self.ancestral_Ne,
+            #ancestral_Ne=self.ancestral_Ne,
+            demography=demography, #temporary
             random_seed=self.rng.integers(2**31),
             recombination_rate=self.recomb,
         )
@@ -362,7 +394,7 @@ class OneSim:
         # get a list of Series
         for rep in range(reps):
             seed = rng.integers(2**31)
-            tts = toytree_sequence(self.tree_sequence, sample=sample, seed=seed)
+            tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
             samples = np.arange(tts.sample[0])
 
             stats = pd.Series(
@@ -384,7 +416,7 @@ class OneSim:
         for stat in data.columns:
             mean_val = np.mean(data[stat])
             low, high = scipy.stats.t.interval(
-                alpha=0.95,
+                confidence=0.95,
                 df=len(data[stat]) - 1,
                 loc=mean_val,
                 scale=scipy.stats.sem(data[stat]),
@@ -608,8 +640,10 @@ class OneSim:
 class TwoSims:
     trees_files: List[str]
     ancestral_ne: int
-    mut: float
+    mutation_rate: float
     recomb: float
+    gens_per_lifecycle: int
+    generations: int
     chromosome: 'shadie.Chromosome'
     seed: Optional[int]=None
     recapitate: bool=False
@@ -629,14 +663,40 @@ class TwoSims:
 
     def _extract_metadata(self):
         """Extract self attributes from shadie .trees file metadata.
-        TODO: can more of this be saved in SLiM metadata?
         """
-        gens = [i.metadata["SLiM"]["generation"] for i in self._tree_sequences]
-        #assert len(set(gens)) == 1, ("simulations must be same length (gens).")
-        self.generations = gens[0]
-        assert self.ancestral_ne, "ancestral_ne not found in metadata."
+        self.mut = self.mutation_rate
+
+        if self.generations is None :
+            self.generations = self.tree_sequence.metadata["SLiM"]["cycle"]
+
+        if self.gens_per_lifecycle is None:
+            self.gens_per_lifecycle = int(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
+
+        #print(f"Recombination Rate: {self.recomb}")
+        if self.recomb is None:
+            self.recomb = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"][0])
+            #print(f"Recombination Rate: {self.recomb}")
+
+        if self.ancestral_Ne is None:
+            self.ancestral_Ne = self.generations
+        
+        if self.mut is None:
+            try:
+                #if no gam mutation rate, this will fail
+                gam_mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gam_mutation_rate"][0])
+                spo_mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["spo_mutation_rate"][0])
+                gens = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
+
+                self.mut = (gam_mut+spo_mut)/gens
+            except:
+                self.mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["mutation_rate"][0])
+                self.mut = self.mut/self.gens_per_lifecycle
+        else:
+            self.mut = self.mut/self.gens_per_lifecycle
+
+        assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
-        assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
+        #assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
 
     def _update_tables(self):
         """...Remove extra psuedopopulation nodes."""
@@ -667,7 +727,7 @@ class TwoSims:
             )
 
             # turn it back into a treesequence
-            self._tree_sequences.append(pyslim.load_tables(tables))
+            self._tree_sequences.append(tables.tree_sequence())
 
     def _match_nodes_and_merge(self):
         """Find matching ancestral nodes between two treeseqs for merging
@@ -778,7 +838,7 @@ class TwoSims:
 
             # let toytree do the sampling of N nodes from each pop such that:
             # (pop=pop, time=0, flag=1); this is equivalent to 'alive at' sampling.
-            tts = toytree_sequence(self.tree_sequence, sample=sample, seed=rep_seed)
+            tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=rep_seed)
             samples = np.arange(tts.sample[0] + tts.sample[1])
             sample_0 = samples[:tts.sample[0]]
             sample_1 = samples[tts.sample[0]:]
@@ -814,7 +874,7 @@ class TwoSims:
         for stat in data.columns:
             mean_val = np.mean(data[stat])
             low, high = scipy.stats.t.interval(
-                alpha=0.95,
+                confidence=0.95,
                 df=len(data[stat]) - 1,
                 loc=mean_val,
                 scale=scipy.stats.sem(data[stat]),
@@ -856,7 +916,7 @@ class TwoSims:
         rep_values = []
         for _ in range(reps):
             rep_seed = rng.integers(2**31)
-            tts = toytree_sequence(self.tree_sequence, sample=sample, seed=rep_seed)
+            tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=rep_seed)
             samples = np.arange(tts.sample[0] + tts.sample[1])
             sample_0 = samples[:tts.sample[0]]
             sample_1 = samples[tts.sample[0]:]
@@ -895,7 +955,7 @@ class TwoSims:
             data = i
             mean_val = np.mean(data)
             low, high = scipy.stats.t.interval(
-                alpha=0.95,
+                confidence=0.95,
                 df=len(data) - 1,
                 loc=mean_val,
                 scale=scipy.stats.sem(data),

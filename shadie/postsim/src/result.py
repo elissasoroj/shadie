@@ -35,19 +35,30 @@ class TwoSims:
         self,
         tree_files: List[str],
         seed: Optional[int]=None,
+        gens_per_lifecycle: Optional[int]=None,
+        ancestral_Ne: Optional[int]=None,
+        generations: int=None,
         **kwargs,
         ):
 
         # hidden attributes
         self._tree_files: List[str] = tree_files
-        self._tree_sequences = [pyslim.load(i) for i in self._tree_files]
+        self._tree_sequences = [tskit.load(i) for i in self._tree_files]
         self._nts: int = len(self._tree_files)
 
-        # attributes to be parsed from the slim metadata
-        self.generations: int=0
+
+        #read in number of SLiM generations per organism life cycle
+        #so that mutation rate can be adjusted accordingly
+        self.gens_per_lifecycle: int=gens_per_lifecycle
+
+        # attributes to be parsed from the SLiM metadata
+        self.generations: int=generations
         """The SLiM simulated length of time in diploid generations."""
+        self.ancestral_Ne: int=ancestral_Ne
+        """The SLiM simulated diploid carrying capacity"""
         self.popsize: int=kwargs.get("popsize")
         """The SLiM simulated diploid carrying capacity"""
+
         self.recomb: float=kwargs.get("recomb")
         """The recombination rate to use for recapitation."""
         self.mut: float=kwargs.get("mut")
@@ -66,18 +77,40 @@ class TwoSims:
 
     def _extract_metadata(self):
         """Extract self attributes from shadie .trees file metadata.
-
-        TODO: can more of this be saved in SLiM metadata?
-        YES, it is now saved - but since we are combining two sims
-        and the spo/gam values can be different, we may want to assess
-        how this metadata is read in
         """
-        gens = [i.metadata["SLiM"]["generation"] for i in self._tree_sequences]
-        assert len(set(gens)) == 1, ("simulations must be same length (gens).")
-        self.generations = gens[0] #/ 2.
-        assert self.popsize, "popsize not found in metadata; must enter a popsize arg."
+        self.tree_sequence = self._tree_sequences[0]
+
+        if self.generations is None :
+            self.generations = self.tree_sequence.metadata["SLiM"]["cycle"]
+
+        if self.gens_per_lifecycle is None:
+            self.gens_per_lifecycle = int(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
+
+        #print(f"Recombination Rate: {self.recomb}")
+        if self.recomb is None:
+            self.recomb = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"][0])
+            #print(f"Recombination Rate: {self.recomb}")
+
+        #if self.ancestral_Ne is None:
+            #self.ancestral_Ne = self.generations
+        
+        if self.mut is None:
+            try:
+                #if no gam mutation rate, this will fail
+                gam_mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gam_mutation_rate"][0])
+                spo_mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["spo_mutation_rate"][0])
+                gens = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
+
+                self.mut = (gam_mut+spo_mut)/gens
+            except:
+                self.mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["mutation_rate"][0])
+                self.mut = self.mut/self.gens_per_lifecycle
+        else:
+            self.mut = self.mut/self.gens_per_lifecycle
+
+        #assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
-        assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
+        #assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
 
     def _tskit_complete(self):
         """Calls tskit union, simplify, mutate to complete neutral sim.
@@ -115,7 +148,7 @@ class TwoSims:
             tables.mutations.time /= 2.
 
             # turn it back into a treesequence
-            treeseq = pyslim.load_tables(tables)#.tree_sequence()
+            treeseq = tables.tree_sequence()
 
             # drop nodes that are not connected to anything. This includes
             # the pseudo-nodes representing half of the haploid populations.
@@ -141,6 +174,7 @@ class TwoSims:
         subpopulations. At the final generation of shadie SLiMulation
         the generation is even, and so we ...
         """
+
         # set population=0 for all nodes in each ts. Nodes from the
         # diploid sub-generation are currently labeled as population=1.
         for idx, treeseq in enumerate(self._tree_sequences):
@@ -153,30 +187,99 @@ class TwoSims:
             nnodes = tables.nodes.num_rows
             tables.nodes.population = np.full(nnodes, idx, dtype=np.int32)
 
-            # modify table metadata for SLiM sim length
-            # tables.metadata["SLiM"]["generation"] = int(
-            #     tables.metadata["SLiM"]["generation"] / 2)
-            # tables.mutations.time = tables.mutations.time / 2.
-            # tables.nodes.time = tables.nodes.time / 2.
-
             # drop nodes that are not connected to anything. This includes
             # the pseudo-nodes representing half of the haploid populations.
-            nodes_in_edge_table = list(
-                set(tables.edges.parent).union(tables.edges.child)
-            )
+
+            #commenting out because wpi pine are losing nodes...
+            #nodes_in_edge_table = list(
+            #    set(tables.edges.parent).union(tables.edges.child)
+            #)
+            nodes_in_edge_table = list(range(1,max(list(tables.edges.parent))))
 
             # reload treeseq FROM modified tables
-            mod_tree_seq = pyslim.load_tables(tables)
+            mod_tree_seq = tables.tree_sequence()
 
             # remove the empty population (p1) by using simplify, which will
             # find that there are no longer any nodes in population=1. This
             # does not remove any Nodes, but it does remove a population.
             # https://tskit.dev/tskit/docs/stable/_modules/tskit/tables.html
-            self._tree_sequences[idx] = mod_tree_seq.simplify(
-                samples=nodes_in_edge_table,
-                keep_input_roots=True,
-                keep_unary_in_individuals=True
-            )
+            # self._tree_sequences[idx] = mod_tree_seq.simplify(
+            #     samples=nodes_in_edge_table,
+            #     keep_input_roots=True,
+            #     keep_unary_in_individuals=True,
+            #     #keep_unary=True,
+            # )
+
+            self._tree_sequences[idx] = mod_tree_seq
+
+    
+    #from https://tskit.dev/pyslim/docs/latest/vignette_parallel_phylo.html
+    def match_nodes(other, ts, split_time):
+        """
+        From https://tskit.dev/pyslim/docs/latest/vignette_parallel_phylo.html
+        Given SLiM tree sequences `other` and `ts`, builds a numpy array with length
+        `other.num_nodes` in which the indexes represent the node id in `other` and the
+        entries represent the equivalent node id in `ts`. If a node in `other` has no
+        equivalent in `ts`, then the entry takes the value `tskit.NULL` (-1). The
+        matching is done by comparing the IDs assigned by SLiM which are kept in
+        node metadata. This matching of SLiM IDs is *only* done for nodes with time
+        older than the specified `split_time`.
+        """
+        node_mapping = np.full(other.num_nodes, tskit.NULL)
+        sids0 = np.array([n.metadata["slim_id"] for n in ts.nodes()])
+        sids1 = np.array([n.metadata["slim_id"] for n in other.nodes()])
+        alive_before_split1 = (other.tables.nodes.time >= split_time)
+        is_1in0 = np.isin(sids1, sids0)
+        both = np.logical_and(alive_before_split1, is_1in0)
+        sorted_ids0 = np.argsort(sids0)
+        matches = np.searchsorted(
+            sids0,
+            sids1[both],
+            side='left',
+            sorter=sorted_ids0
+        )
+        node_mapping[both] = sorted_ids0[matches]
+        self.node_mapping =  node_mapping
+
+        merged = {
+        row.child : {
+            "ts": tskit.load(row.outfile),
+            "depth": row.edgelen,
+            "children": [row.child]
+            }
+        for i, row in df[df.is_leaf].iterrows()
+        }
+
+    def union_children(parent, df, merged):
+
+        print(f"Going in: {parent}")
+        child_rows = df[df.parent == parent]
+        assert (len(child_rows) == 2) or (len(childs) == 0)
+        if len(child_rows) == 2:
+            children = [row.child for _, row in child_rows.iterrows()]
+            for child in children:
+                if child not in merged:
+                    union_children(child, df, merged)
+            split_time = merged[children[0]]["depth"]
+            assert split_time == merged[children[1]]["depth"] # ultrametric
+            print(f'Unioning: {children}, Split time: {split_time}')
+            ts0 = merged[children[0]]["ts"]
+            ts1 = merged[children[1]]["ts"]
+            node_map = match_nodes(ts1, ts0, split_time)
+            tsu = ts0.union(ts1, node_map, check_shared_equality=True)
+            # the time from tip to start of simulation is split_time plus the
+            # length of the edge
+            parent_edgelength = df[df.child==parent].edgelen.item()
+            merged[parent] = {
+                "ts": tsu,
+                "depth": split_time + parent_edgelength,
+                "children": merged[children[0]]["children"] + merged[children[1]]["children"]
+            }
+
+        union_children("root", df, merged)
+        # union of all three species tree sequences is in the root.
+        tsu = merged["root"]["ts"]
+        pops = merged["root"]["children"]
 
     def _merge_ts_pops(self):
         """Merge two separate sims into a single ts with 2 pops.
@@ -194,15 +297,37 @@ class TwoSims:
             return
         if self._nts > 2:
             raise ValueError("you cannot enter >2 tree sequences.") 
+        
         # Merge two tree sequences
+        ids = []
+        species = []    
+
+        #read in all the tree sequences
+        for i in range(0,len(self._tree_files)):
+           ts = tskit.load(self._tree_files[i])
+           species.append(ts)
+        
+        #merge the sequences
+        merged_ts = species[0].union(
+                species[1], 
+                node_mapping=[tskit.NULL for i in range(species[1].num_nodes)],
+                add_populations=True,
+                )
+        self.merged_ts = merged_ts
+                
+    def _merge_ts_pops_old(self):
+
         ts0 = self._tree_sequences[0]
         ts1 = self._tree_sequences[1]
+
+        self.match_nodes(other = ts1, ts=ts0, split_time=self.generations)
+
         merged_ts = ts0.union(
             ts1,
-            node_mapping=[tskit.NULL for i in range(ts1.num_nodes)],
+            node_mapping=self.node_mapping,
             add_populations=True,
         )
-        self.tree_sequence = pyslim.SlimTreeSequence(merged_ts)
+        self.merged_ts = merged_ts #pyslim.SlimTreeSequence(merged_ts)
 
     def _report_ninds(self):
         """Report number of inds in each population."""
@@ -210,8 +335,8 @@ class TwoSims:
         # get array of ids of individuals (sets of 2 nodes) alive at
         # 0 generations ago (diploids) [time=1 also has nodes].
         # e.g., [0, 1, 2, ... 2000, 2001, 2002]
-        inds_alive_in_pop0 = treeseq.individuals_alive_at(time=0, population=0)
-        inds_alive_in_pop1 = treeseq.individuals_alive_at(time=0, population=1)
+        inds_alive_in_pop0 = pyslim.individuals_alive_at(treeseq, time=0, population=0)
+        inds_alive_in_pop1 = pyslim.individuals_alive_at(treeseq, time=1, population=0)
         npop0 = len(inds_alive_in_pop0)
         npop1 = len(inds_alive_in_pop1)
         logger.info(f"inds alive at time=0; simpop0={npop0}, simpop1={npop1}")
@@ -244,13 +369,64 @@ class TwoSims:
     def _recapitate(self):
         """Merge pops backwards in time and simulate ancestry.
         """
+
+        #add msprime demographic event 
+        #(because SLiM adds populations with 0 individuals there are more than two 
+        #populations here, which is why we have the for loop)
+        demography=msprime.Demography().from_tree_sequence(self.merged_ts)
+        demography.add_mass_migration(time = simlength, source = i, destination = 0,
+            proportion = 1.0)
+
+        #pop_configs = [msprime.PopulationConfiguration(initial_size=popsize)
+        #    for _ in range(merged_ts.num_populations)]
+
+        #matrix = np.zeros((merged_ts.num_populations, merged_ts.num_populations))
+
+        #recapitate with demographic event
+        rts = pyslim.recapitate(
+            ts=self.merged_ts,
+            demography=demography,
+            random_seed=self.rng.integers(2**31),
+            recombination_rate=self.recomb,
+        )
+
+        self.tree_sequence = rts
+
+    def _recapitate_old(self):
+        ancestral_Ne = self.popsize
+
+        #manually create demography to avoid error in pyslim
+        demography = msprime.Demography.from_tree_sequence(self.tree_sequence)
+        
+        # must set pop sizes to >0 even though we merge immediately
+        for pop in demography.populations:
+            pop.initial_size=1.0
+        ancestral_name = "ancestral"
+        derived_names = [pop.name for pop in demography.populations]
+        while ancestral_name in derived_names:
+            ancestral_name = (ancestral_name + "_ancestral")
+        demography.add_population(
+                name=ancestral_name,
+                description="ancestral population simulated by msprime",
+                initial_size=ancestral_Ne,
+        )
+
+        # the split has to come slightly longer ago than slim's tick
+        # since that's when all the linages are at, and otherwise the event
+        # won't apply to them
+        demography.add_population_split(
+                np.nextafter( recap_time, 2 * recap_time),
+                derived=derived_names,
+                ancestral=ancestral_name,
+        )
+
         # recapitate: ts is passed to sim_ancestry as 'initial_state'.
         # this automatically merges everyone into new ancestral pop.
         self.tree_sequence = pyslim.recapitate(
-            ts=self.tree_sequence,
-            ancestral_Ne=self.popsize,
-            random_seed=self.rng.integers(2**31),
-            recombination_rate=self.recomb,
+        ts=self.tree_sequence,
+        demography=demography,
+        random_seed=self.rng.integers(2**31),
+        recombination_rate=self.recomb,
         )
 
     def _mutate(self):

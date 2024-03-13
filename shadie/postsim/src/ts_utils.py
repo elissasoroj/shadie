@@ -92,6 +92,7 @@ def stats(
         )
         return data
 
+
 def draw_stats(
         tree_sequence,
         stat: str="diversity",
