@@ -111,9 +111,9 @@ class PteridophyteHomosporous(PteridophyteBase):
         # methods inherited from parent Pteridophyte class
         self._set_mutation_rates()
         self._add_shared_mode_scripts()
-        self._add_first_script()
 
         # methods inherited from parent NonWrightFisher class
+        self._add_first_script()
         self._define_subpopulations()
         self._add_alternation_of_generations()
         self._set_gametophyte_k()
