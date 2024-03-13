@@ -2,7 +2,9 @@
 
 ## What is it?
 
-`shadie` is a wrapper around SLiM3 that provides a user-friendly python API interface, implements selection on alternating hapliod/diploid lifecycles, and converts user-provided phylogeny into SLiM3-compatible subpopulation demography.
+`shadie` is a wrapper around SLiM that provides a user-friendly python API interface for generating models that incorporate alternation-of-generations. 
+
+Coming Soon: we are currently working on functionality that would allow `shadie` to convert user-provided phylogeny into SLiM-compatible subpopulation demography.
 
 
 ## Image Use

@@ -13,12 +13,6 @@ git clone https://github.com/elissasoroj/shadie.git
 cd ./shadie
 pip install -e .
 
-#shadie requires utilities from the development version of the package `toytree`
-#clone and install from GitHub
-git clone https://github.com/eaton-lab/toytree.git
-cd ./toytree
-git checkout toy3
-pip install -e .
 ```
 
 ## Troubleshooting
