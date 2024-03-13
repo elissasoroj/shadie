@@ -149,11 +149,12 @@ class NonWrightFisher(ReproductionBase):
         unique set of attributes. Excludes parent attrs like model.
         """
         # exclude parent class attributes
-        exclude = ["lineage", "mode", "model", "gens_per_lifecycle",
-                    "full_lifecycles", "slim_gens",
-                    "model_source", "_substitution_str", 
+        exclude = [ "lineage", "mode", "model", "gens_per_lifecycle",
+                   "full_lifecycles", "slim_gens",
+                    "model_source","_substitution_str", 
                     "_p0activate_str", "_p0deactivate_str",
                     "_p1activate_str", "_p1deactivate_str"]
+
         asdict = {
             i: j for (i, j) in self.__dict__.items()
             if i not in exclude

@@ -70,6 +70,11 @@ class BryophyteBase(NonWrightFisher):
         self.mode = self.mode
         self.gens_per_lifecycle = self._gens_per_lifecycle
 
+        """Convert tuple ratio to a float."""
+        sum_ratio = sum(self.gam_female_to_male_ratio)
+        float_ratio = self.gam_female_to_male_ratio[0] / sum_ratio
+        self.gam_female_to_male_ratio = float_ratio
+
     def _set_mutation_rates(self):
         """Checks parameters after init."""
         # Set mutation rates for both, or use Model rate / 2 for both.
@@ -114,12 +119,6 @@ class BryophyteDioicous(BryophyteBase):
     mode: str = field(default="dioicous", init=False)
     gam_female_to_male_ratio: Tuple[float,float]
 
-    def __post_init__(self):
-        """Convert tuple ratio to a float."""
-        sum_ratio = sum(self.gam_female_to_male_ratio)
-        float_ratio = self.gam_female_to_male_ratio[0] / sum_ratio
-        self.gam_female_to_male_ratio = float_ratio
-
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
         # methods inherited from parent Bryophyte class
@@ -128,13 +127,13 @@ class BryophyteDioicous(BryophyteBase):
         self._add_early_script()
 
         # methods inherited from parent NonWrightFisher class
+        self._add_first_script()
         self._define_subpopulations()
         self._add_alternation_of_generations()
-        self._add_early_script()
         self._set_gametophyte_k()
-        self._write_trees_file()
         self._add_initialize_globals()
         self._add_initialize_constants()
+        self._write_trees_file()
 
         # mode-specific functions
         self._add_mode_scripts()
@@ -145,13 +144,13 @@ class BryophyteDioicous(BryophyteBase):
         self.model.repro(
             population="p0",
             scripts=REPRO_BRYO_DIO_P0,
-            idx = "s5",
+            idx = "s0",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
             population="p1",
             scripts=REPRO_BRYO_DIO_P1,
-            idx = "s6",
+            idx = "s1",
             comment="generates gametes from sporophytes"
         )
 
@@ -161,26 +160,22 @@ class BryophyteMonoicous(BryophyteBase):
     mode: str = field(default="monoicous", init=False)
     gam_self_rate_per_egg: float
     gam_female_to_male_ratio: Tuple[float,float]
-    
-    def __post_init__(self):
-        sum_ratio = sum(self.gam_female_to_male_ratio)
-        float_ratio = self.gam_female_to_male_ratio[0] / sum_ratio
-        self.gam_female_to_male_ratio = float_ratio
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
         # methods inherited from parent Bryophyte class
         self._set_mutation_rates()
         self._add_shared_mode_scripts()
+        self._add_early_script()
 
         # methods inherited from parent NonWrightFisher class
+        self._add_first_script()
         self._define_subpopulations()
         self._add_alternation_of_generations()
-        self._add_early_script()
         self._set_gametophyte_k()
-        self._write_trees_file()
         self._add_initialize_globals()
         self._add_initialize_constants()
+        self._write_trees_file()
 
         # mode-specific functions
         self._add_mode_scripts()
@@ -192,13 +187,13 @@ class BryophyteMonoicous(BryophyteBase):
         self.model.repro(
             population="p0",
             scripts=REPRO_BRYO_MONO_P0,
-            idx = "s5",
+            idx = "s0",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
             population="p1",
             scripts=REPRO_BRYO_MONO_P1,
-            idx="s6",
+            idx="s1",
             comment="generates gametes from sporophytes"
         )
 
