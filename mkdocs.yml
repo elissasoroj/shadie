@@ -20,6 +20,7 @@ nav:
     - wright-fisher: notebooks/3-WFsim.ipynb
     - model intro: notebooks/4-model_intro.ipynb
     - recapitation: notebooks/5-recapitation.ipynb
+    - analysis: notebooks/6-data_analysis.ipynb
     - quick demo: notebooks/shadie-v0_3_0-demo.ipynb
     - plant models: drafts/under-construction.md
   #  - Full Work Flow: tutorials/fullworkflow.md
