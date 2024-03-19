@@ -33,18 +33,10 @@ setup(
     author_email="ess2239@columbia.edu",
     license="GPLv3",
     description="'Simulating Haploid-Diploid Evolution', a wrapper for SLiM and msprime.",
-    python_requires='>3.10.0',
     install_requires = [
-        "numpy>=1.26.2",
-        "pandas>=2.1.4",
         "pyslim>=1.0.3",
-        "msprime>=1.3.0",
-        "tskit>=0.5.6",
-        "scipy>=1.11.4",
-        "toytree", #v >=3.0.0
-        "toyplot>=1.0.3",
+        "toytree>=3.0.0",
         "altair>=5.2.0",
-        "loguru>=0.6.0",
     ],
     classifiers=["Programming Language :: Python :: 3"],
 )
