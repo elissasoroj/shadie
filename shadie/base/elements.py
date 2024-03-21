@@ -1,41 +1,46 @@
 #!/usr/bin/env python
 
-"""
-Allows user to create element types for their simulation
+"""Allows user to create element types for their simulation.
 
-SLIM examples:
---------------
-initializeGenomicElementType("g1", m1, 1.0);
-initializeGenomicElementType("g1", c(m2,m3,m4), c(2,8,0.1));
-initializeGenomicElementType("g1", m1, 1.0, mmJukesCantor(2.5e-5));
+An Element contains one or more MutationTypes and their relative 
+frequencies. It is used in a simulations to simulate the stochastic
+mutation process that could include mutations with different types,
+each drawing from its own probability distribution of effects.
+
+SLIM examples
+-------------
+>>> initializeGenomicElementType("g1", m1, 1.0);
+>>> initializeGenomicElementType("g1", c(m2,m3,m4), c(2,8,0.1));
+>>> initializeGenomicElementType("g1", m1, 1.0, mmJukesCantor(2.5e-5));
 """
 
 # from loguru import logger
 from typing import List
 import numpy as np
-import scipy.stats as stats
+from scipy import stats
 import toyplot
-from shadie.base.mutations import MutationList, MutationTypeBase
+from shadie.base.mutations import MutationType
+from shadie.base.mutation_list import MutationList
 
 
 class ElementType:
-    """
-    Makes element types for the simulation. An Element contains one or
-    more MutationTypes and their relative frequencies.
+    """ElementType objects represent probabilities of MutationTypes
+    occurring in a genomic region.
 
-    Parameters:
-    -----------
-    MutationType or MutationList (str): 
-       For random generator: number of exons per gene; default = random
-       For dict generator: number of exons per gene; default = 1
-
-    frequency list(float): 
-        Chance of mutation at each bp
+    Parameters
+    ----------
+    Mutations: MutationType or MutationList
+        One or more MutationType objects to be used to represent a 
+        genomic element.
+    frequencies: List[float]: 
+        Probability of each MutationType.
+    altname: str
+        A str name to label this ElementType.
     """    
     idx = 0
     def __init__(
         self,
-        mutations: List[MutationTypeBase],
+        mutations: List[MutationType],
         frequencies: List[float],
         altname=None,
         ):
@@ -48,14 +53,14 @@ class ElementType:
         # convert to a MutationList regardless of input type
         self.mlist = (
             MutationList(*mutations) 
-            if isinstance(mutations, (list, tuple, MutationTypeBase))
+            if isinstance(mutations, (list, tuple, MutationType))
             else mutations
         )
 
         #store coding attribute (0 = noncoding)
         test = 0
         for mut in self.mlist:
-            test += mut.coding
+            test += mut.is_coding
         if test > 0:
             self.coding = 1
         else:
@@ -73,6 +78,7 @@ class ElementType:
                 "length of mutation list must = length of frequency list")
 
     def __repr__(self):
+        """Custom repr for ElementType object."""
         view = [
             self.altname, self.name, self.mlist.names, 
             self.freq
@@ -80,15 +86,14 @@ class ElementType:
         return f"<ElementType: {', '.join(map(str, view))}>"
 
 
-    def to_slim(self):
-        """
-        Returns the SLIM command to define an ElementType object.
+    def to_slim(self) -> str:
+        """Return the SLIM command to define an ElementType object.
         
-        Examples: 
-        --------
-        initializeGenomicElementType("g1", m1, 1.0);
-        initializeGenomicElementType("g1", c(m2,m3,m4), c(2,8,0.1));
-        initializeGenomicElementType("g1", m1, 1.0, mmJukesCantor(2.5e-5));
+        Example SLiM code
+        -----------------
+        >>> initializeGenomicElementType("g1", m1, 1.0);
+        >>> initializeGenomicElementType("g1", c(m2,m3,m4), c(2,8,0.1));
+        >>> initializeGenomicElementType("g1", m1, 1.0, mmJukesCantor(2.5e-5));
         """
         inner = ", ".join([
             f"'{self.name}'",
@@ -99,10 +104,8 @@ class ElementType:
         ])
         return f"initializeGenomicElementType({inner});"
 
-
     def draw(self, **kwargs):
-        """
-        Returns a histogram of a kde mixture of points drawn from 
+        """Return a histogram of a kde mixture of points drawn from 
         all mutational distributions at the selected frequencies.
         """
         canvas = toyplot.Canvas(
@@ -137,8 +140,7 @@ class ElementType:
 
 
 class ElementList(list):
-    """
-    Creates a list of mutations and the mutationdict object for Shadie
+    """A list of mutations and the mutationdict object for Shadie.
     """
     def __init__(self, *elementtypes):
         super().__init__(elementtypes)
@@ -173,7 +175,6 @@ class ElementList(list):
 
 if __name__ == "__main__":
 
-
     import shadie
 
     # create mutationlist
@@ -181,6 +182,8 @@ if __name__ == "__main__":
         shadie.mtype(0.5, 'f', 0.1),
         shadie.mtype(0.5, 'n', 0.05, 0.02),
     )
+
+    print(mlist)
 
     # create elements (a mutation list with frequencies)
     ele1 = ElementType(mlist, (1, 1), )
