@@ -15,19 +15,17 @@ def draw_altair_chrom_canvas(chrom: 'ChromosomeBase', width: int=700):
 
     # collect data from chromosome
     data = chrom.data.copy()
-    data['category'] = chrom.data.name
     data['altname'] = chrom.data.script.apply(lambda x: x.altname)
-    data['length'] = chrom.data.end - chrom.data.start
+    data['length'] = chrom.data.end - chrom.data.start + 1
 
     # if name was empty then infer type from coding status
     for idx in data.index:
-        if pd.isna(data.category[idx]):
-            if data.coding[idx]:
-                data.loc[idx, "category"] = "exon"
-            elif ("intron" in data.name[idx]) or ("intron" in data.script.altname):
-                data.loc[idx, "category"] = "intron"
-            else:
-                data.loc[idx, "category"] = "noncds"
+        if ("int" in data.name[idx]):
+            data.loc[idx, "category"] = "intron"
+        elif data.coding[idx] or ("ex" in data.name[idx]):
+            data.loc[idx, "category"] = "exon"
+        else:
+            data.loc[idx, "category"] = "noncds"
 
     # subset to the data used for plotting
     genome = data[["eltype", "category", "altname", "length"]].copy()
@@ -37,7 +35,7 @@ def draw_altair_chrom_canvas(chrom: 'ChromosomeBase', width: int=700):
     genome["y2"] = 1
 
     # set the colors
-    cmap_in = ['mediumaquamarine', 'palegreen','olivedrab', 'darkgreen', 'limegreen']
+    cmap_in = ['mediumaquamarine','olivedrab', 'limegreen', 'darkgreen','palegreen',]
     cmap_ex = ['cornflowerblue', 'mediumblue','dodgerblue', 'darkslateblue', 'skyblue']
     cmap_nc = ['lemonchiffon', 'gold', 'orange',  'yellow', 'khaki']
 
@@ -125,6 +123,7 @@ def draw_toyplot_chrom(
     colormap = toyplot.color.brewer.palette("Spectral", count=max(4, len(set(elements))))
     colors = [colormap[i] for i in elements]
 
+    marks = []
     # plot bars for element types
     for idx, pos in enumerate(chrom.data.index):
         dat = chrom.data.loc[pos]
@@ -142,6 +141,7 @@ def draw_toyplot_chrom(
                 f"coding: {bool(dat.coding)}"
             )
         )
+
     axes.y.show = False
     axes.x.ticks.show = True
     axes.x.ticks.locator = toyplot.locator.Extended(only_inside=True, count=8)

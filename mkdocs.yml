@@ -1,11 +1,124 @@
-site_name: shadie Docs
-nav:
-    - Overview: overview.md
-    - Installation: install.md
-    - Tutorial: tutorial.md
-theme: readthedocs
-extra_css: [extra.css]
+site_name: shadie {UNDER ACTIVE DEVELOPMENT}
 repo_url: https://github.com/elissasoroj/shadie
 site_author: Elissa Sorojsrisom
-docs_dir: docs
+#to deploy: mkdocs gh-deploy --force
+#to see dummy site: mkdocs serve
+
+# Copyright
+copyright: Copyright &copy; 2022 Elissa Sorojsrisom
+
+nav:
+  - Introduction: 
+    - Overview: main/overview.md
+    - About: main/about.md
+  - Installation: main/install.md
+  - Tutorials: 
+    - Getting Started: tutorials/getting_started.md
+    - mtypes: notebooks/1-mtypes_gtypes.ipynb
+    - chromosome: notebooks/2-chrom.ipynb
+    - model setup: drafts/under-construction.md
+    - v0.1.1 Demo: notebooks/shadie-v0_1_1-demo.ipynb
+    - Full Work Flow: tutorials/fullworkflow.md
+  - Examples:
+    - Single-Site: drafts/under-construction.md
+    - Differential Expression: drafts/under-construction.md
+  - Understory:
+    - Intro: education/eduintro.md
+
+#Theme Settings
+theme:
+  name: material
+  custom-dir: overrides
+  favicon: assets/favicon.png
+  palette:
+    - scheme: shadie-light
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: hsl(145, 41%, 64%)
+      secondary:
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    #text: Quicksand
+  icon:
+    logo: octicons/codespaces-24
+    admonition:
+      note: octicons/tag-16
+      abstract: octicons/checklist-16
+      info: octicons/info-16
+      tip: octicons/squirrel-16
+      success: octicons/check-16
+      question: octicons/unverified-16
+      warning: octicons/alert-16
+      failure: octicons/x-circle-16
+      danger: octicons/zap-16
+      bug: octicons/bug-16
+      example: octicons/beaker-16
+      quote: octicons/quote-16
+  features:
+    # - navigation.instant
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.expand
+    - content.code.annotate
+    - header.autohide
+
+#Plugins
+plugins:
+  - mkdocs-jupyter:
+      include_source: True
+
+markdown_extensions:
+# Python Markdown
+  - admonition
+  - attr_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+#pymdownx
+  - pymdownx.tabbed      
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.details
+  # - pymdownx.highlight:
+  #     anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences
+      # custom_fences:
+      #   - name: mermaid
+      #     class: mermaid
+      #     format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+#Javascript Extentions
+extra_javascript:
+  # - js/custom.js 
+  # - https://unpkg.com/mermaid@8.9.2/dist/mermaid.min.js
+  # - https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.0.9/mermaid.min.js
+  # - js/termynal.js
+  # - js/mermaid.js
+
+extra_css:
+  - stylesheets/extra.css
+
 

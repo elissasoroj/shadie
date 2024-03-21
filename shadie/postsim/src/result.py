@@ -15,6 +15,7 @@ import scipy.stats
 from loguru import logger
 
 from toytree.utils import toytree_sequence, ScrollableCanvas
+from toytree.utils.src.toytree_sequence import ToyTreeSequence
 from shadie.chromosome.src.classes import ChromosomeBase
 
 
@@ -67,6 +68,9 @@ class TwoSims:
         """Extract self attributes from shadie .trees file metadata.
 
         TODO: can more of this be saved in SLiM metadata?
+        YES, it is now saved - but since we are combining two sims
+        and the spo/gam values can be different, we may want to assess
+        how this metadata is read in
         """
         gens = [i.metadata["SLiM"]["generation"] for i in self._tree_sequences]
         assert len(set(gens)) == 1, ("simulations must be same length (gens).")
@@ -147,7 +151,7 @@ class TwoSims:
 
             # modify the tables to set population to 0 for all
             nnodes = tables.nodes.num_rows
-            tables.nodes.population = np.zeros(nnodes, dtype=np.int32)
+            tables.nodes.population = np.full(nnodes, idx, dtype=np.int32)
 
             # modify table metadata for SLiM sim length
             # tables.metadata["SLiM"]["generation"] = int(

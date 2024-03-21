@@ -21,17 +21,15 @@ from shadie.reproduction.scripts import (
     GAM_MATERNAL_EFFECT_ON_P1,
     SUBSTITUTION,
     P0_FITNESS_SCALE_DEFAULT,
-    EARLY_WITH_GAM_K,
+    #EARLY_WITH_GAM_K,
+    EARLY,
 )
 from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_DIO_P1,
     REPRO_BRYO_DIO_P0,
-    LATE_BRYO_DIO,
     REPRO_BRYO_MONO_P1,
     REPRO_BRYO_MONO_P0,
-    LATE_BRYO_MONO,
-    S4_TAG,
-    FUNCTIONS_BRYO,
+    DEFS_BRYO,
 )
 # from shadie.reproduction.bryo_scripts2 import (
 #     LATE_BRYO_MONO,
@@ -54,10 +52,9 @@ class BryophyteBase(NonWrightFisher):
     gam_mutation_rate: Optional[float]
     gam_clone_rate: float
     gam_clones_per: int
-    gam_self_rate_per_ind: float
-    gam_self_rate_per_egg: float    
-    # egg_spo_self_rate: float
-    # spo_self_chance: float
+    #gam_self_rate: float
+    spo_self_rate_per_egg: float
+    #spo_self_rate: float
     spo_random_death_chance: float
     gam_random_death_chance: float
     spo_spores_per: int
@@ -84,10 +81,13 @@ class BryophyteBase(NonWrightFisher):
         Adds a survival script to define the random_chance_of_death,
         maternal effects, and survival=0 for alternation of generations.
         """
-        self.model.custom(
-            scripts=SURVIVAL_BRYO, 
-            comment="survival is random, maternal-effect, or standard fitness",
+        survival_script = (
+            SURV.format(
+                p0_maternal_effect="",
+                p1_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1
+            )
         )
+        self.model.custom(survival_script, comment="SURVIVAL CALLBACKS for alternation of generations")
 
 
 @dataclass
@@ -109,7 +109,10 @@ class BryophyteDioicous(BryophyteBase):
 
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
-        self._add_early_and_late(EARLY_BRYO_MONO, LATE_BRYO_MONO)
+        self._add_alternation_of_generations()
+        self._add_early_script()
+        self._set_gametophyte_k()
+        self._add_initialize_globals()
         self._add_initialize_constants()
         self._write_trees_file()
 
@@ -118,39 +121,25 @@ class BryophyteDioicous(BryophyteBase):
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
-        self.model.custom(
-            scripts=FUNCTIONS_BRYO, 
-            comment="shadie DEFINITIONS",
-        )
-        self.model.repro(
-            population="p1",
-            idx="s5",
-            scripts=REPRO_BRYO_DIO_P1,
-            comment="generates gametes from sporophytes"
-        )
+        self.model.custom(scripts=DEFS_BRYO, comment = "shadie DEFINITIONS")
         self.model.repro(
             population="p0",
             scripts=REPRO_BRYO_DIO_P0,
+            idx = "s5",
+            comment="generates sporophytes from gametes"
+        )
+        self.model.repro(
+            population="p1",
+            scripts=REPRO_BRYO_DIO_P1,
             idx = "s6",
             comment="generates gametes from sporophytes"
         )
-        
-        # add late call
-        substitution_script = (
-            SUBSTITUTION.format(**{'muts': self._substitution_str,
-                'late': LATE_BRYO_DIO}).lstrip())
-
-        self.model.late(
-            time=None,
-            scripts=substitution_script,
-            comment="fixes mutations in haploid gen"
-            )
 
 
 @dataclass
 class BryophyteMonoicous(BryophyteBase):
     mode: str = field(default="monoicous", init=False)
-    gam_self_rate: float=0.2
+    gam_self_rate_per_egg: float
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
@@ -160,7 +149,10 @@ class BryophyteMonoicous(BryophyteBase):
 
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
-        self._add_early_and_late(EARLY_BRYO_MONO, LATE_BRYO_MONO)
+        self._add_alternation_of_generations()
+        self._add_early_script()
+        self._set_gametophyte_k()
+        self._add_initialize_globals()
         self._add_initialize_constants()
         self._write_trees_file()
 
@@ -170,25 +162,23 @@ class BryophyteMonoicous(BryophyteBase):
     def _add_mode_scripts(self):
         """fills the model.map block with bryophyte-monoicous scripts."""
         # add reproduction scripts
-        self.model.custom(
-            scripts=FUNCTIONS_BRYO, 
-            comment="shadie DEFINITIONS"
+        self.model.custom(scripts=DEFS_BRYO, comment = "shadie DEFINITIONS")
+        self.model.repro(
+            population="p0",
+            scripts=REPRO_BRYO_MONO_P0,
+            idx = "s5",
+            comment="generates sporophytes from gametes"
         )
         self.model.repro(
             population="p1",
             scripts=REPRO_BRYO_MONO_P1,
-            idx = "s5",
-            comment="generates gametes from sporophytes"
-        )
-        self.model.repro(
-            population="p0",
-            scripts=REPRO_BRYO_MONO_P0,
             idx="s6",
             comment="generates sporophytes from gametes"
         )
 
-
-
+        # add model type to metadata
+        modeldict = {'model': 'shadie', 'lineage': 'bryophyte', 'mode': 'monoicous'}
+        self.model.map["initialize"][0]['simglobals']['METADATA'].update(modeldict)
 
 if __name__ == "__main__":
 
@@ -197,10 +187,12 @@ if __name__ == "__main__":
     # define mutation types
     m0 = shadie.mtype(0.5, 'n', 0, 0.4)
     m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
+    m2 = shadie.mtype(0.5, 'g', 0.8, 0.75, diffexpr="diploid")
+    m3 = shadie.mtype(0.5, 'n', 0, 0.4, diffexpr="haploid")
 
     # define elements types
-    e0 = shadie.etype([m0, m1], [1, 2])
-    e1 = shadie.etype([m1], [1])
+    e0 = shadie.etype([m0, m2], [1, 2])
+    e1 = shadie.etype([m3], [1])
 
     # design chromosome of elements
     chrom = shadie.chromosome.random(
@@ -215,7 +207,8 @@ if __name__ == "__main__":
         mod.reproduction.bryophyte_monoicous(
             spo_pop_size=100,
             gam_pop_size=100,
+            gam_self_rate_per_egg=0.8,
         )
     print(mod.script)
     #mod.write("/tmp/slim.slim")
-    # mod.run(binary="/usr/local/bin/slim", seed=123)
+    #mod.run(seed=123)

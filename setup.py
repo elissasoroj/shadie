@@ -6,25 +6,43 @@ Install package locally for testing.
 >>> pip install -e . --no-deps
 """
 
+import os
+import re
 from setuptools import setup
+
+# parse version from init.py
+with open("shadie/__init__.py") as init:
+    CUR_VERSION = re.search(
+        r"^__version__ = ['\"]([^'\"]*)['\"]",
+        init.read(),
+        re.M,
+    ).group(1)
 
 # build command
 setup(
     name="shadie",
-    version="0.2",
+    version=CUR_VERSION,
+    packages=["shadie",
+            "shadie.base",
+            "shadie.chromosome",
+            "shadie.chromosome.src",
+            "shadie.postsim",
+            "shadie.postsim.src",
+            "shadie.reproduction",
+            "shadie.sims"],
     author="Elissa Sorojsrisom",
     author_email="ess2239@columbia.edu",
     license="GPLv3",
     description="SLiM3 Wrapper Program, 'Simulating Haploid-Diploid Evolution'",
     install_requires = [
-        "pandas",
+        "altair",
         "numpy",
+        "pandas",
         "pyslim",
-        "tskit",
+        "scipy",
         "toyplot",
         "toytree",
-        "loguru",
-        "altair",
+        "tskit",
     ],
     classifiers=["Programming Language :: Python :: 3"],
 )

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-A context manager for wrapping the context of a simulation setup.
+"""A context manager for wrapping the context of a simulation setup.
 
 Example
 -------
@@ -44,7 +43,7 @@ from contextlib import AbstractContextManager
 from concurrent.futures import ProcessPoolExecutor
 from loguru import logger
 import numpy as np
-from shadie.base.mutations import MutationTypeBase
+from shadie.base.mutations import MutationType
 from shadie.base.elements import ElementType
 from shadie.reproduction.api import ReproductionApi
 from shadie.sims.format import (
@@ -106,38 +105,38 @@ class Model(AbstractContextManager):
             'survival': [],
             'custom': [],
         }
-        """A dict to store SLiM script snippets until context closure."""
+        """: A dict to store SLiM script snippets until context closure."""
         self.script = ""
-        """The final SLiM script built from components in `.map`."""
+        """: The final SLiM script built from components in `.map`."""
         self.stdout = ""
-        """The stdout from running `slim script` if `.run()` is called."""
-        self.sim_time: int=0
-        """The length of the simulation in sporophyte generations."""
+        """: The stdout from running `slim script` if `.run()` is called."""
+        self.sim_time: int = 0
+        """: The length of the simulation in sporophyte generations."""
         self.chromosome = None
-        """Chromosome object with genome structure."""
+        """: Chromosome object with genome structure."""
         self.metadata: dict = {}
-        """Dictionary storing simulation metadata"""
-        
+        """: Dictionary storing simulation metadata"""
+
         # hidden attributes set by .initialize()
         self.metadata = {
             'file_in': None,
             'file_out': None,
             'mutation_rate': None,
-            'recomb_rate': None,    
+            'recomb_rate': None,
         }
 
         self.reproduction = ReproductionApi(self)
         """API to access reproduction functions."""
 
     def __repr__(self):
-        return "<shadie.Model generations={self.sim_time}>"
+        return f"<shadie.Model generations={self.sim_time}>"
 
     def __enter__(self):
         """
         On entry the Class counters of mutation and element types
         is reset to zero. The .map dictionary is also cleared.
         """
-        MutationTypeBase.idx = 0
+        MutationType.idx = 0
         ElementType.idx = 0
         self.map = {i: [] for i in self.map}
         return self
@@ -183,7 +182,7 @@ class Model(AbstractContextManager):
             elif key == "late":
                 events = sorted(mapped[key], key=lambda x: str(x['time']))
             elif key == "fitness":
-                events = sorted(mapped[key], key=lambda x: x['idx'])
+                events = sorted(mapped[key], key=lambda x: -1 * float('inf') if x['idx'] is None else x['idx'])
             elif key == "survival":
                 events = sorted(mapped[key], key=lambda x: x['idx'])
             else:
@@ -211,15 +210,17 @@ class Model(AbstractContextManager):
     def initialize(
         self,
         chromosome,
-        sim_time: int=1000,
-        mutation_rate: float=1e-8,
-        recomb_rate: float=1e-9,
-        constants: Union[None, dict]=None,
-        scripts: Union[None, list]=None,
-        file_in: Union[None, str]=None,
-        file_out: str="shadie.trees",
-        skip_neutral_mutations: bool=False,
-        ):
+        sim_time: int = 1000,
+        mutation_rate: float = 1e-8,
+        recomb_rate: float = 1e-9,
+        constants: Union[None, dict] = None,
+        simglobals: Union[None, dict] = None,
+        scripts: Union[None, list] = None,
+        file_in: Union[None, str] = None,
+        file_out: str = "shadie.trees",
+        skip_neutral_mutations: bool = False,
+        _simplification_interval: Union[str, int] = "NULL",
+    ):
         """Add an initialize() block to the SLiM code map.
 
         This sets the chromosome structure by initializing MutationType
@@ -242,20 +243,23 @@ class Model(AbstractContextManager):
             This is applied in the sporophyte generation during meiosis.
         constants: dict[str,Any]
             Custom constants defined by user
+        simglobals: dict[str,Any]
+            Custom globals defined by user
         scripts: list[str]
             Customo scripts provided by the user
         file_in: str
-            Optional starting .trees file used to initialize the 
+            Optional starting .trees file used to initialize the
             starting population
         file_out: str
             Filepath to save output
         skip_neutral_mutations: bool
-            If True then mutations are not added to neutral genomic 
+            If True then mutations are not added to neutral genomic
             regions. This should be used if you plan to add coalescent
             recapitated ancestry and mutations. Default=False.
         """
         logger.debug("initializing Model")
         constants = {} if constants is None else constants
+        simglobals = {} if simglobals is None else simglobals
         scripts = [] if scripts is None else scripts
 
         # store a copy of the chromosome and set to keep or exclude neutral.
@@ -270,20 +274,23 @@ class Model(AbstractContextManager):
         })
 
         self.map['initialize'].append({
+            'simplification_interval': _simplification_interval,
             'mutation_rate': mutation_rate,
             'recombination_rate': f"{recomb_rate}, {int(self.chromosome.genome_size)}",
             'genome_size': self.chromosome.genome_size,
             'mutations': self.chromosome.to_slim_mutation_types(),
+            'mutation_names':self.chromosome.mutation_list(),
             'elements': self.chromosome.to_slim_element_types(),
             'chromosome': self.chromosome.to_slim_elements(),
             'constants': constants,
+            'simglobals': simglobals,
             'scripts': scripts,
         })
-    
+
     def _read_from_file(self, tag_scripts: List[str]):
         """Set an existing .trees file as starting state of simulation.
 
-        If the trees file is not a shadie trees file (e.g., with 
+        If the trees file is not a shadie trees file (e.g., with
         subpops defined as p0 and p1) this will cause problems.
         """
         scripts = [f"sim.readFromPopulationFile('{self.metadata['file_in']}')"]
@@ -298,9 +305,9 @@ class Model(AbstractContextManager):
         self,
         time: Union[int, None],
         scripts: Union[str, list],
-        idx: Union[str,None]= None,
-        comment: Union[str,None]=None,
-        ):
+        idx: Union[str, None] = None,
+        comment: Union[str, None] = None,
+    ):
         """Add an early() block to the SLiM code map.
 
         Events in `early` blocks occur before selection in every
@@ -318,9 +325,9 @@ class Model(AbstractContextManager):
         self,
         population: Union[str, None],
         scripts: Union[str, list],
-        idx:Union[str, None]=None,
-        comment: Union[str,None]=None,
-        ):
+        idx: Union[str, None] = None,
+        comment: Union[str, None] = None,
+    ):
         """Add a custom reproduction() block to the SLiM code map.
 
         Users will usually want to use the organism specific functions
@@ -335,31 +342,48 @@ class Model(AbstractContextManager):
             'comment': comment,
         })
 
-    def fitness(
+    def muteffect(
         self,
-        mutation:Union[str, None],
-        scripts:Union[str, list],
-        idx:Union[str, None]=None,
-        comment:Union[str,None]=None,
-        ):
-        """
-        Add event that adjusts fitness values before fitness calc.
+        mutation: Union[str, None],
+        scripts: Union[str, list],
+        idx: Union[str, None] = None,
+        comment: Union[str, None] = None,
+    ):
+        """Add event that adjusts fitness values before fitness calc.
+
+
         """
         self.map['fitness'].append({
             'idx': idx,
             'mutation': mutation,
             'scripts': scripts,
+            'comment': comment,
+        })
+
+    def fitness(
+        self,
+        target: str,  # subpop or ind
+        scripts: Union[str, list],
+        idx: Union[str, None] = None,
+        comment: Union[str, None] = None,
+    ):
+        """
+        Add event that adjusts fitness values before fitness calc.
+        """
+        self.map['fitness'].append({
             'idx': idx,
+            'target': target,
+            'scripts': scripts,
             'comment': comment,
         })
 
     def survival(
         self,
-        population:Union[str, None],
-        scripts:Union[str, list],
-        idx:Union[str,None]=None,
-        comment:Union[str,None]=None,
-        ):
+        population: Union[str, None],
+        scripts: Union[str, list],
+        idx: Union[str, None] = None,
+        comment: Union[str, None] = None,
+    ):
         """
         Add event that adjusts fitness values before fitness calc.
         """
@@ -374,9 +398,9 @@ class Model(AbstractContextManager):
         self,
         time: Union[int, None],
         scripts: Union[str, list],
-        idx: Union[str,None]=None,
-        comment: Union[str,None]=None,
-        ):
+        idx: Union[str, None] = None,
+        comment: Union[str, None] = None,
+    ):
         """Add a late() block to the SLiM code map.
 
         Events in `late` blocks occur at the end of *every* generation
@@ -500,7 +524,6 @@ class Model(AbstractContextManager):
                 args = (rng.integers(2**31), binary)
                 rasync = pool.submit(self.run, *args)
                 rasyncs.append(rasync)
-
 
 
 if __name__ == "__main__":

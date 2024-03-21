@@ -16,10 +16,11 @@ initialize() {{
   // config
   initializeRecombinationRate({recombination_rate});
   initializeMutationRate({mutation_rate});
-  initializeTreeSeq(simplificationInterval=200);
+  initializeTreeSeq(simplificationInterval={simplification_interval});
 
   // MutationType init
   {mutations}
+  c({mutation_names}).haploidDominanceCoeff = 1.0;
 
   // ElementType init
   {elements}
@@ -29,6 +30,9 @@ initialize() {{
 
   // constants (Population sizes and others)
   {constants}
+
+  // globals (metadata dictionary)
+  {simglobals}
 
   // extra scripts (Optional)
   {scripts}
@@ -43,9 +47,18 @@ REPRODUCTION = """
 }}
 """
 
+MUT_EFFECT = """
+// adjusts mutationEffect calculation 
+//(specific mutation in specific ind)
+{comment}{idx}mutationEffect({mutation}) {{
+    {scripts}
+}}
+"""
+
 FITNESS = """
-// adjusts fitness calculation
-{comment}{idx}fitness({mutation}) {{
+// adjusts fitnessEffect calculation 
+//(fitness recalc for specific ind)
+{comment}{idx}fitnessEffect({target}) {{
     {scripts}
 }}
 """
@@ -113,6 +126,21 @@ def format_event_dicts_to_strings(event: Dict):
         event['constants'] = "\n  ".join([
             f"defineConstant('{str(key).upper()}', {val});" for key, val
             in event['constants'].items()
+        ])
+
+    if 'simglobals' in event:
+        for (key, val) in event['simglobals'].items():
+            if isinstance(val, dict):
+                dictlist = []
+                for (i,j) in val.items():
+                    dictlist.append(str(i))
+                    dictlist.append(str(j))
+                string = "Dictionary"+str(tuple(dictlist))
+                event['simglobals'].update({key:str(string)})
+
+        event['simglobals'] = "\n  ".join([
+            f"defineGlobal('{str(key).upper()}', {val});" for key, val
+            in event['simglobals'].items()
         ])
 
     if 'scripts' in event:

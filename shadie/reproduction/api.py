@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 
-"""
-API to make reproduction functions accessible from Model object.
+"""API to make reproduction functions accessible from Model object.
+
 These are the main user-facing options for implementing life
 histories into SLiM scripts using the shadie Model context.
 """
 
-from typing import Union, Tuple, Optional
+from typing import Union, Tuple, Optional, TypeVar
 
 from shadie.reproduction.base import WrightFisher
+from shadie.reproduction.wfspecial import ClonalHaploidWF, AltGenWF
 from shadie.reproduction.bryobase import BryophyteMonoicous, BryophyteDioicous
 from shadie.reproduction.angiobase import AngiospermMonoecious, AngiospermDioecious
 from shadie.reproduction.fernbase import PteridophyteHomosporous, PteridophyteHeterosporous
+
+Model = TypeVar("Model")
 
 
 class ReproductionApi:
@@ -20,28 +23,35 @@ class ReproductionApi:
     This is called from an initialized Model object to access functions
     as Model.reproduction.bryophyte(...), for example.
     """
-    def __init__(self, model: 'shadie.Model'):
+    def __init__(self, model: Model):
         self.model = model
 
     def bryophyte_monoicous(
         self,
         spo_pop_size: int,
         gam_pop_size: int,
-        spo_mutation_rate: Optional[float]=None,
-        gam_mutation_rate: Optional[float]=None,
-        gam_clone_rate: float=0.8,
-        gam_clones_per: int=100,
-        gam_self_rate_per_ind: float=0.2,
-        gam_self_rate_per_egg: float=0.1,
+        spo_mutation_rate: Optional[float] = None,
+        gam_mutation_rate: Optional[float] = None,
+        gam_clone_rate: float = 0.8,
+        gam_clones_per: int = 100,
+        # gam_self_rate_per_ind: float=0.2,
+        # gam_self_rate_per_egg: float=0.1,
         #egg_spo_self_rate: float=0.1,
         #spo_self_chance: float=0.1,
-        gam_maternal_effect: float=0.5,
-        spo_random_death_chance: float=0.08,
-        gam_random_death_chance: float=0.08,
+        # gam_maternal_effect: float=0.5,
+        # spo_random_death_chance: float=0.08,
+        # gam_random_death_chance: float=0.08,
+        #gam_self_rate: float=0.2,
+        gam_self_rate_per_egg: float=0.2,
+        spo_self_rate_per_egg: float=0.0,
+        #spo_self_rate: float=0.0,
+        gam_maternal_effect: float=0.0,
+        spo_random_death_chance: float=0.0, # FIXME: I like probability better than chance
+        gam_random_death_chance: float=0.0,
         spo_spores_per: int=500,
         gam_archegonia_per: int=5,
         #gam_k: int=None
-        ):
+    ):
         """Adds Monoicous Bryophyte life history to model.
 
         Generate scripts appropriate for a bryophyte (moss, liverwort,
@@ -56,9 +66,9 @@ class ReproductionApi:
             Gametophyte (haploid) population carrying capacity.
         spo_mutation_rate: float
             Sporophyte mutation rate; mutations per site per generation
-            applied each sporophyte generation. If rates are set for 
-            spo and gam separately here then each is set to 1/2 the 
-            initialize mutation rate. 
+            applied each sporophyte generation. If rates are set for
+            spo and gam separately here then each is set to 1/2 the
+            initialize mutation rate.
         gam_mutation_rate: float
             Gametophyte mutation rate; mutations per site per generation
             applied each gametophyte generation.
@@ -87,10 +97,14 @@ class ReproductionApi:
             gam_mutation_rate=gam_mutation_rate,
             gam_clone_rate=gam_clone_rate,
             gam_clones_per=gam_clones_per,
-            gam_self_rate_per_ind=gam_self_rate_per_ind,
-            gam_self_rate_per_egg=gam_self_rate_per_egg,
+            # gam_self_rate_per_ind=gam_self_rate_per_ind,
+            # gam_self_rate_per_egg=gam_self_rate_per_egg,
             # egg_spo_self_rate=egg_spo_self_rate,
             # spo_self_chance=spo_self_chance,
+            #gam_self_rate=gam_self_rate,
+            gam_self_rate_per_egg=gam_self_rate_per_egg,
+            spo_self_rate_per_egg=spo_self_rate_per_egg,
+            #spo_self_rate=spo_self_rate,
             spo_random_death_chance=spo_random_death_chance,
             gam_random_death_chance=gam_random_death_chance,
             gam_maternal_effect=gam_maternal_effect,
@@ -107,16 +121,18 @@ class ReproductionApi:
         gam_mutation_rate: Optional[float]=None,
         gam_female_to_male_ratio: Tuple[float,float]=(2, 1),
         gam_clone_rate: float=0.8,
-        gam_clones_per: int=100,
-        egg_spo_self_rate: float=0.1,
-        spo_self_chance: float=0.1,
+        gam_clones_per: int=10,
+        #gam_self_rate:float=0.0,
+        #gam_self_rate_per_egg:float=0.0,
+        spo_self_rate_per_egg: float=0.1,
+        #spo_self_rate: float=0.1,
         spo_random_death_chance: float=0.08,
         gam_random_death_chance: float=0.08,
         gam_maternal_effect: float=0.5,
-        spo_spores_per: int=100,
+        spo_spores_per: int=10,
         gam_archegonia_per = 10,
         gam_k=None,
-        ):
+    ):
         """Adds Dioicous Bryophyte life history to model.
 
         Generate scripts appropriate for a bryophyte (moss, liverwort,
@@ -131,14 +147,14 @@ class ReproductionApi:
             Gametophyte (haploid) population carrying capacity.
         spo_mutation_rate: float
             Sporophyte mutation rate; mutations per site per generation
-            applied each sporophyte generation. If rates are set for 
-            spo and gam separately here then each is set to 1/2 the 
-            initialize mutation rate. 
+            applied each sporophyte generation. If rates are set for
+            spo and gam separately here then each is set to 1/2 the
+            initialize mutation rate.
         gam_mutation_rate: float
             Gametophyte mutation rate; mutations per site per generation
             applied each gametophyte generation.
         gam_female_to_male_ratio: tuple
-            Gametophyte female:male ratio; e.g. (1,1)            
+            Gametophyte female:male ratio; e.g. (1,1)
         spo_spores_per: int
             Number of spores generated by each sporophyte.
         spo_megaspores_per: int
@@ -169,15 +185,17 @@ class ReproductionApi:
             gam_female_to_male_ratio=gam_female_to_male_ratio,
             gam_clone_rate=gam_clone_rate,
             gam_clones_per=gam_clones_per,
-            egg_spo_self_rate=egg_spo_self_rate,
-            spo_self_chance=spo_self_chance,
+            #gam_self_rate=gam_self_rate,
+            #gam_self_rate_per_egg=gam_self_rate_per_egg,
+            spo_self_rate_per_egg=spo_self_rate_per_egg,
+            #spo_self_rate=spo_self_rate,
             gam_maternal_effect=gam_maternal_effect,
             spo_random_death_chance=spo_random_death_chance,
             gam_random_death_chance=gam_random_death_chance,
             spo_spores_per=spo_spores_per,
             gam_archegonia_per= gam_archegonia_per,
             gam_k=gam_k,
-        ).run()        
+        ).run()
 
     def pteridophyte_homosporous(
         self,
@@ -185,12 +203,14 @@ class ReproductionApi:
         gam_pop_size: int,
         spo_mutation_rate: Union[None, float]=None,
         gam_mutation_rate: Union[None, float]=None,
+        gam_female_to_male_ratio: Tuple[float,float]=(2, 1),
         spo_clone_rate: float=0.0,
         spo_clones_per: int=1,
         gam_clone_rate: float=0.0,
         gam_clones_per: int=1,
-        egg_spo_self_rate: float=0.1,
-        spo_self_chance: float=0.0,
+        gam_self_rate_per_egg: float=0.1,
+        spo_self_rate_per_egg: float=0.1,
+        spo_self_rate: float=0.0,
         gam_self_rate: float=0.0,
         spo_random_death_chance: float=0,
         gam_random_death_chance: float=0,
@@ -199,9 +219,8 @@ class ReproductionApi:
         spo_spores_per: int=100,
         gam_archegonia_per = 10,
         gam_k: int =None,
-        ):
-        """
-        Generate scripts appropriate for an pteridophyte (lycophytes
+    ):
+        """Fenerate scripts appropriate for an pteridophyte (lycophytes
         and ferns) life history.
 
         Parameters:
@@ -245,17 +264,19 @@ class ReproductionApi:
         ...
         """
         PteridophyteHomosporous(
-            model=self.model, 
-            spo_pop_size=spo_pop_size, 
+            model=self.model,
+            spo_pop_size=spo_pop_size,
             gam_pop_size=gam_pop_size,
+            gam_female_to_male_ratio=gam_female_to_male_ratio,
             spo_mutation_rate=spo_mutation_rate,
             gam_mutation_rate=gam_mutation_rate,
             spo_clone_rate=spo_clone_rate,
             spo_clones_per = spo_clones_per,
             gam_clone_rate=gam_clone_rate,
             gam_clones_per=gam_clones_per,
-            egg_spo_self_rate=egg_spo_self_rate,
-            spo_self_chance=spo_self_chance,
+            gam_self_rate_per_egg=gam_self_rate_per_egg,
+            spo_self_rate_per_egg=spo_self_rate_per_egg,
+            spo_self_rate=spo_self_rate,
             gam_self_rate=gam_self_rate,
             spo_random_death_chance=spo_random_death_chance,
             gam_random_death_chance=gam_random_death_chance,
@@ -270,31 +291,39 @@ class ReproductionApi:
         self,
         spo_pop_size: int,
         gam_pop_size: int,
+        gam_female_to_male_ratio: Tuple[float,float]=(2, 1),
         spo_mutation_rate: Union[None, float]=None,
         gam_mutation_rate: Union[None, float]=None,
         spo_clone_rate: float=0.0,
         spo_clones_per: int=1,
-        gam_clone_rate: float=0.0,
-        gam_clones_per: int=1,
+        # gam_clone_rate: float=0.0,
+        # gam_clones_per: int=1,
         # spo_self_rate: float=0.1,
-        spo_self_rate_per_egg: float=0.1,
-        spo_self_rate_per_ind: float=0.1,        
+        # spo_self_rate_per_egg: float=0.1,
+        # spo_self_rate_per_ind: float=0.1,
         # egg_spo_self_rate: float=0.1,
         # spo_self_chance: float=0.0,
+        # spo_random_death_chance: float=0,
+        # gam_random_death_chance: float=0,
+        # spo_maternal_effect: float=0,
+        # gam_archegonia_per: int=10,
+        # spo_female_to_male_ratio: float=0.01,
+        # perhaps a ratio could replace both of these and we just create "enough" spores...
+        # spo_microspores_per: int=100,
+        # spo_megaspores_per: int=1,
+        spo_self_rate_per_egg: float=0.1,
+        spo_self_rate: float=0.0,
         spo_random_death_chance: float=0,
         gam_random_death_chance: float=0,
         spo_maternal_effect: float=0,
-        gam_archegonia_per: int=10,
-        # spo_female_to_male_ratio: float=0.01,
-        # perhaps a ratio could replace both of these and we just create "enough" spores...
-        spo_microspores_per: int=100,  
-        spo_megaspores_per: int=1,
+        gam_archegonia_per = 10,
+        spo_spores_per: int=100,
         # rs_megasporangia_per: int=1,
         # rs_microsporangia_per: int=1,
         # megasporangia_megaspores_per: int=1,
         # microsporangia_microspores_per: int=100,
-        # gam_k: int =None,
-        ):
+        gam_k: int =None,
+    ):
         """
         Generate scripts appropriate for an pteridophyte (lycophytes
         and ferns) life history.
@@ -340,32 +369,39 @@ class ReproductionApi:
         ...
         """
         PteridophyteHeterosporous(
-            model=self.model, 
-            spo_pop_size=spo_pop_size, 
+            model=self.model,
+            spo_pop_size=spo_pop_size,
             gam_pop_size=gam_pop_size,
-            spo_mutation_rate=spo_mutation_rate,
-            gam_mutation_rate=gam_mutation_rate,
-            spo_clone_rate=spo_clone_rate,
-            spo_clones_per=spo_clones_per,
-            gam_clone_rate=gam_clone_rate,
-            gam_clones_per=gam_clones_per,
-            spo_self_rate_per_egg=spo_self_rate_per_egg,
-            spo_self_rate_per_ind=spo_self_rate_per_ind,
+            # spo_mutation_rate=spo_mutation_rate,
+            # gam_mutation_rate=gam_mutation_rate,
+            # spo_clone_rate=spo_clone_rate,
+            # spo_clones_per=spo_clones_per,
+            # gam_clone_rate=gam_clone_rate,
+            # gam_clones_per=gam_clones_per,
+            # spo_self_rate_per_egg=spo_self_rate_per_egg,
+            # spo_self_rate_per_ind=spo_self_rate_per_ind,
             # egg_spo_self_rate=egg_spo_self_rate,
             # spo_self_chance=spo_self_chance,
+            gam_female_to_male_ratio=gam_female_to_male_ratio,
+            spo_mutation_rate = spo_mutation_rate,
+            gam_mutation_rate = gam_mutation_rate,
+            spo_clone_rate=spo_clone_rate,
+            spo_clones_per = spo_clones_per,
+            spo_self_rate_per_egg=spo_self_rate_per_egg,
+            spo_self_rate =  spo_self_rate,
             spo_random_death_chance=spo_random_death_chance,
             gam_random_death_chance=gam_random_death_chance,
             spo_maternal_effect=spo_maternal_effect,
             gam_archegonia_per=gam_archegonia_per,
-            spo_microspores_per=spo_microspores_per,
-            spo_megaspores_per=spo_megaspores_per,
+            # spo_microspores_per=spo_microspores_per,
+            # spo_megaspores_per=spo_megaspores_per,
+            spo_spores_per=spo_spores_per,
             # rs_megasporangia_per=rs_megasporangia_per,
             # rs_microsporangia_per=rs_microsporangia_per,
             # megasporangia_megaspores_per=megasporangia_megaspores_per,
             # microsporangia_microspores_per=microsporangia_microspores_per,
-            # gam_k=gam_k,
+            gam_k=gam_k,
         ).run()
-
 
     def angiosperm_monoecious(
         self,
@@ -375,45 +411,38 @@ class ReproductionApi:
         gam_mutation_rate: Optional[float]=None,
         spo_clone_rate: float=0.0,
         spo_clones_per: int=3,
-        egg_spo_self_rate: float=0.1,
-        spo_self_chance: float=0.0,
+        spo_self_rate_per_egg: float=0.1,
+        spo_self_rate: float=0.0,
         spo_random_death_chance: float=0.0,
         gam_random_death_chance: float=0.0,
         spo_maternal_effect: float=0.0,
-        spo_flowers_per: int=2,
-        flower_ovules_per: int=6,
-        flower_anthers_per: int=6,
-        anther_pollen_per: int=300,
-        ovule_success_rate: float=1.0,
+        spo_pollen_per: int=100,
+        spo_archegonia_per: int=30,
+        fertilization_rate: float=0.7,
         pollen_success_rate: float=1.0,
-        pollen_comp: Union[bool, str]=False,
-        pollen_comp_stigma_pollen_per: int=8,
-        pollen_control: int =None,
-        ):
+        pollen_competition: str="F",
+        stigma_pollen_per: int=5,
+    ):
         AngiospermMonoecious(
-            model=self.model, 
+            model=self.model,
             spo_pop_size=spo_pop_size,
             gam_pop_size=gam_pop_size,
             spo_mutation_rate=spo_mutation_rate,
             gam_mutation_rate=gam_mutation_rate,
             spo_clone_rate=spo_clone_rate,
             spo_clones_per=spo_clones_per,
-            egg_spo_self_rate=egg_spo_self_rate,
-            spo_self_chance=spo_self_chance,
+            spo_self_rate_per_egg=spo_self_rate_per_egg,
+            spo_self_rate=spo_self_rate,
             spo_random_death_chance=spo_random_death_chance,
             gam_random_death_chance=gam_random_death_chance,
             spo_maternal_effect=spo_maternal_effect,
-            spo_flowers_per=spo_flowers_per,
-            flower_ovules_per=flower_ovules_per,
-            flower_anthers_per=flower_anthers_per,
-            anther_pollen_per=anther_pollen_per,
-            ovule_success_rate=ovule_success_rate,
+            spo_pollen_per=spo_pollen_per,
+            spo_archegonia_per=spo_archegonia_per,
+            fertilization_rate=fertilization_rate,
             pollen_success_rate=pollen_success_rate,
-            pollen_comp=pollen_comp,
-            pollen_comp_stigma_pollen_per=pollen_comp_stigma_pollen_per,
-            pollen_control=pollen_control,
+            pollen_competition=pollen_competition,
+            stigma_pollen_per=stigma_pollen_per,
         ).run()
-    
 
     def angiosperm_dioecious(
         self,
@@ -421,25 +450,22 @@ class ReproductionApi:
         gam_pop_size: int,
         spo_female_to_male_ratio: Tuple[float,float],
         spo_mutation_rate: Optional[float]=None,
-        gam_mutation_rate: Optional[float]=None,
+        gam_mutation_rate: Optional[float]=0.0,
         spo_clone_rate: float=0.0,
         spo_clones_per: int=3,
         spo_random_death_chance: float=0.0,
         gam_random_death_chance: float=0.0,
         spo_maternal_effect: float=0.0,
-        spo_flowers_per: int=2,
-        flower_ovules_per: int=6,
-        flower_anthers_per: int=6,
-        anther_pollen_per: int=300,
-        ovule_success_rate: float=1.0,
+        spo_pollen_per: int=100,
+        spo_archegonia_per: int=30,
+        fertilization_rate: float=0.7,
         pollen_success_rate: float=1.0,
-        pollen_comp: Union[bool, str]=False,
-        pollen_comp_stigma_pollen_per: int=8,
-        pollen_control: int =None,
-        ):
+        pollen_competition: str="F",
+        stigma_pollen_per: int=5,
+    ):
 
         AngiospermDioecious(
-            model=self.model, 
+            model=self.model,
             spo_pop_size=spo_pop_size,
             gam_pop_size=gam_pop_size,
             spo_female_to_male_ratio=spo_female_to_male_ratio,
@@ -450,41 +476,40 @@ class ReproductionApi:
             spo_random_death_chance=spo_random_death_chance,
             gam_random_death_chance=gam_random_death_chance,
             spo_maternal_effect=spo_maternal_effect,
-            spo_flowers_per=spo_flowers_per,
-            flower_ovules_per=flower_ovules_per,
-            flower_anthers_per=flower_anthers_per,
-            anther_pollen_per=anther_pollen_per,
-            ovule_success_rate=ovule_success_rate,
+            spo_pollen_per=spo_pollen_per,
+            spo_archegonia_per=spo_archegonia_per,
+            fertilization_rate=fertilization_rate,
             pollen_success_rate=pollen_success_rate,
-            pollen_comp=pollen_comp,
-            pollen_comp_stigma_pollen_per=pollen_comp_stigma_pollen_per,
-            pollen_control=pollen_control,
+            pollen_competition=pollen_competition,
+            stigma_pollen_per=stigma_pollen_per,
+
         ).run()
     # def gymnosperm_monosporous(...)
-    # def gymnosperm_heterosporous(...)    
-    
+    # def gymnosperm_heterosporous(...)
+
     def spermatophyte(
         self,
         spo_pop_size: int,
         gam_pop_size: int,
-        spo_mutation_rate: Union[None, float]=None,
-        gam_mutation_rate: Union[None, float]=None,
+        spo_mutation_rate: Optional[float]=None,
+        gam_mutation_rate: Optional[float]=0.0,
         spo_female_to_male_ratio: float.as_integer_ratio = (1,1),
         spo_clone_rate: float=0.0,
         spo_clones_per:  int =1,
-        ovule_count: int=30,
-        ovule_fertilization_rate: float=0.7,
-        pollen_success_rate: float=1.0,
-        pollen_count: int=100,
-        pollen_comp: str="F",
-        pollen_per_ovule: int=5,
+        spo_maternal_effect: float =0.0,
         spo_random_death_chance: float=0,
         gam_random_death_chance: float=0,
+        spo_pollen_per: int=100,
+        spo_archegonia_per: int=30,
+        fertilization_rate: float=0.7,
+        pollen_success_rate: float=1.0,
+        pollen_competition: str="F",
+        stigma_pollen_per: int=5,
         _chromosome=None,
         _sim_time = None,
         _file_in = None,
         _file_out = None,
-        ):
+    ):
         """
         Generate scripts appropriate for an angiosperm (flowering plant)
         life history. Appropriate for gymnosperms as well.
@@ -558,19 +583,18 @@ class ReproductionApi:
             _file_out = self.model.file_out,
         ).run()
 
-
     def wright_fisher(
         self,
         pop_size: int,
         sexes: bool=False,  # mono/hetero terms is more consistent with others...
-        ):
+    ):
         """
-        Generate scripts appropriate for basic SLiM nonWF model, set up
-        as a WF model.
+        Generate scripts appropriate for basic WF model, set up as a
+        SLiM nonWF model
 
         Parameters:
         -----------
-        pop_size: 
+        pop_size:
             Size of the population in number of diploids.
         sexes: bool
             default = False; individuals are hemraphroditic. If True,
@@ -581,3 +605,62 @@ class ReproductionApi:
             pop_size=pop_size,
             sexes=sexes,
         ).run()
+
+    def wright_fisher_haploid(
+        self,
+        pop_size: int,
+        sexes: bool=False,  # mono/hetero terms is more consistent with others...
+    ):
+        """
+        Generate scripts appropriate for basic SLiM nonWF model, set up
+        as a WF model.
+
+        Parameters:
+        -----------
+        pop_size:
+            Size of the population in number of haploids.
+        sexes: bool
+            default = False; individuals are hemraphroditic. If True,
+            individuals will be male and female
+        """
+        ClonalHaploidWF(
+            model=self.model,
+            pop_size=pop_size,
+            sexes=sexes,
+        ).run()
+
+    def wright_fisher_altgen(
+        self,
+        spo_pop_size: int,
+        gam_pop_size: int,
+        sexes: bool=False,  # mono/hetero terms is more consistent with others...
+    ):
+        """
+        Generate scripts appropriate for an altered Wright-Fisher model
+        with alternation of generations. Each generation reproduces and
+        experiences fitness effects.
+
+        Parameters:
+        -----------
+        spo_pop_size:
+            Size of the population in number of diploids in diploid life stage
+        gam_pop_size:
+            Size of the population in number of haploids in the haploid life stage
+        sexes: bool
+            default = False; individuals are hemraphroditic. If True,
+            individuals will be male and female
+        """
+        AltGenWF(
+            model=self.model,
+            spo_pop_size=spo_pop_size,
+            gam_pop_size=gam_pop_size,
+            sexes=sexes,
+        ).run()
+
+
+if __name__ == "__main__":
+
+    import shadie
+    with shadie.Model() as model:
+        api = ReproductionApi(model)
+        api

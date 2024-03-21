@@ -39,6 +39,9 @@ NONCDS = ElementType([NEUT], [1], altname="noncds")
 #SYN is used by shadie for synonymous regiions inside coding regions
 SYN = ElementType([NEUT], [1], altname="syn") 
 
+#SYN is used by shadie for synonymous regiions inside coding regions
+EMPTY = ElementType([NEUT], [1], altname="empty") 
+
 
 if __name__ == "__main__":
     pass

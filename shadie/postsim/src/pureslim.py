@@ -29,7 +29,7 @@ class PureSlim:
         ):
 
         # hidden attributes
-        self._tree_sequence = pyslim.load(tree_file)
+        self._tree_sequence = tskit.load(tree_file)
 
         # attributes to be parsed from the slim metadata
         self.generations: int=0
@@ -58,7 +58,7 @@ class PureSlim:
 
         TODO: can more of this be saved in SLiM metadata?
         """
-        gens = self._tree_sequence.metadata["SLiM"]["generation"]
+        gens = self._tree_sequence.metadata["SLiM"]["tick"]
         self.generations = gens
         assert self.popsize, "popsize not found in metadata; must enter a popsize arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."

@@ -47,7 +47,7 @@ class OneSim:
         ):
 
         # hidden attributes
-        self.tree_sequence = pyslim.load(trees_file)
+        self.tree_sequence = tskit.load(trees_file)
         """A SlimTreeSequence that has been recapitated and mutated."""
 
         # attributes to be parsed from the slim metadata
@@ -76,7 +76,7 @@ class OneSim:
 
         TODO: can more of this be saved in SLiM metadata?
         """
-        self.generations = self.tree_sequence.metadata["SLiM"]["generation"]
+        self.generations = self.tree_sequence.metadata["SLiM"]["tick"]
         assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
         assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
@@ -500,7 +500,7 @@ class TwoSims:
     def _update_tables(self):
         """...Remove extra psuedopopulation nodes."""
         for tree_file in self.trees_files:
-            treeseq = pyslim.load(tree_file)
+            treeseq = tskit.load(tree_file)
 
             # get mutable tskit.TableCollection
             tables = treeseq.dump_tables()

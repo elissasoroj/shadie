@@ -1,72 +1,154 @@
 #!/usr/bin/env python
 
-"""
-Allows user to create MutationType and MutationList instances
+"""Allows user to create MutationType and MutationList instances
 
 SHADIE usage:
 -------------
 MutationTypes are used in shadie to describe the regions of a chromosome
-and the type of fitness effects that mutations to these regions will 
+and the type of fitness effects that mutations to these regions will
 cause.
 
-SHADIE example:
----------------
-mlist = shadie.mlist(
-    shadie.mtype(0.5, 'f', 0.1),
-    shadie.mtype(0.5, 'n', 0.5, 0.25),
-    shadie.mtype(0.5, 'g', 2.0, 0.1),
-    shadie.mtype(0.1, 'e', 2.5),
-)
-for muta in mlist:
-    muta.summary()
-    print(muta.to_slim())
+SHADIE example
+--------------
+>>> mlist = shadie.mlist(
+>>>     shadie.mtype(0.5, 'f', (0.1)),
+>>>     shadie.mtype(0.5, 'n', (0.5, 0.25)),
+>>>     shadie.mtype(0.5, 'g', (2.0, 0.1)),
+>>>     shadie.mtype(0.1, 'e', (2.5)),
+>>> )
+>>> for muta in mlist:
+>>>     muta.print_summary()
+>>>     print(muta.to_slim())
 
-SLIM example:
--------------
-initializeMutationType(1, 0.5, "f", 0);
-initializeMutationType(2, 0.5, "f", 0);
-initializeMutationType(3, 0.1, "g", -0.03, 0.2);
-initializeMutationType(4, 0.8, "e", 0.1);
+SLIM example
+------------
+>>> initializeMutationType(1, 0.5, "f", 0);
+>>> initializeMutationType(2, 0.5, "f", 0);
+>>> initializeMutationType(3, 0.1, "g", -0.03, 0.2);
+>>> initializeMutationType(4, 0.8, "e", 0.1);
 """
 
 
-from typing import Iterable, Union, List, Dict
+from typing import Mapping, Sequence, Optional, ClassVar
 from dataclasses import dataclass, field
 import numpy as np
-import scipy.stats as stats
+from scipy import stats
+from scipy.stats import rv_continuous
 import toyplot
 from loguru import logger
 
 
 DISTOPTS = ['f', 'g', 'e', 'n', 'w', 's']
+BAD_DIST_TYPE = """\
+Distribution type options: \n"
+    "'f' = fixed fitness effect (uniform)\n"
+    "'g' = gamma distribution\n"
+    "'e' = exponential distribution\n"
+    "'n' = normal distribution\n"
+    "'w' = Weibull distribution\n"
+    "'s' = Script-based distribution"
+"""
 
 
 @dataclass
-class MutationTypeBase:
-    """Mutation Base Class to be inherited by more specific types.
+class MutationType:
+    """MutationType Class for fitness effects.
 
-    The functions of this object require additional parameters that
-    are only created in the superclasses.
+    This is used to model fitness effects of mutations as random
+    variables drawn from a probability distribution in SLiM. The
+    distributions can be visualized and summarized using convenience
+    functions here. The code to define the object in SLIM can be
+    generated with the `.to_slim()` function call.
+
+    In contrast to MutationTypes in SLiM, this class includes the
+    additional parameter `diff_expr` which applies easily to writing
+    alternation of generations (complex life cycle) scripts in shadie.
+    With this you can specify whether a mutation affects fitness in
+    only the diploid, only the haploid, or both life stages.
 
     Parameters
     ----------
     dominance: float
-        Dominance coefficient scales the effect of the selection 
+        Dominance coefficient scales the effect of the selection
         coefficient on fitness in heterozygotes.
-    sporophyte_phenotype: bool
-        If True then the selection coefficient affects fitness during
-        the sporophyte generation.
-    gametophyte_phenotype: bool
-        If True then the selection coefficient affects fitness during
-        the gametophyte generation.
-    """
-    idx: int = field(default=0, init=False)
-    dominance: float
-    sporophyte_phenotype: bool
-    gametophyte_phenotype: bool
+    distribution: str
+        A string to represent a distribution of fitness effects.
+        Examples are: 'f', 'g', 'n', 'e', 'w', 's'.
+    parameters: Sequence[float]
+        One or more parameters of the specified distribution.
+    affects_diploid: bool
+        Affects diploid fitness. Default=True.
+    affects_haploid: bool
+        Affects haploid fitness. Default=False.
+    idx: int
+        Set a unique integer index for this MutationType.
 
-    distribution: str = field(default='f', init=False)
-    params: List[float] = field(default=0.0, init=False)
+    # diff_expr: Optional[str]
+    # ...
+
+    Example
+    -------
+    Create a MutationType object using the `shadie.mtype` function.
+    >>> mut0 = shadie.mtype(0.5, 'e', (2.5))
+    >>> mut0.print_summary()
+    """
+    dominance: float
+    """: Scales the effect of selection coefficient on diploid heterozygotes."""
+    distribution: str
+    """: String name for fitness effect distribution: ['f', 'g', 'n', 'w', 'e']"""
+    params: Sequence[float]
+    """: Parameters of the distribution of fitness effects."""
+    affects_diploid: bool
+    """: ..."""
+    affects_haploid: bool
+    """: ..."""
+
+    # Class variable
+    idx: ClassVar[int] = field(default=0, init=True)
+
+    # Parameters auto-filled and not entered by users
+    """: Unique index of this mutation type."""
+    _dist: rv_continuous = field(default=None, init=False, repr=False)
+    """: Scipy stats distribution of the .distribution name type."""
+    _params: Mapping[str, float] = field(default=dict, init=False, repr=False)
+    """: A dict mapping parameter names to values for a distribution."""
+    _sign: int = field(default=1, init=False, repr=False)
+    """: A value of 1 or -1 depending whether dist allows negative."""
+
+    _force_idx: Optional[int] = field(default=None, init=True, repr=False)
+    """Private variable to override auto setting of class variable idx."""
+
+    def __post_init__(self):
+        """Set the _dist distribution using the user params."""
+        # advance counter for of MutationTypes in existence.
+        MutationType.idx += 1
+        # set to user entered idx else to Mutation counter value
+        self.idx = MutationType.idx if self._force_idx is None else self._force_idx
+
+        # user-entered param can be one or multiple values -> Tuple
+        self.params = (
+            (self.params,) if isinstance(self.params, float)
+            else tuple(self.params))
+
+        # parse user entered 'distribution' and 'params' to
+        if self.distribution == "f":
+            self._dist = stats.uniform
+            self._sign = 1
+            self._params = {"loc": self.params[0], "scale": 1e-9}
+        elif self.distribution == "n":
+            self._dist = stats.norm
+            self._sign = 1
+            self._params = {"loc": self.params[0], "scale": self.params[1]}
+        elif self.distribution == "g":
+            self._dist = stats.gamma
+            self._sign = -1 if self.params[0] < 0 else 1
+            self._params = {"a": abs(self.params[0]), "scale": self.params[1]}
+        elif self.distribution == "e":
+            self._dist = stats.expon
+            self._sign = -1 if self.params[0] < 0 else 1
+            self._params = {"loc": 0.0, "scale": abs(self.params[0])}
+        else:
+            raise ValueError(f"distribution {self.distribution} not recognized.")
 
     def __repr__(self):
         """Return a string reprentation of the object."""
@@ -76,8 +158,11 @@ class MutationTypeBase:
         )
         return value
 
+    ###################################################################
+    # Properties called as .name() or .is_coding()
+    ###################################################################
     @property
-    def name(self):
+    def name(self) -> str:
         """Returns a unique name for this MutationType.
 
         When called from within a chromosome object MutationTypes
@@ -86,15 +171,18 @@ class MutationTypeBase:
         return f"m{self.idx}"
 
     @property
-    def coding(self):
+    def is_coding(self) -> bool:
         """Returns True if MutationType has non-zero fitness effects."""
         if (self.distribution == 'f') and (self.params[0] == 0.):
             return False
         return True
 
-    def to_slim(self, nuc=False):
+    ###################################################################
+    # Main function call for writing to SLIM
+    ###################################################################
+    def to_slim(self, nuc=False) -> str:
         """Returns the SLIM command to Initialize the MutationType.
-        
+
         This function is called from within a shadie simulation setup
         by accessing this MutationType object from a Chromosome.
         """
@@ -104,83 +192,48 @@ class MutationTypeBase:
             return f"initializeMutationTypeNuc({inner});"
         return f"initializeMutationType({inner});"
 
-
-@dataclass
-class MutationTypeParameterized(MutationTypeBase):
-    """Parent class of MutationType classes with stat distributions.
-
-    Parameters
-    ----------
-    distribution: str
-        The statistical distribution to draw selection coefficients
-        from. Supported options are f,g,e,n,w,s.
-    params
-        Parameters of the specified distribution.
-    """
-    distribution: str
-    params: List[float]
-    dist: 'scipy.stats.continuous_distns' = field(init=False)
-    params_dict: Dict[str, float] = field(init=False)
-    sign: int = field(init=False)
-
-    def __post_init__(self):
-        if isinstance(self.params, float):
-            self.params = (self.params,)
-        if self.distribution == "f":
-            self.dist = stats.uniform
-            self.sign = 1
-            self.params_dict = {"loc": self.params[0], "scale": 1e-9}
-        elif self.distribution == "n":
-            self.dist = stats.norm
-            self.sign = 1
-            self.params_dict = {"loc": self.params[0], "scale": self.params[1]}
-        elif self.distribution == "g":
-            self.dist = stats.gamma
-            self.sign = (-1 if self.params[0] < 0 else 1)
-            self.params_dict = {"a": abs(self.params[0]), "scale": self.params[1]}
-        elif self.distribution == "e":
-            self.dist = stats.expon
-            self.sign = (-1 if self.params[0] < 0 else 1)
-            self.params_dict = {"loc": 0.0, "scale": abs(self.params[0])}
-        else:
-            raise ValueError(f"distribution {self.distribution} not recognized.")
-
+    ###################################################################
+    # Extract stats from distribution.
+    ###################################################################
     @property
-    def mean(self):
+    def mean(self) -> float:
         """Return the mean selection coefficient from the distribution"""
-        return self.dist.mean(**self.params_dict) * self.sign
+        return self._dist.mean(**self._params) * self._sign
 
     @property
-    def std(self):
+    def std(self) -> float:
         """Return the std of the selection coefficient from the distribution"""
-        return self.dist.std(**self.params_dict)
+        return self._dist.std(**self._params)
 
     @property
-    def min(self):
+    def min(self) -> float:
         """Return the min value in the 99% CI of the distribution"""
-        interval = self.dist.interval(0.99, **self.params_dict)
-        if self.sign < 0:
-            return interval[1] * self.sign
+        interval = self._dist.interval(0.995, **self._params)
+        if self._sign < 0:
+            return interval[1] * self._sign
         return interval[0]
 
     @property
-    def max(self):
+    def max(self) -> float:
         """Return the max value in the 99% CI of the distribution"""
-        interval = self.dist.interval(0.99, **self.params_dict)
-        if self.sign < 0:
-            return interval[0] * self.sign
+        interval = self._dist.interval(0.995, **self._params)
+        if self._sign < 0:
+            return interval[0] * self._sign
         return interval[1]
 
-    def summary(self):
+    def print_summary(self) -> None:
         """Prints a summary statement about the distribution."""
         print(
             '\033[1m' + "Mutation Type" + '\033[0m' + "\n"
             f"idx: {self.name}\n"
             f"dominance coefficient: {self.dominance}\n"
             f"distribution: {self.distribution}\n"
-            f"distribution parameters: {self.params}\n"
+            f"distribution parameters: {self._params}\n"
             f"distribution_mean: {self.mean:.4f}\n"
             f"distribution_std: {self.std:.4f}\n"
+            f"affects diploid fitness: {self.affects_diploid}\n"
+            f"affects haploid fitness: {self.affects_haploid}\n"
+            # f"differential_expr: {self._expr}\n"
         )
 
     def _draw_hists(self, axes):
@@ -188,15 +241,15 @@ class MutationTypeParameterized(MutationTypeBase):
         ...
         """
         xpoints = np.linspace(self.min, self.max, 100)
-        yvalues = self.dist.pdf(xpoints * self.sign, **self.params_dict)
+        yvalues = self._dist.pdf(xpoints * self._sign, **self._params)
         mark = axes.fill(
-            xpoints, yvalues, 
-            style = {
-                "stroke": toyplot.color.Palette()[0], 
+            xpoints, yvalues,
+            style={
+                "stroke": toyplot.color.Palette()[0],
                 "stroke-width": 1.5,
-                "fill": toyplot.color.Palette()[0],             
+                "fill": toyplot.color.Palette()[0],
                 "fill-opacity": 0.33,
-            },           
+            },
         )
         axes.x.ticks.locator = toyplot.locator.Extended(only_inside=True)
         axes.x.ticks.show = True
@@ -208,24 +261,22 @@ class MutationTypeParameterized(MutationTypeBase):
         """
         # add mean line to the axes
         mark = axes.vlines(
-            self.mean, 
+            self.mean,
             style={
-                "stroke": toyplot.color.Palette()[1], 
+                "stroke": toyplot.color.Palette()[1],
                 "stroke-width": 1.5,
             }
         )
-        if self.dist == "f":
+        if self.distribution == "f":
             axes.x.domain.max = self.mean + 1
             axes.x.domain.min = self.mean - 1
         return mark
 
     def draw(self, axes=None, show_mean=True, **kwargs):
-        """
-        Returns a toyplot histogram of the selection coefficients.
-        """
+        """Return a toyplot histogram of the selection coefficients."""
         # create new axes if none was provided
         canvas = toyplot.Canvas(
-            width=kwargs.get('width', 300), 
+            width=kwargs.get('width', 300),
             height=kwargs.get('height', 225),
         )
         axes = canvas.cartesian(
@@ -242,115 +293,117 @@ class MutationTypeParameterized(MutationTypeBase):
         """
         ...
         """
-        self.summary()
+        self.print_summary()
         return self.draw()
 
 
 def mtype(
-    dominance: float, 
-    distribution: str, 
-    params: Union[float, Iterable[float]],
-    sporophyte_phenotype: bool=True, 
-    gametophyte_phenotype: bool=True,
-    ):
-    """
-    MutationType class constructor. Returns a MutationType subclass 
-    instance for the selected 'distribution' type.
+    dominance: float,
+    distribution: str,
+    params: Sequence[float],
+    affects_diploid: bool = True,
+    affects_haploid: bool = False,
+    force_idx: Optional[int] = None,
+) -> MutationType:
+    """MutationType class constructor function.
 
-    Parameters:
-    -----------
+    Returns a MutationType instance for the selected 'distribution'
+    type and its parameter settings.
+
+    Parameters
+    ----------
     ...
     """
+    # group params as a tuple
     if isinstance(params, float):
         params = (params,)
 
+    # raise exception if bad type
     if distribution not in DISTOPTS:
-        logger.info("Distribution type options: \n"
-            "'f' = fixed fitness effect\n"
-            "'g' = gamma distribution\n"
-            "'e' = exponential distribution\n"
-            "'n' = normal distirbution\n"
-            "'w' = Weibull distribution\n"
-            "'s' = Script-based distribution")
+        logger.info(BAD_DIST_TYPE)
         raise ValueError(f"distribution type must be one of {DISTOPTS}")
+
+    # group all args into a dict
+    kwargs = dict(
+        dominance=dominance,
+        distribution=distribution,
+        params=params,
+        affects_diploid=affects_diploid,
+        affects_haploid=affects_haploid,
+        _force_idx=force_idx,
+    )
+
+    if distribution == 'f':
+        assert len(params) == 1, "fixed (uniform) dist requires one param"
+        return MutationType(**kwargs)
 
     if distribution == 'n':
         assert len(params) == 2, "normal dist requires two params (loc, scale)"
-        return MutationTypeParameterized(
-            dominance, sporophyte_phenotype, gametophyte_phenotype, 'n', params)
+        return MutationType(**kwargs)
+
     if distribution == 'g':
         assert len(params) == 2, "gamma dist requires two params (a, scale)"
-        return MutationTypeParameterized(
-            dominance, sporophyte_phenotype, gametophyte_phenotype, 'g', params)
-    if distribution == 'f':
-        assert len(params) == 1, "fixed (uniform) dist requires one param"
-        return MutationTypeParameterized(
-            dominance, sporophyte_phenotype, gametophyte_phenotype, 'f', params)
+        return MutationType(**kwargs)
+
     if distribution == 'e':
         assert len(params) == 1, "exponential dist requires one param"
-        return MutationTypeParameterized(
-            dominance, sporophyte_phenotype, gametophyte_phenotype, 'e', params)
-    raise NotImplementedError("distribution not yet supported; TODO")
-
-
-class MutationList(list):
-    """
-    Creates a list of mutations and the mutationdict object for Shadie
-    """
-    def __init__(self, *mutationtypes):
-        super().__init__(mutationtypes)
-
-        self.names = [i.name for i in self]
-        self.dict = {i.name: i for i in self}
-        self.slim_dict = {}        
-
-        # build a string representation of muttype for slim
-        for mut in self:
-            params = ", ".join(map(str, mut.params))
-            srep = f"'{mut.name}', {mut.dominance}, '{mut.distribution}', {params}"
-            self.slim_dict[mut.name] = srep
-
-    def __repr__(self):
-        return f"<MutationList: {self.names}>"
-
-    @property
-    def min(self):
-        "min value in the 99% CI of all MutationType distributions"
-        return min([i.min for i in self])
-
-    @property
-    def max(self):
-        "max value in the 99% CI of all MutationType distributions"
-        return max([i.max for i in self])
-
-    def draw(self, **kwargs):
-        """Returns a toyplot histogram of the selection coefficients.
-        """
-        canvas, axes, marks = self[0].draw(show_mean=False, **kwargs)
-        for mut in self[1:]:
-            marks.append(mut._draw_hists(axes=axes))
-        return canvas, axes, marks
+        return MutationType(**kwargs)
+    raise ValueError(f"distribution {distribution} not recognized.")
 
 
 if __name__ == "__main__":
 
-    # generate random chromosome
-    import shadie
+    m = mtype(0.5, 'n', [0.0, 1.0])
+    m.print_summary()
 
-    mlist = shadie.mlist(
-        #shadie.mtype(0.5, 'f', 0.0),
-        shadie.mtype(0.5, 'f', 0.1, True, True),
-        shadie.mtype(0.5, 'n', (0.5, 0.25)),
-        shadie.mtype(0.5, 'g', (2.0, 0.1)),
-        shadie.mtype(0.1, 'e', 2.5),
-    )
-    for muta in mlist:
-        muta.summary()
-    #m2 = shadie.mtype(0.5, 'f', 0)
+    m = mtype(0.5, 'f', 0.1)
+    m.print_summary()
 
-    print(mlist)
-    test= []
-    for mut in mlist:
-        test.append(mut.name)
-    print(test)
-    print(mlist[0].to_slim())
+    m = mtype(0.5, 'g', (2.0, 0.1))
+    m.print_summary()
+
+    m = mtype(0.5, 'e', (2.5))
+    m.print_summary()
+
+    m = mtype(0.5, 'e', (2.5), force_idx=99)
+    m.print_summary()
+
+    m = mtype(0.5, 'e', (2.5), force_idx=0)
+    m.print_summary()
+
+    m = mtype(0.5, 'g', (2, 0.1), force_idx=0, affects_diploid=False)
+    m.print_summary()
+
+    print(m.__doc__)
+
+    # mlist = shadie.mlist(
+    #     #shadie.mtype(0.5, 'f', 0.0),
+    #     # <<<<<<< HEAD
+    #     shadie.mtype(0.5, 'f', 0.1, True, True),
+    #     shadie.mtype(0.5, 'n', (0.5, 0.25)),
+    #     shadie.mtype(0.5, 'g', (2.0, 0.1)),
+    #     shadie.mtype(0.1, 'e', 2.5),
+    #     # =======
+    #     # SLIM4 EDITION
+    #     # shadie.mtype(0.5, 'f', 0.1),
+    #     # shadie.mtype(0.5, 'n', 0.5, 0.25),
+    #     # shadie.mtype(0.5, 'g', 2.0, 0.1),
+    #     # shadie.mtype(0.1, 'e', 2.5, diffexpr = "diploid"),
+    #     # >>>>>>> 1283be0eadbb91c01407cc5c09497b96f6a762fa
+    # )
+    # for muta in mlist:
+    #     muta.summary()
+    # #m2 = shadie.mtype(0.5, 'f', 0)
+
+    # print(mlist)
+    # test= []
+    # expr = []
+    # for mut in mlist:
+    #     test.append(mut.name)
+    #     expr.append(mut._expr)
+    # print(test)
+    # print(mlist[0].to_slim())
+
+    # mut2 = shadie.mtype(0.5, 'f', 0.1, diffexpr="diploid")
+    # print(mut2._expr)
+    # print(expr)

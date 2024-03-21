@@ -190,6 +190,9 @@ if __name__ == "__main__":
     print(ele2.to_slim())
     print(ele2.coding)
 
+    for mut in ele1.mlist:
+        print(mut._expr)
+
     # create an ElementList ()
 
 

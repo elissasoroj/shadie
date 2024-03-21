@@ -9,7 +9,7 @@ These classes are for internal use only. They are exposed in user-
 facing functions in :meth:`shadie.chromosome`.
 """
 
-from typing import Union, List
+from typing import Union, List, Optional
 import numpy as np
 
 # internal imports
@@ -180,10 +180,15 @@ class ChromosomeExplicit(ChromosomeBase):
     def __init__(
         self, 
         data, 
+        genome_size: Optional[int]=None,
         use_nucleotides: bool=False,
         use_synonymous_sites_in_coding: bool=True,
         ):
-        genome_size = 1 + (max(i[1] for i in data.keys()))
+        if genome_size is not None:
+            genome_size = genome_size
+        else:
+            genome_size = 1 + (max(i[1] for i in data.keys()))
+        
         super().__init__(
             genome_size, 
             use_nucleotides,
@@ -250,6 +255,8 @@ if __name__ == "__main__":
     #chrom.to_slim_mutation_types()
     test = chrom.mutations
     print(chrom.data.head())
+
+    print(chrom.data)
     # chrom.inspect()
     # print(test)
     # chrom.to_slim_elements()
