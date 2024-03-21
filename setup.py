@@ -6,12 +6,11 @@ Install package locally for testing.
 >>> pip install -e . --no-deps
 """
 
-import os
 import re
 from setuptools import setup
 
 # parse version from init.py
-with open("shadie/__init__.py") as init:
+with open("shadie/__init__.py", 'r', encoding="utf-8") as init:
     CUR_VERSION = re.search(
         r"^__version__ = ['\"]([^'\"]*)['\"]",
         init.read(),
@@ -22,14 +21,16 @@ with open("shadie/__init__.py") as init:
 setup(
     name="shadie",
     version=CUR_VERSION,
-    packages=["shadie",
-            "shadie.base",
-            "shadie.chromosome",
-            "shadie.chromosome.src",
-            "shadie.postsim",
-            "shadie.postsim.src",
-            "shadie.reproduction",
-            "shadie.sims"],
+    packages=[
+        "shadie",
+        "shadie.base",
+        "shadie.chromosome",
+        "shadie.chromosome.src",
+        "shadie.postsim",
+        "shadie.postsim.src",
+        "shadie.reproduction",
+        "shadie.sims",
+    ],
     author="Elissa Sorojsrisom",
     author_email="ess2239@columbia.edu",
     license="GPLv3",

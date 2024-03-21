@@ -17,7 +17,7 @@ nav:
     - mtypes: notebooks/1-mtypes_gtypes.ipynb
     - chromosome: notebooks/2-chrom.ipynb
     - model setup: drafts/under-construction.md
-    - v0.1.1 Demo: notebooks/shadie-v0_1_1-demo.ipynb
+    #- v0.1.1 Demo: notebooks/shadie-v0_1_1-demo.ipynb
     - Full Work Flow: tutorials/fullworkflow.md
   - Examples:
     - Single-Site: drafts/under-construction.md
@@ -72,6 +72,8 @@ theme:
 plugins:
   - mkdocs-jupyter:
       include_source: True
+      kernel_name: py310
+      ignore: [".ipynb_checkpoints/*.ipynb"]
 
 markdown_extensions:
 # Python Markdown
@@ -111,7 +113,7 @@ markdown_extensions:
   - pymdownx.tilde
 
 #Javascript Extentions
-extra_javascript:
+# extra_javascript:
   # - js/custom.js 
   # - https://unpkg.com/mermaid@8.9.2/dist/mermaid.min.js
   # - https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.0.9/mermaid.min.js
