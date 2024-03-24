@@ -1,42 +1,39 @@
 #!/usr/bin/env python
 
-"""
-Allows user to create MutationType and MutationList instances
+"""Allows user to create MutationType and MutationList instances
 
 SHADIE usage:
 -------------
 MutationTypes are used in shadie to describe the regions of a chromosome
-and the type of fitness effects that mutations to these regions will 
+and the type of fitness effects that mutations to these regions will
 cause.
 
-SHADIE example:
----------------
-mlist = shadie.mlist(
-    shadie.mtype(0.5, 'f', 0.1),
-    shadie.mtype(0.5, 'n', 0.5, 0.25),
-    shadie.mtype(0.5, 'g', 2.0, 0.1),
-    shadie.mtype(0.1, 'e', 2.5),
-)
-for muta in mlist:
-    muta.summary()
-    print(muta.to_slim())
+SHADIE example
+--------------
+>>> mlist = shadie.mlist(
+>>>     shadie.mtype(0.5, 'f', (0.1)),
+>>>     shadie.mtype(0.5, 'n', (0.5, 0.25)),
+>>>     shadie.mtype(0.5, 'g', (2.0, 0.1)),
+>>>     shadie.mtype(0.1, 'e', (2.5)),
+>>> )
+>>> for muta in mlist:
+>>>     muta.print_summary()
+>>>     print(muta.to_slim())
 
-SLIM example:
--------------
-initializeMutationType(1, 0.5, "f", 0);
-initializeMutationType(2, 0.5, "f", 0);
-initializeMutationType(3, 0.1, "g", -0.03, 0.2);
-initializeMutationType(4, 0.8, "e", 0.1);
+SLIM example
+------------
+>>> initializeMutationType(1, 0.5, "f", 0);
+>>> initializeMutationType(2, 0.5, "f", 0);
+>>> initializeMutationType(3, 0.1, "g", -0.03, 0.2);
+>>> initializeMutationType(4, 0.8, "e", 0.1);
 """
 
 from typing import Mapping, Sequence, Optional, ClassVar
 from dataclasses import dataclass, field
-import numpy as np
-import scipy.stats as stats
-from scipy.stats import rv_continuous
-import toyplot
 from loguru import logger
-
+from scipy import stats
+import numpy as np
+import toyplot
 
 DISTOPTS = ['f', 'g', 'e', 'n', 'w', 's']
 BAD_DIST_TYPE = """\
@@ -48,6 +45,7 @@ Distribution type options: \n"
     "'w' = Weibull distribution\n"
     "'s' = Script-based distribution"
 """
+
 
 @dataclass(eq=False)
 class MutationType:
@@ -109,7 +107,7 @@ class MutationType:
 
     # Parameters auto-filled and not entered by users
     """: Unique index of this mutation type."""
-    _dist: rv_continuous = field(default=None, init=False, repr=False)
+    _dist: stats.rv_continuous = field(default=None, init=False, repr=False)
     """: Scipy stats distribution of the .distribution name type."""
     _params: Mapping[str, float] = field(default=dict, init=False, repr=False)
     """: A dict mapping parameter names to values for a distribution."""
@@ -166,7 +164,7 @@ class MutationType:
     @property
     def name(self) -> str:
         """Returns a unique name for this MutationType.
-s
+
         When called from within a chromosome object MutationTypes
         are renamed with unique numbering.
         """

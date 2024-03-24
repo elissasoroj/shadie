@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-A returned object class from a shadie simulation call.
+"""A returned object class from a shadie simulation call.
 """
 
 from typing import Optional, Union, Iterable, List
@@ -49,7 +48,7 @@ class OneSim:
         recapitate: bool=True,
         add_neutral_mutations: bool=True,
         custom_mutrate: Optional[float]=None,
-        ):
+    ):
 
         # hidden attributes
         self.tree_sequence = tskit.load(trees_file)
@@ -101,7 +100,6 @@ class OneSim:
     def _extract_metadata(self):
         """Extract self attributes from shadie .trees file metadata.
         """
-
         if self.generations is None :
             self.generations = self.tree_sequence.metadata["SLiM"]["cycle"]
 
@@ -288,7 +286,7 @@ class OneSim:
         mutate:bool,
         recapitate:bool=True,
         custom_mutrate:Optional[float]=None,
-        ):
+    ):
         """
         Utility function for batch recapitating all the .trees files
         in a folder. Option to add neutral mutations as well
@@ -364,18 +362,21 @@ class OneSim:
 
     def stats(
         self,
-        sample: Union[int, Iterable[int]]=10,
+        sample_size: Union[int, Iterable[int]]=10,
         seed: Optional[int]=None,
         reps: int=10
         ):
         """Calculate statistics summary on mutated TreeSequence.
         
-        Returns a dataframe with several statistics calculated and
-        summarized from replicate random sampling.
+        Returns a dataframe with diversity and Tajima's D calculated 
+        for a single population. If sample_size is specified then N 
+        samples will subsampled, using the random seed, and stats will
+        be returned with 95% confidence interval over replicate 
+        subsampled sets of nodes.
 
         Parameters
         ----------
-        sample: int or Iterable of ints
+        sample_size: int or Iterable of ints
             The number of tips to randomly sample from each population.
         seed: int
             A seed for random sampling.
@@ -388,10 +389,21 @@ class OneSim:
         pandas.DataFrame
             A dataframe with mean and 95% confidence intervals.
         """
-        rng = np.random.default_rng(seed)
-        data = []
+        # no subsampling just return calculated stats.
+        if not sample_size:
+            return pd.Series(
+                index=["theta", "D_Taj"],
+                name=str(0),
+                data=[
+                    self.tree_sequence.diversity(),
+                    self.tree_sequence.Tajimas_D(),
+                ],
+                dtype=float,
+            )
 
         # get a list of Series
+        rng = np.random.default_rng(seed)
+        data = []
         for rep in range(reps):
             seed = rng.integers(2**31)
             tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
@@ -440,7 +452,7 @@ class OneSim:
         show_label=True,
         show_generation_line=False,
         **kwargs):
-        """Returns a toytree drawing for a random sample of tips.
+        """Return a toytree drawing for a random sample of tips.
 
         The tree drawing will include mutations as marks on edges
         with mutationTypes colored differently. The tips are re-labeled
@@ -540,6 +552,40 @@ class OneSim:
 
         return canvas, axes, mark
 
+    def get_windowed_stats(
+        self,
+        stat: str="divergence",
+        window_size: int=20_000,
+        sample_size: Union[int, Iterable[int]]=10,
+        reps: int=1,
+        seed: Optional[int]=None,
+        ):
+        """Return array of stats measured over many random sampled replicates.
+        """
+        rng = np.random.default_rng(seed)
+        rep_values = []
+        for _ in range(reps):
+            rep_seed = rng.integers(2**31)
+            tts = toytree_sequence(self.tree_sequence, sample=sample_size, seed=rep_seed)
+            sample_sets = np.arange(sample_size).tolist()
+
+            # select a supported statistic to measure
+            if stat == "diversity":
+                func = tts.tree_sequence.diversity
+            else:
+                func = tts.tree_sequence.Tajimas_D
+                
+            values = func(
+                sample_sets=sample_sets,
+                windows=np.linspace(
+                    start=0, 
+                    stop=tts.tree_sequence.sequence_length, 
+                    num=round(tts.tree_sequence.sequence_length / window_size)
+                )
+            )
+            rep_values.append(values)
+        return np.array(rep_values)
+
     def draw_stats(
         self,
         stat: str="diversity",
@@ -562,6 +608,8 @@ class OneSim:
         # select a supported statistic to measure
         if stat == "diversity":
             func = self.tree_sequence.diversity
+        elif "ajima" in stat:
+            func = self.tree_sequence.Tajimas_D
         else:
             raise NotImplementedError(f"stat {stat} on the TODO list...")
 
@@ -635,6 +683,7 @@ class OneSim:
     def mktest(self):
         "Perform mk-test"
         pass
+
 
 @dataclass
 class TwoSims:
@@ -774,11 +823,11 @@ class TwoSims:
             sorter=sorted_ids0,
         )
         node_mapping[both] = sorted_ids0[matches]
-        match = sum(node_mapping != -1)
-        nomatch = sum(node_mapping == -1)
-        
+        # match = sum(node_mapping != -1)
+        # nomatch = sum(node_mapping == -1)
+        # logger.debug(f"match={match}; nomatch={nomatch}; {self.trees_files}")        
+
         # save it.
-        # logger.debug(f"match={match}; nomatch={nomatch}; {self.trees_files}")
         tsu = ts0.union(ts1, node_mapping=node_mapping, check_shared_equality=True)
         self.tree_sequence = pyslim.SlimTreeSequence(tsu)
 
@@ -799,7 +848,7 @@ class TwoSims:
             random_seed=self.seed,
         )
 
-    def stats(
+    def get_stats(
         self,
         sample: Union[int, Iterable[int]]=10,
         seed: Optional[int]=None,
@@ -889,6 +938,60 @@ class TwoSims:
         )
         return data
 
+    def get_windowed_stats(
+        self,
+        stat: str="divergence",
+        window_size: int=20_000,
+        sample: Union[int, Iterable[int]]=10,
+        reps: int=1,
+        seed: Optional[int]=None,
+        ):
+        """Return array of stats measured over many random sampled replicates.
+        """
+        rng = np.random.default_rng(seed)
+        rep_values = []
+        for _ in range(reps):
+            rep_seed = rng.integers(2**31)
+            tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=rep_seed)
+            samples = np.arange(tts.sample[0] + tts.sample[1])
+            sample_0 = samples[:tts.sample[0]]
+            sample_1 = samples[tts.sample[0]:]
+            samples = [sample_0, sample_1]
+
+            # select a supported statistic to measure
+            if stat == "divergence":
+                func = tts.tree_sequence.divergence
+                sample_sets = samples
+            elif stat == "Fst":
+                func = tts.tree_sequence.Fst
+                sample_sets = samples                
+            elif stat == "theta0":
+                func = tts.tree_sequence.diversity
+                sample_sets = sample_0
+            elif stat == "theta1":
+                func = tts.tree_sequence.diversity
+                sample_sets = sample_1
+            elif stat == "tajimas0":
+                func = tts.tree_sequence.Tajimas_D
+                sample_sets = sample_1
+            elif stat == "tajimas1":
+                func = tts.tree_sequence.Tajimas_D
+                sample_sets = sample_1
+            else:
+                raise NotImplementedError(f"stat {stat} on the TODO list...")
+                
+            values = func(
+                sample_sets=sample_sets,
+                windows=np.linspace(
+                    start=0, 
+                    stop=tts.tree_sequence.sequence_length, 
+                    num=round(tts.tree_sequence.sequence_length / window_size)
+                )
+            )
+            rep_values.append(values)
+        return np.array(rep_values)
+
+
     def draw_stats(
         self,
         stat: str="divergence",
@@ -912,46 +1015,19 @@ class TwoSims:
         ----------
         """
         # repeat measurement over many random sampled replicates
-        rng = np.random.default_rng(seed)
-        rep_values = []
-        for _ in range(reps):
-            rep_seed = rng.integers(2**31)
-            tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=rep_seed)
-            samples = np.arange(tts.sample[0] + tts.sample[1])
-            sample_0 = samples[:tts.sample[0]]
-            sample_1 = samples[tts.sample[0]:]
-            samples = [sample_0, sample_1]
-
-            # select a supported statistic to measure
-            if stat == "divergence":
-                func = tts.tree_sequence.divergence
-            elif stat == "Fst":
-                func = tts.tree_sequence.Fst
-            else:
-                raise NotImplementedError(f"stat {stat} on the TODO list...")
-                
-            values = func(
-                sample_sets=samples,
-                windows=np.linspace(
-                    start=0, 
-                    stop=tts.tree_sequence.sequence_length, 
-                    num=round(tts.tree_sequence.sequence_length / window_size)
-                )
-            )
-            rep_values.append(values)
-
-            
+        stats = self.get_windowed_stats(stat, window_size, sample, reps, seed)
         
         # get mean and std
-        means = np.array(rep_values).mean(axis=0)
-        # stds = np.array(rep_values).mean(axis=0) 
-        self.rep_values = rep_values
+        means = np.array(stats).mean(axis=0)
+        # stds = np.array(stats).std(axis=0) 
+
+        self.rep_values = means
         self.means = means    
 
         std_low = []
         std_high = []
 
-        for i in rep_values:
+        for i in self.rep_values:
             data = i
             mean_val = np.mean(data)
             low, high = scipy.stats.t.interval(
@@ -992,7 +1068,12 @@ class TwoSims:
 if __name__ == "__main__":
 
     import shadie
+    shadie.set_log_level("DEBUG")
 
+    # TREEFILES = sorted(glob.glob(
+    #     "/home/deren/Desktop/standard-params/bryo-mono/"
+    #     "bryo_mono_run1[0-9]_from_smallchrom_2000spo.trees")
+    # )
     default = shadie.chromosome.default()
     post = OneSim("/Users/elissa/code/git/hacks/shadie/docs/notebooks/WF.trees", default)
 
@@ -1005,7 +1086,6 @@ if __name__ == "__main__":
     #     "/home/deren/Desktop/standard-params/bryo-mono/"
     #     "bryo_mono_run1[0-9]_from_smallchrom_2000spo.trees")
     # )
-
     # post = OneSim(TREEFILES[0], ancestral_Ne=500, mut=1e-7, recomb=1e-8, chromosome=None)
     # print(post.stats())
 
@@ -1016,8 +1096,21 @@ if __name__ == "__main__":
     #     recomb=1e-8,
     #     chromosome=None,
     # )
-    # print(post.stats(sample=20, reps=20))
 
+    # TREEFILES = sorted(glob.glob(
+    #     "/home/deren/Desktop/standard-params/pter-hetero/"
+    #     "pter_hetero_run2[0-9]_from_smallchrom_2000spo.trees")
+    # )
+    # post = TwoSims(
+    #     trees_files=[TREEFILES[0], TREEFILES[1]],
+    #     ancestral_ne=200,
+    #     mut=1e-7 / 2.,
+    #     recomb=1e-8,
+    #     chromosome=None,
+    # )
+    # print(post.get_stats(sample=20, reps=20))
+    # print(post.get_windowed_stats(reps=5))
+    # print(post.stats(sample=20, reps=20))
 
     # TREEFILES = sorted(glob.glob(
     #     "/home/deren/Desktop/standard-params/pter-hetero/"
@@ -1033,4 +1126,3 @@ if __name__ == "__main__":
     # print(post.stats(sample=20, reps=20))
 
     # print(post.draw_stats())
-    

@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 
-"""
-Base classes for reproduction.
+"""Base classes for reproduction.
 
 ReproductionBase -> NonWrightFisher -> BryophyteBase
                     WrightFisher       PteridophyteBase
                                        etc.
 """
 
-from dataclasses import dataclass
+from typing import TypeVar
+from dataclasses import dataclass, field
+import pyslim
 import tskit
+from loguru import logger
+# from shadie.reproduction.scripts import ITER_CHECK_MUT_IS_SUB
 from shadie.reproduction.scripts import (
     P0_FITNESS_SCALE_DEFAULT,
     P1_FITNESS_SCALE_DEFAULT,
@@ -20,6 +23,9 @@ from shadie.reproduction.scripts import (
     HAP_MUT_FITNESS,
     DIP_MUT_FITNESS
 )
+
+logger = logger.bind(name="shadie")
+Model = TypeVar("shadie.Model")
 
 
 @dataclass
@@ -37,14 +43,14 @@ class ReproductionBase:
 
     Example
     -------
-    with shadie.Model() as model:
-        model.initialize(...)
-        model.early(...)
-        model.reproduction.bryophyte(...)
+    >>> with shadie.Model() as model:
+    >>>     model.initialize(...)
+    >>>     model.early(...)
+    >>>     model.reproduction.bryophyte(...)
     """
-    model: 'shadie.Model'
+    model: Model
 
-    def _write_trees_file(self):
+    def _write_trees_file(self) -> None:
         """adds late() call to save and write .trees file.
 
         All shadie reproduction classes write a .trees file in a late()
@@ -93,18 +99,27 @@ class NonWrightFisher(ReproductionBase):
     """
 
     def _set_gametophyte_k(self):
-        """Sets a carrying capacity for gametophyte holding pop (during p1
-        generation, to avoid lagging in the simulation. Automatically sets
-        to 10x user-defined popsize
+        """Set carrying capacity for gametophyte holding pop (p1).
+
+        During p1 generation, to avoid lagging in the simulation, this
+        automatically sets to 10x user-defined popsize.
         """
         if not self.gam_ceiling:
-            self.gam_ceiling = 10*self.gam_pop_size
+            self.gam_ceiling = 10 * self.gam_pop_size
 
     def _define_subpopulations(self):
-        """add haploid and diploid life stages as subpopulations."""
+        """add haploid and diploid life stages as subpopulations.
+        """
+        # load a trees file that already has p0 and p1 pops
         if self.model.metadata['file_in']:
-            self.model._read_from_file(tag_scripts =["p1.individuals.tag=3;", 
-                "tags = rbinom(1, p0.individualCount, 0.5);", "p0.individuals.tag = tags;"])
+            # set p1 to tag=3 (sporophytes) and p0 to tag=[0,1] (gametophytes)
+            self.model._read_from_file(tag_scripts=[
+                "p1.individuals.tag = 3;",
+                "tags = rbinom(1, p0.individualCount, 0.5);",
+                "p0.individuals.tag = tags;",
+            ])
+
+        # create new p0 and p1 populations
         else:
             self.model.first(
                 time=1,
@@ -113,7 +128,8 @@ class NonWrightFisher(ReproductionBase):
                     "sim.addSubpop('p0', 0)",
                     "p1.individuals.tag = 3",
                     "p1.individuals.setValue('maternal_fitness', 1.0);",
-                    "p1.individuals.tagL0 = (runif(p1.individualCount) < GAM_FEMALE_TO_MALE_RATIO);"],
+                    "p1.individuals.tagL0 = (runif(p1.individualCount) < GAM_FEMALE_TO_MALE_RATIO);",
+                ],
                 comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
             )
 
@@ -127,18 +143,17 @@ class NonWrightFisher(ReproductionBase):
         Includes parent attrs like model.
         """
         # exclude parent class attributes
-        exclude = ["_substitution_str", "model",
-                    "_p0activate_str", "_p0deactivate_str",
-                    "_p1activate_str", "_p1deactivate_str"]
+        exclude = [
+            "_substitution_str", "model",
+            "_p0activate_str", "_p0deactivate_str",
+            "_p1activate_str", "_p1deactivate_str",
+        ]
         asdict = {
             i: j for (i, j) in self.__dict__.items()
             if i not in exclude
         }
-
-        #save initalize metadata
+        # save initalize metadata and update with dict
         self.model.map["initialize"][0]['simglobals']['METADATA'] = self.model.metadata
-
-        #update with globals dict
         self.model.map["initialize"][0]['simglobals']['METADATA'].update(asdict)
 
     def _add_initialize_constants(self):
@@ -149,11 +164,13 @@ class NonWrightFisher(ReproductionBase):
         unique set of attributes. Excludes parent attrs like model.
         """
         # exclude parent class attributes
-        exclude = [ "lineage", "mode", "model", "gens_per_lifecycle",
-                   "full_lifecycles", "slim_gens",
-                    "model_source","_substitution_str", 
-                    "_p0activate_str", "_p0deactivate_str",
-                    "_p1activate_str", "_p1deactivate_str"]
+        exclude = [
+            "lineage", "mode", "model", "gens_per_lifecycle",
+            "full_lifecycles", "slim_gens",
+            "model_source","_substitution_str",
+            "_p0activate_str", "_p0deactivate_str",
+            "_p1activate_str", "_p1deactivate_str",
+        ]
 
         asdict = {
             i: j for (i, j) in self.__dict__.items()
@@ -169,13 +186,15 @@ class NonWrightFisher(ReproductionBase):
         generations.
         """
         idx = 6
+
         # iterate over MutationTypes
         for mut in self.model.chromosome.mutations:
+            # only execute below if the mutation doesn't affect all lifestages
             if not mut.affects_diploid or not mut.affects_haploid:
 
                 # refer to mutations by s{idx}
                 idx += 1
-                sidx = str("s" + str(idx))
+                # sidx = str("s" + str(idx))
 
                 # add mutEffect callback function (e.g., s5 mutEffect(m1) {...})
                 # for each MutationType. This callback will be activated or
@@ -183,23 +202,23 @@ class NonWrightFisher(ReproductionBase):
                 # it is the haploid or diploid subpopulation's generation.
                 if not mut.affects_diploid:
                     self.model.muteffect(
-                        idx = None,
-                        mutation = mut.name,
-                        scripts = HAP_MUT_FITNESS,
-                        comment = "mutation only expressed in haploid"
-                        )
+                        idx=None,
+                        mutation=mut.name,
+                        scripts=HAP_MUT_FITNESS,
+                        comment="mutation only expressed in haploid"
+                    )
                 if not mut.affects_haploid:
                     self.model.muteffect(
-                        idx = None,
-                        mutation = mut.name,
-                        scripts = DIP_MUT_FITNESS,
-                        comment = "mutation only expressed in diploid"
-                        )
+                        idx=None,
+                        mutation=mut.name,
+                        scripts=DIP_MUT_FITNESS,
+                        comment="mutation only expressed in diploid"
+                    )
 
     def _add_first_script(self):
-        """
-        Defines the first() callbacks for each gen.
-        This will be overridden by any callbacks of the same name in subclasses
+        """Defines the first() callbacks for each gen.
+
+        This is overridden by callbacks of the same name in subclasses
         """
         self.model.first(
             time=None,
@@ -208,20 +227,20 @@ class NonWrightFisher(ReproductionBase):
         )
 
     def _add_early_script(self):
+        """Defines the early() callbacks for each gen.
+
+        This is overridden by callbacks of the same name in subclasses
         """
-        Defines the early() callbacks for each gen.
-        This will be overridden by any callbacks of the same name in subclasses
-        """
-        early_script = (EARLY.format(
-            p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
-            p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
-            gametophyte_clones=GAM_CLONES,
-            gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
-            sporophyte_clones=SPO_CLONES,
-            spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
+        early_script = (
+            EARLY.format(
+                p0_fitnessScaling=P0_FITNESS_SCALE_DEFAULT,
+                p1_fitnessScaling=P1_FITNESS_SCALE_DEFAULT,
+                gametophyte_clones=GAM_CLONES,
+                gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+                sporophyte_clones=SPO_CLONES,
+                spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
             )
         )
-
         self.model.early(
             time=None,
             scripts=early_script,
@@ -233,13 +252,12 @@ class NonWrightFisher(ReproductionBase):
 class WrightFisher(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
-    selection: str = "none" # soft selection on by default
-    _gens_per_lifecycle: int = 1  #internal param
+    selection: str = "none"  # soft selection on by default
+    _gens_per_lifecycle: int = 1  # internal param
     sexes: bool = False  # not yet used?
 
     def run(self):
-        """
-        Updates self.model.map with new component scripts for running
+        """Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
         """
         self._define_subpopulations()
@@ -261,7 +279,6 @@ class WrightFisher(ReproductionBase):
 
     def _add_scripts(self):
         """fitness and mating of diploid population."""
-
         if self.selection == "soft":
             self.model.repro(
                 population="p1",
@@ -273,13 +290,13 @@ class WrightFisher(ReproductionBase):
             self.model.repro(
                 population="p1",
                 scripts= WF_REPRO_HARD,
-                comment="WF model with hard selection ()"
+                comment="WF model with hard selection (random mating)"
             )
             self.model.early(
                 time=None,
                 scripts="p1.fitnessScaling = K / p1.individualCount",
                 comment="calculate relative fitness.",
-            )   
+            )
 
         elif self.selection == "none":
             self.model.repro(
@@ -302,16 +319,15 @@ class WrightFisher(ReproductionBase):
         }
 
         self.model.map["initialize"][0]['constants']["K"] = self.pop_size
+        self.model.map["initialize"][0]['simglobals']["METADATA"] = metadata_dict
 
-        #save initalize metadata
+        # save initalize metadata and update from dict
         self.model.map["initialize"][0]['simglobals']['METADATA'] = self.model.metadata
-
-        #update the metadata
         self.model.map["initialize"][0]['simglobals']['METADATA'].update(metadata_dict)
 
     def _add_survival_script(self):
-        """
-        Defines the late() callbacks for each gen.
+        """Defines the late() callbacks for each gen.
+
         This overrides the NonWrightFisher class function of same name.
         """
         self.model.survival(
@@ -324,6 +340,7 @@ class WrightFisher(ReproductionBase):
 if __name__ == "__main__":
 
     import shadie
+    shadie.set_log_level("DEBUG")
 
     # define mutation types
     m0 = shadie.mtype(0.5, 'n', [0, 0.4])
@@ -342,12 +359,10 @@ if __name__ == "__main__":
         exon=e1,
     )
 
-    print(m1.affects_haploid)
-
+    # generate a model w/ slim script
     with shadie.Model() as mod:
-        mod.initialize(chromosome=chrom, sim_time=1000, #file_in = "/tmp/test.trees"
-            )
-        mod.reproduction.wright_fisher_haploid_sexual(pop_size=1000) #spo_pop_size=1000, gam_pop_size=500
-    print(mod.script)
-    #mod.write("/tmp/slim.slim")
-    #mod.run(binary="/usr/local/bin/slim")
+        mod.initialize(chromosome=chrom, sim_time=1000, )  # file_in="/tmp/test.trees")
+        mod.reproduction.wright_fisher_haploid_sexual(pop_size=1000)
+    # print(mod.script)
+    mod.write("/tmp/slim.slim")
+    mod.run(seed=123, binary="/home/deren/miniconda3/envs/shadie/bin/slim")  # /usr/local/bin/slim")

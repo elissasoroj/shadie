@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-Superclasses of ChromosomeBase for generating Elements to represent 
+"""Superclasses of ChromosomeBase for generating Elements to represent
 a Chromosome structure. ChromosomeBase has functions to visualize
 these chroms and to convert them to SLiM simulation commands.
 
@@ -28,12 +27,14 @@ class Chromosome(ChromosomeBase):
         self,
         use_nucleotides: bool=False,
         use_synonymous_sites_in_coding: bool=False,
-        ):
+    ):
+        # init from ChromosomeBase
         super().__init__(
             genome_size=10001,
             use_nucleotides=use_nucleotides,
             use_synonymous_sites_in_coding=use_synonymous_sites_in_coding,
         )
+        # create default chromosome
         self.data.loc[0] = (
             NONCDS.altname, 0, 2000, NONCDS.name, NONCDS, NONCDS.is_coding)
         self.data.loc[2001] = (
@@ -46,15 +47,15 @@ class Chromosome(ChromosomeBase):
             NONCDS.altname, 8001, 10000, NONCDS.name, NONCDS, NONCDS.is_coding)
 
 
-class ChromosomeRandom(ChromosomeBase): 
+class ChromosomeRandom(ChromosomeBase):
     """Builds a random chromosome given defined element types.
 
-    This chromosome builder is exposed to users in a factory function 
-    at :meth:`shadie.chromosome.random`. 
+    This chromosome builder is exposed to users in a factory function
+    at :meth:`shadie.chromosome.random`.
 
-    The chromosome will be a set length and composed randomly of 
-    intron, exon, and non-cds genomic ElementTypes with their 
-    relative weights scaled by args to the self.run() function. 
+    The chromosome will be a set length and composed randomly of
+    intron, exon, and non-cds genomic ElementTypes with their
+    relative weights scaled by args to the self.run() function.
     Default ElementTypes are used if not entered by the user.
 
     Examples
@@ -63,15 +64,15 @@ class ChromosomeRandom(ChromosomeBase):
     >>> chrom.run()
     """
     def __init__(
-        self, 
-        genome_size: int=20000, 
+        self,
+        genome_size: int=20000,
         intron: Union[None, ElementType, List[ElementType]]=None,
         exon: Union[None, ElementType, List[ElementType]]=None,
         noncds: ElementType=None,
         seed: Union[int, None]=None,
         use_nucleotides: bool=False,
         use_synonymous_sites_in_coding: bool=False,
-        ):
+    ):
 
         super().__init__(
             genome_size=genome_size,
@@ -86,7 +87,7 @@ class ChromosomeRandom(ChromosomeBase):
 
     def get_noncds_span(self, scale:int=5000) -> int:
         """
-        Draws the number of bases until the next element from an 
+        Draws the number of bases until the next element from an
         exponential distribution. The scale is the average waiting
         time in number of bp.
         """
@@ -94,9 +95,9 @@ class ChromosomeRandom(ChromosomeBase):
 
     def get_cds_spans(self, length_scale:int=1000, intron_scale:int=1000) -> List[int]:
         """
-        Draws the number of exons in a fixed length space from a 
+        Draws the number of exons in a fixed length space from a
         Poisson distribution. The lam parameter is the average number
-        of events per sampled region. A value of 0.005 means one 
+        of events per sampled region. A value of 0.005 means one
         intron per 200bp.
         """
         cds_span = int(self.rng.exponential(scale=length_scale))
@@ -123,14 +124,14 @@ class ChromosomeRandom(ChromosomeBase):
             # start with a non-cds span
             span = self.get_noncds_span(noncds_scale)
             self.data.loc[idx] = (
-                self.noncds.altname, 
-                idx + 1, 
-                min(idx + 1 + span, self.genome_size), 
+                self.noncds.altname,
+                idx + 1,
+                min(idx + 1 + span, self.genome_size),
                 self.noncds.name, self.noncds,
                 self.noncds.is_coding,
             )
             idx += span + 1
-            
+
             # get a cds span
             spans = self.get_cds_spans(cds_scale, intron_scale)
 
@@ -147,14 +148,14 @@ class ChromosomeRandom(ChromosomeBase):
                     else:
                         ele = self.exon
                 else:
-                    if isinstance(self.intron, list):                    
+                    if isinstance(self.intron, list):
                         ele = self.rng.choice(self.intron)
                     else:
                         ele = self.intron
                 self.data.loc[idx] = (
-                    ele.altname, 
-                    idx + 1, 
-                    idx + span + 1, 
+                    ele.altname,
+                    idx + 1,
+                    idx + span + 1,
                     ele.name, ele,
                     ele.is_coding,
                 )
@@ -165,8 +166,8 @@ class ChromosomeRandom(ChromosomeBase):
 class ChromosomeExplicit(ChromosomeBase):
     """Builds a chromosome from a dict of explicit intervals.
 
-    Instructions provided as start, stop positions mapped to 
-    ElementTypes. 
+    Instructions provided as start, stop positions mapped to
+    ElementTypes.
 
     Example
     -------
@@ -178,8 +179,8 @@ class ChromosomeExplicit(ChromosomeBase):
     })
     """
     def __init__(
-        self, 
-        data, 
+        self,
+        data,
         genome_size: Optional[int]=None,
         use_nucleotides: bool=False,
         use_synonymous_sites_in_coding: bool=False,
@@ -188,9 +189,9 @@ class ChromosomeExplicit(ChromosomeBase):
             genome_size = genome_size
         else:
             genome_size = 1 + (max(i[1] for i in data.keys()))
-        
+
         super().__init__(
-            genome_size, 
+            genome_size,
             use_nucleotides,
             use_synonymous_sites_in_coding,
         )
@@ -206,11 +207,11 @@ class ChromosomeExplicit(ChromosomeBase):
             start, end = key
             if data[key] is not None:
                 self.data.loc[start] = (
-                    data[key].altname, 
-                    start, 
-                    end, 
-                    data[key].name, 
-                    data[key], 
+                    data[key].altname,
+                    start,
+                    end,
+                    data[key].name,
+                    data[key],
                     data[key].is_coding,
                 )
 
@@ -223,7 +224,7 @@ if __name__ == "__main__":
     m0 = shadie.mtype(0.5, 'n', [2.0, 1.0])
     m1 = shadie.mtype(0.5, 'g', [3.0, 1.0])
     m2 = shadie.mtype(0.5, 'f', [0])
-    
+
     # define elements types
     e0 = shadie.etype([m0, m1], [1, 2])
     e1 = shadie.etype([m2], [1])
@@ -238,7 +239,7 @@ if __name__ == "__main__":
     # print(default.data)
 
     # design chromosome of elements
-    # Do we want users to be able to put in a chromosome like this 
+    # Do we want users to be able to put in a chromosome like this
     # and have the gaps filled with neutral portions? YES.
     # chrom = shadie.chromosome.explicit(
     #     data = {
@@ -246,20 +247,20 @@ if __name__ == "__main__":
     #     (500, 1000): e1,
     #     (2000, 3000): e0,
     #     (3001, 5000): e1,
-    #     }, 
+    #     },
     #     use_synonymous_sites_in_coding=False,
     #     use_nucleotides=False,
     # )
     e0 = shadie.base.defaults.NONCDS
 
     chrom2 = shadie.chromosome.explicit(
-        data = {(0,1000): NONCDS}
-        )
+        data={(0, 1000): NONCDS}
+    )
 
-    #elem = chrom.data.loc[500]["eltype"]
-    #chrom.to_slim_mutation_types()
+    # elem = chrom.data.loc[500]["eltype"]
+    # chrom.to_slim_mutation_types()
     test = chrom2.mutations
-    #print(chrom.data.head())
+    # print(chrom.data.head())
 
     print(chrom2.data)
     print(test)

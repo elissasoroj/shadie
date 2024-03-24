@@ -1,29 +1,30 @@
 #!/usr/bin/env python
 
-"""
-Special case Wright-Fisher specific SLIM script snippets used for string substitution.
+"""Special case Wright-Fisher specific SLIM script snippets used for
+string substitution.
 """
 
+#############################################################
+# typical Wright-Fisher with soft selection
 # ==PARAMETERS==
-#K
+# K
 # -------------------------
-#typical Wright-Fisher with soft selection
 REPRO_WF = """
     // parents are chosen proportional to fitness
     fitness = p1.cachedFitness(NULL);
     parent = sample(p1.individuals, K, replace=T, weights=fitness);
     for (i in seqLen(K))
         p1.addRecombinant(parent.genome1[i], NULL, NULL, NULL, NULL, NULL);
-    
+
     self.active = 0;
 """
 
 # ==PARAMETERS==
-#K
+# K
 # -------------------------
 REPRO_HAPLOID_WF = """
-    // parents are chosen randomly. Two haploid genomes 
-    //come together and immediately produce a haploid child with recombination
+    // parents are chosen randomly. Two haploid genomes
+    // come together and immediately produce a haploid child with recombination
 
     fitness = p1.cachedFitness(NULL);
     parent1 = sample(p1.individuals, K, replace=T);
@@ -32,13 +33,13 @@ REPRO_HAPLOID_WF = """
         breaks = sim.chromosome.drawBreakpoints(parent1[i]);
         p1.addRecombinant(parent1.genome1[i], parent2.genome1[i], breaks, NULL, NULL, NULL);
     }
-    
+
     self.active = 0;
 """
 
 REPRO_HAPLOID_SOFT_WF = """
-    // parents are chosen proportional to fitness. Two haploid genomes 
-    //come together and immediately produce a haploid child with recombination
+    // parents are chosen proportional to fitness. Two haploid genomes
+    // come together and immediately produce a haploid child with recombination
 
     fitness = p1.cachedFitness(NULL);
     parent1 = sample(p1.individuals, K, replace=T, weights=fitness);
@@ -47,12 +48,12 @@ REPRO_HAPLOID_SOFT_WF = """
         breaks = sim.chromosome.drawBreakpoints(parent1[i]);
         p1.addRecombinant(parent1.genome1[i], parent2.genome1[i], breaks, NULL, NULL, NULL);
     }
-    
+
     self.active = 0;
 """
 
 REPRO_CLONAL_WF = """
-    // parents are chosen randomly, produce one offpsring each time. 
+    // parents are chosen randomly, produce one offpsring each time.
 
     fitness = p1.cachedFitness(NULL);
     parent1 = sample(p1.individuals, K, replace=T);
@@ -60,12 +61,12 @@ REPRO_CLONAL_WF = """
     for (i in seqLen(K)){
         p1.addRecombinant(parent1.genome1[i], NULL, NULL, NULL, NULL, NULL);
     }
-    
+
     self.active = 0;
 """
 
 REPRO_CLONAL_SOFT_WF = """
-    // parents are chosen proportional to fitness, produce one offpsring each time. 
+    // parents are chosen proportional to fitness, produce one offpsring each time.
 
     fitness = p1.cachedFitness(NULL);
     parent1 = sample(p1.individuals, K, replace=T, weights=fitness);
@@ -73,12 +74,12 @@ REPRO_CLONAL_SOFT_WF = """
     for (i in seqLen(K)){
         p1.addRecombinant(parent1.genome1[i], NULL, NULL, NULL, NULL, NULL);
     }
-    
+
     self.active = 0;
 """
 
 # PARAMETERS
-#GAM_POP_SIZE
+# GAM_POP_SIZE
 # -------------------------
 REPRO_ALTGEN_P1 = """
     // parents are chosen randomly
@@ -103,7 +104,7 @@ REPRO_ALTGEN_SOFT_P1 = """
 """
 
 # PARAMETERS
-#SPO_POP_SIZE
+# SPO_POP_SIZE
 # -------------------------
 REPRO_ALTGEN_P0 = """
     // parents are chosen randomly
@@ -131,7 +132,7 @@ WF_ALTGEN_EARLY = """
     if (community.tick % 2 == 0) {
         // fitness affects haploid survival
         p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
-        }
+    }
     // haploids (p0) just generated diploids into p1
     else {
         //fitness affects diploid survival
@@ -139,17 +140,17 @@ WF_ALTGEN_EARLY = """
     }
 """
 
-#------------
+# ------------
 SURV_MORAN = """
-    if (individual.age>1) 
+    if (individual.age>1)
         return F;
     else
         return NULL;
 """
 
-#------------
+# ------------
 OLD_SURV_WF = """
-    if (individual.age>1) 
+    if (individual.age>1)
         return F;
     else
         return NULL;

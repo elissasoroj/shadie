@@ -1,8 +1,9 @@
 site_name: shadie {UNDER ACTIVE DEVELOPMENT}
 repo_url: https://github.com/elissasoroj/shadie
 site_author: Elissa Sorojsrisom
-#to deploy: mkdocs gh-deploy --force
-#to see dummy site: mkdocs serve
+# requires: mkdocs mkdocs-jupyter
+# to deploy: mkdocs gh-deploy --force
+# to see dummy site: mkdocs serve
 
 # Copyright
 copyright: Copyright &copy; 2024 Elissa Sorojsrisom

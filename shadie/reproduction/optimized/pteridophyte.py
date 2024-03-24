@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 """
-Starting an alternate implementation of Reproduction 
+DEPRECATED.
+
 """
 from dataclasses import dataclass, field
 from typing import Union
-import pyslim
 from loguru import logger
 from shadie.reproduction.optimized.base_wf import ReproductionBase
 from shadie.reproduction.optimized.scripts import (
@@ -17,23 +17,16 @@ from shadie.reproduction.optimized.scripts import (
     LATE_PTER_HOMOSPORE, LATE_PTER_HETEROSPORE
 )
 
-DTYPES = ("d", "dio", "dioicy", "dioicous", "heterosporous",)
-MTYPES = ("m", "mono", "monoicy", "monoicous", "homosporous",)
 
 @dataclass
 class PteridophyteBase(ReproductionBase):
     lineage: str = field(default="Angiosperm", init=False)
     mode: str
-    _file_in: str
-    _chromosome: 'shadie.chromosome.ChromosomeBase'
-    _sim_time: int
-    _file_out: str
+
 
 @dataclass
 class Pteridophyte(PteridophyteBase):
-    """
-    Reproduction mode based on ferns and lycophytes
-    """
+    """Reproduction mode based on ferns and lycophytes."""
     spo_pop_size: int
     gam_pop_size: int
     microspore_pool: Union[None, int]=None,

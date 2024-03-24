@@ -1,9 +1,16 @@
 #!/usr/bin/env python
 
-"""
-`shadie` is a wrapper around SLiM that implements selection on 
-alternating hapliod/diploid lifecycles and converts user-provided 
-phylogeny into SLiM-compatible subpopulation demography
+"""Shadie is a Python library for writing and executing SLiM scripts
+and performing downstream evolutionary analyses. Shadie includes many
+functions with a focus on implementing evolutionary models with
+selection acting on alternating haploid/diploid lifecycles.
+
+Example
+-------
+>>> import shadie
+>>> with shadie.Model() as model:
+>>>     model.initalize()
+>>> ...
 """
 
 __version__ = "1.0.0"

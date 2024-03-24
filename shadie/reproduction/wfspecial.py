@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 
-"""
-Bryophyte reproduction class is a superclass of NonWrightFisher class.
+"""WrightFisher type reproduction classes.
 
 Class inheritance structure
 ---------------------------
 ReproductionBase
-    WrightFisher
+    WrightFisher *
+        Moran *
+    HaploidWF *
+    ClonalHaploidWF *
+    AltGenWF *
+    ...
     NonWrightFisher
         BrypophyteBase
             BryophyteDioicous
@@ -20,7 +24,7 @@ from shadie.reproduction.base import WrightFisher
 from shadie.reproduction.scripts import (
     GAM_MATERNAL_EFFECT_ON_P1,
     P0_FITNESS_SCALE_DEFAULT,
-    #EARLY_WITH_GAM_K,
+    # EARLY_WITH_GAM_K,
     EARLY,
     HAP_MUT_FITNESS,
     DIP_MUT_FITNESS
@@ -44,15 +48,13 @@ from shadie.reproduction.specialWF_scripts import (
 class HaploidWF(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model with clonal
      haploid individuals."""
-    
-    pop_size: int #number of haploid individuals
+    pop_size: int  # number of haploid individuals
     selection: str = "none"
     _gens_per_lifecycle: int = 1
     sexes: bool = False  # not yet used?
 
     def run(self):
-        """
-        Updates self.model.map with new component scripts for running
+        """Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
         """
 
@@ -65,7 +67,6 @@ class HaploidWF(ReproductionBase):
         self._add_initialize_constants()
         self._add_mode_scripts()
         self._add_survival_script()
-        
 
     def _define_subpopulations(self):
         """Add a single diploid population. See NonWrightFisher for comparison."""
@@ -134,6 +135,7 @@ class HaploidWF(ReproductionBase):
             scripts="return (individual.age == 0);",
             comment="non-overlapping generations",
         )
+
 
 @dataclass
 class ClonalHaploidWF(ReproductionBase):
@@ -223,20 +225,20 @@ class ClonalHaploidWF(ReproductionBase):
             comment="non-overlapping generations",
         )
 
+
 @dataclass
 class AltGenWF(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model with clonal
      haploid individuals."""
     
-    spo_pop_size: int #number of diploid individuals
-    gam_pop_size: int #number of haploid individuals
+    spo_pop_size: int # number of diploid individuals
+    gam_pop_size: int # number of haploid individuals
     selection:str = "none"
     _gens_per_lifecycle: int = 2
     sexes: bool = False  # not yet used?
 
     def run(self):
-        """
-        Updates self.model.map with new component scripts for running
+        """Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
         """
 
@@ -308,7 +310,7 @@ class AltGenWF(ReproductionBase):
                 time = None,
                 scripts=WF_ALTGEN_EARLY,
                 comment="Fitness scaling for hard selection"
-                )
+            )
 
     def _add_initialize_constants(self):
         """Add defineConstant calls to init for new variables."""
@@ -327,8 +329,7 @@ class AltGenWF(ReproductionBase):
         self.model.map["initialize"][0]['simglobals']["METADATA"] = metadata_dict
 
     def _add_survival_script(self):
-        """
-        Defines the late() callbacks for each gen.
+        """Defines the late() callbacks for each gen.
         This overrides the NonWrightFisher class function of same name.
         """
         self.model.survival(
@@ -402,10 +403,17 @@ if __name__ == "__main__":
     import shadie
 
     # define mutation types
+# <<<<<<< HEAD
+    # m0 = shadie.mtype(0.5, 'n', 0, 0.4)
+    # m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
+    # m2 = shadie.mtype(0.5, 'g', 0.8, 0.75, diffexpr="diploid")
+    # m3 = shadie.mtype(0.5, 'n', 0, 0.4, diffexpr="haploid")
+# =======
     m0 = shadie.mtype(0.5, 'n', [0, 0.4])
     m1 = shadie.mtype(0.5, 'g', [0.8, 0.75])
     m2 = shadie.mtype(0.5, 'g', [0.8, 0.75], affects_haploid = False)
     m3 = shadie.mtype(0.5, 'n', [0, 0.4], affects_diploid = False)
+# >>>>>>> e146a076ec813395f37608c6847ff78a339d9683
 
     # define elements types
     e0 = shadie.etype([m0, m2], [1, 2])
@@ -422,10 +430,8 @@ if __name__ == "__main__":
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=50, file_out="/tmp/test.trees")
         mod.reproduction.wright_fisher_haploid_clonal(
-            pop_size = 500,
-            #spo_pop_size=100,
-            #gam_pop_size=100,
+            pop_size=500,
         )
     print(mod.script)
-    #mod.write("/tmp/slim.slim")
-    #mod.run(seed=123)
+    # mod.write("/tmp/slim.slim")
+    # mod.run(seed=123)

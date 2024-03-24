@@ -1,0 +1,420 @@
+// Two mutationTypes defined:
+//   - m1 is applied only to p0
+//   - m2 is applied only to p1
+
+initialize() {
+
+  // model type
+  initializeSLiMModelType("nonWF");
+
+  // config
+  initializeRecombinationRate(5e-08, 15000000);
+  initializeMutationRate(5e-7);
+  initializeTreeSeq(recordMutations=F, simplificationInterval=100);
+
+  // MutationType init
+  initializeMutationType('m1', 0.5, 'f', 0.01);
+  initializeMutationType('m2', 0.5, 'f', 0.01);
+
+  // ElementType init
+  initializeGenomicElementType('g1', m1, 1.0);
+  initializeGenomicElementType('g2', m2, 1.0);
+
+  // Chromosome (GenomicElement init)
+  initializeGenomicElement(g1, 5000001, 5001000);
+  initializeGenomicElement(g2, 10000001, 10001000);
+
+  // The trees file output path.
+  defineConstant('OUTPATH', '/tmp/target-bryo-mono.trees');
+ 
+  // constants (Population sizes and others)
+  defineConstant('SPO_POP_SIZE', 3000);
+  defineConstant('GAM_POP_SIZE', 3000);
+  defineConstant('SPO_MUTATION_RATE', 5e-07);
+  defineConstant('GAM_MUTATION_RATE', 5e-07);
+
+  // cloning rate applies to gametophyte individuals
+  defineConstant('GAM_CLONE_RATE', 0.8);
+  defineConstant('GAM_CLONES_PER', 10);
+
+  // gam selfing rate applies to gametophyte archegonia
+  // defineConstant('GAM_SELF_RATE_PER_IND', 0.10);
+  defineConstant('GAM_SELF_RATE_PER_EGG', 0.44);
+
+  // gametophytes from the same sporophyte will get unique tags
+  // that will be used to specify mating later. Because bryos
+  // have only one egg per archegon this is actually per-archeg.
+  defineConstant('SPO_SELF_RATE_PER_EGG', 0.44);
+
+  // affects fitness and survival
+  defineConstant('SPO_RANDOM_DEATH_CHANCE', 0.0);
+  defineConstant('GAM_RANDOM_DEATH_CHANCE', 0.0);
+
+  // TODO: needs further testing in GUI
+  defineConstant('GAM_MATERNAL_EFFECT', 0.0);
+
+  // this defines the total number of gams that will be produced prior to selection
+  // culling it down to the K population size. Larger numbers runs slower, but also
+  // represents a larger number of recombinant gamete genomes for selection to act on.
+  // only the post-selection p0 population reproduces in reproduction(p1).
+  defineConstant('SPO_SPORES_PER', 10);
+
+  // of the surviving gametophytes, this defines their reproductive potential to 
+  // make up the following generation. If one individual can produce a million eggs,
+  // then that one individual could potentially compose the entire population the 
+  // next generation if it has a very high fitness. 
+  defineConstant('GAM_ARCHEGONIA_PER', 10);
+}
+
+// shadie DEFINITIONS
+// p0 = haploid population
+// p1 = diploid population
+
+// 0 = gametophyte (1N)
+// 1 = gametophyte clones (1N)
+// 3 = sporophyte (2N)
+// >1M- tmp tags
+// Note: sporophytes cannot clone here.
+
+// executes after reproduction block in NONWF (after offspring are generated).
+// define subpops: p1=diploid sporophytes, p0=haploid gametophytes
+1 early() {
+    sim.addSubpop('p1', SPO_POP_SIZE);
+    sim.addSubpop('p0', 0);
+    p1.individuals.tag = 3;
+}
+
+
+early() {
+    // reproduction(p1) just finished creating GAMETOPHYTES in p0.
+    // this generation will calculate fitness and apply selection on them.
+    // report("early");
+    if (sim.generation % 2 == 0) {
+
+        // fitness is scaled relative to all p0s, b/c all monoicous bryos are hermaphroditic
+        p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
+
+        // set mutation rate to gametophyte rate
+        sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
+
+        // alternate generations.
+        // deactivate survival callback to remove inds from p1 subpop.
+        // activate survival callback to remove inds from p0 subpop.
+        s1.active = 1;
+        s2.active = 0;
+
+        // add random chance of death, maternal effects, or fitness calculation.
+        // activate survival(p0) to set fitness method for p0s
+        // deactivate survival(p1) to set fitness method for p1s
+        s3.active = 1;
+        s4.active = 0;
+
+        // set reproduction function to be used when next generation starts.
+        // deactivate reproduction(p1) diploids reproduce, haploids don't.
+        // activate reproduction(p0) haploids reproduce, diploids don't.        
+        s5.active = 0;
+        s6.active = 1;
+
+        // Each of the callbacks below applies to a MutationType's fitness effect.
+        // This can one of three possible effects depending on the shadie code:
+
+        // x0. perform non-standard fitness calc to suppress all effects (can apply to diploids or haploids)
+        // x1. perform non-standard fitness calc to suppress dominance (should only be applied to haploids)
+        // X2. perform standard fitness calc (should only be applied to diploids)
+
+        // m1 has non-dominance fitness effect on gametophyte
+        s70.active = 0;
+        s71.active = 1;
+        s72.active = 0;
+
+        // m2 has no effect on gametophyte
+        s80.active = 1;
+        s81.active = 0;
+        s82.active = 0;
+    }
+
+    // reproduction(p0) just finished creating diploid SPOROPHYTES in p1
+    // to a level that is likely above its carrying capacity. Next
+    // fitness will be calculated and seletion applied to sporophytes.
+    else {
+
+        // fitness is scaled relative to number of inds in p1
+        p1.fitnessScaling = SPO_POP_SIZE / p1.individualCount;
+
+        // set mutation rate to sporophyte rate
+        sim.chromosome.setMutationRate(SPO_MUTATION_RATE);
+
+        // alternate generations.
+        // deactivate survival(p0) to remove inds from p0 subpop (i.e., keep p0)
+        // activate survival(p1) to remove inds from p1 subpop.
+        s1.active = 0;
+        s2.active = 1;
+
+        // add random chance of death, maternal effects, or fitness calculation.
+        // deactivate survival(p0) to set fitness method for p0s
+        // activate survival(p1) to set fitness method for p1s
+        s3.active = 0;
+        s4.active = 1;
+
+        // set reproduction function to be used when next generation starts.
+        // activate reproduction(p1) diploids reproduce, haploids don't.
+        // deactivate reproduction(p0) haploids reproduce, diploids don't.        
+        s5.active = 1;
+        s6.active = 0;
+
+        // x0. perform non-standard fitness calc to suppress all effects (can apply to diploids or haploids)
+        // x1. perform non-standard fitness calc to suppress dominance (should only be applied to haploids)
+        // X2. perform standard fitness calc (should only be applied to diploids)
+
+        // m1 has no effect on sporophyte
+        s70.active = 1;
+        s71.active = 0;
+        s72.active = 0;
+
+        // m2 has standard fitness effect on sporophyte
+        s80.active = 0;
+        s81.active = 0;
+        s82.active = 1;
+    }
+}
+
+// alternate to other generation.
+// remove p1 individuals.
+s1 survival(p1) {
+    return F;
+}
+
+// alternate to other generation.
+// remove p0 individuals unless it is a clone or selfed.
+s2 survival(p0) {
+    // allow clones to persist until next generation, retag with parent id.
+    if (individual.tag == 1) {
+        individual.tag = individual.getValue("parentid");
+        return T;
+    }
+    return F;
+}
+
+// remove p0s by three possible mechanisms: 
+// 1. random chance of death.
+// X2. maternal effect. (There are no SPO maternal effects)
+// 3. returns NULL, meaning use the standard fitness prob.
+s3 survival(p0) {
+    if (runif(1) < GAM_RANDOM_DEATH_CHANCE)
+        return F;
+    return NULL;
+}
+
+
+// remove p1s by three possible mechanisms: 
+// 1. random chance of death.
+// 2. using fitness re-calculated to include maternal effect.
+// 3. returns NULL, meaning use the standard fitness prob.
+s4 survival(p1) {
+    if (runif(1) < SPO_RANDOM_DEATH_CHANCE)
+        return F;
+    maternal_fitness = individual.getValue("maternal_fitness");
+    if (!isNULL(maternal_fitness)) {
+        corrected_fitness = (maternal_fitness * GAM_MATERNAL_EFFECT) + fitness * (1 - GAM_MATERNAL_EFFECT);
+        return (runif(1) < corrected_fitness);
+    }
+    return NULL;
+}
+
+// ==========================================================================================================
+
+// sporophyte (2N) undergoes meiosis to release 4 1N gametophytes for each spore
+s5 reproduction(p1) {
+    ind = individual;
+
+    // parent tag is 1M + the parents unique index
+    ptag = 1000000 + ind.index;
+
+    // each spore produces its own recombinant breakpoints 
+    for (rep in 1:SPO_SPORES_PER) {
+        breaks1 = sim.chromosome.drawBreakpoints(ind);
+        breaks2 = sim.chromosome.drawBreakpoints(ind);
+
+        // create four meiotic products. If later two of these mate with each other
+        // it is an example of sporophytic selfing. Because we need to be able to match
+        // sibling gametes at that time we tag them now with their sporophyte parent's index.
+        p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL).tag=ptag;
+        p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL).tag=ptag;
+        p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL).tag=ptag;
+        p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL).tag=ptag;
+    }
+}
+
+
+// gametophyte gametes are joined to form new 2N sporophytes.
+s6 reproduction(p0) {
+
+    // archegonia only produce one egg in bryophytes
+    eggs = GAM_ARCHEGONIA_PER;
+
+    // clonal individual get added to the p0 pool for next round.
+    // NOTE: this doesn't allow clones to reproduce this round.
+    if (runif(1) < GAM_CLONE_RATE) {
+        for (i in 1:GAM_CLONES_PER) {
+            child = p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL);
+            child.tag = 1;
+            child.setValue("parentid", individual.tag);
+            if (GAM_MATERNAL_EFFECT > 0)
+                child.setValue("maternal_fitness", NULL);
+        }
+    }
+
+    // the original plant making the clones can still reproduce regardless 
+    // of whether or not it cloned.
+
+    // for crossing get the males, and for selfing get siblings
+    if (SPO_SELF_RATE_PER_EGG > 0)
+        siblings = p0.sampleIndividuals(1, tag=individual.tag);
+
+    // iterate over each egg to find a mate (self, sib, or outcross)
+    // NOTE: each gametophyte gives rise to antheridia that produce thousands of
+    // clonal sperm. Because of this, sperm is not removed from the mating pool when used.       
+    for (rep in 1:eggs) {
+        // weighted sampling: each egg gets gam-selfed, spo-selfed, or outcrossed.
+        // Note: shadie enforces that GAM_SELF_RATE + SPO_SELF_RATE !> 1
+        mode = sample(
+            x=c(1, 2, 3), 
+            size=1, 
+            weights=c(GAM_SELF_RATE_PER_EGG, SPO_SELF_RATE_PER_EGG, 1 - (GAM_SELF_RATE_PER_EGG + SPO_SELF_RATE_PER_EGG))
+        );
+
+        // intra-gametic selfed (only possible in monoicous)
+        if (mode == 1) {
+            child = p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome1, NULL, NULL);
+            child.tag = 3;
+            if (GAM_MATERNAL_EFFECT > 0)
+                child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));    
+        }
+
+        // inter-gametophytic selfed individual (same sporo parent)
+        // only occurs IF a sibling gametophyte is still alive.
+        else if (mode == 2) {
+            if (siblings.size() > 0) {
+                sibling = sample(siblings, 1);
+                child = p1.addRecombinant(individual.genome1, NULL, NULL, sibling.genome1, NULL, NULL);
+                child.tag = 3;
+                if (GAM_MATERNAL_EFFECT > 0)
+                    child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));    
+            }
+        }
+
+        // outcrossing individual samples any p0 that is not same tag.
+        // only occurs if a non-sib gametophyte is still alive.
+        else {
+            // try at most 10 times to find a non-sib sperm, then skip.
+            for (trial in 1:10) {
+                sperm = sample(p0.individuals, 1);
+                if (sperm.tag != individual.tag) {
+                    child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
+                    child.tag = 3;
+                    if (GAM_MATERNAL_EFFECT > 0)
+                        child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));    
+                    break;
+                }
+            }
+        }
+        // print(mode);
+    }
+}
+
+
+// adjusts fitness calculation
+// This applies to p0 and overrides the standard fitness calculation, 
+// which would incorporate the dominanceCoefficient for heterozygotes.
+s70 fitness(m1) {
+    return 1.0;
+}
+
+s71 fitness(m1) {
+    return 1.0 + mut.selectionCoeff;
+}
+
+s72 fitness(m1) {
+    if (homozygous)
+        return 1.0 + mut.selectionCoeff;
+    else
+        return 1.0 + mut.mutationType.dominanceCoeff * mut.selectionCoeff;
+}
+
+
+// adjusts fitness calculation
+// This applies to p0 and overrides the standard fitness calculation, 
+// which would incorporate the dominanceCoefficient for heterozygotes.
+s80 fitness(m1) {
+    return 1.0;
+}
+
+s81 fitness(m1) {
+    return 1.0 + mut.selectionCoeff;
+}
+
+s82 fitness(m1) {
+    if (homozygous)
+        return 1.0 + mut.selectionCoeff;
+    else
+        return 1.0 + mut.mutationType.dominanceCoeff * mut.selectionCoeff;
+}
+
+
+// executes after selection occurs
+// end of sim; save .trees file
+10001 late() {
+    // sim.treeSeqRememberIndividuals(sim.subpopulations.individuals);
+    report("final generation");
+    sim.treeSeqRememberIndividuals(p1.individuals);
+    sim.treeSeqOutput(
+        path=OUTPATH,
+        metadata=Dictionary(
+            "spo_mutation_rate", SPO_MUTATION_RATE,
+            "recombination_rate", 1e-7,
+            "spo_population_size", SPO_POP_SIZE,
+            "gam_population_size", GAM_POP_SIZE)
+    );
+}
+
+
+// executes after selection occurs
+late() {
+    if (sim.generation % 10 == 0)
+        report('late');
+}
+
+
+// DEBUGGING and removing fixed mutations.
+function (void)report(s$ title) {
+
+    // print a title
+    cat(title + "\n");
+
+    // get the total number of genomes
+    ngenomes = (2 * size(p1.individuals)) + size(p0.individuals);
+
+    // iterate over mutationTypes in the simulation
+    for (mtype in sim.mutationTypes) {
+
+        // get all mutations of this type
+        muts = sim.mutationsOfType(mtype);
+
+        // remove mut if it is fixed
+        for (mut in muts) {
+            counts = sim.mutationCounts(NULL, mut);
+            cat(mut);
+            cat(format('; counts=%i\n', counts));
+            if (counts == ngenomes) {
+                sim.subpopulations.genomes.removeMutations(mut, T);
+            }
+        }
+    }
+
+    cat(format('gen=%i, ', sim.generation));
+    cat(format('ngenomes=%i, ', ngenomes));
+    cat(format('(p1=%i, ', 2 * p1.individuals.size()));
+    cat(format('p0=%i, ', sum(p0.individuals.tag != 1)));
+    cat(format('p0 clone=%i)\n', sum(p0.individuals.tag == 1)));
+    cat("\n---------------------- fixed=" + sim.substitutions.size() + "\n\n");
+}

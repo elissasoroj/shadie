@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-Bryophyte reproduction class is a superclass of NonWrightFisher class.
+"""Bryophyte reproduction class is a superclass of NonWrightFisher class.
 
 Class inheritance structure
 ---------------------------
@@ -38,9 +37,16 @@ from shadie.reproduction.bryo_scripts import (
     DEFS_BRYO_MONO,
     DEFS_BRYO_DIO,
 )
+# from shadie.reproduction.bryo_scripts2 import (
+#     LATE_BRYO_MONO,
+#     EARLY_BRYO_MONO,
+#     FUNCTIONS_BRYO_MONO,
+#     SURVIVAL_BRYO_MONO,
+#     REPRO_BRYO_MONO_0, 
+#     REPRO_BRYO_MONO_P1,
+# )
 
-DTYPES = ("dioicy", "dioicous", "heterosporous")
-MTYPES = ("monoicy", "monoicous", "homosporous")
+
 
 @dataclass
 class BryophyteBase(NonWrightFisher):
@@ -197,11 +203,18 @@ class BryophyteMonoicous(BryophyteBase):
             comment="generates gametes from sporophytes"
         )
 
+
 if __name__ == "__main__":
 
     import shadie
 
     # define mutation types
+# <<<<<<< HEAD
+#     m0 = shadie.mtype(0.5, 'n', 0, 0.4)
+#     m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
+#     m2 = shadie.mtype(0.5, 'g', 0.8, 0.75, diffexpr="diploid")
+#     m3 = shadie.mtype(0.5, 'n', 0, 0.4, diffexpr="haploid")
+# =======
     m0 = shadie.mtype(0.5, 'n', [0, 0.4])
     m1 = shadie.mtype(0.5, 'g', [0.8, 0.75])
     m2 = shadie.mtype(0.5, 'g', [0.8, 0.75], affects_diploid = False)
@@ -227,5 +240,5 @@ if __name__ == "__main__":
             gam_self_rate_per_egg=0.8,
         )
     print(mod.script)
-    #mod.write("/tmp/slim.slim")
-    #mod.run(seed=123)
+    # mod.write("/tmp/slim.slim")
+    # mod.run(seed=123)

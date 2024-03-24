@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-Convenience functions for constructing chromosome objects.
+"""Convenience functions for constructing chromosome objects.
 """
 
 from typing import Union, Optional
@@ -12,9 +11,9 @@ from shadie.chromosome.src.classes import (
 
 
 def default(
-    use_nucleotides: bool=False,
-    use_synonymous_sites_in_coding: bool=False,
-    ):
+    use_nucleotides: bool = False,
+    use_synonymous_sites_in_coding: bool = False,
+):
     """Return the default 100Kb Chromosome (nonCDS-exon-intron-exon-nonCDS).
 
     This chromosome type is typically used for testing purposes.
@@ -24,25 +23,24 @@ def default(
     ...
     """
     return Chromosome(
-        use_nucleotides, 
-        use_synonymous_sites_in_coding, 
+        use_nucleotides,
+        use_synonymous_sites_in_coding,
     )
 
 
 def random(
-    genome_size: int=20000,
-    intron: Union[None, ElementType, list]=None,
-    exon: Union[None, ElementType, list]=None,
-    noncds: ElementType=None,
-    intron_scale: int=1000,
-    cds_scale: int=1000,
-    noncds_scale: int=5000,
-    seed: Union[int, None]=None,
-    use_nucleotides: bool=False,
-    use_synonymous_sites_in_coding: bool=False,
-    ):
-    """
-    Build a chromosome of a set length composed randomly of intron,
+    genome_size: int = 20000,
+    intron: Union[None, ElementType, list] = None,
+    exon: Union[None, ElementType, list] = None,
+    noncds: ElementType = None,
+    intron_scale: int = 1000,
+    cds_scale: int = 1000,
+    noncds_scale: int = 5000,
+    seed: Union[int, None] = None,
+    use_nucleotides: bool = False,
+    use_synonymous_sites_in_coding: bool = False,
+):
+    """Build a chromosome of a set length composed randomly of intron,
     exon, and noncds element type regions.
 
     Parameters
@@ -66,10 +64,10 @@ def random(
     """
     # construct pandas DataFrame of ElementTypes
     elements = ChromosomeRandom(
-        genome_size=genome_size, 
-        intron=intron, 
-        exon=exon, 
-        noncds=noncds, 
+        genome_size=genome_size,
+        intron=intron,
+        exon=exon,
+        noncds=noncds,
         seed=seed,
         use_nucleotides=use_nucleotides,
         use_synonymous_sites_in_coding=use_synonymous_sites_in_coding,
@@ -79,11 +77,11 @@ def random(
 
 
 def explicit(
-    data, 
-    genome_size: Optional[int]=None,
-    use_nucleotides: bool=False,
-    use_synonymous_sites_in_coding: bool=False,
-    ):
+    data,
+    genome_size: Optional[int] = None,
+    use_nucleotides: bool = False,
+    use_synonymous_sites_in_coding: bool = False,
+):
     """Return a chromosome built from a dictionary.
 
     The dict should contain tuples of (start,end) positions as keys
@@ -117,3 +115,7 @@ def explicit(
         use_nucleotides=use_nucleotides,
         use_synonymous_sites_in_coding=use_synonymous_sites_in_coding,
     )
+
+
+if __name__ == "__main__":
+    pass

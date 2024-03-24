@@ -38,5 +38,6 @@ Finally, `shadie` was first developed with the intention of modeling realistic p
 **Plotting:**
 
 	- toyplot: for static plots
+	- toytree: for static plots
 	- altair: for interactive plots
-	- IPython: for displaying plots in Jupyter Notebooks
+	- notebook: for displaying plots in Jupyter Notebooks

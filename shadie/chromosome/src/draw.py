@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-Inspect tools for visualizing chromosome structure with alt.
+"""Inspect tools for visualizing chromosome structure with alt.
 """
 
 from typing import Optional
@@ -52,41 +51,42 @@ def draw_altair_chrom_canvas(chrom: 'ChromosomeBase', width: int=700):
     rng = cmap_ex[:n_ex] + cmap_in[:n_in] + cmap_nc[:n_nc]
 
     # create a chromosome composed of rectangles
-    ichrom = (alt.Chart(genome)
+    ichrom = (
+        alt.Chart(genome)
         .mark_rect()
-            .encode(
-                x=alt.X('x1:Q', axis=alt.Axis(title='Base Pairs')),
-                y=alt.Y('y1:Q', axis=None),
-                x2='x2:Q',
-                y2='y2:Q', 
-                color=alt.Color(
-                    'altname:N', 
-                    scale=alt.Scale(domain=dom, range=rng)
-                ),
-                tooltip=[
-                    alt.Tooltip('eltype', title='Element Type'),
-                    alt.Tooltip('altname', title='Name'),
-                    alt.Tooltip('length', title='Length'),
-                    alt.Tooltip('x1', title='Start'),
-                    alt.Tooltip('x2', title='Stop'),
-                ]
-            ).properties(width=width)
-        )
+        .encode(
+            x=alt.X('x1:Q', axis=alt.Axis(title='Base Pairs')),
+            y=alt.Y('y1:Q', axis=None),
+            x2='x2:Q',
+            y2='y2:Q',
+            color=alt.Color(
+                'altname:N',
+                scale=alt.Scale(domain=dom, range=rng)
+            ),
+            tooltip=[
+                alt.Tooltip('eltype', title='Element Type'),
+                alt.Tooltip('altname', title='Name'),
+                alt.Tooltip('length', title='Length'),
+                alt.Tooltip('x1', title='Start'),
+                alt.Tooltip('x2', title='Stop'),
+            ]
+        ).properties(width=width)
+    )
     return ichrom
 
 
 def draw_altair_chrom_canvas_interactive(
     chrom: 'ChromosomeBase',
-    width: int=700, 
-    outfile:Optional[str]=None,
-    ):
+    width: int = 700,
+    outfile: Optional[str] = None,
+):
     """Return an interactive altair visualization of the chromosome.
     """
     # create a brush to select interval
     mark = alt.BrushConfig(fill='red', fillOpacity=0.700, stroke="black")
     brush = alt.selection_interval(encodings=['x'], mark=mark)
-    
-    # get the canvas drawing    
+
+    # get the canvas drawing
     ichrom = draw_altair_chrom_canvas(chrom, width=width)
 
     # create an interactive composite plot with two views of ichrom
@@ -101,15 +101,15 @@ def draw_altair_chrom_canvas_interactive(
     # optionally write to disk
     if outfile:
         zoom.save(outfile.strip('.html') + '.html')
-    
+
     return zoom
 
 
 def draw_toyplot_chrom(
-    chrom: 'ChromosomeBase', 
-    width: int=700,
-    axes: Optional['toyplot.coordinates.Cartesian']=None,
-    ):
+    chrom: 'ChromosomeBase',
+    width: int = 700,
+    axes: Optional['toyplot.coordinates.Cartesian'] = None,
+):
     """Return a toyplot drawing of the chromosome.
 
     """
@@ -130,7 +130,7 @@ def draw_toyplot_chrom(
         dat = chrom.data.loc[pos]
         mark = axes.fill(
             [dat.start, dat.end],
-            [0, 0], 
+            [0, 0],
             [1, 1],
             color=colors[idx],
             opacity=0.75,
@@ -138,7 +138,7 @@ def draw_toyplot_chrom(
             title=(
                 f"name: {chrom.data.loc[pos, 'name']}\n"
                 f"interval: ({dat.start}, {dat.end})\n"
-                f"ElementType: {dat.eltype}\n" 
+                f"ElementType: {dat.eltype}\n"
                 f"is coding: {bool(dat.is_coding)}"
             )
         )
@@ -153,5 +153,5 @@ if __name__ == "__main__":
 
     import shadie
     c, a, m = shadie.chromosome.default().draw()
-    c, a, m = shadie.chromosome.random().draw()    
+    c, a, m = shadie.chromosome.random().draw()
     iviz = shadie.chromosome.default().inspect()

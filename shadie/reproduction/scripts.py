@@ -1,41 +1,43 @@
 #!/usr/bin/env python
 
-"""
-Generic scripts.
+"""Generic SLiM4 scripts.
+
 """
 
-#standard first script
+######################################################################
+# standard first script
 
 # ==PARAMETERS==
 # SPO_MUTATION_RATE
 # GAM_MUTATION_RATE
-#-----------------
+###################
 FIRST = """
 // alternate generations
     if (sim.cycle % 2 == 1) {
         // reproduction(p0) will create SPOROPHYTES in p1.
-        
-        // set reproduction function to be used this generation     
+
+        // set reproduction function to be used this generation
         s0.active = 1;
         s1.active = 0;
-        
+
         // set mutation rate that will apply to the offspring
         sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
     }
-    
-    else {  //(sim.cycle % 2 == 0)
+
+    else {
         // reproduction(p1) will produce GAMETOPHYTES into p0.
-        
-        // set reproduction function to be used this generation  
-        s0.active = 0; //GAM
-        s1.active = 1; //SPO
-        
+
+        // set reproduction function to be used this generation
+        s0.active = 0;  // GAM
+        s1.active = 1;  // SPO
+
         // set mutation rate that will apply to the offspring
         sim.chromosome.setMutationRate(SPO_MUTATION_RATE);
     }
 """
-#--------------------------------------------------------------
-#standard early script
+
+#####################################################################
+# standard early script
 
 # ==PARAMETERS==
 # GAM_RANDOM_DEATH_CHANCE
@@ -48,80 +50,83 @@ EARLY = """
 // diploids (p1) just generated haploid gametophytes into p0
     if (community.tick % 2 == 0) {{
         // alternate generations.
-        
+
         {sporophyte_clones}
-        
-        // new p0s removed by three possible mechanisms: 
+
+        // new p0s removed by three possible mechanisms:
         // 1. random chance of death.
         // 2. using fitness re-calculated to include maternal effect.
         // 3. individual goes on next tick (unless fitness kills it)
-        
+
         // 1. make a mask for random death
         if (GAM_RANDOM_DEATH_CHANCE > 0) {{
             random_death = (runif(p0.individualCount) < GAM_RANDOM_DEATH_CHANCE);
             sim.killIndividuals(p0.individuals[random_death]);
         }}
 
-        //random death also occurs to implement GAM_CEILING
+        // random death also occurs to implement GAM_CEILING
         if (p0.individualCount > GAM_CEILING) {{
             to_kill = GAM_CEILING - GAM_POP_SIZE;
             death_chance = to_kill/p0.individualCount;
             random_death = sample(c(F,T), p0.individualCount, T, c(1-death_chance, death_chance));
             sim.killIndividuals(p0.individuals[random_death]);
             }}
-        
+
        {spo_maternal_effect}
-        
-        //3. Set up for next tick
+
+        // 3. Set up for next tick
         // fitness affects gametophyte survival
         {p0_fitnessScaling}
     }}
-    
-    
+
+
     // odd generations = gametophytes (p0) just generated sporophytes
     else {{
         // alternate generations.
         {gametophyte_clones}
-        
-        // remove new p1s by three possible mechanisms: 
+
+        // remove new p1s by three possible mechanisms:
         // 1. random chance of death.
         // 2. using fitness re-calculated to include maternal effect.
         // 3. individual goes on next tick (unless fitness kills it)
-        
+
         // 1. make a mask for random death
         if (SPO_RANDOM_DEATH_CHANCE > 0) {{
             random_death = (runif(p1.individualCount) < GAM_RANDOM_DEATH_CHANCE);
             sim.killIndividuals(p1.individuals[random_death]);
         }}
-        
+
         {gam_maternal_effect}
-        
-        
-        //3. Set up for next tick
+
+
+        // 3. Set up for next tick
         // fitness is scaled relative to number of inds in p1
         {p1_fitnessScaling}
     }}
 """
-#--------------------------------------------------------------
+
+
+###############################################################
+# cloning scripts
 
 SPO_CLONES = """
     // remove parents, except for clones
     non_clones = p1.individuals[p1.individuals.tag != 4];
     sim.killIndividuals(non_clones);
-    //reset clone tags to regular tag
+    // reset clone tags to regular tag
     p1.individuals.tag = 3;
 """
 
 NO_SPO_CLONES = """
-    // remove parents
-    sim.killIndividuals(p1.individuals);
+        // remove parents
+        sim.killIndividuals(p1.individuals);
 """
 
 GAM_CLONES = """
-// removes parents, except clones
+        // removes parents, except clones
         non_clones = p0.individuals[p0.individuals.tag != 2];
         sim.killIndividuals(non_clones);
-        //reset clone tags to regular tag
+        // reset clone tags to regular tag
         p0.individuals.tag = 1;
 """
 
@@ -130,8 +135,9 @@ NO_GAM_CLONES = """
     sim.killIndividuals(p0.individuals);
 """
 
-#--------------------------------------------------------------
-
+###############################################################
+# fitness scripts
+#
 # ==PARAMETERS==
 # GAM_POP_SIZE
 # SPO_POP_SIZE
@@ -153,7 +159,7 @@ WF_REPRO_SOFT = """
 """
 
 WF_REPRO_HARD = """
-    // parents are chosen raqndomly (irrespective of fitness)
+    // parents are chosen randomly (irrespective of fitness)
     inds = p1.individuals;
     fitness = p1.cachedFitness(NULL);
     parents1 = p1.sampleIndividuals(K, replace=T);
@@ -163,27 +169,27 @@ WF_REPRO_HARD = """
     self.active = 0;
 """
 
-#-----------------------------------------------
-#activate/deactivate fitness callbacks
+#################################################################
+# activate/deactivate fitness callbacks
 
 ACTIVATE = "{idx}.active = 1;"
 
 DEACTIVATE = "{idx}.active = 0;"
 
-#-----------------------------------------------
+#################################################################
 # gam_maternal_effect
 GAM_MATERNAL_EFFECT_ON_P1 = """
-    // 2. maternal effect re-calculation 
+    // 2. maternal effect re-calculation
     if (GAM_MATERNAL_EFFECT > 0) {
-        //temp fitness scaling
+        // temp fitness scaling
         scale = SPO_POP_SIZE / p1.individualCount;
 
-        //calculations
+        // calculations
         maternal_fitnesses = GAM_MATERNAL_EFFECT*p1.individuals.getValue("maternal_fitness");
         child_fitnesses = (1 - GAM_MATERNAL_EFFECT)*p1.cachedFitness(NULL);
         corrected_fitnesses = scale*(maternal_fitnesses + child_fitnesses);
-        
-        //remove inds based on maternal effects
+
+        // remove inds based on maternal effects
         to_kill = (runif(p1.individualCount) > corrected_fitnesses);
         sim.killIndividuals(p1.individuals[to_kill]);
     }
@@ -195,27 +201,27 @@ NO_GAM_MATERNAL_EFFECT = """
 
 # spo_maternal_effect
 SPO_MATERNAL_EFFECT_ON_P0 = """
-    // 2. maternal effect re-calculation 
+    // 2. maternal effect re-calculation
     if (SPO_MATERNAL_EFFECT > 0) {
-        //temp fitness scaling
+        // temp fitness scaling
         scale = SPO_POP_SIZE / p1.individualCount;
-        //calculations
+        // calculations
         maternal_fitnesses = SPO_MATERNAL_EFFECT*p0.individuals.getValue("maternal_fitness");
         child_fitnesses = (1 - SPO_MATERNAL_EFFECT)*p0.cachedFitness(NULL);
         corrected_fitnesses = scale * (maternal_fitnesses + child_fitnesses);
-        
-        //remove inds based on maternal effects
+
+        // remove inds based on maternal effects
         to_kill = (runif(p0.individualCount) > corrected_fitnesses);
         sim.killIndividuals(p0.individuals[to_kill]);
-        }
+    }
 """
 
 NO_SPO_MATERNAL_EFFECT = """
-    // 2. No sporophyte maternal effect on P0
+        // 2. No sporophyte maternal effect on P0
 """
 
-#-----------------------------------------------
-#note relFitness was replaced by `effect` in SLiM 4.0
+##################################################################
+# note relFitness was replaced by `effect` in SLiM 4.0
 HAP_MUT_FITNESS = """
     if (individual.subpopulation == p1)
         return 1.0;
@@ -229,7 +235,7 @@ DIP_MUT_FITNESS = """
     else
         return effect;
 """
-#-----------------------------------------------
+##################################################################
 
 METADATA = """
 metadata=Dictionary(
@@ -242,18 +248,18 @@ metadata=Dictionary(
 DEBUG = """
 // DEBUGGING
 function (void)report(s$ title) {
-    
+
     // print a title
     cat(title + "\n");
-    
+
     // get the total number of genomes
-    
+
     cat(format('gen=%i, ', community.tick));
-    cat(format('ngenomes=%i, ', sim.subpopulations.genomesNonNull.size())); // BCH 
+    cat(format('ngenomes=%i, ', sim.subpopulations.genomesNonNull.size())); // BCH
     cat(format('(p1=%i, ', 2 * p1.individuals.size()));
     cat(format('p0=%i, ', sum(p0.individuals.tag != 1)));
     cat(format('p0 clone=%i)\n', sum(p0.individuals.tag == 1)));
     cat("\n---------------------- fixed=" + sim.substitutions.size() + "\n\n");
-    
+
     }
 """

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-A returned object class from a shadie simulation call.
+"""A returned object class from a shadie simulation call.
 """
 
 from typing import List, Optional, Union, Iterable
@@ -14,7 +13,7 @@ import pandas as pd
 import scipy.stats
 from loguru import logger
 
-#from toytree.utils import toytree_sequence, ScrollableCanvas
+# from toytree.utils import toytree_sequence, ScrollableCanvas
 from toytree.utils.src.toytree_sequence import ToyTreeSequence
 from shadie.chromosome.src.classes import ChromosomeBase
 
@@ -39,7 +38,7 @@ class TwoSims:
         ancestral_Ne: Optional[int]=None,
         generations: int=None,
         **kwargs,
-        ):
+    ):
 
         # hidden attributes
         self._tree_files: List[str] = tree_files
@@ -93,7 +92,7 @@ class TwoSims:
 
         #if self.ancestral_Ne is None:
             #self.ancestral_Ne = self.generations
-        
+
         if self.mut is None:
             try:
                 #if no gam mutation rate, this will fail
@@ -133,7 +132,7 @@ class TwoSims:
         https://github.com/tskit-dev/pyslim/blob/625295ba6b4ae8e8400953be65b03b3630c1430f/docs/vignette_continuing.md#continuing-the-simulation
         """
         for idx, treeseq in enumerate(self._tree_sequences):
-            
+
             # get mutable tskit.TableCollection
             tables = treeseq.dump_tables()
             nnodes = tables.nodes.time.size
@@ -155,9 +154,9 @@ class TwoSims:
             nodes_in_edge_table = list(
                 set(tables.edges.parent).union(tables.edges.child)
             )
-            
-            # remove the empty population nodes by using simplify, which 
-            # will remove unconnected nodes (those not in samples). This 
+
+            # remove the empty population nodes by using simplify, which
+            # will remove unconnected nodes (those not in samples). This
             # does not remove any Nodes, but it does remove a population.
             # https://tskit.dev/tskit/docs/stable/_modules/tskit/tables.html
             self._tree_sequences[idx] = treeseq.simplify(
@@ -212,7 +211,6 @@ class TwoSims:
 
             self._tree_sequences[idx] = mod_tree_seq
 
-    
     #from https://tskit.dev/pyslim/docs/latest/vignette_parallel_phylo.html
     def match_nodes(other, ts, split_time):
         """
@@ -296,25 +294,25 @@ class TwoSims:
                 self._tree_sequences[0]).simplify(keep_input_roots=True)
             return
         if self._nts > 2:
-            raise ValueError("you cannot enter >2 tree sequences.") 
-        
+            raise ValueError("you cannot enter >2 tree sequences.")
+
         # Merge two tree sequences
         ids = []
-        species = []    
+        species = []
 
         #read in all the tree sequences
         for i in range(0,len(self._tree_files)):
            ts = tskit.load(self._tree_files[i])
            species.append(ts)
-        
+
         #merge the sequences
         merged_ts = species[0].union(
-                species[1], 
+                species[1],
                 node_mapping=[tskit.NULL for i in range(species[1].num_nodes)],
                 add_populations=True,
                 )
         self.merged_ts = merged_ts
-                
+
     def _merge_ts_pops_old(self):
 
         ts0 = self._tree_sequences[0]
@@ -351,7 +349,7 @@ class TwoSims:
 
         Mutation and recombination rates are handled separately.
 
-        Moved code to _remove_null_population_and_nodes() since it 
+        Moved code to _remove_null_population_and_nodes() since it
         seems that it needs to be done before any simplify calls.
         """
         # set metadata
@@ -370,8 +368,8 @@ class TwoSims:
         """Merge pops backwards in time and simulate ancestry.
         """
 
-        #add msprime demographic event 
-        #(because SLiM adds populations with 0 individuals there are more than two 
+        #add msprime demographic event
+        #(because SLiM adds populations with 0 individuals there are more than two
         #populations here, which is why we have the for loop)
         demography=msprime.Demography().from_tree_sequence(self.merged_ts)
         demography.add_mass_migration(time = simlength, source = i, destination = 0,
@@ -397,7 +395,7 @@ class TwoSims:
 
         #manually create demography to avoid error in pyslim
         demography = msprime.Demography.from_tree_sequence(self.tree_sequence)
-        
+
         # must set pop sizes to >0 even though we merge immediately
         for pop in demography.populations:
             pop.initial_size=1.0
@@ -423,10 +421,10 @@ class TwoSims:
         # recapitate: ts is passed to sim_ancestry as 'initial_state'.
         # this automatically merges everyone into new ancestral pop.
         self.tree_sequence = pyslim.recapitate(
-        ts=self.tree_sequence,
-        demography=demography,
-        random_seed=self.rng.integers(2**31),
-        recombination_rate=self.recomb,
+            ts=self.tree_sequence,
+            demography=demography,
+            random_seed=self.rng.integers(2**31),
+            recombination_rate=self.recomb,
         )
 
     def _mutate(self):
@@ -474,9 +472,9 @@ class TwoSims:
         sample: Union[int, Iterable[int]]=10,
         seed: Optional[int]=None,
         reps: int=10
-        ):
+    ):
         """Calculate statistics summary on mutated TreeSequence.
-        
+
         Returns a dataframe with several statistics calculated and
         summarized from replicate random sampling.
 
@@ -487,7 +485,7 @@ class TwoSims:
         seed: int
             A seed for random sampling.
         reps: int
-            Number of replicate times to random sample tips and 
+            Number of replicate times to random sample tips and
             calculate statistics.
 
         Returns
@@ -552,7 +550,8 @@ class TwoSims:
         seed=None,
         show_label=True,
         show_generation_line=True,
-        **kwargs):
+        **kwargs,
+    ):
         """Returns a toytree drawing for a random sample of tips.
 
         The tree drawing will include mutations as marks on edges
@@ -601,7 +600,7 @@ class TwoSims:
         scrollable: bool=True,
         axes: Optional['toyplot.coordinates.Cartesian']=None,
         **kwargs,
-        ):
+    ):
         """Return a ToyTreeSequence drawing.
 
         """
@@ -612,14 +611,14 @@ class TwoSims:
         height = height if height is not None else 325
         height += 100
         width = max(300, (
-            width if width is not None else 
+            width if width is not None else
             15 * tts.at_index(0).ntips * min(max_trees, len(tts))
-        ))        
+        ))
 
         # create an axis for the chromosome. +100 height for chrom.
         canvas = ScrollableCanvas(height=height, width=width)
         ax0 = canvas.cartesian(bounds=(50, -50, 50, 75), padding=5)
-        ax1 = canvas.cartesian(bounds=(50, -50, 100, -50))        
+        ax1 = canvas.cartesian(bounds=(50, -50, 100, -50))
 
         # draw tree sequence
         canvas, axes, mark = tts.draw_tree_sequence(
@@ -650,16 +649,16 @@ class TwoSims:
         stat: str="diversity",
         window_size: int=20_000,
         sample: Union[int, Iterable[int]]=6,
-        ):
+    ):
         """Return a toyplot drawing of a statistic across the genome.
 
         """
         if stat == "diversity":
             values = self.tree_sequence.diversity(
-                sample_sets=self.tree_sequence.samples()[:sample], 
+                sample_sets=self.tree_sequence.samples()[:sample],
                 windows=np.linspace(0, self.tree_sequence.sequence_length, 20)
-            )           
-        
+            )
+
         # draw canvas...
         canvas, axes, mark  = toyplot.fill(
             values, height=300, width=500, opacity=0.5, margin=(60, 50, 50, 80)
@@ -670,7 +669,11 @@ class TwoSims:
         axes.x.ticks.locator = toyplot.locator.Extended(only_inside=True)
         axes.y.ticks.labels.angle = -90
         axes.y.ticks.show = True
-        axes.y.ticks.locator = toyplot.locator.Extended(only_inside=True, count=5)        
+        axes.y.ticks.locator = toyplot.locator.Extended(only_inside=True, count=5)
         axes.label.offset = 20
         axes.label.text = f"{stat} in {int(window_size / 1000)}kb windows"
         return canvas, axes, mark
+
+
+if __name__ == "__main__":
+    pass
