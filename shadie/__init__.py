@@ -9,7 +9,7 @@ Example
 -------
 >>> import shadie
 >>> with shadie.Model() as model:
->>>     model.simulate()
+>>>     model.initalize()
 >>> ...
 """
 
