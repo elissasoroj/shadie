@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-"""Create replicates and submit to run.
+"""A template script for a command-line tool to submit many jobs to HPC.
+
+Create replicates and submit to run.
 """
 
 import os
