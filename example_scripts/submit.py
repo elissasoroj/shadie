@@ -3,7 +3,6 @@
 """Create replicates and submit to run.
 """
 
-
 import os
 import subprocess
 import typer
@@ -16,12 +15,12 @@ app = typer.Typer(add_completion=False, context_settings=CONTEXT_SETTINGS)
 @app.command()
 def run(
     organism: str = typer.Argument(..., help="organism name"),
-    mode: str = typer.Argument(..., help="run type"),    
+    mode: str = typer.Argument(..., help="run type"),
     idx: int = typer.Argument(..., help="replicate number"),
     outdir: str = typer.Argument(..., help="directory"),
     slim_binary: str = typer.Argument(..., help="path to slim"),
     sim_time: int = typer.Argument(10001, help="length of simulation"),
-    ):
+):
     """Start a SliM job on a subprocess."""
     script = get_slim_script(organism, mode)
     script = substitute_outfile(script, outdir, idx, sim_time)
@@ -66,7 +65,7 @@ def start_slim_job(script: str, idx: int, slim_binary: str):
     else:
         seed = f"{idx}{idx}{idx}"
     cmd = [slim_binary, "-s", seed, script]
-    return subprocess.run(cmd, check=True)    
+    return subprocess.run(cmd, check=True)
 
 
 if __name__ == "__main__":

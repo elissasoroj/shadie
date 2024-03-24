@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 
-"""
-Pteridophyte-specific scripts.
+"""Pteridophyte-specific scripts.
 """
 
 EARLY_PTER_HETERO = """
-	// reproduction(p1) just finished creating sperm and eggs in p0.
-	// this generation will form sporophytes and apply selection on them.
+    // reproduction(p1) just finished creating sperm and eggs in p0.
+    // this generation will form sporophytes and apply selection on them.
     if (sim.generation % 2 == 0) {{
 
         // fitness is scaled relative to non-males in p0
-		num_males = length(p0.individuals[p0.individuals.tag == 2]);
-		p0.fitnessScaling = (GAM_POP_SIZE / (p0.individualCount - num_males));
+        num_males = length(p0.individuals[p0.individuals.tag == 2]);
+        p0.fitnessScaling = (GAM_POP_SIZE / (p0.individualCount - num_males));
         // print(format('p0.fitnessScaling=%.2f', p0.fitnessScaling));
 
         // set mutation rate to gametophyte rate
@@ -33,7 +32,7 @@ EARLY_PTER_HETERO = """
     }}
 
 
-	// reproduction(p0) just finished creating diploid zygotes
+    // reproduction(p0) just finished creating diploid zygotes
     // this generation will produce gametophytes and apply selection on them.
     else {{
 
@@ -71,7 +70,7 @@ LATE_PTER_HETERO = """\
         p0_size = p0.individualCount;
 
         // for each MutationType check all muts for fixation
-        {checking_each_mut_for_fixation}        
+        {checking_each_mut_for_fixation}
 
         // tag gametophytes that will clone
         clones = p0.sampleIndividuals(asInteger(p0_size * GAM_CLONE_RATE));
@@ -106,7 +105,7 @@ LATE_PTER_HETERO = """\
 FUNCTIONS_PTER_HETERO = """
 // p0 = haploid population
 // p1 = diploid population
- 
+
 // 0 = hermaphrodite
 // 1 = female
 // 2 = male
@@ -118,8 +117,8 @@ FUNCTIONS_PTER_HETERO = """
 
 
 // shadie func(ind, reps) to generate 4 p0 tag=2 (male/microspores) in heterosporous ferns.
-// Each ind here represents a 2N microsporangium, and each replicate is a different 
-// mitotic 2N sporocyte that it produces. Each sporocyte undergoes meiosis to 
+// Each ind here represents a 2N microsporangium, and each replicate is a different
+// mitotic 2N sporocyte that it produces. Each sporocyte undergoes meiosis to
 // form 4 1N recombinant gametes (microspores) that are added to p0.
 function (void)make_microspores(object<Individual>$ ind, integer$ reps) {
     for (rep in 1:reps){
@@ -161,7 +160,7 @@ function (void)make_eggs(object<Individual>$ ind, integer$ reps) {
 // generates p1 tag=5 (self) selfed sporophytes
 // generates p0 tag=0 (herm) gametophytes, and p0 tag=1 or tag=2 (eggs, sperm)
 function (void)sporophyte_selfs(object<Individual>$ ind) {
-    
+
     // count the number of eggs that are selfed, only the unselfed ones
     // will be added to the p0 pool.
     selfed_eggs = 0;
@@ -175,7 +174,7 @@ function (void)sporophyte_selfs(object<Individual>$ ind) {
             // randomly sample whether this egg was self fertilized
             if (runif(1) < SPO_SELF_RATE_PER_EGG) {
                 selfed_eggs = selfed_eggs + 1;
-                
+
                 // create 4 self sperm, use one of them to create new p1 zygote,
                 // put other 3 sperm into the gamete pool.
                 breaks1 = sim.chromosome.drawBreakpoints(individual);
@@ -206,7 +205,6 @@ function (void)sporophyte_selfs(object<Individual>$ ind) {
     make_microspores(individual, SPO_MICROSPORES_PER - selfed_eggs);
 }
 """
-
 
 
 REPRO_PTER_HETEROSPORE_P1 = """
@@ -242,7 +240,7 @@ REPRO_PTER_HETEROSPORE_P1 = """
 REPRO_PTER_HETEROSPORE_P0 = """
     // spore is female (megaspore)
     if (individual.tag == 1) {
-               
+
         // iterate over each egg to fertilize.
         for (rep in 1:GAM_ARCHEGONIA_PER) {
 
@@ -261,7 +259,7 @@ REPRO_PTER_HETEROSPORE_P0 = """
     }
 
     // if gametophyte clone (tag=4), add p0 gametophyte clone
-    else if (individual.tag == 4) { 
+    else if (individual.tag == 4) {
         for (i in 1:GAM_CLONES_PER)
             p0.addRecombinant(individual.genome1, NULL, NULL, NULL, NULL, NULL).tag = 4;
     }
@@ -286,7 +284,7 @@ s2 survival(p1) {
     if (runif(1) < SPO_RANDOM_DEATH_CHANCE)
         return F;
 
-	// gametophyte mother fitness affects sporophyte survival
+    // gametophyte mother fitness affects sporophyte survival
     maternal_effect = individual.getValue("maternal_fitness");
     if (!isNULL(maternal_effect)) {
         corrected_fitness = (maternal_effect * GAM_MATERNAL_EFFECT) + fitness * (1 - GAM_MATERNAL_EFFECT);

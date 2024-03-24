@@ -33,12 +33,14 @@ initialize() {
 	sim.addSubpop('p0', 0); //haploid gametophytes
 }
 
-reproduction(p1) {	// creation of gametes from sporophytes
+reproduction(p1) {	
+    // creation of gametes from sporophytes
 	g_1 = genome1;
 	g_2 = genome2;
 	
 	meiosis_reps = floor(Spore_num/2);
 	reproduction_opportunity_count = 1;
+	
 	// clones give the focal individual extra opportunities to reproduce
 	if (runif(1) <= Clone_rate)
 		meiosis_reps = meiosis_reps*Clone_num;

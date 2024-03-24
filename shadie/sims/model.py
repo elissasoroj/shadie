@@ -98,9 +98,11 @@ class Model(AbstractContextManager):
         # }
         self.map = {
             'initialize': [],
+            'first':[],
             'reproduction': [],
             'early': [],
             'late': [],
+            'muteffect': [],
             'fitness': [],
             'survival': [],
             'custom': [],
@@ -147,8 +149,8 @@ class Model(AbstractContextManager):
         order and runs checks on the script.
         """
         sorted_keys = [
-            'initialize', 'shadie', 'reproduction', 'early',
-            'custom', 'survival', 'fitness', 'late',
+            'initialize', 'shadie', 'first', 'reproduction', 'early',
+            'custom', 'muteffect', 'survival', 'fitness', 'late',
         ]
 
         # copy map and split timed events to a new key list
@@ -177,14 +179,18 @@ class Model(AbstractContextManager):
             # sort events within key type
             if key == "shadie":
                 events = mapped[key]
+            elif key == "first":
+                events = sorted(mapped[key], key=lambda x: str(x['time']))
             elif key == "early":
                 events = sorted(mapped[key], key=lambda x: str(x['time']))
             elif key == "late":
                 events = sorted(mapped[key], key=lambda x: str(x['time']))
+            elif key == "muteffect":
+                events = sorted(mapped[key], key=lambda x: -1 * float('inf') if x['idx'] is None else x['idx'])
             elif key == "fitness":
                 events = sorted(mapped[key], key=lambda x: -1 * float('inf') if x['idx'] is None else x['idx'])
             elif key == "survival":
-                events = sorted(mapped[key], key=lambda x: x['idx'])
+                events = sorted(mapped[key], key=lambda x: -1 * float('inf') if x['idx'] is None else x['idx'])
             else:
                 events = mapped[key]
 
@@ -279,7 +285,7 @@ class Model(AbstractContextManager):
             'recombination_rate': f"{recomb_rate}, {int(self.chromosome.genome_size)}",
             'genome_size': self.chromosome.genome_size,
             'mutations': self.chromosome.to_slim_mutation_types(),
-            'mutation_names':self.chromosome.mutation_list(),
+            'mutation_names': self.chromosome.mutation_list(),
             'elements': self.chromosome.to_slim_element_types(),
             'chromosome': self.chromosome.to_slim_elements(),
             'constants': constants,
@@ -295,11 +301,32 @@ class Model(AbstractContextManager):
         """
         scripts = [f"sim.readFromPopulationFile('{self.metadata['file_in']}')"]
         scripts.extend(tag_scripts)
-        self.early(
+        self.first(
             time=1,
             scripts=scripts,
             comment="read starting populations from file_in"
         )
+
+    def first(
+        self,
+        time: Union[int, None],
+        scripts: Union[str, list],
+        idx: Union[str, None] = None,
+        comment: Union[str, None] = None,
+    ):
+        """Add an first() block to the SLiM code map.
+
+        Events in `first` blocks occur before reproduction in every
+        generation if time=None, or only in a specified generation if
+        a time arg is entered.
+        """
+        logger.debug(f"define first() @time={time} for idx={idx}")
+        self.map['first'].append({
+            'time': time,
+            'scripts': scripts,
+            'idx': idx,
+            'comment': comment,
+        })
 
     def early(
         self,
@@ -351,9 +378,26 @@ class Model(AbstractContextManager):
     ):
         """Add event that adjusts fitness values before fitness calc.
 
+        Parameters
+        ----------
+        mutation: str or None
+            The name of a MutationType object (e.g., MutationType.name)
+        scripts: str or list
+            One or more SLiM scripts to execute.
+        idx: str or None
+            An index...
+        comment: str or None
+            An optional comment to embed in SLiM code.
 
+        Example
+        -------
+        >>> model.muteffect(
+        >>>     idx=None, mutation=mut.name, scripts=SCRIPT,
+        >>>     comment="mutation only affects haploid",
+        >>> )
         """
-        self.map['fitness'].append({
+        logger.debug(f"define mutationEffect() for mutationType={mutation}")
+        self.map['muteffect'].append({
             'idx': idx,
             'mutation': mutation,
             'scripts': scripts,
@@ -362,17 +406,16 @@ class Model(AbstractContextManager):
 
     def fitness(
         self,
-        target: str,  # subpop or ind
+        population: str,  # subpop or ind
         scripts: Union[str, list],
         idx: Union[str, None] = None,
         comment: Union[str, None] = None,
     ):
-        """
-        Add event that adjusts fitness values before fitness calc.
+        """Add event that adjusts fitness values before fitness calc.
         """
         self.map['fitness'].append({
             'idx': idx,
-            'target': target,
+            'population': population,
             'scripts': scripts,
             'comment': comment,
         })
@@ -384,8 +427,7 @@ class Model(AbstractContextManager):
         idx: Union[str, None] = None,
         comment: Union[str, None] = None,
     ):
-        """
-        Add event that adjusts fitness values before fitness calc.
+        """Add event that adjusts fitness values before fitness calc.
         """
         self.map['survival'].append({
             'idx': idx,
@@ -415,11 +457,10 @@ class Model(AbstractContextManager):
 
     def custom(
         self,
-        scripts:str,
-        comment:Union[str,None]=None,
-        ):
-        """
-        Add custom scripts outside without formatting by shadie.
+        scripts: str,
+        comment: Union[str, None] = None,
+    ):
+        """Add custom scripts outside without formatting by shadie.
         Scripts must be Eidos-formatted.
         """
         self.map['custom'].append({
@@ -437,7 +478,7 @@ class Model(AbstractContextManager):
             "to implement either an organism specific reproduction "
             "or a standard wright_fisher model.")
 
-    def write(self, path: Optional[str]=None):
+    def write(self, path: Optional[str] = None) -> None:
         """Write SLIM script to the outname filepath or stdout."""
         if path is None:
             print(self.script)
@@ -445,7 +486,7 @@ class Model(AbstractContextManager):
             with open(path, 'w') as out:
                 out.write(self.script)
 
-    def run(self, seed: int=None, binary: Optional[str]=None):
+    def run(self, seed: int = None, binary: Optional[str] = None):
         """Run `slim script` using subprocess and store STDOUT to self.stdout.
 
         The script is written to a tmpfile and run in subprocess using
@@ -481,7 +522,7 @@ class Model(AbstractContextManager):
             cmd = [binary, '-seed', str(seed), script_path]
             with subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-                ) as proc:
+            ) as proc:
 
                 # capture stdout
                 out, _ = proc.communicate()
@@ -490,8 +531,7 @@ class Model(AbstractContextManager):
                 if proc.returncode:
                     logger.error(out.decode())
                     self.write("/tmp/slim.slim")
-                    raise SyntaxError(
-                        "SLiM3 error, see script at /tmp/slim.slim")
+                    raise SyntaxError("SLiM error, see script at /tmp/slim.slim")
 
         # todo: parse stdout to store, and send warnings to logger
         self.stdout = out.decode()
@@ -504,13 +544,12 @@ class Model(AbstractContextManager):
         # as the fully recapitated TreeSequence, though that is not
         # useful for when we want to combine two sims....
 
-
     def run_parallel(
         self,
-        njobs: int=2,
-        seed: Optional[int]=None,
-        binary: Optional[str]=None,
-        ):
+        njobs: int = 2,
+        seed: Optional[int] = None,
+        binary: Optional[str] = None,
+    ):
         """Submit jobs to run in parallel. NOT READY YET.
 
         TODO: this needs to edit the trees file path to be different
@@ -529,12 +568,13 @@ class Model(AbstractContextManager):
 if __name__ == "__main__":
 
     import shadie
+    shadie.set_log_level = "DEBUG"
 
     with shadie.Model() as model:
 
         # define mutation types
-        m0 = shadie.mtype(0.5, 'n', 2.0, 1.0)
-        m1 = shadie.mtype(0.5, 'g', 3.0, 1.0)
+        m0 = shadie.mtype(0.5, 'n', [2.0, 1.0])
+        m1 = shadie.mtype(0.5, 'g', [3.0, 1.0], affects_diploid=False)
 
         # define elements types
         e0 = shadie.etype([m0, m1], [1, 2])
@@ -549,29 +589,38 @@ if __name__ == "__main__":
         )
 
         # print(chrom.data.iloc[:, :4,])
-        # print(chrom.mutations)
+        print(chrom.mutations)
 
         # init the model
-
-        model.initialize(chromosome=chrom,)
-        model.reproduction.wright_fisher(pop_size=1000)
+        model.initialize(chromosome=chrom, file_out="/tmp/shadie.trees")
+        model.reproduction.bryophyte_monoicous(
+            spo_pop_size=1000,
+            gam_pop_size=2000,
+        )
 
         model.early(
             time=1000,
             scripts="sim.addSubpop('p1', 1000)",
             comment="diploid sporophytes",
         )
+
+        model.first(
+            time=100,
+            scripts="sim.addSubpop('p0', 100)",
+            comment="add haploid gametos",
+        )
+
         model.fitness(
-            mutation="m4",
+            population='p1',
             scripts="return 1 + mut.selectionCoeff",
-            comment="gametophytes have no dominance effects, s1",
-        )
-
-        model.custom(
-            scripts="s2 fitness(m5) {\n    return 1 + mut.selectionCoeff;\n}",
             comment="gametophytes have no dominance effects",
+            idx=1
         )
 
+        # model.custom(
+        #     scripts="s2 fitness(m5) {\n    return 1 + mut.selectionCoeff;\n}",
+        #     comment="gametophytes have no dominance effects",
+        # )
 
-    print(model.script)
-    #model.run()
+    # print(model.script)
+    model.run()

@@ -12,21 +12,21 @@ from dataclasses import dataclass, field
 import pyslim
 import tskit
 from loguru import logger
-from shadie.reproduction.scripts import ITER_CHECK_MUT_IS_SUB
+# from shadie.reproduction.scripts import ITER_CHECK_MUT_IS_SUB
 from shadie.reproduction.scripts import (
-    SUBSTITUTION,
-    SUB_MUTS,
     P0_FITNESS_SCALE_DEFAULT,
     P1_FITNESS_SCALE_DEFAULT,
+    FIRST,
     EARLY,
-    EARLY_WITH_GAM_K,
-    WF_REPRO,
+    WF_REPRO_SOFT,
+    WF_REPRO_HARD,
     HAP_MUT_FITNESS,
     DIP_MUT_FITNESS
 )
 
 logger = logger.bind(name="shadie")
 Model = TypeVar("shadie.Model")
+
 
 @dataclass
 class ReproductionBase:
@@ -50,7 +50,7 @@ class ReproductionBase:
     """
     model: Model
 
-    def _write_trees_file(self):
+    def _write_trees_file(self) -> None:
         """adds late() call to save and write .trees file.
 
         All shadie reproduction classes write a .trees file in a late()
@@ -58,7 +58,11 @@ class ReproductionBase:
         whether the start point was loaded from a previous file.
         """
         # get time AFTER the last even generation.
-        endtime = int(self.model.sim_time + 1)
+
+        gens = self._gens_per_lifecycle
+        endtime = int((self.model.sim_time*gens) + 1)
+        self.full_lifecycles = self.model.sim_time
+        self.slim_gens = endtime
 
         # calculate end based on this sim AND the loaded parent sim.
         if self.model.metadata['file_in']:
@@ -72,6 +76,7 @@ class ReproductionBase:
                     f"sim.treeSeqOutput('{self.model.metadata['file_out']}', metadata = METADATA)"],
                 comment="end of sim; save .trees file",
             )
+
         # write output at last generation of this simulation.
         else:
             self.model.late(
@@ -93,27 +98,37 @@ class NonWrightFisher(ReproductionBase):
     alternative is to implement a WF model.
     """
 
+    def _set_gametophyte_k(self):
+        """Set carrying capacity for gametophyte holding pop (p1).
+
+        During p1 generation, to avoid lagging in the simulation, this
+        automatically sets to 10x user-defined popsize.
+        """
+        if not self.gam_ceiling:
+            self.gam_ceiling = 10 * self.gam_pop_size
+
     def _define_subpopulations(self):
         """add haploid and diploid life stages as subpopulations.
-
-        This create
         """
         # load a trees file that already has p0 and p1 pops
         if self.model.metadata['file_in']:
+            # set p1 to tag=3 (sporophytes) and p0 to tag=[0,1] (gametophytes)
             self.model._read_from_file(tag_scripts=[
-                "p1.individuals.tag = 3;", # should this be tag=0?
-                "tags = rbinom(1, p0.individualCount, 0.5);",  # TODO: this seems like it will assign 0/1 instead of 1/2
+                "p1.individuals.tag = 3;",
+                "tags = rbinom(1, p0.individualCount, 0.5);",
                 "p0.individuals.tag = tags;",
             ])
 
         # create new p0 and p1 populations
         else:
-            self.model.early(
+            self.model.first(
                 time=1,
                 scripts=[
                     "sim.addSubpop('p1', SPO_POP_SIZE)",
                     "sim.addSubpop('p0', 0)",
-                    "p1.individuals.tag = 3",  # should this be 0?
+                    "p1.individuals.tag = 3",
+                    "p1.individuals.setValue('maternal_fitness', 1.0);",
+                    "p1.individuals.tagL0 = (runif(p1.individualCount) < GAM_FEMALE_TO_MALE_RATIO);",
                 ],
                 comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
             )
@@ -128,14 +143,18 @@ class NonWrightFisher(ReproductionBase):
         Includes parent attrs like model.
         """
         # exclude parent class attributes
-        exclude = ["_substitution_str", "model",
-                    "_p0activate_str", "_p0deactivate_str",
-                    "_p1activate_str", "_p1deactivate_str"]
+        exclude = [
+            "_substitution_str", "model",
+            "_p0activate_str", "_p0deactivate_str",
+            "_p1activate_str", "_p1deactivate_str",
+        ]
         asdict = {
             i: j for (i, j) in self.__dict__.items()
             if i not in exclude
         }
-        self.model.map["initialize"][0]['simglobals']['METADATA'] = asdict
+        # save initalize metadata and update with dict
+        self.model.map["initialize"][0]['simglobals']['METADATA'] = self.model.metadata
+        self.model.map["initialize"][0]['simglobals']['METADATA'].update(asdict)
 
     def _add_initialize_constants(self):
         """Add defineConstant calls to init variables.
@@ -145,183 +164,100 @@ class NonWrightFisher(ReproductionBase):
         unique set of attributes. Excludes parent attrs like model.
         """
         # exclude parent class attributes
-        exclude = ["lineage", "mode", "model", "_substitution_str", 
-                    "_p0activate_str", "_p0deactivate_str",
-                    "_p1activate_str", "_p1deactivate_str"]
+        exclude = [
+            "lineage", "mode", "model", "gens_per_lifecycle",
+            "full_lifecycles", "slim_gens",
+            "model_source","_substitution_str",
+            "_p0activate_str", "_p0deactivate_str",
+            "_p1activate_str", "_p1deactivate_str",
+        ]
+
         asdict = {
             i: j for (i, j) in self.__dict__.items()
             if i not in exclude
         }
         self.model.map["initialize"][0]['constants'].update(asdict)
 
-    def _add_alternation_of_generations(self, early: str, late: str):
-        """Add alternation of generations scripts.
-        
-        Formerly named `_add_early_and_late()`.
+    def _add_alternation_of_generations(self):
+        """Alternation of generations scripts.
 
-        This writes a fitness function for every MutationType in the
-        chromosome that will be alternately turned on or off during
-        p0 and p1 generations to alternate whether the mutation affects
-        one or the other, and to only apply dominance to the diploid
-        population.
-
-        The Early() block this creates includes the 'fitnessScaling'
-        command. This is very important to nonWF models to regulate
-        the population size. Without it the population would grow 
-        exponentially forever. The fitnessScaling is a bit different
-        among different models depending on separate sexes, so see it
-        comes in here as part of an organism-specific the early script.
-
-        The Early() block also includes commands to activate/deactivate
-        survival, fitness, and reproduction functions to switch between
-        the two alternating subpopulation functions.
-
-        The Late() block this creates tags cloned or selfed inds and 
-        removes fixed mutations.
+        This writes mutEffect, early, and late functions that activate
+        or deactivate mutEffect effects of mutations in alternating
+        generations.
         """
-        # add fitness callback for gametophytes based on MutationTypes
-        # in the model.chromosome.
-        # this will map to sx-sy survival callbacks.
         idx = 6
-        p0activate_scripts = []
-        p1activate_scripts = []
-        p0deactivate_scripts = []
-        p1deactivate_scripts = []
-        substitutions = []
 
         # iterate over MutationTypes
         for mut in self.model.chromosome.mutations:
+            # only execute below if the mutation doesn't affect all lifestages
+            if not mut.affects_diploid or not mut.affects_haploid:
 
-            # refer to mutations by s{idx}
-            idx += 1
-            sidx = str("s" + str(idx))
+                # refer to mutations by s{idx}
+                idx += 1
+                # sidx = str("s" + str(idx))
 
-            # add fitness callback function (e.g., s5 fitness(m1) {...})
-            # for each MutationType. This callback will be activated or
-            # deactivated (below) by early scripts based on whether
-            # it is the haploid or diploid subpopulation's generation.
+                # add mutEffect callback function (e.g., s5 mutEffect(m1) {...})
+                # for each MutationType. This callback will be activated or
+                # deactivated (below) by early scripts based on whether
+                # it is the haploid or diploid subpopulation's generation.
+                if not mut.affects_diploid:
+                    self.model.muteffect(
+                        idx=None,
+                        mutation=mut.name,
+                        scripts=HAP_MUT_FITNESS,
+                        comment="mutation only expressed in haploid"
+                    )
+                if not mut.affects_haploid:
+                    self.model.muteffect(
+                        idx=None,
+                        mutation=mut.name,
+                        scripts=DIP_MUT_FITNESS,
+                        comment="mutation only expressed in diploid"
+                    )
 
-            # in a nonWF model fitness 0=death and 1=survival, with
-            # values in between treated as a probability. Thus, fitness
-            # here represents 'absolute fitness', and selection will reduce
-            # the size of the population proportionate to the mean 
-            # population fitness. We use fitnessScaling to recalculate
-            # the mean subpop fitness each generation.
+    def _add_first_script(self):
+        """Defines the first() callbacks for each gen.
 
-            # this defines a fitness callback that will activated only
-            # during the haploid generations.
-            # self.model.fitness(
-            #     idx=sidx,
-            #     mutation=mut.name,
-            #     scripts="return 1 + mut.selectionCoeff",
-            #     comment="dominance effect in diploids",
-            # )
-
-            # add mutEffect callback function (e.g., s5 mutEffect(m1) {...})
-            # for each MutationType. This callback will be activated or
-            # deactivated (below) by early scripts based on whether
-            # it is the haploid or diploid subpopulation's generation.
-
-            # apply fitness effects to the diploid life stages.
-            if mut.affects_diploid:
-                self.model.muteffect(
-                    idx=None,
-                    mutation=mut.name,
-                    scripts=DIP_MUT_FITNESS,
-                    comment="mutation affecting diploid only."
-                )
-
-            # apply fitness effects to the haploid life stages.
-            if mut.affects_haploid:
-                self.model.muteffect(
-                    idx=None,
-                    mutation=mut.name,
-                    scripts=HAP_MUT_FITNESS,
-                    comment="mutation affecting haploid only."
-                )
-
-            # create a fitness callback to TURN ON/OFF fitness effects
-            # of a mutation on only haploid or only diploid stage.
-            # self.model.fitness(
-            #     idx=sidx,
-            #     mutation=mut.name,
-            #     scripts="return 0",
-            #     comment="mutation has no fitness effect in diploids",
-            # )
-
-            # store script to activate or deactivate this mutationtype
-            # activate_scripts.append(f"        {sidx}.active = 1;")
-            # deactivate_scripts.append(f"        {sidx}.active = 0;")
-
-            # add reference to this mutation to be added to a late call
-            # for checking whether a mutation has become a substitution.
-            # sub_muts = ITER_CHECK_MUT_IS_SUB.format(idx=sidx, mut=mut.name)
-            # substitutions.append(sub_muts)
-
-        # save activate and deactivate scripts for later.
-        # insert references to fitness callbacks into an early script
-        # that will alternately activate or deactivate them on
-        # alternating generations to only apply to gameto or sporo.    
-        self._p0activate_str = "\n        ".join(p0activate_scripts)
-        self._p0deactivate_str = "\n        ".join(p0deactivate_scripts)
-        self._p1activate_str = "\n        ".join(p1activate_scripts)
-        self._p1deactivate_str = "\n        ".join(p1deactivate_scripts)
-
-        #CHECK - SHOULD NOT BE NECESSARY ANYMORE
-        # # insert the substitution-checking scripts into larger context
-        # substitution_str = "\n    ".join(substitutions)
-        # #save subsitutions for late caldl in model-specific scripts
-        # self._substitution_str = substitution_str
+        This is overridden by callbacks of the same name in subclasses
+        """
+        self.model.first(
+            time=None,
+            scripts=FIRST,
+            comment="alternation of generations",
+        )
 
     def _add_early_script(self):
-        """
-        Defines the early() callbacks for each gen.
-        This overrides the NonWrightFisher class function of same name.
+        """Defines the early() callbacks for each gen.
+
+        This is overridden by callbacks of the same name in subclasses
         """
         early_script = (
-            EARLY_WITH_GAM_K.format(
+            EARLY.format(
                 p0_fitnessScaling=P0_FITNESS_SCALE_DEFAULT,
                 p1_fitnessScaling=P1_FITNESS_SCALE_DEFAULT,
-                p0activate=self._p0activate_str,
-                p1activate=self._p1activate_str,
-                p0deactivate=self._p0deactivate_str,
-                p1deactivate=self._p1deactivate_str,
+                gametophyte_clones=GAM_CLONES,
+                gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+                sporophyte_clones=SPO_CLONES,
+                spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
             )
         )
         self.model.early(
             time=None,
             scripts=early_script,
-            comment="alternation of generations",
+            comment="events after reproduction",
         )
-
-        # # insert the substitution-checking scripts into larger context
-        # late_script = late.format(
-        #     checking_each_mut_for_fixation="".join(substitutions)
-        # )
-        # self.model.late(
-        #     time=None,
-        #     scripts=late_script,
-        #     comment="fixes mutations in haploid gen"
-        # )
-
-    def _set_gametophyte_k(self):
-        """Sets a carrying capacity for gametophyte holding pop (during p1
-        generation, to avoid lagging in the simulation. Automatically sets
-        to 10x user-defined popsize
-        """
-        if not self.gam_k:
-            self.gam_k = 10 * self.gam_pop_size
 
 
 @dataclass
 class WrightFisher(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
+    selection: str = "none"  # soft selection on by default
+    _gens_per_lifecycle: int = 1  # internal param
     sexes: bool = False  # not yet used?
 
     def run(self):
-        """
-        Updates self.model.map with new component scripts for running
+        """Updates self.model.map with new component scripts for running
         life history and reproduction based on input args.
         """
         self._define_subpopulations()
@@ -335,7 +271,7 @@ class WrightFisher(ReproductionBase):
         if self.model.metadata['file_in']:
             self.model._read_from_file(tag_scripts="")
         else:
-            self.model.early(
+            self.model.first(
                 time=1,
                 scripts="sim.addSubpop('p1', K);",
                 comment="define starting diploid population.",
@@ -343,12 +279,31 @@ class WrightFisher(ReproductionBase):
 
     def _add_scripts(self):
         """fitness and mating of diploid population."""
-        self.model.repro(
-            population="p1",
-            # scripts="subpop.addCrossed(individual, subpop.sampleIndividuals(1));",
-            scripts=WF_REPRO,
-            comment="hermaphroditic random mating."
-        )
+        if self.selection == "soft":
+            self.model.repro(
+                population="p1",
+                scripts= WF_REPRO_SOFT,
+                comment="WF model with soft selection (parent fitness determines mating success)"
+            )
+
+        elif self.selection == "hard":
+            self.model.repro(
+                population="p1",
+                scripts= WF_REPRO_HARD,
+                comment="WF model with hard selection (random mating)"
+            )
+            self.model.early(
+                time=None,
+                scripts="p1.fitnessScaling = K / p1.individualCount",
+                comment="calculate relative fitness.",
+            )
+
+        elif self.selection == "none":
+            self.model.repro(
+                population="p1",
+                scripts= "subpop.addCrossed(individual, subpop.sampleIndividuals(1));",
+                comment="WF model with no selection; random mating"
+            )
 
     def _add_initialize_constants(self):
         """Add defineConstant calls to init for new variables."""
@@ -358,15 +313,21 @@ class WrightFisher(ReproductionBase):
             'spo_pop_size': self.pop_size,
             'gam_pop_size': "NA",
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
-            'recombination_rate': self.model.metadata['recomb_rate']
+            'recombination_rate': self.model.metadata['recomb_rate'],
+            'selection': self.selection,
+            'gens_per_lifecycle': self._gens_per_lifecycle,
         }
 
         self.model.map["initialize"][0]['constants']["K"] = self.pop_size
         self.model.map["initialize"][0]['simglobals']["METADATA"] = metadata_dict
 
+        # save initalize metadata and update from dict
+        self.model.map["initialize"][0]['simglobals']['METADATA'] = self.model.metadata
+        self.model.map["initialize"][0]['simglobals']['METADATA'].update(metadata_dict)
+
     def _add_survival_script(self):
-        """
-        Defines the late() callbacks for each gen.
+        """Defines the late() callbacks for each gen.
+
         This overrides the NonWrightFisher class function of same name.
         """
         self.model.survival(
@@ -379,10 +340,12 @@ class WrightFisher(ReproductionBase):
 if __name__ == "__main__":
 
     import shadie
+    shadie.set_log_level("DEBUG")
 
     # define mutation types
-    m0 = shadie.mtype(0.5, 'n', 0, 0.4)
-    m1 = shadie.mtype(0.5, 'g', 0.8, 0.75, diffexpr="diploid")
+    m0 = shadie.mtype(0.5, 'n', [0, 0.4])
+    m1 = shadie.mtype(0.5, 'g', [0.8, 0.75], affects_haploid=False)
+    m0 = shadie.mtype(0.5, 'f', [2], affects_diploid=False)
 
     # define elements types
     e0 = shadie.etype([m0, m1], [1, 2])
@@ -396,11 +359,10 @@ if __name__ == "__main__":
         exon=e1,
     )
 
-    print(m1._expr)
-
+    # generate a model w/ slim script
     with shadie.Model() as mod:
-        mod.initialize(chromosome=chrom, sim_time=1000,) #file_in = "/tmp/test.trees")
-        mod.reproduction.wright_fisher(pop_size=1000)
-    print(mod.script)
-    #mod.write("/tmp/slim.slim")
-    #mod.run(binary="/usr/local/bin/slim")
+        mod.initialize(chromosome=chrom, sim_time=1000, )  # file_in="/tmp/test.trees")
+        mod.reproduction.wright_fisher_haploid_sexual(pop_size=1000)
+    # print(mod.script)
+    mod.write("/tmp/slim.slim")
+    mod.run(seed=123, binary="/home/deren/miniconda3/envs/shadie/bin/slim")  # /usr/local/bin/slim")

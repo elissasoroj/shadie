@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-"""
-Angiosperm reproduction class is a superclass of NonWrightFisher class.
+"""Angiosperm reproduction class is a superclass of NonWrightFisher class.
 
 Class inheritance structure
 ---------------------------
@@ -17,9 +16,7 @@ from typing import Tuple, Optional, Union
 from dataclasses import dataclass, field
 from shadie.reproduction.base import NonWrightFisher
 from shadie.reproduction.scripts import (
-    SURV,
     SPO_MATERNAL_EFFECT_ON_P0,
-    SUBSTITUTION,
     P0_FITNESS_SCALE_DEFAULT,
     EARLY,
     P1_FITNESS_SCALE_DEFAULT,
@@ -56,6 +53,13 @@ class AngiospermBase(NonWrightFisher):
     pollen_success_rate: float
     pollen_competition: str
     stigma_pollen_per: int
+    _gens_per_lifecycle: int = field(default=2, init=False)
+
+    def __post_init__(self):
+        """Add extra params to metadata"""
+        self.gens_per_lifecycle = self._gens_per_lifecycle
+        self.lineage = self.lineage
+        self.mode = self.mode
 
     def _set_mutation_rates(self):
         """Checks parameters after init."""
@@ -73,15 +77,7 @@ class AngiospermBase(NonWrightFisher):
     def _add_shared_mode_scripts(self):
         """Adds scripts shared by homosp and heterosp superclasses.
 
-        Adds a survival script to define the random_chance_of_death,
-        maternal effects, and survival=0 for alternation of generations.
         """
-        survival_script = (
-            SURV.format(
-                p0_maternal_effect="",
-                p1_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0)
-        )
-        self.model.custom(survival_script, comment="maternal effects and survival")
 
 
 @dataclass
@@ -109,8 +105,6 @@ class AngiospermDioecious(AngiospermBase):
         self._add_shared_mode_scripts()
 
         # methods inherited from parent NonWrightFisher class
-        self._add_initialize_globals()
-        self._add_initialize_constants()
         self._add_alternation_of_generations()
         self._write_trees_file()
 
@@ -118,6 +112,10 @@ class AngiospermDioecious(AngiospermBase):
         self._define_subpopulations()
         self._add_mode_scripts()
         self._add_early_script()
+
+        #save metadata
+        self._add_initialize_globals()
+        self._add_initialize_constants()
 
     def _define_subpopulations(self):
         """Defines the subpopulations and males/females.
@@ -133,20 +131,19 @@ class AngiospermDioecious(AngiospermBase):
             )
 
     def _add_early_script(self):
-        """
-        Defines the early() callbacks for each gen.
+        """Defines the early() callbacks for each gen.
         This overrides the NonWrightFisher class function of same name.
         """
-        early_script = (EARLY.format(
-            p0_fitnessScaling = ANGIO_DIO_FITNESS_SCALE,
-            p1_fitnessScaling = P1_FITNESS_SCALE_DEFAULT,
-            p0activate= self._p0activate_str,
-            p0deactivate= self._p0deactivate_str,
-            p1activate= self._p1activate_str,
-            p1deactivate= self._p1deactivate_str
+        early_script = (
+            EARLY.format(
+                p0_fitnessScaling = ANGIO_DIO_FITNESS_SCALE,
+                p1_fitnessScaling = P1_FITNESS_SCALE_DEFAULT,
+                p0activate= self._p0activate_str,
+                p0deactivate= self._p0deactivate_str,
+                p1activate= self._p1activate_str,
+                p1deactivate= self._p1deactivate_str
             )
         )
-
         self.model.early(
             time=None,
             scripts=early_script,
@@ -161,26 +158,15 @@ class AngiospermDioecious(AngiospermBase):
         self.model.repro(
             population="p0",
             scripts=REPRO_ANGIO_DIO_P0,
-            idx = "s5",
+            idx="s5",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
             population="p1",
             scripts=REPRO_ANGIO_DIO_P1,
-            idx = "s6",
+            idx="s6",
             comment="generates gametes from sporophytes"
         )
-        
-        # # add late call
-        # substitution_script = (
-        #     SUBSTITUTION.format(**{'muts': self._substitution_str,
-        #         'late': LATE_ANGIO_DIO}).lstrip())
-
-        # self.model.late(
-        #     time=None,
-        #     scripts=substitution_script,
-        #     comment="fixes mutations in haploid gen"
-        #     )
 
 
 @dataclass
@@ -191,7 +177,7 @@ class AngiospermMonoecious(AngiospermBase):
     spo_self_rate: float
 
     def __post_init__(self):
-        #set pollen competition as string
+        # set pollen competition as string
         if self.pollen_competition and self.pollen_competition != "F":
             self.pollen_competition = "T"
         else:
@@ -205,8 +191,6 @@ class AngiospermMonoecious(AngiospermBase):
         self._add_shared_mode_scripts()
 
         # methods inherited from parent NonWrightFisher class
-        self._add_initialize_globals()
-        self._add_initialize_constants()
         self._add_alternation_of_generations()
         self._write_trees_file()
 
@@ -215,18 +199,23 @@ class AngiospermMonoecious(AngiospermBase):
         self._add_mode_scripts()
         self._add_early_script()
 
+        # add metadata
+        self._add_initialize_globals()
+        self._add_initialize_constants()
+
     def _add_early_script(self):
         """
         Defines the early() callbacks for each gen.
         This overrides the NonWrightFisher class function of same name.
         """
-        early_script = (EARLY.format(
-            p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
-            p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
-            p0activate= self._p0activate_str,
-            p0deactivate= self._p0deactivate_str,
-            p1activate= self._p1activate_str,
-            p1deactivate= self._p1deactivate_str
+        early_script = (
+            EARLY.format(
+                p0_fitnessScaling=P0_FITNESS_SCALE_DEFAULT,
+                p1_fitnessScaling=P1_FITNESS_SCALE_DEFAULT,
+                p0activate=self._p0activate_str,
+                p0deactivate=self._p0deactivate_str,
+                p1activate=self._p1activate_str,
+                p1deactivate=self._p1deactivate_str
             )
         )
 
@@ -238,18 +227,18 @@ class AngiospermMonoecious(AngiospermBase):
 
     def _add_mode_scripts(self):
         """scripts specific to this organism."""
-        #self.model.custom(scripts=FUNCTIONS_ANGIO_MONO, comment = "shadie DEFINITIONS")
+        # self.model.custom(scripts=FUNCTIONS_ANGIO_MONO, comment = "shadie DEFINITIONS")
 
         self.model.repro(
             population="p0",
             scripts=REPRO_ANGIO_MONO_P0,
-            idx = "s5",
+            idx="s5",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
             population="p1",
             scripts=REPRO_ANGIO_MONO_P1,
-            idx = "s6",
+            idx="s6",
             comment="generates gametes from sporophytes"
         )
 
@@ -267,22 +256,21 @@ class AngiospermMonoecious(AngiospermBase):
 
 if __name__ == "__main__":
 
-
     import shadie
     with shadie.Model() as mod:
-        
+
         # define mutation types
-        m0 = shadie.mtype(0.5, 'n', 0, 0.4)
-        m1 = shadie.mtype(0.5, 'g', 0.8, 0.75)
-        #I suggest we add a checkpoint that calculates the average
-        #fitness of mutations input by the user. If fitness is too high
-        #the simuulation will lag tremendously. 
+        m0 = shadie.mtype(0.5, 'n', (0, 0.4))
+        m1 = shadie.mtype(0.5, 'g', [0.8, 0.75])
+        # I suggest we add a checkpoint that calculates the average
+        # fitness of mutations input by the user. If fitness is too high
+        # the simuulation will lag tremendously.
         # OK: a good use case for logger.warning('fitness is too high...')
-        
+
         # define elements types
         e0 = shadie.etype([m0, m1], [1, 2])
         e1 = shadie.etype([m1], [1])
-        
+
         # design chromosome of elements
         chrom = shadie.chromosome.random(
             genome_size=20000,
@@ -295,9 +283,9 @@ if __name__ == "__main__":
         mod.initialize(chromosome=chrom)
 
         mod.reproduction.angiosperm_monoecious(
-            spo_pop_size=1000, 
+            spo_pop_size=1000,
             gam_pop_size=1000,
         )
 
     print(mod.script)
-    #mod.run()
+    # mod.run()

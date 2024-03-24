@@ -4,152 +4,150 @@
 
 """
 
-# Standard alternation of generations early script
+######################################################################
+# standard first script
+
+# ==PARAMETERS==
+# SPO_MUTATION_RATE
+# GAM_MUTATION_RATE
+###################
+FIRST = """
+// alternate generations
+    if (sim.cycle % 2 == 1) {
+        // reproduction(p0) will create SPOROPHYTES in p1.
+
+        // set reproduction function to be used this generation
+        s0.active = 1;
+        s1.active = 0;
+
+        // set mutation rate that will apply to the offspring
+        sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
+    }
+
+    else {
+        // reproduction(p1) will produce GAMETOPHYTES into p0.
+
+        // set reproduction function to be used this generation
+        s0.active = 0;  // GAM
+        s1.active = 1;  // SPO
+
+        // set mutation rate that will apply to the offspring
+        sim.chromosome.setMutationRate(SPO_MUTATION_RATE);
+    }
+"""
+
+#####################################################################
+# standard early script
+
+# ==PARAMETERS==
+# GAM_RANDOM_DEATH_CHANCE
+# GAM_CEILING
+# GAM_POP_SIZE
+# SPO_RANDOM_DEATH_CHANCE
+# SPO_POP_SIZE
+# -------------------------
 EARLY = """
 // diploids (p1) just generated haploid gametophytes into p0
     if (community.tick % 2 == 0) {{
-
-        // fitness affects gametophyte survival
-        {p0_fitnessScaling};
-
-        // set mutation rate for haploids
-        sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
-
         // alternate generations.
-        // deactivate survival callback to remove inds from p1 subpop.
-        // activate survival callback to remove inds from p0 subpop.
-        s1.active = 1;
-        s2.active = 0;
 
-        // add random chance of death, maternal effects, or fitness calculation.
-        // activate survival(p0) to set fitness method for p0s
-        // deactivate survival(p1) to set fitness method for p1s
-        s3.active = 1;
-        s4.active = 0;
+        {sporophyte_clones}
 
-        // set reproduction function to be used when next generation starts.
-        // deactivate reproduction(p1) diploids reproduce, haploids don't.
-        // activate reproduction(p0) haploids reproduce, diploids don't.
-        s5.active = 1;
-        s6.active = 0;
+        // new p0s removed by three possible mechanisms:
+        // 1. random chance of death.
+        // 2. using fitness re-calculated to include maternal effect.
+        // 3. individual goes on next tick (unless fitness kills it)
 
-        {p0activate}
-        {p0deactivate}
+        // 1. make a mask for random death
+        if (GAM_RANDOM_DEATH_CHANCE > 0) {{
+            random_death = (runif(p0.individualCount) < GAM_RANDOM_DEATH_CHANCE);
+            sim.killIndividuals(p0.individuals[random_death]);
+        }}
+
+        // random death also occurs to implement GAM_CEILING
+        if (p0.individualCount > GAM_CEILING) {{
+            to_kill = GAM_CEILING - GAM_POP_SIZE;
+            death_chance = to_kill/p0.individualCount;
+            random_death = sample(c(F,T), p0.individualCount, T, c(1-death_chance, death_chance));
+            sim.killIndividuals(p0.individuals[random_death]);
+            }}
+
+       {spo_maternal_effect}
+
+        // 3. Set up for next tick
+        // fitness affects gametophyte survival
+        {p0_fitnessScaling}
     }}
 
 
     // odd generations = gametophytes (p0) just generated sporophytes
     else {{
+        // alternate generations.
+        {gametophyte_clones}
+
+        // remove new p1s by three possible mechanisms:
+        // 1. random chance of death.
+        // 2. using fitness re-calculated to include maternal effect.
+        // 3. individual goes on next tick (unless fitness kills it)
+
+        // 1. make a mask for random death
+        if (SPO_RANDOM_DEATH_CHANCE > 0) {{
+            random_death = (runif(p1.individualCount) < GAM_RANDOM_DEATH_CHANCE);
+            sim.killIndividuals(p1.individuals[random_death]);
+        }}
+
+        {gam_maternal_effect}
+
+
+        // 3. Set up for next tick
         // fitness is scaled relative to number of inds in p1
-        {p1_fitnessScaling};
-
-        // set mutation rate to sporophyte rate
-        sim.chromosome.setMutationRate(SPO_MUTATION_RATE);
-
-        // alternate generations.
-        // deactivate survival(p0) to remove inds from p0 subpop (i.e., keep p0)
-        // activate survival(p1) to remove inds from p1 subpop.
-        s1.active = 0;
-        s2.active = 1;
-
-        // add random chance of death, maternal effects, or fitness calculation.
-        // deactivate survival(p0) to set fitness method for p0s
-        // activate survival(p1) to set fitness method for p1s
-        s3.active = 0;
-        s4.active = 1;
-
-        // set reproduction function to be used when next generation starts.
-        // activate reproduction(p1) diploids reproduce, haploids don't.
-        // deactivate reproduction(p0) haploids reproduce, diploids don't.
-        s5.active = 0;
-        s6.active = 1;
-
-        {p1deactivate}
-        {p1activate}
-    }}
-"""
-
-# EARLY modified for the inclusion of carrying capacity in gametes
-# EARLY_WITH_GAM_K = EARLY.split("\n")
-EARLY_WITH_GAM_K = """
-// diploids (p1) just generated haploid gametophytes
-    if (community.tick % 2 == 0) {{
-
-        // fitness affects gametophyte survival
-        {p0_fitnessScaling};
-
-       //set mutation rate for haploids
-        sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
-
-        // alternate generations.
-        // deactivate survival callback to remove inds from p1 subpop.
-        // activate survival callback to remove inds from p0 subpop.
-        s1.active = 1;
-        s2.active = 0;
-
-        // add random chance of death, maternal effects, or fitness calculation.
-        // activate survival(p0) to set fitness method for p0s
-        // deactivate survival(p1) to set fitness method for p1s
-        s3.active = 1;
-        s4.active = 0;
-
-        // set reproduction function to be used when next generation starts.
-        // deactivate reproduction(p1) diploids reproduce, haploids don't.
-        // activate reproduction(p0) haploids reproduce, diploids don't.
-        s5.active = 1;
-        s6.active = 0;
-
-        {p0activate}
-        {p0deactivate}
-    }}
-
-
-    // odd generations = gametophytes (p0) just generated sporophytes
-    else {{
-
-        // fitness affects sporophytes (with haploid K capacity)
-        {p1_fitnessScaling};
-        p0.fitnessScaling = GAM_K / p0.individualCount;
-
-        // set mutation rate to sporophyte rate
-        sim.chromosome.setMutationRate(SPO_MUTATION_RATE);
-
-        // alternate generations.
-        // deactivate survival(p0) to remove inds from p0 subpop (i.e., keep p0)
-        // activate survival(p1) to remove inds from p1 subpop.
-        s1.active = 0;
-        s2.active = 1;
-
-        // add random chance of death, maternal effects, or fitness calculation.
-        // deactivate survival(p0) to set fitness method for p0s
-        // activate survival(p1) to set fitness method for p1s
-        s3.active = 0;
-        s4.active = 1;
-
-        // set reproduction function to be used when next generation starts.
-        // activate reproduction(p1) diploids reproduce, haploids don't.
-        // deactivate reproduction(p0) haploids reproduce, diploids don't.
-        s5.active = 0;
-        s6.active = 1;
-
-        {p1activate}
-        {p1deactivate}
+        {p1_fitnessScaling}
     }}
 """
 
 
-# Used by EARLY_GAM_K to set {p0_fitnessScaling: P0_FITNESS_SCALE_DEFAULT}
-P0_FITNESS_SCALE_DEFAULT = "p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount"
+###############################################################
+# cloning scripts
 
-# Used by EARLY_GAM_K to set {p1_fitnessScaling: P1_FITNESS_SCALE_DEFAULT}
-P1_FITNESS_SCALE_DEFAULT = "p1.fitnessScaling = SPO_POP_SIZE / p1.individualCount"
+SPO_CLONES = """
+    // remove parents, except for clones
+    non_clones = p1.individuals[p1.individuals.tag != 4];
+    sim.killIndividuals(non_clones);
+    // reset clone tags to regular tag
+    p1.individuals.tag = 3;
+"""
 
-# ...
+NO_SPO_CLONES = """
+        // remove parents
+        sim.killIndividuals(p1.individuals);
+"""
+
+GAM_CLONES = """
+        // removes parents, except clones
+        non_clones = p0.individuals[p0.individuals.tag != 2];
+        sim.killIndividuals(non_clones);
+        // reset clone tags to regular tag
+        p0.individuals.tag = 1;
+"""
+
+NO_GAM_CLONES = """
+    // remove parents
+    sim.killIndividuals(p0.individuals);
+"""
+
+###############################################################
+# fitness scripts
+#
+# ==PARAMETERS==
+# GAM_POP_SIZE
+# SPO_POP_SIZE
+# ----------------------
+P0_FITNESS_SCALE_DEFAULT = "p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;"
+P1_FITNESS_SCALE_DEFAULT = "p1.fitnessScaling = SPO_POP_SIZE / p1.individualCount;"
 WF_FITNESS_SCALE = """inds = sim.subpopulations.individuals;
     p1.fitnessScaling = K / sum(inds.fitnessScaling);"""
 
-# ...
-WF_REPRO = """
+WF_REPRO_SOFT = """
     // parents are chosen proportional to fitness
     inds = p1.individuals;
     fitness = p1.cachedFitness(NULL);
@@ -160,173 +158,84 @@ WF_REPRO = """
     self.active = 0;
 """
 
-# GAM_K
-# GAM_MUTATION_RATE
-# SPO_MUTATION_RATE
-# SPO_POP_SIZE
+WF_REPRO_HARD = """
+    // parents are chosen randomly (irrespective of fitness)
+    inds = p1.individuals;
+    fitness = p1.cachedFitness(NULL);
+    parents1 = p1.sampleIndividuals(K, replace=T);
+    parents2 = p1.sampleIndividuals(K, replace=T);
+    for (i in seqLen(K))
+        p1.addCrossed(parents1[i], parents2[i]);
+    self.active = 0;
+"""
 
+#################################################################
+# activate/deactivate fitness callbacks
 
-#-----------------------------------------------
-#activate/deactivate fitness callbacks
 ACTIVATE = "{idx}.active = 1;"
+
 DEACTIVATE = "{idx}.active = 0;"
 
-#-----------------------------------------------
-#proper substitution behavior for gametophyte generation -
-#must be repreated for every mut
-SUBSTITUTION = """
-    // gametophytes have just undergone fitness selection
-    if (community.tick % 2 == 0) {{
-        {muts}
-    {late}
-"""
-
-
-CHECK_FOR_MUT_FIX = """
-    1:{sim_time} late() {
-
-        // only check occasionally for fixation
-        if (sim.generation % 10 == 0) {
-
-            // get the total number of genomes
-            ngenomes = (2 * size(p1.individuals)) + size(p0.individuals)
-
-            // iterate over mutationTypes in the simulation
-            for (mtype in sim.mutationTypes) {
-                cat('gen' + sim.generation + 'mutationType' + mtype)
-
-                // get all mutations of this type
-                muts = sim.mutationsOfType({mtype})
-
-                //
-                count = sim.mutationCounts(NULL, muts)
-                freqs = sim.mutationFrequencies(NULL, muts);
-                cat('count' + count)
-                cat('freq' + freqs)
-            }
-        }
-    }
-"""
-
-
-# this is used to check whether a substitution is completely fixed.
-# A string with this chunk repeated for each mutationtype is then
-# substituted into the LATE call below.
-ITER_CHECK_MUT_IS_SUB = """\
-        mut_{mut} = sim.mutationsOfType({mut});
-        freqs = sim.mutationFrequencies(NULL, mut_{mut});
-
-        // mutations are removed if their frequency is 0.5?
-        if (any(freqs == 0.5)) {{
-            sim.subpopulations.genomes.removeMutations(mut{idx}[freqs == 0.5], T);
-            print('removed fixed mutation');
-        }}
-"""
-
-# # this is used to check whether a substitution is completely fixed.
-# ITER_CHECK_MUT_IS_SUB = """
-#         count{idx} = sim.mutationFrequencies(NULL, sim.mutationsOfType({mut}));
-#         if (any(counts{idx} == fixedCount))
-#             sim.subpopulations.genomes.removeMutations(muts{idx}[counts{idx} == fixedCount], T);
-# """
-
-#-----------------------------------------------
+#################################################################
 # gam_maternal_effect
 GAM_MATERNAL_EFFECT_ON_P1 = """
-	// Gametophyte mother fitness affects sporophyte survival
-    maternal_fitness = individual.getValue("maternal_fitness");
-    if (!isNULL(maternal_fitness)) {
-        corrected_fitness = (maternal_fitness * GAM_MATERNAL_EFFECT) + fitness * (1 - GAM_MATERNAL_EFFECT);
-        return (runif(1) < corrected_fitness);
+    // 2. maternal effect re-calculation
+    if (GAM_MATERNAL_EFFECT > 0) {
+        // temp fitness scaling
+        scale = SPO_POP_SIZE / p1.individualCount;
+
+        // calculations
+        maternal_fitnesses = GAM_MATERNAL_EFFECT*p1.individuals.getValue("maternal_fitness");
+        child_fitnesses = (1 - GAM_MATERNAL_EFFECT)*p1.cachedFitness(NULL);
+        corrected_fitnesses = scale*(maternal_fitnesses + child_fitnesses);
+
+        // remove inds based on maternal effects
+        to_kill = (runif(p1.individualCount) > corrected_fitnesses);
+        sim.killIndividuals(p1.individuals[to_kill]);
     }
 """
 
+NO_GAM_MATERNAL_EFFECT = """
+    // 2. No gametophyte maternal effect on P1
+"""
 
 # spo_maternal_effect
 SPO_MATERNAL_EFFECT_ON_P0 = """
-    // Sporophyte mother fitness affects gametophyte survival
-    maternal_fitness = individual.getValue("maternal_fitness");
-    if (!isNULL(maternal_fitness)) {
-        corrected_fitness = (maternal_fitness * SPO_MATERNAL_EFFECT) + fitness * (1 - SPO_MATERNAL_EFFECT);
-        return (runif(1) < corrected_fitness);
+    // 2. maternal effect re-calculation
+    if (SPO_MATERNAL_EFFECT > 0) {
+        // temp fitness scaling
+        scale = SPO_POP_SIZE / p1.individualCount;
+        // calculations
+        maternal_fitnesses = SPO_MATERNAL_EFFECT*p0.individuals.getValue("maternal_fitness");
+        child_fitnesses = (1 - SPO_MATERNAL_EFFECT)*p0.cachedFitness(NULL);
+        corrected_fitnesses = scale * (maternal_fitnesses + child_fitnesses);
+
+        // remove inds based on maternal effects
+        to_kill = (runif(p0.individualCount) > corrected_fitnesses);
+        sim.killIndividuals(p0.individuals[to_kill]);
     }
 """
 
-#-----------------------------------------------
-# spo_random_death_chance
-# gam_random_death_chance
-
-
-# DEPRECATED IN FERNS CURRENTLY FOR A MORE SPECIFIC
-SURV = """
-// during haploid generation, remove p1 individuals unless it is a clone.
-s1 survival(p1) {{
-    //clones survive to next gen and are re-tagged with parental tag
-    if (individual.tag == 4) {{
-            individual.tag = individual.getValue("parentid");
-            return NULL;
-        }}
-    return F;
-}}
-
-// alternate to other generation (diploid)
-// remove p0 individuals unless it is a clone.
-s2 survival(p0) {{
-    // allow clones to persist until next generation, tag is reset to parent tag.
-    if (individual.tag == 2) {{
-        individual.tag = individual.getValue("parentid");
-        return NULL;
-    }}
-    return F;
-}}
-
-// remove p0s by three possible mechanisms:
-// 1. random chance of death.
-// 2. maternal effect.
-// 3. returns NULL, meaning use the standard fitness prob.
-s3 survival(p0) {{
-    if (runif(1) < GAM_RANDOM_DEATH_CHANCE)
-        return F;
-    {p1_maternal_effect}
-    return NULL;
-}}
-
-// remove p1s by three possible mechanisms:
-// 1. random chance of death.
-// 2. using fitness re-calculated to include maternal effect.
-// 3. returns NULL, meaning use the standard fitness prob.
-s4 survival(p1) {{
-    if (runif(1) < SPO_RANDOM_DEATH_CHANCE)
-        return F;
-    {p1_maternal_effect}
-    return NULL;
-}}
+NO_SPO_MATERNAL_EFFECT = """
+        // 2. No sporophyte maternal effect on P0
 """
 
+##################################################################
+# note relFitness was replaced by `effect` in SLiM 4.0
 HAP_MUT_FITNESS = """
     if (individual.subpopulation == p1)
         return 1.0;
     else
-        return relFitness;
+        return effect;
 """
 
 DIP_MUT_FITNESS = """
     if (individual.subpopulation == p0)
         return 1.0;
     else
-        return relFitness;
+        return effect;
 """
-
-
-# METADATA = """
-# metadata=Dictionary(
-# "spo_mutation_rate", SPO_MUTATION_RATE,
-# "recombination_rate", 1e-7,
-# "spo_population_size", SPO_POP_SIZE,
-# "gam_population_size", GAM_POP_SIZE,
-# "fixed m4 muts", sum(sim.substitutions.mutationType == m4),
-# "fixed m5 muts", sum(sim.substitutions.mutationType == m5))
-# """
+##################################################################
 
 METADATA = """
 metadata=Dictionary(

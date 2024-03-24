@@ -2,11 +2,11 @@
 
 ## Overview
 
-`shadie` (Simulating Haploid-Diploid Evolution) is a Python API wrapper for the forward-in-time evolutionary simulation software, SLiM3. `shadie` simulates non-neutral mutations in SLiM, then uses `pyslim` to overlay neutral mutations using coalescent in `msprime`. 
+`shadie` (Simulating Haploid-Diploid Evolution) is a Python API wrapper for the forward-in-time evolutionary simulation software, SLiM. `shadie` simulates non-neutral mutations in SLiM, then uses functionality provided by `pyslim` and `tskit` to overlay neutral mutations using coalescent simulations in `msprime`. 
 
-`shadie` also provides a user-friendly Python API framework for using SLiM3. This is meant to make SLiM a little more approachable for users with prior Python knowledge, however it does not incorporate all the functionality of SLiM and it is hightly encouraged for users to familiarize themselves with the SLiMgui and the SliM Manual. The [Messer Lab](https://messerlab.org/slim/) provides excellent documentationi for learning SLiM. 
+`shadie` also provides a user-friendly Python API framework for using SLiM. This is meant to make SLiM a little more approachable for users with prior Python knowledge, however it does not incorporate all the functionality of SLiM and it is hightly encouraged for users to familiarize themselves with the SLiMgui and the SliM Manual. The [Messer Lab](https://messerlab.org/slim/) provides excellent documentation for learning SLiM. 
 
-Finally, `shadie` was first developed with the intention of modeling realistic plant lifecycles in SLiM.
+Finally, `shadie` was first developed with the intention of modeling realistic plant lifecycles in SLiM, so much of the tutorials and documentation focus on this use case. 
 
 ---
 
@@ -20,7 +20,7 @@ Finally, `shadie` was first developed with the intention of modeling realistic p
 
 ### pyslim
 
-[`pyslim`](https://pyslim.readthedocs.io/en/latest/index.html) is a package that modifies `tskit` tree sequence files outpu by SLiM. `shadie` utilizes `pyslim` to overlay neutral muations with `msprime`. This method uses coalescent and is therefore *much* faster than SLiM. 
+[`pyslim`](https://pyslim.readthedocs.io/en/latest/index.html) is a package that modifies `tskit` tree sequence files outpu by SLiM. `shadie` utilizes `pyslim` to overlay neutral muations with `msprime`. This method uses coalescent and is therefore *much* faster than SLiM in most cases. 
 
 ### Dependencies
 
@@ -38,5 +38,6 @@ Finally, `shadie` was first developed with the intention of modeling realistic p
 **Plotting:**
 
 	- toyplot: for static plots
+	- toytree: for static plots
 	- altair: for interactive plots
-	- IPython: for displaying plots in Jupyter Notebooks
+	- notebook: for displaying plots in Jupyter Notebooks

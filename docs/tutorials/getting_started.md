@@ -5,7 +5,7 @@ The tutorials on this site provide all the source code necessary to follow along
 ## Notebook Tutorials
 If you prefer to download the full tutorials as Jupyter Notebooks, they are available [here](https://github.com/elissasoroj/shadie/tree/main/shadie/notebooks). There is a detailed notebook for each 'step' of using `shadie` and an example full workflow. 
 
-You must have Jupyter Notebooks and `shadie` installed locally to use these notebooks. You must also install SLiM3 to access all the functionality in the notebooks.
+You must have Jupyter Notebooks and `shadie` installed locally to use these notebooks. You must also install SLiM 4 to access all the functionality in the notebooks.
 
 ## binder Tutorials
 Finally, if you do not have Jupyter on your machine, you are able to run the notebooks in your web broswer using binder. This is a great way to use `shadie` for teaching applications, with students that do not need to learn how to Jupyter or run SLiM themselves. However, keep in mind that any changes made in binder cannot be saved for later use. 

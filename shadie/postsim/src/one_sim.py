@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
-"""
-A returned object class from a shadie simulation call.
+"""A returned object class from a shadie simulation call.
 """
 
 from typing import Optional, Union, Iterable, List
 from dataclasses import dataclass, field
+import os
+import warnings
 import numpy as np
 import pyslim
-# import tskit
 import msprime
 import toyplot
 import pandas as pd
@@ -16,19 +16,20 @@ import tskit
 import scipy.stats
 from loguru import logger
 
-from toytree.utils import toytree_sequence, ScrollableCanvas
+from toytree.utils.src.toytree_sequence import ToyTreeSequence
+from toytree.utils.src.scrollable_canvas import ScrollableCanvas
 from shadie.chromosome.src.classes import ChromosomeBase
 
+warnings.simplefilter('ignore', msprime.TimeUnitsMismatchWarning)
 logger = logger.bind(name='shadie')
 
 
 class OneSim:
-    """"Load and merge one TreeSequence files from SLiM.
+    """"Load a single SLiM simulation .trees output file 
 
-    SliM has been run for two populations with the same genome type
-    for T generations starting from different seeds and perhaps
-    with different selection or demographic histories. Each ts
-    includes N haploid individuals at time_start and time_end.
+    Some functionality (e.g. plotting change in diversity
+    over time) requires that you saved individuals at
+    given time points. 
 
     SLiM was run with the argument keep_input_roots=True so that it
     preserves the first-generation ancestors so they can be used for
@@ -37,49 +38,99 @@ class OneSim:
     def __init__(
         self,
         trees_file: str, #'tskit.trees.TreeSequence',
-        mut: float=1e-8,
-        recomb: float=1e-9,
-        chromosome: 'shadie.Chromosome'=None,
+        chromosome: 'shadie.Chromosome',
+        generations: int=None,
+        gens_per_lifecycle: Optional[int]=None,
+        ancestral_Ne: Optional[int]=None,
+        mutation_rate: Optional[float]=None,
+        recomb_rate: Optional[float]=None,
         seed: Optional[int]=None,
-        ancestral_Ne: int=1,
-        recapitate: bool=False,
-        add_neutral_mutations: bool=False,
-        ):
+        recapitate: bool=True,
+        add_neutral_mutations: bool=True,
+        custom_mutrate: Optional[float]=None,
+    ):
 
         # hidden attributes
         self.tree_sequence = tskit.load(trees_file)
         """A SlimTreeSequence that has been recapitated and mutated."""
 
-        # attributes to be parsed from the slim metadata
-        self.generations: int=0
+        #read in number of SLiM generations per organism life cycle
+        #so that mutation rate can be adjusted accordingly
+        self.gens_per_lifecycle: int=gens_per_lifecycle
+
+        # attributes to be parsed from the SLiM metadata
+        self.generations: int=generations
         """The SLiM simulated length of time in diploid generations."""
         self.ancestral_Ne: int=ancestral_Ne
         """The SLiM simulated diploid carrying capacity"""
-        self.recomb: float=recomb
+        self.recomb: float=recomb_rate
         """The recombination rate to use for recapitation."""
-        self.mut: float=mut
+        self.mut: float=mutation_rate
         """The mutation rate to use for recapitated treesequence."""
         self.chromosome: ChromosomeBase=chromosome
         """The shadie.Chromosome class representing the SLiM genome."""
         self.rng: np.random.Generator=np.random.default_rng(seed)
+ 
+        self.custom_mutrate: float=custom_mutrate
 
         # try to fill attributes by extracting metadata from the tree files.
         self._extract_metadata()
+
+        #removed this because it was messing up the recapitation process - 
+        #it may not be necessary with updates to pyslim?
         self._update_tables()
+
+        logger.info(
+            f"shadie assumes sims were run without a burn-in and without "
+            f"neutral mutations and will recapitate (add ancestry simulation) "
+            f"and mutate (add neutral mutations) any loaded sims by default.\n"
+            f"Current settings -\n"
+            f"Recapitate: {recapitate}\n"
+            f"Add neutral mutations: {add_neutral_mutations}\n")
+        
         if recapitate:
             self._recapitate()
+        
         if add_neutral_mutations:
-            self._mutate()
+            if custom_mutrate:
+                self._mutate(custom_mutrate=self.custom_mutrate)
+            else:
+                self._mutate()
 
     def _extract_metadata(self):
         """Extract self attributes from shadie .trees file metadata.
-
-        TODO: can more of this be saved in SLiM metadata?
         """
-        self.generations = self.tree_sequence.metadata["SLiM"]["tick"]
+        if self.generations is None :
+            self.generations = self.tree_sequence.metadata["SLiM"]["cycle"]
+
+        if self.gens_per_lifecycle is None:
+            self.gens_per_lifecycle = int(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
+
+        #print(f"Recombination Rate: {self.recomb}")
+        if self.recomb is None:
+            self.recomb = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"][0])
+            #print(f"Recombination Rate: {self.recomb}")
+
+        if self.ancestral_Ne is None:
+            self.ancestral_Ne = self.generations
+        
+        if self.mut is None:
+            try:
+                #if no gam mutation rate, this will fail
+                gam_mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gam_mutation_rate"][0])
+                spo_mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["spo_mutation_rate"][0])
+                gens = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
+
+                self.mut = (gam_mut+spo_mut)/gens
+            except:
+                self.mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["mutation_rate"][0])
+                self.mut = self.mut/self.gens_per_lifecycle
+        else:
+            self.mut = self.mut/self.gens_per_lifecycle
+
         assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
-        assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
+        #assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
 
     def _update_tables(self):
         """Remove extra psuedopopulation nodes."""
@@ -98,11 +149,15 @@ class OneSim:
 
         # drop nodes that are not connected to anything. This includes
         # the pseudo-nodes representing half of the haploid populations.
-        nodes_in_edge_table = list(
-            set(tables.edges.parent).union(tables.edges.child)
-        )
+        
+        #old code that drops too many nodes
+        #nodes_in_edge_table = list(set(tables.edges.parent).union(tables.edges.child))
 
-        # remove the empty population nodes by using simplify, which 
+        max_edge = max(list(set(tables.edges.parent).union(tables.edges.child)))
+
+        nodes_in_edge_table = list(range(1,max_edge))
+
+        # remove the empty population nodes by using simplify
         tables.simplify(
             samples=nodes_in_edge_table,
             keep_input_roots=True,
@@ -112,43 +167,84 @@ class OneSim:
         )
 
         # turn it back into a treesequence
-        self.tree_sequence = pyslim.load_tables(tables)
+        #self.tree_sequence = pyslim.load_tables(tables) #deprecated
+        self.tree_sequence = tables.tree_sequence()
 
     def _recapitate(self):
-        """Merge pops backwards in time and simulate ancestry.
+        """Simulate ancestry.
         """
+        #this is a TEMPORARY fix until we sort out the node age
+        #mismatch issue. I stole the recapitate code from pyslim
+        #to circumvent the error 
+        recap_time = self.tree_sequence.metadata['SLiM']['tick']
+        demography = msprime.Demography.from_tree_sequence(self.tree_sequence)
+        
+        # must set pop sizes to >0 even though we merge immediately
+        for pop in demography.populations:
+            pop.initial_size=1.0
+        ancestral_name = "ancestral"
+        derived_names = [pop.name for pop in demography.populations]
+        while ancestral_name in derived_names:
+            ancestral_name = (ancestral_name + "_ancestral")
+        demography.add_population(
+                name=ancestral_name,
+                description="ancestral population simulated by msprime",
+                initial_size=self.ancestral_Ne,
+        )
+        # the split has to come slightly longer ago than slim's tick
+        # since that's when all the linages are at, and otherwise the event
+        # won't apply to them
+        demography.add_population_split(
+                np.nextafter( recap_time, 2 * recap_time),
+                derived=derived_names,
+                ancestral=ancestral_name,
+        )
+
         # recapitate: ts is passed to sim_ancestry as 'initial_state'.
         # this automatically merges everyone into new ancestral pop.
         self.tree_sequence = pyslim.recapitate(
             ts=self.tree_sequence,
-            ancestral_Ne=self.ancestral_Ne,
+            #ancestral_Ne=self.ancestral_Ne,
+            demography=demography, #temporary
             random_seed=self.rng.integers(2**31),
             recombination_rate=self.recomb,
         )
 
-    def _mutate(self):
+    def _mutate(self, custom_mutrate:Optional[float]=None):
         """Mutatates the recapitated TreeSequence.
 
         This applies a mutation model to edges of the tree sequence.
         Does it know which regions to mutate or not mutate? For example,
         all recapitated edges should be mutated, but also the neutral
         genomic regions of the SLiM time frame should be mutated.
+        --yes, it wil mutate the whole ts, but one thing to check
+        is if the user does have a portion of the chromsome that SLiM
+        adds neutral mutations to. I think this is something the user 
+        should manage rather than shadie
         """
+
+        #check for custom mutation rate
+        if custom_mutrate:
+            rate = custom_mutrate
+        else:
+            rate = self.mut
+
+        self.rate = rate
+
         # logger report before adding mutations
         self._report_mutations(allow_m0=False)
 
         # add mutations
         self.tree_sequence = msprime.sim_mutations(
             self.tree_sequence,
-            rate=self.mut,
+            rate=rate,
             random_seed=self.rng.integers(2**31),
             keep=True,  # whether to keep existing mutations.
             model=msprime.SLiMMutationModel(type=0),
         )
-        self.tree_sequence = pyslim.SlimTreeSequence(self.tree_sequence)
 
         # logger report after adding mutations
-        self._report_mutations(allow_m0=True)
+        self._report_new_mutations(allow_m0=True)
 
     def _report_mutations(self, allow_m0: bool=True):
         """Report to logger nmutations, mtypes, and check for m0 type."""
@@ -158,13 +254,111 @@ class OneSim:
             for mut in self.tree_sequence.mutations()
             for mutlist in mut.metadata['mutation_list']
         )
+
         if not allow_m0:
             assert 0 not in mut_types, "m0 mutation types already present."
 
+        logger.info(
+            f"Simulation currently has {self.tree_sequence.num_mutations} existing "
+            f"mutations of type(s) {mut_types}.")
+
+    def _report_new_mutations(self, allow_m0: bool=True):
+        """Report to logger nmutations, mtypes, and check for m0 type."""
+        # check type m0 is not used
+        mut_types = set(
+            mutlist['mutation_type']
+            for mut in self.tree_sequence.mutations()
+            for mutlist in mut.metadata['mutation_list']
+        )
+
         # report to logger the existing mutations
         logger.info(
+            f"Mutating using mutation rate: {self.rate*self.gens_per_lifecycle}. "
             f"Keeping {self.tree_sequence.num_mutations} existing "
             f"mutations of type(s) {mut_types}.")
+
+    def batch_recapitate(
+        dirpath:str, 
+        storepath:str,
+        chromosome:'shadie.Chromosome',
+        gens_per_lifecycle:int,
+        ancestral_Ne: int,
+        mutate:bool,
+        recapitate:bool=True,
+        custom_mutrate:Optional[float]=None,
+    ):
+        """
+        Utility function for batch recapitating all the .trees files
+        in a folder. Option to add neutral mutations as well
+
+        Will ignore internal folders. User provides output folder.
+        This function saves the output with the same filename appended
+        with `_recap` and `_mut` if the user also added neutral mutations. 
+
+        Parameters
+        ----------
+        dirpath: str
+            The directory that holds all the .trees files to be processed
+        storepath: str
+            The directory where procesed files will be saved out
+        chromosome: shade.Chromosome
+            The shadie.Chromosome object that was used in the simulations
+        gens_per_lifecycle: int
+            Was this a simulation using an alternation of generations model?
+            If so, the msprime mutation rate needs to be 1/2 the `mutation rate`
+            in the SLiM metadata. User just needs to provide True of False.
+        ancestral_Ne: int
+            What was the size of the DIPLOID ancestral population? Usually this 
+            Should be the same as the `spo_pop_size` parameter given to shadie
+        mutate: bool
+            True will add neutral mutations after recapitation is complete. 
+        recapitate: bool
+            Default = True. Option to make false is to allow a batch mutation of
+            already recapitated sims, if the user decided not the mutate them at
+            the time of recapitation. 
+        """
+
+        # assign the WD (holds all replicate sims)
+        directory = dirpath
+        
+        for filename in os.listdir(directory):
+            print(filename)
+            #generate the full path
+            f = os.path.join(directory, filename)
+            # check if it is a file (ignores internal folders)
+            if os.path.isfile(f):
+                #load the file
+                #ts = tskit.load(f)
+                trees_file = f
+
+                #get the treesfile
+                #treesfile = ts.metadata['SLiM']['user_metadata']['file_out'][0]
+                #if "/" in treesfile:
+                #    filename = treesfile.split("/")[-1]
+
+                #recapitate and mutate 
+                ts_rm = OneSim(trees_file=f, 
+                              chromosome=chromosome, 
+                              gens_per_lifecycle = gens_per_lifecycle,
+                              ancestral_Ne = ancestral_Ne,
+                              recapitate = True,
+                              add_neutral_mutations = mutate)
+                
+                #make the new filepath
+                append_string = ""
+                if recapitate:
+                    append_string = (append_string + "_recap")
+                if mutate:
+                    append_string = (append_string + "_mut")
+                append_string = (append_string + ".trees")
+
+                #newfilename = (filename[:-6] + "_recap.trees")
+                #print(newfilename)
+                newfilename = (filename[:-6] + append_string)
+                new_file = os.path.join(storepath, newfilename)
+
+                #save the new, mutated tree file
+                ts_rm.tree_sequence.dump(new_file)
 
     def stats(
         self,
@@ -212,7 +406,7 @@ class OneSim:
         data = []
         for rep in range(reps):
             seed = rng.integers(2**31)
-            tts = toytree_sequence(self.tree_sequence, sample=sample_size, seed=seed)
+            tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
             samples = np.arange(tts.sample[0])
 
             stats = pd.Series(
@@ -234,7 +428,7 @@ class OneSim:
         for stat in data.columns:
             mean_val = np.mean(data[stat])
             low, high = scipy.stats.t.interval(
-                alpha=0.95,
+                confidence=0.95,
                 df=len(data[stat]) - 1,
                 loc=mean_val,
                 scale=scipy.stats.sem(data[stat]),
@@ -269,7 +463,7 @@ class OneSim:
         ...
         """
         # load as a ToyTreeSequence
-        tts = toytree_sequence(self.tree_sequence, sample=sample, seed=seed)
+        tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
 
         # draw tree and mutations with a pre-set style
         base_style = {
@@ -311,7 +505,7 @@ class OneSim:
 
         """
         # load as a ToyTreeSequence (TODO: make faster)
-        tts = toytree_sequence(self.tree_sequence, sample=sample, seed=seed)
+        tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=seed)
 
         # get auto-dimensions from tree size
         height = height if height is not None else 325
@@ -347,7 +541,7 @@ class OneSim:
 
         # add generation line showing where SLiM simulation ended.
         # only add if not much higher than highest tree height.
-        # thsi could be faster by not building all these trees...
+        # this could be faster by not building all these trees...
         top_root = max([i.treenode.height for i in tts][start:start+max_trees])
         if show_generation_line:
             if self.generations < top_root + top_root * 0.1:
@@ -357,8 +551,6 @@ class OneSim:
                 )
 
         return canvas, axes, mark
-
-
 
     def get_windowed_stats(
         self,
@@ -401,7 +593,8 @@ class OneSim:
         sample: Union[int, Iterable[int]]=6,
         reps: int=1,
         seed: Optional[int]=None,
-        color: Optional[str]="lightseagreen"
+        color: Optional[str]="lightseagreen",
+        time: Optional[int]=0,
         ):
         """Return a toyplot drawing of a statistic across the genome.
         
@@ -425,7 +618,8 @@ class OneSim:
         rep_values = []
         for _ in range(reps):
             ndt = self.tree_sequence.tables.nodes
-            mask = (ndt.population == 0) & (ndt.time == 0) & (ndt.flags == 1)
+            #mask = (ndt.population == 0) & (ndt.time == 0) & (ndt.flags == 1)
+            mask = (ndt.time == time) #allows sampling at a specific time
             arr = np.arange(mask.shape[0])[mask]
             size = min(arr.size, sample)
             samples = rng.choice(arr, size=size, replace=False)
@@ -461,14 +655,44 @@ class OneSim:
         axes.label.offset = 20
         axes.label.text = f"{stat} in {int(window_size / 1000)}kb windows"
         return canvas, axes, mark
+    
+    def dNdS(self):
+        "calculate dN/dS"
+        ranges = []
+        for index, row in self.chromosome.data.iterrows():
+            ranges.append(range(row['exonstart'], row['exonstop']))
+            
+        c_syn = []
+        c_non = []
+        nc_neut = []
+        for mut in self.tscoal.mutations():
+            if mut.derived_state != '1':
+                c_non.append(mut.id)      
+            elif mut.derived_state == '1':
+                position = int(mut.position)
+                for r in ranges:
+                    if position in r:
+                        c_syn.append(mut.id)
+                    elif position not in r:
+                        nc_neut.append(mut.id)
+        
+        dnds = len(c_non)/len(c_syn)
+        print(f"N:S for the coding regions in whole genome = {dnds}")
+
+
+    def mktest(self):
+        "Perform mk-test"
+        pass
 
 
 @dataclass
 class TwoSims:
     trees_files: List[str]
     ancestral_ne: int
-    mut: float
+    mutation_rate: float
     recomb: float
+    gens_per_lifecycle: int
+    generations: int
     chromosome: 'shadie.Chromosome'
     seed: Optional[int]=None
     recapitate: bool=False
@@ -488,14 +712,40 @@ class TwoSims:
 
     def _extract_metadata(self):
         """Extract self attributes from shadie .trees file metadata.
-        TODO: can more of this be saved in SLiM metadata?
         """
-        gens = [i.metadata["SLiM"]["generation"] for i in self._tree_sequences]
-        #assert len(set(gens)) == 1, ("simulations must be same length (gens).")
-        self.generations = gens[0]
-        assert self.ancestral_ne, "ancestral_ne not found in metadata."
+        self.mut = self.mutation_rate
+
+        if self.generations is None :
+            self.generations = self.tree_sequence.metadata["SLiM"]["cycle"]
+
+        if self.gens_per_lifecycle is None:
+            self.gens_per_lifecycle = int(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
+
+        #print(f"Recombination Rate: {self.recomb}")
+        if self.recomb is None:
+            self.recomb = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["recomb_rate"][0])
+            #print(f"Recombination Rate: {self.recomb}")
+
+        if self.ancestral_Ne is None:
+            self.ancestral_Ne = self.generations
+        
+        if self.mut is None:
+            try:
+                #if no gam mutation rate, this will fail
+                gam_mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gam_mutation_rate"][0])
+                spo_mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["spo_mutation_rate"][0])
+                gens = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["gens_per_lifecycle"][0])
+
+                self.mut = (gam_mut+spo_mut)/gens
+            except:
+                self.mut = float(self.tree_sequence.metadata["SLiM"]["user_metadata"]["mutation_rate"][0])
+                self.mut = self.mut/self.gens_per_lifecycle
+        else:
+            self.mut = self.mut/self.gens_per_lifecycle
+
+        assert self.ancestral_Ne, "ancestral_Ne not found in metadata; must enter an ancestral_Ne arg."
         assert self.mut, "mut not found in metadata; must enter a mut arg."
-        assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
+        #assert self.recomb, "recomb not found in metadata; must enter a recomb arg."
 
     def _update_tables(self):
         """...Remove extra psuedopopulation nodes."""
@@ -526,7 +776,7 @@ class TwoSims:
             )
 
             # turn it back into a treesequence
-            self._tree_sequences.append(pyslim.load_tables(tables))
+            self._tree_sequences.append(tables.tree_sequence())
 
     def _match_nodes_and_merge(self):
         """Find matching ancestral nodes between two treeseqs for merging
@@ -637,7 +887,7 @@ class TwoSims:
 
             # let toytree do the sampling of N nodes from each pop such that:
             # (pop=pop, time=0, flag=1); this is equivalent to 'alive at' sampling.
-            tts = toytree_sequence(self.tree_sequence, sample=sample, seed=rep_seed)
+            tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=rep_seed)
             samples = np.arange(tts.sample[0] + tts.sample[1])
             sample_0 = samples[:tts.sample[0]]
             sample_1 = samples[tts.sample[0]:]
@@ -673,7 +923,7 @@ class TwoSims:
         for stat in data.columns:
             mean_val = np.mean(data[stat])
             low, high = scipy.stats.t.interval(
-                alpha=0.95,
+                confidence=0.95,
                 df=len(data[stat]) - 1,
                 loc=mean_val,
                 scale=scipy.stats.sem(data[stat]),
@@ -702,7 +952,7 @@ class TwoSims:
         rep_values = []
         for _ in range(reps):
             rep_seed = rng.integers(2**31)
-            tts = toytree_sequence(self.tree_sequence, sample=sample, seed=rep_seed)
+            tts = ToyTreeSequence(self.tree_sequence, sample=sample, seed=rep_seed)
             samples = np.arange(tts.sample[0] + tts.sample[1])
             sample_0 = samples[:tts.sample[0]]
             sample_1 = samples[tts.sample[0]:]
@@ -781,7 +1031,7 @@ class TwoSims:
             data = i
             mean_val = np.mean(data)
             low, high = scipy.stats.t.interval(
-                alpha=0.95,
+                confidence=0.95,
                 df=len(data) - 1,
                 loc=mean_val,
                 scale=scipy.stats.sem(data),
@@ -817,15 +1067,25 @@ class TwoSims:
 
 if __name__ == "__main__":
 
-    import glob
     import shadie
     shadie.set_log_level("DEBUG")
 
-    TREEFILES = sorted(glob.glob(
-        "/home/deren/Desktop/standard-params/bryo-mono/"
-        "bryo_mono_run1[0-9]_from_smallchrom_2000spo.trees")
-    )
+    # TREEFILES = sorted(glob.glob(
+    #     "/home/deren/Desktop/standard-params/bryo-mono/"
+    #     "bryo_mono_run1[0-9]_from_smallchrom_2000spo.trees")
+    # )
+    default = shadie.chromosome.default()
+    post = OneSim("/Users/elissa/code/git/hacks/shadie/docs/notebooks/WF.trees", default)
 
+
+    # import glob
+    # import shadie
+    # shadie.set_log_level("DEBUG")
+
+    # TREEFILES = sorted(glob.glob(
+    #     "/home/deren/Desktop/standard-params/bryo-mono/"
+    #     "bryo_mono_run1[0-9]_from_smallchrom_2000spo.trees")
+    # )
     # post = OneSim(TREEFILES[0], ancestral_Ne=500, mut=1e-7, recomb=1e-8, chromosome=None)
     # print(post.stats())
 
@@ -836,19 +1096,33 @@ if __name__ == "__main__":
     #     recomb=1e-8,
     #     chromosome=None,
     # )
+
+    # TREEFILES = sorted(glob.glob(
+    #     "/home/deren/Desktop/standard-params/pter-hetero/"
+    #     "pter_hetero_run2[0-9]_from_smallchrom_2000spo.trees")
+    # )
+    # post = TwoSims(
+    #     trees_files=[TREEFILES[0], TREEFILES[1]],
+    #     ancestral_ne=200,
+    #     mut=1e-7 / 2.,
+    #     recomb=1e-8,
+    #     chromosome=None,
+    # )
     # print(post.get_stats(sample=20, reps=20))
+    # print(post.get_windowed_stats(reps=5))
+    # print(post.stats(sample=20, reps=20))
 
+    # TREEFILES = sorted(glob.glob(
+    #     "/home/deren/Desktop/standard-params/pter-hetero/"
+    #     "pter_hetero_run2[0-9]_from_smallchrom_2000spo.trees")
+    # )
+    # post = TwoSims(
+    #     trees_files=[TREEFILES[0], TREEFILES[1]],
+    #     ancestral_ne=200,
+    #     mut=1e-7 / 2.,
+    #     recomb=1e-8,
+    #     chromosome=None,
+    # )
+    # print(post.stats(sample=20, reps=20))
 
-    TREEFILES = sorted(glob.glob(
-        "/home/deren/Desktop/standard-params/pter-hetero/"
-        "pter_hetero_run2[0-9]_from_smallchrom_2000spo.trees")
-    )
-    post = TwoSims(
-        trees_files=[TREEFILES[0], TREEFILES[1]],
-        ancestral_ne=200,
-        mut=1e-7 / 2.,
-        recomb=1e-8,
-        chromosome=None,
-    )
-    print(post.get_stats(sample=20, reps=20))
-    print(post.get_windowed_stats(reps=5))
+    # print(post.draw_stats())

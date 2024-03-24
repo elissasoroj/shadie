@@ -5,9 +5,10 @@ site_author: Elissa Sorojsrisom
 #to see dummy site: mkdocs serve
 
 # Copyright
-copyright: Copyright &copy; 2022 Elissa Sorojsrisom
+copyright: Copyright &copy; 2024 Elissa Sorojsrisom
 
 nav:
+  - Home: index.md
   - Introduction: 
     - Overview: main/overview.md
     - About: main/about.md
@@ -16,12 +17,16 @@ nav:
     - Getting Started: tutorials/getting_started.md
     - mtypes: notebooks/1-mtypes_gtypes.ipynb
     - chromosome: notebooks/2-chrom.ipynb
-    - model setup: drafts/under-construction.md
-    #- v0.1.1 Demo: notebooks/shadie-v0_1_1-demo.ipynb
-    - Full Work Flow: tutorials/fullworkflow.md
-  - Examples:
-    - Single-Site: drafts/under-construction.md
-    - Differential Expression: drafts/under-construction.md
+    - wright-fisher: notebooks/3-WFsim.ipynb
+    - model intro: notebooks/4-model_intro.ipynb
+    - recapitation: notebooks/5-recapitation.ipynb
+    - analysis: notebooks/6-data_analysis.ipynb
+    - quick demo: notebooks/shadie-v0_3_0-demo.ipynb
+    - plant models: drafts/under-construction.md
+  #  - Full Work Flow: tutorials/fullworkflow.md
+  # - Examples:
+  #   - Single-Site: drafts/under-construction.md
+  #   - Differential Expression: drafts/under-construction.md
   - Understory:
     - Intro: education/eduintro.md
 
@@ -42,7 +47,7 @@ theme:
         icon: material/weather-sunny
         name: Switch to light mode
   font:
-    #text: Quicksand
+    text: Roboto
   icon:
     logo: octicons/codespaces-24
     admonition:
@@ -72,8 +77,6 @@ theme:
 plugins:
   - mkdocs-jupyter:
       include_source: True
-      kernel_name: py310
-      ignore: [".ipynb_checkpoints/*.ipynb"]
 
 markdown_extensions:
 # Python Markdown
@@ -86,26 +89,22 @@ markdown_extensions:
       permalink: true
 
 #pymdownx
-  - pymdownx.tabbed      
-  - pymdownx.details
-  - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
-  - pymdownx.critic
+# Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
   - pymdownx.caret
   - pymdownx.details
-  # - pymdownx.highlight:
-  #     anchor_linenums: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.keys
   - pymdownx.mark
   - pymdownx.smartsymbols
-  - pymdownx.snippets
   - pymdownx.superfences
-      # custom_fences:
-      #   - name: mermaid
-      #     class: mermaid
-      #     format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.tasklist:
@@ -113,7 +112,7 @@ markdown_extensions:
   - pymdownx.tilde
 
 #Javascript Extentions
-# extra_javascript:
+#extra_javascript:
   # - js/custom.js 
   # - https://unpkg.com/mermaid@8.9.2/dist/mermaid.min.js
   # - https://cdnjs.cloudflare.com/ajax/libs/mermaid/7.0.9/mermaid.min.js

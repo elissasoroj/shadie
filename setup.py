@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
-"""
-Install package locally for testing.
->>> conda install [deps...] -c conda-forge
->>> pip install -e . --no-deps
+"""Run `pip install -e .` to install local git version.
 """
 
 import re
@@ -20,7 +17,6 @@ with open("shadie/__init__.py", 'r', encoding="utf-8") as init:
 # build command
 setup(
     name="shadie",
-    version=CUR_VERSION,
     packages=[
         "shadie",
         "shadie.base",
@@ -31,19 +27,15 @@ setup(
         "shadie.reproduction",
         "shadie.sims",
     ],
+    version=CUR_VERSION,
     author="Elissa Sorojsrisom",
     author_email="ess2239@columbia.edu",
     license="GPLv3",
-    description="SLiM3 Wrapper Program, 'Simulating Haploid-Diploid Evolution'",
-    install_requires = [
-        "altair",
-        "numpy",
-        "pandas",
-        "pyslim",
-        "scipy",
-        "toyplot",
-        "toytree",
-        "tskit",
+    description="'Simulating Haploid-Diploid Evolution', a wrapper for SLiM and msprime.",
+    install_requires=[
+        "pyslim>=1.0.3",
+        "toytree>=3.0.0",
+        "altair>=5.2.0",
     ],
     classifiers=["Programming Language :: Python :: 3"],
 )

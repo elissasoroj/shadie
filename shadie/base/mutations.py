@@ -28,15 +28,12 @@ SLIM example
 >>> initializeMutationType(4, 0.8, "e", 0.1);
 """
 
-
 from typing import Mapping, Sequence, Optional, ClassVar
 from dataclasses import dataclass, field
-import numpy as np
-from scipy import stats
-from scipy.stats import rv_continuous
-import toyplot
 from loguru import logger
-
+from scipy import stats
+import numpy as np
+import toyplot
 
 DISTOPTS = ['f', 'g', 'e', 'n', 'w', 's']
 BAD_DIST_TYPE = """\
@@ -50,7 +47,7 @@ Distribution type options: \n"
 """
 
 
-@dataclass
+@dataclass(eq=False)
 class MutationType:
     """MutationType Class for fitness effects.
 
@@ -79,7 +76,7 @@ class MutationType:
     affects_diploid: bool
         Affects diploid fitness. Default=True.
     affects_haploid: bool
-        Affects haploid fitness. Default=False.
+        Affects haploid fitness. Default=True.
     idx: int
         Set a unique integer index for this MutationType.
 
@@ -99,16 +96,18 @@ class MutationType:
     params: Sequence[float]
     """: Parameters of the distribution of fitness effects."""
     affects_diploid: bool
-    """: ..."""
+    """: Mutation will affect diploid fitness"""
     affects_haploid: bool
-    """: ..."""
+    """: Mutation will affect haploid fitness"""
+    convert_to_substitution: bool = False
+    """: Determines whether a Mutation is converted to a Substitution object in SLiM"""
 
     # Class variable
     idx: ClassVar[int] = field(default=0, init=True)
 
     # Parameters auto-filled and not entered by users
     """: Unique index of this mutation type."""
-    _dist: rv_continuous = field(default=None, init=False, repr=False)
+    _dist: stats.rv_continuous = field(default=None, init=False, repr=False)
     """: Scipy stats distribution of the .distribution name type."""
     _params: Mapping[str, float] = field(default=dict, init=False, repr=False)
     """: A dict mapping parameter names to values for a distribution."""
@@ -154,7 +153,8 @@ class MutationType:
         """Return a string reprentation of the object."""
         value = (
             f"MutationType({self.name}, {self.dominance}, "
-            f"{self.distribution}, {self.params})"
+            f"{self.distribution}, {self.params},"
+            f"{self.affects_diploid}, {self.affects_haploid})"
         )
         return value
 
@@ -189,8 +189,17 @@ class MutationType:
         inner = f"'{self.name}', {self.dominance}, '{self.distribution}', "
         inner += ", ".join(map(str, self.params))
         if nuc:
-            return f"initializeMutationTypeNuc({inner});"
-        return f"initializeMutationType({inner});"
+            initialize = f"initializeMutationTypeNuc({inner});"
+        else:
+            initialize = f"initializeMutationType({inner});"
+
+        if self.convert_to_substitution:
+            convert = f"\n{self.name}.convertToSubstitution = T;"
+            to_slim_string = initialize + convert
+        else:
+            to_slim_string = initialize
+
+        return to_slim_string
 
     ###################################################################
     # Extract stats from distribution.
@@ -233,6 +242,7 @@ class MutationType:
             f"distribution_std: {self.std:.4f}\n"
             f"affects diploid fitness: {self.affects_diploid}\n"
             f"affects haploid fitness: {self.affects_haploid}\n"
+            f"convert to substitution: {self.convert_to_substitution}\n"
             # f"differential_expr: {self._expr}\n"
         )
 
@@ -302,7 +312,8 @@ def mtype(
     distribution: str,
     params: Sequence[float],
     affects_diploid: bool = True,
-    affects_haploid: bool = False,
+    affects_haploid: bool = True,
+    convert_to_substitution: bool = False,
     force_idx: Optional[int] = None,
 ) -> MutationType:
     """MutationType class constructor function.
@@ -330,6 +341,7 @@ def mtype(
         params=params,
         affects_diploid=affects_diploid,
         affects_haploid=affects_haploid,
+        convert_to_substitution=convert_to_substitution,
         _force_idx=force_idx,
     )
 
@@ -371,10 +383,12 @@ if __name__ == "__main__":
     m = mtype(0.5, 'e', (2.5), force_idx=0)
     m.print_summary()
 
-    m = mtype(0.5, 'g', (2, 0.1), force_idx=0, affects_diploid=False)
+    m = mtype(0.5, 'g', (2, 0.1), force_idx=0, affects_diploid=False, convert_to_substitution= True)
     m.print_summary()
 
-    print(m.__doc__)
+    print(m.to_slim())
+
+    #print(m.__doc__)
 
     # mlist = shadie.mlist(
     #     #shadie.mtype(0.5, 'f', 0.0),
@@ -406,4 +420,3 @@ if __name__ == "__main__":
 
     # mut2 = shadie.mtype(0.5, 'f', 0.1, diffexpr="diploid")
     # print(mut2._expr)
-    # print(expr)

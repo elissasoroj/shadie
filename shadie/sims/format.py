@@ -21,6 +21,7 @@ initialize() {{
   // MutationType init
   {mutations}
   c({mutation_names}).haploidDominanceCoeff = 1.0;
+  c({mutation_names}).convertToSubstitution = T;
 
   // ElementType init
   {elements}
@@ -48,24 +49,32 @@ REPRODUCTION = """
 """
 
 MUT_EFFECT = """
-// adjusts mutationEffect calculation 
-//(specific mutation in specific ind)
+// adjusts mutationEffect calculation
+// (specific mutation in specific ind)
 {comment}{idx}mutationEffect({mutation}) {{
     {scripts}
 }}
 """
 
 FITNESS = """
-// adjusts fitnessEffect calculation 
-//(fitness recalc for specific ind)
-{comment}{idx}fitnessEffect({target}) {{
+// adjusts fitnessEffect calculation
+// (fitness recalc for specific ind)
+{comment}{idx}fitnessEffect({population}) {{
     {scripts}
 }}
 """
 
 SURVIVAL = """
 // implements survival adjustments
-{idx}survival({population}) {{
+{comment}{idx}survival({population}) {{
+    {scripts}
+}}
+"""
+
+FIRST = """
+// executes before offspring are generated
+{comment}
+{idx}{time}first() {{
     {scripts}
 }}
 """
@@ -92,8 +101,10 @@ CUSTOM = """{comment}{scripts}"""
 
 EVENT_TO_FORMATTER = {
     "initialize": INITIALIZE,
+    "first": FIRST,
     "early": EARLY,
     "late": LATE,
+    'muteffect': MUT_EFFECT,
     'fitness': FITNESS,
     'survival': SURVIVAL,
     'custom': CUSTOM,
@@ -103,8 +114,7 @@ EVENT_TO_FORMATTER = {
 
 
 def clean_scripts(scripts: Union[str, List[str]]):
-    """
-    Ensures scripts end with a semi-colon
+    """Ensures scripts end with a semi-colon
     """
     if isinstance(scripts, list):
         scripts = "\n    ".join([i.strip(';') + ';' for i in scripts])
@@ -117,8 +127,7 @@ def clean_scripts(scripts: Union[str, List[str]]):
 
 
 def format_event_dicts_to_strings(event: Dict):
-    """
-    Performs string formatting on the .map dictionary of the
+    """Performs string formatting on the .map dictionary of the
     Model object to write the arguments to SLiM string format
     """
     # cleanup formatting of some arguments
@@ -132,11 +141,11 @@ def format_event_dicts_to_strings(event: Dict):
         for (key, val) in event['simglobals'].items():
             if isinstance(val, dict):
                 dictlist = []
-                for (i,j) in val.items():
+                for (i, j) in val.items():
                     dictlist.append(str(i))
                     dictlist.append(str(j))
                 string = "Dictionary"+str(tuple(dictlist))
-                event['simglobals'].update({key:str(string)})
+                event['simglobals'].update({key: str(string)})
 
         event['simglobals'] = "\n  ".join([
             f"defineGlobal('{str(key).upper()}', {val});" for key, val
