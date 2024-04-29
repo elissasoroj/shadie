@@ -252,9 +252,10 @@ class NonWrightFisher(ReproductionBase):
 class WrightFisher(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
-    selection: str = "none"  # soft selection on by default
     _gens_per_lifecycle: int = 1  # internal param
-    sexes: bool = False  # not yet used?
+    fitness_affects_survival: bool =True
+    fitness_affects_reproduction: bool =False
+    separate_sexes: bool = False
 
     def run(self):
         """Updates self.model.map with new component scripts for running
@@ -279,14 +280,20 @@ class WrightFisher(ReproductionBase):
 
     def _add_scripts(self):
         """fitness and mating of diploid population."""
-        if self.selection == "soft":
+        # check only one reproduction mode for WF
+        if (self.fitness_affects_survival and self.fitness_affects_reproduction):
+            raise ValueError(f"WF models in shadie requires only one of "
+             "`fitness_affects_reproduction` and `fitness_affects_survival "
+             "to be equal to `True`.")
+
+        if self.fitness_affects_reproduction:
             self.model.repro(
                 population="p1",
                 scripts= WF_REPRO_SOFT,
                 comment="WF model with soft selection (parent fitness determines mating success)"
             )
 
-        elif self.selection == "hard":
+        elif self.fitness_affects_survival:
             self.model.repro(
                 population="p1",
                 scripts= WF_REPRO_HARD,
@@ -298,7 +305,7 @@ class WrightFisher(ReproductionBase):
                 comment="calculate relative fitness.",
             )
 
-        elif self.selection == "none":
+        else:
             self.model.repro(
                 population="p1",
                 scripts= "subpop.addCrossed(individual, subpop.sampleIndividuals(1));",
@@ -314,7 +321,6 @@ class WrightFisher(ReproductionBase):
             'gam_pop_size': "NA",
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
             'recombination_rate': self.model.metadata['recomb_rate'],
-            'selection': self.selection,
             'gens_per_lifecycle': self._gens_per_lifecycle,
         }
 
@@ -362,7 +368,7 @@ if __name__ == "__main__":
     # generate a model w/ slim script
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=1000, )  # file_in="/tmp/test.trees")
-        mod.reproduction.wright_fisher_haploid_sexual(pop_size=1000)
-    # print(mod.script)
-    mod.write("/tmp/slim.slim")
-    mod.run(seed=123, binary="/home/deren/miniconda3/envs/shadie/bin/slim")  # /usr/local/bin/slim")
+        mod.reproduction.moran(pop_size=1000)
+    print(mod.script)
+    #mod.write("/tmp/slim.slim")
+    #mod.run(seed=123, binary="/home/deren/miniconda3/envs/shadie/bin/slim")  # /usr/local/bin/slim")

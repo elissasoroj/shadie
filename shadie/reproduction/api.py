@@ -647,8 +647,9 @@ class ReproductionApi:
     def wright_fisher(
         self,
         pop_size: int,
-        selection: str="none",
-        sexes: bool=False,  # mono/hetero terms is more consistent with others...
+        separate_sexes: bool = False,
+        fitness_affects_reproduction: bool=False,
+        fitness_affects_survival: bool=True,
     ):
         """Generate scripts appropriate for basic WF model, set up as a
         SLiM nonWF model
@@ -669,15 +670,17 @@ class ReproductionApi:
         WrightFisher(
             model=self.model,
             pop_size=pop_size,
-            selection = selection,
-            sexes=sexes,
+            separate_sexes=separate_sexes,
+            fitness_affects_reproduction=fitness_affects_reproduction,
+            fitness_affects_survival=fitness_affects_survival
         ).run()
 
     def moran(
         self,
         pop_size: int,
-        selection: str = "none",
-        sexes: bool = False,  # mono/hetero terms is more consistent with others...
+        separate_sexes: bool = False,
+        fitness_affects_reproduction: bool=False,
+        fitness_affects_survival: bool=True,
     ):
         """Generate scripts appropriate for Moran model. This is similar
         to a WF model, but with overlapping generations
@@ -698,15 +701,17 @@ class ReproductionApi:
         Moran(
             model=self.model,
             pop_size=pop_size,
-            selection=selection,
-            sexes=sexes,
+            separate_sexes=separate_sexes,
+            fitness_affects_reproduction=fitness_affects_reproduction,
+            fitness_affects_survival=fitness_affects_survival
         ).run()
 
     def wright_fisher_haploid_sexual(
         self,
         pop_size: int,
-        selection: str = "none",
-        sexes: bool = False,  # mono/hetero terms is more consistent with others...
+        separate_sexes: bool = False,
+        fitness_affects_survival: bool=True,
+        fitness_affects_reproduction: bool=False,
     ):
         """Generate scripts for a clonal Wright-Fisher model. Each
         generation reproduces sexually and experiences fitness effects
@@ -728,15 +733,16 @@ class ReproductionApi:
         HaploidWF(
             model=self.model,
             pop_size=pop_size,
-            selection=selection,
-            sexes=sexes,
+            separate_sexes=separate_sexes,
+            fitness_affects_reproduction=fitness_affects_reproduction,
+            fitness_affects_survival=fitness_affects_survival
         ).run()
 
     def wright_fisher_haploid_clonal(
         self,
         pop_size: int,
-        selection: str="none",
-        sexes: bool=False,  # mono/hetero terms is more consistent with others...
+        fitness_affects_reproduction: bool=False,
+        fitness_affects_survival: bool=True,
     ):
         """
         Generate scripts for a clonal Wright-Fisher model. Each generation
@@ -759,16 +765,19 @@ class ReproductionApi:
         ClonalHaploidWF(
             model=self.model,
             pop_size=pop_size,
-            selection=selection,
-            sexes=sexes,
+            fitness_affects_reproduction=fitness_affects_reproduction,
+            fitness_affects_survival=fitness_affects_survival
         ).run()
 
     def wright_fisher_altgen(
         self,
         spo_pop_size: int,
         gam_pop_size: int,
-        selection: str="none",
-        sexes: bool=False,  # mono/hetero terms is more consistent with others...
+        separate_sexes: bool = False,
+        fitness_affects_haploid_reproduction: bool=False,
+        fitness_affects_haploid_survival: bool=True,
+        fitness_affects_diploid_reproduction: bool=False,
+        fitness_affects_diploid_survival: bool=True,
     ):
         """Generate scripts for an altered Wright-Fisher model with
         alternation of generations. Each generation reproduces and
@@ -793,30 +802,11 @@ class ReproductionApi:
             model=self.model,
             spo_pop_size=spo_pop_size,
             gam_pop_size=gam_pop_size,
-            selection=selection,
-            sexes=sexes,
-        ).run()
-
-    def wright_fisher_haploid(
-        self,
-        pop_size: int,
-        sexes: bool = False,  # mono/hetero terms is more consistent with others...
-    ):
-        """Generate scripts appropriate for basic SLiM nonWF model,
-        set up as a WF model.
-
-        Parameters:
-        -----------
-        pop_size:
-            Size of the population in number of haploids.
-        sexes: bool
-            default = False; individuals are hemraphroditic. If True,
-            individuals will be male and female
-        """
-        ClonalHaploidWF(
-            model=self.model,
-            pop_size=pop_size,
-            sexes=sexes,
+            separate_sexes=separate_sexes,
+            fitness_affects_haploid_reproduction=fitness_affects_reproduction,
+            fitness_affects_haploid_survival=fitness_affects_survival,
+            fitness_affects_diploid_reproduction=fitness_affects_reproduction,
+            fitness_affects_diploid_survival=fitness_affects_survival
         ).run()
 
 

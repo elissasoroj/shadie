@@ -43,7 +43,6 @@ from shadie.reproduction.specialWF_scripts import (
     WF_ALTGEN_EARLY,
 )
 
-
 @dataclass
 class HaploidWF(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model with clonal
@@ -51,7 +50,9 @@ class HaploidWF(ReproductionBase):
     pop_size: int  # number of haploid individuals
     selection: str = "none"
     _gens_per_lifecycle: int = 1
-    sexes: bool = False  # not yet used?
+    separate_sexes: bool = False
+    fitness_affects_survival: bool = True
+    fitness_affects_reproduction: bool = False
 
     def run(self):
         """Updates self.model.map with new component scripts for running
@@ -81,22 +82,7 @@ class HaploidWF(ReproductionBase):
 
     def _add_mode_scripts(self):
         """fitness and mating of diploid population."""
-
-        if self.selection == "none":
-            self.model.repro(
-                population="p1",
-                scripts= REPRO_HAPLOID_WF,
-                comment="haploid random mating; mating success weighted by fitness."
-            )
-
-        elif self.selection == "soft":
-            self.model.repro(
-                population="p1",
-                scripts= REPRO_HAPLOID_SOFT_WF,
-                comment="haploid random mating; mating success weighted by fitness."
-            )
-
-        elif self.selection == "hard":
+        if self.fitness_affects_survival:
             self.model.repro(
                 population="p1",
                 scripts= REPRO_HAPLOID_WF,
@@ -108,6 +94,20 @@ class HaploidWF(ReproductionBase):
                 scripts="p1.fitnessScaling = K / p1.individualCount",
                 comment="calculate relative fitness.",
             ) 
+
+        elif self.fitness_affects_reproduction:
+            self.model.repro(
+                population="p1",
+                scripts= REPRO_HAPLOID_SOFT_WF,
+                comment="haploid random mating; mating success weighted by fitness."
+            )
+
+        else:
+            self.model.repro(
+                population="p1",
+                scripts= REPRO_HAPLOID_WF,
+                comment="haploid random mating; mating success weighted by fitness."
+            )
 
     def _add_initialize_constants(self):
         """Add defineConstant calls to init for new variables."""
@@ -136,16 +136,15 @@ class HaploidWF(ReproductionBase):
             comment="non-overlapping generations",
         )
 
-
 @dataclass
 class ClonalHaploidWF(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model with clonal
      haploid individuals."""
-    
     pop_size: int #number of haploid individuals
     selection:str = "none"
     _gens_per_lifecycle: int = 1
-    sexes: bool = False  # not yet used?
+    fitness_affects_survival: bool = True
+    fitness_affects_reproduction: bool = False
 
     def run(self):
         """
@@ -171,21 +170,14 @@ class ClonalHaploidWF(ReproductionBase):
 
     def _add_scripts(self):
         """fitness and mating of diploid population."""
-        if self.selection == "none":
-            self.model.repro(
-                population="p1",
-                scripts= REPRO_CLONAL_WF,
-                comment="haploid random mating; mating success weighted by fitness."
-            )
-
-        elif self.selection == "soft":
+        if self.fitness_affects_reproduction:
             self.model.repro(
                 population="p1",
                 scripts= REPRO_CLONAL_SOFT_WF,
                 comment="haploid random mating; mating success weighted by fitness."
             )
 
-        elif self.selection == "hard":
+        elif self.fitness_affects_survival:
             self.model.repro(
                 population="p1",
                 scripts= REPRO_CLONAL_WF,
@@ -197,6 +189,13 @@ class ClonalHaploidWF(ReproductionBase):
                 scripts="p1.fitnessScaling = K / p1.individualCount",
                 comment="calculate relative fitness.",
             ) 
+
+        else:
+            self.model.repro(
+                population="p1",
+                scripts= REPRO_CLONAL_WF,
+                comment="haploid random mating; mating success weighted by fitness."
+            )
 
     def _add_initialize_constants(self):
         """Add defineConstant calls to init for new variables."""
@@ -230,12 +229,13 @@ class ClonalHaploidWF(ReproductionBase):
 class AltGenWF(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model with clonal
      haploid individuals."""
-    
     spo_pop_size: int # number of diploid individuals
     gam_pop_size: int # number of haploid individuals
     selection:str = "none"
     _gens_per_lifecycle: int = 2
-    sexes: bool = False  # not yet used?
+    fitness_affects_survival: bool =True
+    fitness_affects_reproduction: bool =False
+    separate_sexes: bool = False
 
     def run(self):
         """Updates self.model.map with new component scripts for running
@@ -264,22 +264,7 @@ class AltGenWF(ReproductionBase):
     def _add_scripts(self):
         """fitness and mating of diploid population."""
 
-        if self.selection == "none":
-
-            self.model.repro(
-                population="p1",
-                scripts= REPRO_ALTGEN_P1,
-                comment="clonal random mating; mating success weighted by fitness."
-            )
-
-            self.model.repro(
-                population="p0",
-                scripts= REPRO_ALTGEN_P0,
-                comment="clonal random mating; mating success weighted by fitness."
-            )
-
-        elif self.selection == "soft":
-
+        if self.fitness_affects_reproduction:
             self.model.repro(
                 population="p1",
                 scripts= REPRO_ALTGEN_SOFT_P1,
@@ -292,8 +277,7 @@ class AltGenWF(ReproductionBase):
                 comment="clonal random mating; mating success weighted by fitness."
             )
 
-        elif self.selection == "hard":
-
+        elif self.fitness_affects_survival:
             self.model.repro(
                 population="p1",
                 scripts= REPRO_ALTGEN_P1,
@@ -310,6 +294,19 @@ class AltGenWF(ReproductionBase):
                 time = None,
                 scripts=WF_ALTGEN_EARLY,
                 comment="Fitness scaling for hard selection"
+            )
+
+        else:
+            self.model.repro(
+                population="p1",
+                scripts= REPRO_ALTGEN_P1,
+                comment="clonal random mating; mating success weighted by fitness."
+            )
+
+            self.model.repro(
+                population="p0",
+                scripts= REPRO_ALTGEN_P0,
+                comment="clonal random mating; mating success weighted by fitness."
             )
 
     def _add_initialize_constants(self):
@@ -377,7 +374,7 @@ class AltGenWF(ReproductionBase):
 class Moran(WrightFisher):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
-    sexes: bool = False  # not yet used?
+    separate_sexes: bool = False
     _gens_per_lifecycle: int = 1
 
     def run(self):
@@ -429,7 +426,7 @@ if __name__ == "__main__":
 
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=50, file_out="/tmp/test.trees")
-        mod.reproduction.wright_fisher_haploid_clonal(
+        mod.reproduction.bryophyte_monoicous(
             pop_size=500,
         )
     print(mod.script)
