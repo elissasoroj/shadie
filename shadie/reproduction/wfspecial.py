@@ -48,11 +48,10 @@ class HaploidWF(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model with clonal
      haploid individuals."""
     pop_size: int  # number of haploid individuals
-    selection: str = "none"
-    _gens_per_lifecycle: int = 1
     separate_sexes: bool = False
     fitness_affects_survival: bool = True
     fitness_affects_reproduction: bool = False
+    _gens_per_lifecycle: int = 1
 
     def run(self):
         """Updates self.model.map with new component scripts for running
@@ -118,7 +117,8 @@ class HaploidWF(ReproductionBase):
             'gam_pop_size': self.pop_size,
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
             'recombination_rate': self.model.metadata['recomb_rate'],
-            'selection': self.selection,
+            'fitness_affects_survival': self.fitness_affects_survival,
+            'fitness_affects_reproduction': self.fitness_affects_reproduction,
             'gens_per_lifecycle': self._gens_per_lifecycle,
         }
 
@@ -141,10 +141,9 @@ class ClonalHaploidWF(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model with clonal
      haploid individuals."""
     pop_size: int #number of haploid individuals
-    selection:str = "none"
-    _gens_per_lifecycle: int = 1
     fitness_affects_survival: bool = True
     fitness_affects_reproduction: bool = False
+    _gens_per_lifecycle: int = 1
 
     def run(self):
         """
@@ -206,7 +205,8 @@ class ClonalHaploidWF(ReproductionBase):
             'gam_pop_size': self.pop_size,
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
             'recombination_rate': self.model.metadata['recomb_rate'],
-            'selection': self.selection,
+            'fitness_affects_survival': self.fitness_affects_survival,
+            'fitness_affects_reproduction': self.fitness_affects_reproduction,
             'gens_per_lifecycle': self._gens_per_lifecycle,
         }
 
@@ -231,11 +231,10 @@ class AltGenWF(ReproductionBase):
      haploid individuals."""
     spo_pop_size: int # number of diploid individuals
     gam_pop_size: int # number of haploid individuals
-    selection:str = "none"
-    _gens_per_lifecycle: int = 2
     fitness_affects_survival: bool =True
     fitness_affects_reproduction: bool =False
     separate_sexes: bool = False
+    _gens_per_lifecycle: int = 2
 
     def run(self):
         """Updates self.model.map with new component scripts for running
@@ -317,7 +316,8 @@ class AltGenWF(ReproductionBase):
             'spo_pop_size': self.spo_pop_size,
             'gam_pop_size': self.gam_pop_size,
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
-            'selection': self.selection,
+            'fitness_affects_survival': self.fitness_affects_survival,
+            'fitness_affects_reproduction': self.fitness_affects_reproduction,
             'recombination_rate': self.model.metadata['recomb_rate']
         }
 
@@ -375,6 +375,7 @@ class Moran(WrightFisher):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
     separate_sexes: bool = False
+    age_of_death: int = 10
     _gens_per_lifecycle: int = 1
 
     def run(self):
@@ -392,7 +393,14 @@ class Moran(WrightFisher):
         self._add_survival_script()
 
     def _add_survival_script(self):
-        pass
+        """Defines the late() callbacks for each gen.
+        This overrides the NonWrightFisher class function of same name.
+        """
+        self.model.survival(
+            population=None,
+            scripts=f"return (individual.age < {self.age_of_death});",
+            comment=f"Individuals will die at age {self.age_of_death}",
+        )
 
 
 if __name__ == "__main__":
