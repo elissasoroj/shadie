@@ -773,11 +773,9 @@ class ReproductionApi:
         self,
         spo_pop_size: int,
         gam_pop_size: int,
-        separate_sexes: bool = False,
-        fitness_affects_haploid_reproduction: bool=False,
-        fitness_affects_haploid_survival: bool=True,
-        fitness_affects_diploid_reproduction: bool=False,
-        fitness_affects_diploid_survival: bool=True,
+        separate_sexes: bool = False,        
+        fitness_affects_survival: bool=True,
+        fitness_affects_reproduction: bool=False,
     ):
         """Generate scripts for an altered Wright-Fisher model with
         alternation of generations. Each generation reproduces and
@@ -803,10 +801,8 @@ class ReproductionApi:
             spo_pop_size=spo_pop_size,
             gam_pop_size=gam_pop_size,
             separate_sexes=separate_sexes,
-            fitness_affects_haploid_reproduction=fitness_affects_reproduction,
-            fitness_affects_haploid_survival=fitness_affects_survival,
-            fitness_affects_diploid_reproduction=fitness_affects_reproduction,
-            fitness_affects_diploid_survival=fitness_affects_survival
+            fitness_affects_reproduction=fitness_affects_reproduction,
+            fitness_affects_survival=fitness_affects_survival
         ).run()
 
 

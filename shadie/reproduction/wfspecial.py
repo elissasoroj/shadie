@@ -29,6 +29,7 @@ from shadie.reproduction.scripts import (
     HAP_MUT_FITNESS,
     DIP_MUT_FITNESS
 )
+
 from shadie.reproduction.specialWF_scripts import (
     REPRO_WF,
     REPRO_HAPLOID_WF,
@@ -231,8 +232,8 @@ class AltGenWF(ReproductionBase):
      haploid individuals."""
     spo_pop_size: int # number of diploid individuals
     gam_pop_size: int # number of haploid individuals
-    fitness_affects_survival: bool =True
-    fitness_affects_reproduction: bool =False
+    fitness_affects_survival: bool = True
+    fitness_affects_reproduction: bool = False
     separate_sexes: bool = False
     _gens_per_lifecycle: int = 2
 
@@ -433,9 +434,10 @@ if __name__ == "__main__":
     )
 
     with shadie.Model() as mod:
-        mod.initialize(chromosome=chrom, sim_time=50, file_out="/tmp/test.trees")
-        mod.reproduction.bryophyte_monoicous(
-            pop_size=500,
+        mod.initialize(chromosome=chrom, sim_time=100, file_out="/tmp/test.trees")
+        mod.reproduction.wright_fisher_altgen(
+            spo_pop_size=500,
+            gam_pop_size=500,
         )
     print(mod.script)
     # mod.write("/tmp/slim.slim")

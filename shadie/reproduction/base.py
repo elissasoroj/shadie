@@ -253,8 +253,8 @@ class WrightFisher(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
     _gens_per_lifecycle: int = 1  # internal param
-    fitness_affects_survival: bool =True
-    fitness_affects_reproduction: bool =False
+    fitness_affects_survival: bool = True
+    fitness_affects_reproduction: bool = False
     separate_sexes: bool = False
 
     def run(self):
@@ -368,7 +368,8 @@ if __name__ == "__main__":
     # generate a model w/ slim script
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=1000, )  # file_in="/tmp/test.trees")
-        mod.reproduction.moran(pop_size=1000)
+        mod.reproduction.wright_fisher(pop_size=1000, fitness_affects_reproduction=True,
+            fitness_affects_survival=False)
     print(mod.script)
     #mod.write("/tmp/slim.slim")
     #mod.run(seed=123, binary="/home/deren/miniconda3/envs/shadie/bin/slim")  # /usr/local/bin/slim")
