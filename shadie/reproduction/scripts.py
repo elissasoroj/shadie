@@ -76,7 +76,7 @@ EARLY = """
 
         // 3. Set up for next tick
         // fitness affects gametophyte survival
-        {p0_fitnessScaling}
+        {p0_survival_effects}
     }}
 
 
@@ -101,7 +101,7 @@ EARLY = """
 
         // 3. Set up for next tick
         // fitness is scaled relative to number of inds in p1
-        {p1_fitnessScaling}
+        {p1_survival_effects}
     }}
 """
 
@@ -118,16 +118,16 @@ SPO_CLONES = """
 """
 
 NO_SPO_CLONES = """
-        // remove parents
-        sim.killIndividuals(p1.individuals);
+    // remove parents
+    sim.killIndividuals(p1.individuals);
 """
 
 GAM_CLONES = """
-        // removes parents, except clones
-        non_clones = p0.individuals[p0.individuals.tag != 2];
-        sim.killIndividuals(non_clones);
-        // reset clone tags to regular tag
-        p0.individuals.tag = 1;
+    // removes parents, except clones
+    non_clones = p0.individuals[p0.individuals.tag != 2];
+    sim.killIndividuals(non_clones);
+    // reset clone tags to regular tag
+    p0.individuals.tag = 1;
 """
 
 NO_GAM_CLONES = """
@@ -146,6 +146,25 @@ P0_FITNESS_SCALE_DEFAULT = "p0.fitnessScaling = GAM_POP_SIZE / p0.individualCoun
 P1_FITNESS_SCALE_DEFAULT = "p1.fitnessScaling = SPO_POP_SIZE / p1.individualCount;"
 WF_FITNESS_SCALE = """inds = sim.subpopulations.individuals;
     p1.fitnessScaling = K / sum(inds.fitnessScaling);"""
+
+P0_RANDOM_SURVIVAL = """
+    num_to_kill = p0.individualCount - GAM_POP_SIZE
+    if num_to_kill > 0 {
+        random_inds = sample(p0.individuals, num_to_kill)
+        sim.killIndividuals(p0.individuals[random_inds]);           
+    }
+    //exact population is maintained
+    p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
+"""
+P1_RANDOM_SURVIVAL = """
+    num_to_kill = p0.individualCount - SPO_POP_SIZE
+    if num_to_kill > 0 {
+        random_inds = sample(p1.individuals, num_to_kill)
+        sim.killIndividuals(p1.individuals[random_inds]);           
+    }
+    //exact population is maintained
+    p1.fitnessScaling = SPO_POP_SIZE / p1.individualCount;
+"""
 
 WF_REPRO_SOFT = """
     // parents are chosen proportional to fitness

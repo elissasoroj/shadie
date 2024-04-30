@@ -126,6 +126,10 @@ class ReproductionApi:
         spo_spores_per: int=10,
         gam_archegonia_per = 10,
         gam_ceiling=None,
+        fitness_affects_spo_survival: bool=True,
+        fitness_affects_spo_reproduction: bool=False,
+        fitness_affects_gam_survival: bool=True,
+        fitness_affects_gam_mating: bool=False,
     ):
         """Adds Dioicous Bryophyte life history to model.
 
@@ -189,6 +193,10 @@ class ReproductionApi:
             spo_spores_per=spo_spores_per,
             gam_archegonia_per= gam_archegonia_per,
             gam_ceiling=gam_ceiling,
+            fitness_affects_spo_survival=fitness_affects_spo_survival,
+            fitness_affects_spo_reproduction=fitness_affects_spo_reproduction,
+            fitness_affects_gam_survival=fitness_affects_gam_survival,
+            fitness_affects_gam_mating=fitness_affects_gam_mating,
         ).run()
 
     def pteridophyte_homosporous(

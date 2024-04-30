@@ -98,6 +98,42 @@ class NonWrightFisher(ReproductionBase):
     alternative is to implement a WF model.
     """
 
+    def _print_warning(self):
+        """Print any warnings that may cause the model to 
+        behave unexpectedly. 
+        """
+        if (self.fitness_affects_gam_survival and self.fitness_affects_gam_mating):
+            logger.warning("Based on your parameter settings, selection will"
+                " occur twice in the gametophyte (haploid) generation."
+                " This may cause the simulation to deviate from expectations"
+                " based on wright-fisher-like models.")
+
+        if (self.fitness_affects_spo_survival and self.fitness_affects_spo_reproduction):
+            logger.warning("Based on your parameter settings, selection will"
+                " occur twice in the sporophyte (diploid) generation."
+                " This may cause the simulation to deviate from expectations"
+                " based on wright-fisher-like models.")
+
+        if (self.fitness_affects_spo_survival and self.fitness_affects_gam_mating):
+            logger.warning("Based on your parameter settings, selection will"
+                " affect survival in the sporophyte (diploid) generation, but"
+                " will affect mating success in the gametophyte (haploid)"
+                " generation. This may cause unexpected behavior.")
+
+        if (self.fitness_affects_gam_survival and self.fitness_affects_spo_reproduction):
+            logger.warning("Based on your parameter settings, selection will"
+                " affect survival in the gametophyte (haploid) generation, but"
+                " will affect spore production in the sporophyte (diploid)"
+                " generation. This may cause unexpected behavior.")
+
+        if not (self.fitness_affects_gam_survival or self.fitness_affects_gam_mating):
+            logger.warning("Based on your parameter settings, selection will" 
+                " not occur during the gametophyte (haploid) generation.")
+
+        if not (self.fitness_affects_spo_survival or self.fitness_affects_spo_reproduction):
+            logger.warning("Based on your parameter settings, selection will" 
+                " not occur during the sporophyte (diploid) generation.")
+
     def _set_gametophyte_k(self):
         """Set carrying capacity for gametophyte holding pop (p1).
 
@@ -170,6 +206,8 @@ class NonWrightFisher(ReproductionBase):
             "model_source","_substitution_str",
             "_p0activate_str", "_p0deactivate_str",
             "_p1activate_str", "_p1deactivate_str",
+            "fitness_affects_gam_survival", "fitness_affects_gam_mating",
+            "fitness_affects_spo_survival", "fitness_affects_spo_reproduction",
         ]
 
         asdict = {
@@ -231,14 +269,23 @@ class NonWrightFisher(ReproductionBase):
 
         This is overridden by callbacks of the same name in subclasses
         """
-        early_script = (
-            EARLY.format(
-                p0_fitnessScaling=P0_FITNESS_SCALE_DEFAULT,
-                p1_fitnessScaling=P1_FITNESS_SCALE_DEFAULT,
-                gametophyte_clones=GAM_CLONES,
-                gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
-                sporophyte_clones=SPO_CLONES,
-                spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
+        if self.fitness_affects_gam_survival:
+            p0_survival_effects = P0_FITNESS_SCALE_DEFAULT
+        else:
+            p0_survival_effects = P0_RANDOM_SURVIVAL
+
+        if self.fitness_affects_spo_survival:
+            p1_survival_effects = P1_FITNESS_SCALE_DEFAULT
+        else:
+            p1_survival_effects = P1_RANDOM_SURVIVAL
+
+        early_script = (EARLY.format(
+            p0_survival_effects= p0_survival_effects,
+            p1_survival_effects= p1_survival_effects,
+            gametophyte_clones=GAM_CLONES,
+            gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+            sporophyte_clones=SPO_CLONES,
+            spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
             )
         )
         self.model.early(
