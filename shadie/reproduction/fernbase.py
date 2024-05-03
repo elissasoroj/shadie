@@ -25,7 +25,11 @@ from shadie.reproduction.scripts import (
     GAM_CLONES,
     NO_GAM_CLONES,
     GAM_MATERNAL_EFFECT_ON_P1,
-    NO_GAM_MATERNAL_EFFECT
+    NO_GAM_MATERNAL_EFFECT,
+    FITNESS_AFFECTS_SPO_REPRODUCTION,
+    CONSTANT_SPORES,
+    FITNESS_AFFECTS_GAM_MATING,
+    RANDOM_MATING,
 )
 from shadie.reproduction.fern_scripts import (
     REPRO_PTER_HOMOSPORE_P1,
@@ -98,13 +102,6 @@ class PteridophyteBase(NonWrightFisher):
             self.spo_mutation_rate = 0.5 * self.model.metadata['mutation_rate']
             self.gam_mutation_rate = 0.5 * self.model.metadata['mutation_rate']
 
-    def _add_shared_mode_scripts(self):
-        """Adds scripts shared by homosp and heterosp superclasses.
-
-        Adds shadie-defined functions
-        """
-
-
 @dataclass
 class PteridophyteHomosporous(PteridophyteBase):
     """Reproduction mode based on homosporoous ferns and lycophytes"""
@@ -114,12 +111,15 @@ class PteridophyteHomosporous(PteridophyteBase):
     gam_maternal_effect: float
     gam_clone_rate: float
     gam_clones_per: int
+    fitness_affects_spo_survival: bool = True
+    fitness_affects_spo_reproduction: bool = False
+    fitness_affects_gam_survival: bool = True
+    fitness_affects_gam_mating: bool = False
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
         # methods inherited from parent Pteridophyte class
         self._set_mutation_rates()
-        self._add_shared_mode_scripts()
 
         # methods inherited from parent NonWrightFisher class
         self._add_first_script()
@@ -139,10 +139,20 @@ class PteridophyteHomosporous(PteridophyteBase):
         Defines the early() callbacks for each gen.
         This overrides the NonWrightFisher class function of same name.
         """
+        if self.fitness_affects_gam_survival:
+            p0_survival_effects = P0_FITNESS_SCALE_DEFAULT
+        else:
+            p0_survival_effects = P0_RANDOM_SURVIVAL
+
+        if self.fitness_affects_spo_survival:
+            p1_survival_effects = P1_FITNESS_SCALE_DEFAULT
+        else:
+            p1_survival_effects = P1_RANDOM_SURVIVAL
+
         early_script = (EARLY.format(
             # TODO: do not use camelcase for argument
-            p0_fitnessScaling=P0_FITNESS_SCALE_DEFAULT,
-            p1_fitnessScaling=P1_FITNESS_SCALE_DEFAULT,
+            p0_survival_effects=p0_survival_effects,
+            p1_survival_effects=p1_survival_effects,
             gametophyte_clones=GAM_CLONES,
             gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
             sporophyte_clones=SPO_CLONES,
@@ -159,29 +169,48 @@ class PteridophyteHomosporous(PteridophyteBase):
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to homosporous pteridophyte."""
         self.model.custom(scripts=DEFS_PTER_HOMOSPORE, comment="shadie DEFINITIONS")
-        self.model.repro(
-            idx="s0",
-            population="p0",
-            scripts=REPRO_PTER_HOMOSPORE_P0,
-            comment="generates gametes from sporophytes"
-        )
-        self.model.repro(
-            idx="s1",
-            population="p1",
-            scripts=REPRO_PTER_HOMOSPORE_P1,
-            comment="generates gametes from sporophytes"
-        )
+        
+        #add fitness determination of sperm success (or not)
+        if self.fitness_affects_gam_mating:
+            repro_script_p0 = REPRO_PTER_HOMOSPORE_P0.format(
+                sperm_sampling=FITNESS_AFFECTS_GAM_MATING)
+        else:
+            repro_script_p0 = REPRO_PTER_HOMOSPORE_P0.format(
+                sperm_sampling=RANDOM_MATING)
 
+        #add fitness determination of spore # (or not)
+        if self.fitness_affects_spo_reproduction:
+            repro_script_p1 = REPRO_PTER_HOMOSPORE_P1.format(
+                spore_determination=FITNESS_AFFECTS_SPO_REPRODUCTION)
+
+        else: repro_script_p1 = REPRO_PTER_HOMOSPORE_P1.format(
+                spore_determination=CONSTANT_SPORES)
+
+        self.model.repro(
+            population="p0",
+            scripts=repro_script_p0,
+            idx = "s0",
+            comment="generates sporophytes from gametes"
+        )
+        self.model.repro(
+            population="p1",
+            scripts=repro_script_p1,
+            idx = "s1",
+            comment="generates gametes from sporophytes"
+        )
 
 @dataclass
 class PteridophyteHeterosporous(PteridophyteBase):
     mode: str = field(default="heterosporous", init=False)
+    fitness_affects_spo_survival: bool = True
+    fitness_affects_spo_reproduction: bool = False
+    fitness_affects_gam_survival: bool = True
+    fitness_affects_gam_mating: bool = False
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
         # methods inherited from parent Bryophyte class
         self._set_mutation_rates()
-        self._add_shared_mode_scripts()
 
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
@@ -200,10 +229,20 @@ class PteridophyteHeterosporous(PteridophyteBase):
         Defines the early() callbacks for each gen.
         This overrides the NonWrightFisher class function of same name.
         """
+        if self.fitness_affects_gam_survival:
+            p0_survival_effects = PTER_FITNESS_SCALE
+        else:
+            p0_survival_effects = P0_RANDOM_SURVIVAL
+
+        if self.fitness_affects_spo_survival:
+            p1_survival_effects = P1_FITNESS_SCALE_DEFAULT
+        else:
+            p1_survival_effects = P1_RANDOM_SURVIVAL
+
         early_script = (
             EARLY.format(
-                p0_fitnessScaling=PTER_FITNESS_SCALE,
-                p1_fitnessScaling=P1_FITNESS_SCALE_DEFAULT,
+                p0_survival_effects=p0_survival_effects,
+                p1_survival_effects=p1_survival_effects,
                 gametophyte_clones=NO_GAM_CLONES,
                 gam_maternal_effect=NO_GAM_MATERNAL_EFFECT,
                 sporophyte_clones=SPO_CLONES,
@@ -220,16 +259,33 @@ class PteridophyteHeterosporous(PteridophyteBase):
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
         self.model.custom(scripts=DEFS_PTER_HETEROSPORE, comment="shadie DEFINITIONS")
+
+        #add fitness determination of sperm success (or not)
+        if self.fitness_affects_gam_mating:
+            repro_script_p0 = REPRO_PTER_HETEROSPORE_P0.format(
+                sperm_sampling=FITNESS_AFFECTS_GAM_MATING)
+        else:
+            repro_script_p0 = REPRO_PTER_HETEROSPORE_P0.format(
+                sperm_sampling=RANDOM_MATING)
+
+        #add fitness determination of spore # (or not)
+        if self.fitness_affects_spo_reproduction:
+            repro_script_p1 = REPRO_PTER_HETEROSPORE_P1.format(
+                spore_determination=FITNESS_AFFECTS_SPO_REPRODUCTION)
+
+        else: repro_script_p1 = REPRO_PTER_HETEROSPORE_P1.format(
+                spore_determination=CONSTANT_SPORES)
+
         self.model.repro(
             population="p0",
-            idx="s0",
-            scripts=REPRO_PTER_HETEROSPORE_P0,
-            comment="generates gametes from sporophytes"
+            scripts=repro_script_p0,
+            idx = "s0",
+            comment="generates sporophytes from gametes"
         )
         self.model.repro(
             population="p1",
-            idx="s1",
-            scripts=REPRO_PTER_HETEROSPORE_P1,
+            scripts=repro_script_p1,
+            idx = "s1",
             comment="generates gametes from sporophytes"
         )
 
@@ -272,8 +328,8 @@ class PteridophyteVittaria(PteridophyteBase):
 
         early_script = (
             EARLY.format(
-                p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
-                p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
+                p0_survival_effects= P0_FITNESS_SCALE_DEFAULT,
+                p1_survival_effects= P1_FITNESS_SCALE_DEFAULT,
                 gametophyte_clones=GAM_CLONES,
                 gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
                 sporophyte_clones=SPO_CLONES,
@@ -334,24 +390,24 @@ if __name__ == "__main__":
             sim_time=20,
         )
 
-        mod.reproduction.pteridophyte_homosporous(
+        mod.reproduction.pteridophyte_heterosporous(
             spo_pop_size=500,
             gam_pop_size=1_000,
             spo_spores_per=100,
             gam_archegonia_per=1,
-            gam_female_to_male_ratio=(1, 0),
+            gam_female_to_male_ratio=(1, 1),
             spo_clone_rate=0,
             spo_clones_per=0,
-            gam_clone_rate=0,
-            gam_clones_per=0,
+            #gam_clone_rate=0,
+            #gam_clones_per=0,
             spo_self_rate=0,
             spo_self_rate_per_egg=0,
-            gam_self_rate=0,
-            gam_self_rate_per_egg=0,
+            #gam_self_rate=0,
+            #gam_self_rate_per_egg=0,
             spo_random_death_chance=0,
             gam_random_death_chance=0,
             spo_maternal_effect=0.0,
-            gam_maternal_effect=0.0,
+            #gam_maternal_effect=0.0,
             gam_ceiling=3_000,
         )
 

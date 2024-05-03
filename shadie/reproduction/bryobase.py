@@ -30,6 +30,10 @@ from shadie.reproduction.scripts import (
     P1_FITNESS_SCALE_DEFAULT,
     P0_RANDOM_SURVIVAL,
     P1_RANDOM_SURVIVAL,
+    FITNESS_AFFECTS_SPO_REPRODUCTION,
+    CONSTANT_SPORES,
+    FITNESS_AFFECTS_GAM_MATING,
+    RANDOM_MATING,
 )
 from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_DIO_P1,
@@ -38,10 +42,6 @@ from shadie.reproduction.bryo_scripts import (
     REPRO_BRYO_MONO_P0,
     DEFS_BRYO_MONO,
     DEFS_BRYO_DIO,
-    FITNESS_AFFECTS_SPO_REPRODUCTION,
-    CONSTANT_SPORES,
-    FITNESS_AFFECTS_GAM_MATING,
-    RANDOM_MATING,
 )
 
 
@@ -160,7 +160,6 @@ class BryophyteDioicous(BryophyteBase):
         """Add reproduction scripts unique to heterosporous bryo."""
         self.model.custom(scripts=DEFS_BRYO_DIO, comment = "shadie DEFINITIONS")
 
-
         #add fitness determination of sperm success (or not)
         if self.fitness_affects_gam_mating:
             repro_script_p0 = REPRO_BRYO_DIO_P0.format(
@@ -196,6 +195,10 @@ class BryophyteMonoicous(BryophyteBase):
     mode: str = field(default="monoicous", init=False)
     gam_self_rate_per_egg: float
     gam_female_to_male_ratio: Tuple[float,float]
+    fitness_affects_spo_survival: bool = True
+    fitness_affects_spo_reproduction: bool = False
+    fitness_affects_gam_survival: bool = True
+    fitness_affects_gam_mating: bool = False
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
@@ -220,19 +223,35 @@ class BryophyteMonoicous(BryophyteBase):
         """fills the model.map block with bryophyte-monoicous scripts."""
         # add reproduction scripts
         self.model.custom(scripts=DEFS_BRYO_MONO, comment = "shadie DEFINITIONS")
+        
+        #add fitness determination of sperm success (or not)
+        if self.fitness_affects_gam_mating:
+            repro_script_p0 = REPRO_BRYO_MONO_P0.format(
+                sperm_sampling=FITNESS_AFFECTS_GAM_MATING)
+        else:
+            repro_script_p0 = REPRO_BRYO_MONO_P0.format(
+                sperm_sampling=RANDOM_MATING)
+
+        #add fitness determination of spore # (or not)
+        if self.fitness_affects_spo_reproduction:
+            repro_script_p1 = REPRO_BRYO_MONO_P1.format(
+                spore_determination=FITNESS_AFFECTS_SPO_REPRODUCTION)
+
+        else: repro_script_p1 = REPRO_BRYO_MONO_P1.format(
+                spore_determination=CONSTANT_SPORES)
+
         self.model.repro(
             population="p0",
-            scripts=REPRO_BRYO_MONO_P0,
+            scripts=repro_script_p0,
             idx = "s0",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
             population="p1",
-            scripts=REPRO_BRYO_MONO_P1,
-            idx="s1",
+            scripts=repro_script_p1,
+            idx = "s1",
             comment="generates gametes from sporophytes"
         )
-
 
 if __name__ == "__main__":
 
@@ -264,14 +283,14 @@ if __name__ == "__main__":
 
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=50, file_out="/tmp/test.trees")
-        mod.reproduction.bryophyte_dioicous(
+        mod.reproduction.bryophyte_monoicous(
             spo_pop_size=100,
             gam_pop_size=100,
             fitness_affects_gam_mating = True,
-            fitness_affects_gam_survival = True,
+            fitness_affects_gam_survival = False,
             fitness_affects_spo_survival = False,
             fitness_affects_spo_reproduction = True,
-            #gam_self_rate_per_egg=0.8,
+            gam_self_rate_per_egg=0.8,
         )
     print(mod.script)
     # mod.write("/tmp/slim.slim")

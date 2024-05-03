@@ -21,7 +21,7 @@ FIRST = """
         s1.active = 0;
 
         // set mutation rate that will apply to the offspring
-        sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
+        sim.chromosome.setMutationRate(SPO_MUTATION_RATE);
     }
 
     else {
@@ -32,7 +32,7 @@ FIRST = """
         s1.active = 1;  // SPO
 
         // set mutation rate that will apply to the offspring
-        sim.chromosome.setMutationRate(SPO_MUTATION_RATE);
+        sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
     }
 """
 
@@ -49,9 +49,9 @@ FIRST = """
 EARLY = """
 // diploids (p1) just generated haploid gametophytes into p0
     if (community.tick % 2 == 0) {{
+        
         // alternate generations.
-
-        {sporophyte_clones}
+            {sporophyte_clones}
 
         // new p0s removed by three possible mechanisms:
         // 1. random chance of death.
@@ -83,7 +83,7 @@ EARLY = """
     // odd generations = gametophytes (p0) just generated sporophytes
     else {{
         // alternate generations.
-        {gametophyte_clones}
+            {gametophyte_clones}
 
         // remove new p1s by three possible mechanisms:
         // 1. random chance of death.
@@ -95,9 +95,7 @@ EARLY = """
             random_death = (runif(p1.individualCount) < GAM_RANDOM_DEATH_CHANCE);
             sim.killIndividuals(p1.individuals[random_death]);
         }}
-
         {gam_maternal_effect}
-
 
         // 3. Set up for next tick
         // fitness is scaled relative to number of inds in p1
@@ -148,23 +146,45 @@ WF_FITNESS_SCALE = """inds = sim.subpopulations.individuals;
     p1.fitnessScaling = K / sum(inds.fitnessScaling);"""
 
 P0_RANDOM_SURVIVAL = """
-    num_to_kill = p0.individualCount - GAM_POP_SIZE
-    if num_to_kill > 0 {
-        random_inds = sample(p0.individuals, num_to_kill)
-        sim.killIndividuals(p0.individuals[random_inds]);           
+    num_to_kill = p0.individualCount - GAM_POP_SIZE;
+    if (num_to_kill > 0) {
+        random_inds = sample(p0.individuals, num_to_kill);
+        sim.killIndividuals(p0.individuals[random_inds.index]);           
     }
     //exact population is maintained
     p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
 """
 P1_RANDOM_SURVIVAL = """
-    num_to_kill = p0.individualCount - SPO_POP_SIZE
-    if num_to_kill > 0 {
-        random_inds = sample(p1.individuals, num_to_kill)
-        sim.killIndividuals(p1.individuals[random_inds]);           
+    num_to_kill = p1.individualCount - SPO_POP_SIZE;
+    if (num_to_kill > 0) {
+        random_inds = sample(p1.individuals, num_to_kill);
+        sim.killIndividuals(p1.individuals[random_inds.index]);           
     }
     //exact population is maintained
     p1.fitnessScaling = SPO_POP_SIZE / p1.individualCount;
 """
+
+# -----------------------
+# ==SCRIPTS FOR SOFT SELECTION==
+
+FITNESS_AFFECTS_SPO_REPRODUCTION = """
+// fitness-based determination of how many spores are created by this ind
+    ind_fitness = p1.cachedFitness(ind.index);
+    max_fitness = max(p1.cachedFitness(NULL));
+    ind_fitness_scaled = ind_fitness/max_fitness;
+
+    spores = rbinom(1, SPO_SPORES_PER, ind_fitness_scaled);
+"""
+
+CONSTANT_SPORES = "spores = SPO_SPORES_PER;"
+
+FITNESS_AFFECTS_GAM_MATING = """
+// fitness-based determination of sperm sampling
+    sperm_fitness_vector = p0.cachedFitness(outcross_sperms.index);
+    sperm = sample(outcross_sperms, 1, weights = sperm_fitness_vector);
+"""
+
+RANDOM_MATING = "sperm = sample(outcross_sperms, 1);"
 
 WF_REPRO_SOFT = """
     // parents are chosen proportional to fitness
