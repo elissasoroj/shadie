@@ -17,8 +17,8 @@ FIRST = """
         // reproduction(p1) will create SPOROPHYTES in p2.
 
         // set reproduction function to be used this generation
-        s0.active = 1; // GAM
-        s1.active = 0; // SPO
+        s1.active = 1; // GAM
+        s2.active = 0; // SPO
 
         // set mutation rate that will apply to the offspring
         sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
@@ -28,8 +28,8 @@ FIRST = """
         // reproduction(p2) will produce GAMETOPHYTES into p1.
 
         // set reproduction function to be used this generation
-        s0.active = 0;  // GAM
-        s1.active = 1;  // SPO
+        s1.active = 0;  // GAM
+        s2.active = 1;  // SPO
 
         // set mutation rate that will apply to the offspring
         sim.chromosome.setMutationRate(SPO_MUTATION_RATE);

@@ -189,13 +189,13 @@ class PteridophyteHomosporous(PteridophyteBase):
         self.model.repro(
             population="p1",
             scripts=repro_script_p1,
-            idx = "s0",
+            idx = "s1",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
             population="p2",
             scripts=repro_script_p2,
-            idx = "s1",
+            idx = "s2",
             comment="generates gametes from sporophytes"
         )
 
@@ -279,13 +279,13 @@ class PteridophyteHeterosporous(PteridophyteBase):
         self.model.repro(
             population="p1",
             scripts=repro_script_p1,
-            idx = "s0",
+            idx = "s1",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
             population="p2",
             scripts=repro_script_p2,
-            idx = "s1",
+            idx = "s2",
             comment="generates gametes from sporophytes"
         )
 
@@ -347,13 +347,13 @@ class PteridophyteVittaria(PteridophyteBase):
         self.model.custom(scripts=DEFS_PTER_VITTARIA, comment="shadie DEFINITIONS")
         self.model.repro(
             population="p1",
-            idx="s0",
+            idx="s1",
             scripts=REPRO_PTER_VITTARIA_P1,
             comment="generates gametes from gametophytes"
         )
         self.model.repro(
             population="p2",
-            idx="s1",
+            idx="s2",
             scripts=REPRO_PTER_VITTARIA_P2,
             comment="generates spores from sporophytes"
         )

@@ -179,13 +179,13 @@ class BryophyteDioicous(BryophyteBase):
         self.model.repro(
             population="p1",
             scripts=repro_script_p1,
-            idx = "s0",
+            idx = "s1",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
             population="p2",
             scripts=repro_script_p2,
-            idx = "s1",
+            idx = "s2",
             comment="generates gametes from sporophytes"
         )
 
@@ -243,13 +243,13 @@ class BryophyteMonoicous(BryophyteBase):
         self.model.repro(
             population="p1",
             scripts=repro_script_p1,
-            idx = "s0",
+            idx = "s1",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
             population="p2",
             scripts=repro_script_p2,
-            idx = "s1",
+            idx = "s2",
             comment="generates gametes from sporophytes"
         )
 
