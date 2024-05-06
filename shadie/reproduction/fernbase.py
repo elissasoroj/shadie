@@ -16,15 +16,15 @@ from dataclasses import dataclass, field
 from shadie.reproduction.base import NonWrightFisher
 from shadie.reproduction.scripts import (
     EARLY,
-    P0_FITNESS_SCALE_DEFAULT,
     P1_FITNESS_SCALE_DEFAULT,
+    P2_FITNESS_SCALE_DEFAULT,
     SPO_CLONES,
     NO_SPO_CLONES,
-    SPO_MATERNAL_EFFECT_ON_P0,
+    SPO_MATERNAL_EFFECT_ON_P1,
     NO_SPO_MATERNAL_EFFECT,
     GAM_CLONES,
     NO_GAM_CLONES,
-    GAM_MATERNAL_EFFECT_ON_P1,
+    GAM_MATERNAL_EFFECT_ON_P2,
     NO_GAM_MATERNAL_EFFECT,
     FITNESS_AFFECTS_SPO_REPRODUCTION,
     CONSTANT_SPORES,
@@ -32,18 +32,18 @@ from shadie.reproduction.scripts import (
     RANDOM_MATING,
 )
 from shadie.reproduction.fern_scripts import (
+    REPRO_PTER_HOMOSPORE_P2,
     REPRO_PTER_HOMOSPORE_P1,
-    REPRO_PTER_HOMOSPORE_P0,
+    REPRO_PTER_HETEROSPORE_P2,
     REPRO_PTER_HETEROSPORE_P1,
-    REPRO_PTER_HETEROSPORE_P0,
     PTER_FITNESS_SCALE,
     DEFS_PTER_HOMOSPORE,
     DEFS_PTER_HETEROSPORE,
 )
 
 from shadie.reproduction.vittaria_scripts import (
-    REPRO_PTER_VITTARIA_P0,
     REPRO_PTER_VITTARIA_P1,
+    REPRO_PTER_VITTARIA_P2,
     DEFS_PTER_VITTARIA,
     )
 
@@ -140,23 +140,23 @@ class PteridophyteHomosporous(PteridophyteBase):
         This overrides the NonWrightFisher class function of same name.
         """
         if self.fitness_affects_gam_survival:
-            p0_survival_effects = P0_FITNESS_SCALE_DEFAULT
-        else:
-            p0_survival_effects = P0_RANDOM_SURVIVAL
-
-        if self.fitness_affects_spo_survival:
             p1_survival_effects = P1_FITNESS_SCALE_DEFAULT
         else:
             p1_survival_effects = P1_RANDOM_SURVIVAL
 
+        if self.fitness_affects_spo_survival:
+            p2_survival_effects = P2_FITNESS_SCALE_DEFAULT
+        else:
+            p2_survival_effects = P2_RANDOM_SURVIVAL
+
         early_script = (EARLY.format(
             # TODO: do not use camelcase for argument
-            p0_survival_effects=p0_survival_effects,
             p1_survival_effects=p1_survival_effects,
+            p2_survival_effects=p2_survival_effects,
             gametophyte_clones=GAM_CLONES,
-            gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+            gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P2,
             sporophyte_clones=SPO_CLONES,
-            spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
+            spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P1,
             )
         )
 
@@ -172,29 +172,29 @@ class PteridophyteHomosporous(PteridophyteBase):
         
         #add fitness determination of sperm success (or not)
         if self.fitness_affects_gam_mating:
-            repro_script_p0 = REPRO_PTER_HOMOSPORE_P0.format(
+            repro_script_p1 = REPRO_PTER_HOMOSPORE_P1.format(
                 sperm_sampling=FITNESS_AFFECTS_GAM_MATING)
         else:
-            repro_script_p0 = REPRO_PTER_HOMOSPORE_P0.format(
+            repro_script_p1 = REPRO_PTER_HOMOSPORE_P1.format(
                 sperm_sampling=RANDOM_MATING)
 
         #add fitness determination of spore # (or not)
         if self.fitness_affects_spo_reproduction:
-            repro_script_p1 = REPRO_PTER_HOMOSPORE_P1.format(
+            repro_script_p2 = REPRO_PTER_HOMOSPORE_P2.format(
                 spore_determination=FITNESS_AFFECTS_SPO_REPRODUCTION)
 
-        else: repro_script_p1 = REPRO_PTER_HOMOSPORE_P1.format(
+        else: repro_script_p2 = REPRO_PTER_HOMOSPORE_P2.format(
                 spore_determination=CONSTANT_SPORES)
 
         self.model.repro(
-            population="p0",
-            scripts=repro_script_p0,
+            population="p1",
+            scripts=repro_script_p1,
             idx = "s0",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
-            population="p1",
-            scripts=repro_script_p1,
+            population="p2",
+            scripts=repro_script_p2,
             idx = "s1",
             comment="generates gametes from sporophytes"
         )
@@ -230,23 +230,23 @@ class PteridophyteHeterosporous(PteridophyteBase):
         This overrides the NonWrightFisher class function of same name.
         """
         if self.fitness_affects_gam_survival:
-            p0_survival_effects = PTER_FITNESS_SCALE
-        else:
-            p0_survival_effects = P0_RANDOM_SURVIVAL
-
-        if self.fitness_affects_spo_survival:
-            p1_survival_effects = P1_FITNESS_SCALE_DEFAULT
+            p1_survival_effects = PTER_FITNESS_SCALE
         else:
             p1_survival_effects = P1_RANDOM_SURVIVAL
 
+        if self.fitness_affects_spo_survival:
+            p2_survival_effects = P2_FITNESS_SCALE_DEFAULT
+        else:
+            p2_survival_effects = P2_RANDOM_SURVIVAL
+
         early_script = (
             EARLY.format(
-                p0_survival_effects=p0_survival_effects,
                 p1_survival_effects=p1_survival_effects,
+                p2_survival_effects=p2_survival_effects,
                 gametophyte_clones=NO_GAM_CLONES,
                 gam_maternal_effect=NO_GAM_MATERNAL_EFFECT,
                 sporophyte_clones=SPO_CLONES,
-                spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
+                spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P1,
             )
         )
 
@@ -262,29 +262,29 @@ class PteridophyteHeterosporous(PteridophyteBase):
 
         #add fitness determination of sperm success (or not)
         if self.fitness_affects_gam_mating:
-            repro_script_p0 = REPRO_PTER_HETEROSPORE_P0.format(
+            repro_script_p1 = REPRO_PTER_HETEROSPORE_P1.format(
                 sperm_sampling=FITNESS_AFFECTS_GAM_MATING)
         else:
-            repro_script_p0 = REPRO_PTER_HETEROSPORE_P0.format(
+            repro_script_p1 = REPRO_PTER_HETEROSPORE_P1.format(
                 sperm_sampling=RANDOM_MATING)
 
         #add fitness determination of spore # (or not)
         if self.fitness_affects_spo_reproduction:
-            repro_script_p1 = REPRO_PTER_HETEROSPORE_P1.format(
+            repro_script_p2 = REPRO_PTER_HETEROSPORE_P2.format(
                 spore_determination=FITNESS_AFFECTS_SPO_REPRODUCTION)
 
-        else: repro_script_p1 = REPRO_PTER_HETEROSPORE_P1.format(
+        else: repro_script_p2 = REPRO_PTER_HETEROSPORE_P2.format(
                 spore_determination=CONSTANT_SPORES)
 
         self.model.repro(
-            population="p0",
-            scripts=repro_script_p0,
+            population="p1",
+            scripts=repro_script_p1,
             idx = "s0",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
-            population="p1",
-            scripts=repro_script_p1,
+            population="p2",
+            scripts=repro_script_p2,
             idx = "s1",
             comment="generates gametes from sporophytes"
         )
@@ -328,12 +328,12 @@ class PteridophyteVittaria(PteridophyteBase):
 
         early_script = (
             EARLY.format(
-                p0_survival_effects= P0_FITNESS_SCALE_DEFAULT,
-                p1_survival_effects= P1_FITNESS_SCALE_DEFAULT,
+                p1_survival_effects= p1_FITNESS_SCALE_DEFAULT,
+                p2_survival_effects= P2_FITNESS_SCALE_DEFAULT,
                 gametophyte_clones=GAM_CLONES,
-                gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+                gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P2,
                 sporophyte_clones=SPO_CLONES,
-                spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
+                spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P1,
             )
         )
         self.model.early(
@@ -346,15 +346,15 @@ class PteridophyteVittaria(PteridophyteBase):
 
         self.model.custom(scripts=DEFS_PTER_VITTARIA, comment="shadie DEFINITIONS")
         self.model.repro(
-            population="p0",
+            population="p1",
             idx="s0",
-            scripts=REPRO_PTER_VITTARIA_P0,
+            scripts=REPRO_PTER_VITTARIA_P1,
             comment="generates gametes from gametophytes"
         )
         self.model.repro(
-            population="p1",
+            population="p2",
             idx="s1",
-            scripts=REPRO_PTER_VITTARIA_P1,
+            scripts=REPRO_PTER_VITTARIA_P2,
             comment="generates spores from sporophytes"
         )
 

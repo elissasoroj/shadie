@@ -20,19 +20,19 @@ from shadie.reproduction.scripts import (
     NO_SPO_CLONES,
     GAM_CLONES,
     NO_GAM_CLONES,
-    GAM_MATERNAL_EFFECT_ON_P1,
+    GAM_MATERNAL_EFFECT_ON_P2,
     NO_GAM_MATERNAL_EFFECT,
-    SPO_MATERNAL_EFFECT_ON_P0,
+    SPO_MATERNAL_EFFECT_ON_P1,
     NO_SPO_MATERNAL_EFFECT,
     EARLY,
+    P2_FITNESS_SCALE_DEFAULT,
     P1_FITNESS_SCALE_DEFAULT,
-    P0_FITNESS_SCALE_DEFAULT,
 )
 from shadie.reproduction.angio_scripts import (
+    REPRO_ANGIO_DIO_P2,
     REPRO_ANGIO_DIO_P1,
-    REPRO_ANGIO_DIO_P0,
+    REPRO_ANGIO_MONO_P2,
     REPRO_ANGIO_MONO_P1,
-    REPRO_ANGIO_MONO_P0,
     FIRST1_ANGIO_MONO,
     FIRST1_ANGIO_DIO,
     ANGIO_DIO_FITNESS_SCALE,
@@ -125,6 +125,7 @@ class AngiospermDioecious(AngiospermBase):
         self._add_alternation_of_generations()
         self._write_trees_file()
         self._define_subpopulations()
+        self._add_first_script()
 
         # specific organism functions
         self._set_gametophyte_k()
@@ -140,12 +141,12 @@ class AngiospermDioecious(AngiospermBase):
         This overrides the NonWrightFisher class function of same name.
         """
         if self.model.metadata['file_in']:
-            self.model._read_from_file(tag_scripts =[ "p1.individuals.tag=0"])
+            self.model._read_from_file(tag_scripts =[ "p2.individuals.tag=0"])
         else:
             self.model.first(
                 time=1,
                 scripts=FIRST1_ANGIO_DIO,
-                comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
+                comment="define subpops: p2=diploid sporophytes, p1=haploid gametophytes",
             )
 
     def _add_early_script(self):
@@ -153,22 +154,22 @@ class AngiospermDioecious(AngiospermBase):
         This overrides the NonWrightFisher class function of same name.
         """
         if self.fitness_affects_gam_survival:
-            p0_survival_effects = ANGIO_DIO_FITNESS_SCALE
-        else:
-            p0_survival_effects = P0_RANDOM_SURVIVAL
-
-        if self.fitness_affects_spo_survival:
-            p1_survival_effects = P1_FITNESS_SCALE_DEFAULT
+            p1_survival_effects = ANGIO_DIO_FITNESS_SCALE
         else:
             p1_survival_effects = P1_RANDOM_SURVIVAL
+
+        if self.fitness_affects_spo_survival:
+            p2_survival_effects = P2_FITNESS_SCALE_DEFAULT
+        else:
+            p2_survival_effects = P2_RANDOM_SURVIVAL
         early_script = (
             EARLY.format(
-                p0_survival_effects = p0_survival_effects,
                 p1_survival_effects = p1_survival_effects,
+                p2_survival_effects = p2_survival_effects,
                 gametophyte_clones=NO_GAM_CLONES,
                 gam_maternal_effect=NO_GAM_MATERNAL_EFFECT,
                 sporophyte_clones=SPO_CLONES,
-                spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
+                spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P1,
             )
         )
         self.model.early(
@@ -183,30 +184,30 @@ class AngiospermDioecious(AngiospermBase):
 
         #add fitness determination of sperm success (or not)
         if self.fitness_affects_gam_mating:
-            repro_script_p0 = REPRO_ANGIO_DIO_P0.format(
+            repro_script_p1 = REPRO_ANGIO_DIO_P1.format(
                 pollen_selection=POLLEN_COMPETITION)
         else:
-            repro_script_p0 = REPRO_ANGIO_DIO_P0.format(
+            repro_script_p1 = REPRO_ANGIO_DIO_P1.format(
                 pollen_selection=NO_POLLEN_COMPETITION)
 
         #add fitness determination of spore # (or not)
         if self.fitness_affects_spo_reproduction:
-            repro_script_p1 = REPRO_ANGIO_DIO_P1.format(
+            repro_script_p2 = REPRO_ANGIO_DIO_P2.format(
                 egg_selection = EGG_FITNESS_AFFECTS_VIABILITY)
 
-        else: repro_script_p1 = REPRO_ANGIO_DIO_P1.format(
+        else: repro_script_p2 = REPRO_ANGIO_DIO_P2.format(
                  egg_selection = NO_EGG_FITNESS)
 
         # add reproduction calls
         self.model.repro(
-            population="p0",
-            scripts=repro_script_p0,
+            population="p1",
+            scripts=repro_script_p1,
             idx="s0",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
-            population="p1",
-            scripts=repro_script_p1,
+            population="p2",
+            scripts=repro_script_p2,
             idx="s1",
             comment="generates gametes from sporophytes"
         )
@@ -241,6 +242,7 @@ class AngiospermMonoecious(AngiospermBase):
         self._add_alternation_of_generations()
         self._write_trees_file()
         self._set_gametophyte_k()
+        self._add_first_script()
 
         # specific organism functions
         self._define_subpopulations()
@@ -256,12 +258,12 @@ class AngiospermMonoecious(AngiospermBase):
         This overrides the NonWrightFisher class function of same name.
         """
         if self.model.metadata['file_in']:
-            self.model._read_from_file(tag_scripts =[ "p1.individuals.tag=0"])
+            self.model._read_from_file(tag_scripts =[ "p2.individuals.tag=0"])
         else:
             self.model.first(
                 time=1,
                 scripts=FIRST1_ANGIO_MONO,
-                comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
+                comment="define subpops: p2=diploid sporophytes, p1=haploid gametophytes",
             )
 
     def _add_early_script(self):
@@ -270,21 +272,21 @@ class AngiospermMonoecious(AngiospermBase):
         This overrides the NonWrightFisher class function of same name.
         """
         if self.fitness_affects_gam_survival:
-            p0_survival_effects = P0_FITNESS_SCALE_DEFAULT
-        else:
-            p0_survival_effects = P0_RANDOM_SURVIVAL
-
-        if self.fitness_affects_spo_survival:
             p1_survival_effects = P1_FITNESS_SCALE_DEFAULT
         else:
             p1_survival_effects = P1_RANDOM_SURVIVAL
+
+        if self.fitness_affects_spo_survival:
+            p2_survival_effects = P2_FITNESS_SCALE_DEFAULT
+        else:
+            p2_survival_effects = P2_RANDOM_SURVIVAL
         early_script = (EARLY.format(
-            p0_survival_effects = p0_survival_effects,
             p1_survival_effects = p1_survival_effects,
+            p2_survival_effects = p2_survival_effects,
             gametophyte_clones=NO_GAM_CLONES,
             gam_maternal_effect=NO_GAM_MATERNAL_EFFECT,
             sporophyte_clones=SPO_CLONES,
-            spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
+            spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P1,
             )
         )
 
@@ -300,29 +302,29 @@ class AngiospermMonoecious(AngiospermBase):
         
         #add fitness determination of sperm success (or not)
         if self.fitness_affects_gam_mating:
-            repro_script_p0 = REPRO_ANGIO_MONO_P0.format(
+            repro_script_p1 = REPRO_ANGIO_MONO_P1.format(
                  pollen_selection=POLLEN_COMPETITION)
         else:
-            repro_script_p0 = REPRO_ANGIO_MONO_P0.format(
+            repro_script_p1 = REPRO_ANGIO_MONO_P1.format(
                  pollen_selection=NO_POLLEN_COMPETITION)
 
         #add fitness determination of spore # (or not)
         if self.fitness_affects_spo_reproduction:
-            repro_script_p1 = REPRO_ANGIO_MONO_P1.format(
+            repro_script_p2 = REPRO_ANGIO_MONO_P2.format(
                 egg_selection = EGG_FITNESS_AFFECTS_VIABILITY)
 
-        else: repro_script_p1 = REPRO_ANGIO_MONO_P1.format(
+        else: repro_script_p2 = REPRO_ANGIO_MONO_P2.format(
                 egg_selection = NO_EGG_FITNESS)
 
         self.model.repro(
-            population="p0",
-            scripts=repro_script_p0,
+            population="p1",
+            scripts=repro_script_p1,
             idx="s0",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
-            population="p1",
-            scripts=repro_script_p1,
+            population="p2",
+            scripts=repro_script_p2,
             idx="s1",
             comment="generates gametes from sporophytes"
         )

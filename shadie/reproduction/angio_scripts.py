@@ -6,7 +6,7 @@
 # shadie DEFINITIONS
 DEFS_ANGIO_MONO = """
 // model: monecious angiosperm
-// p0 = haploid population
+// p1 = haploid population
 // 1 = gametophyte (1N) tag
 // 2 = gametophyte clones (1N) tag ----------- none in this model
 // 3 = sporophyte (2N) tag
@@ -17,7 +17,7 @@ DEFS_ANGIO_MONO = """
 
 DEFS_ANGIO_DIO = """
 // model: dioecious angiosperm
-// p0 = haploid population
+// p1 = haploid population
 // 1 = gametophyte (1N) tag
 // 2 = gametophyte clones (1N) tag ----------- none in this model
 // 3 = sporophyte (2N) tag
@@ -27,13 +27,13 @@ DEFS_ANGIO_DIO = """
 """
 
 # -------------
-ANGIO_DIO_FITNESS_SCALE = """males = length(p0.individuals[p0.individuals.tagL0 == F]);
-        p0.fitnessScaling = (GAM_POP_SIZE / (p0.individualCount-males));"""
+ANGIO_DIO_FITNESS_SCALE = """males = length(p1.individuals[p1.individuals.tagL0 == F]);
+        p1.fitnessScaling = (GAM_POP_SIZE / (p1.individualCount-males));"""
 
 EGG_FITNESS_AFFECTS_VIABILITY = """
     // determine how many ovules were fertilized, out of the total
-    ind_fitness = p1.cachedFitness(ind.index);
-    max_fitness = max(p1.cachedFitness(NULL));
+    ind_fitness = p2.cachedFitness(ind.index);
+    max_fitness = max(p2.cachedFitness(NULL));
     ind_fitness_scaled = ind_fitness/max_fitness;
     
     meiosis_reps = rbinom(1, SPO_ARCHEGONIA_PER, ind_fitness_scaled);
@@ -46,7 +46,7 @@ POLLEN_COMPETITION = """
     pollen_pool = sample(outcross_sperms, POLLEN_PER_STIGMA);
     for (pollen in pollen_pool) {
         // store fitness value
-        pollen.setValue("fitness", p0.cachedFitness(pollen.index));
+        pollen.setValue("fitness", p1.cachedFitness(pollen.index));
         //pollen.tag = 0; do not remove for now
     }
 
@@ -75,17 +75,17 @@ NO_POLLEN_COMPETITION = """
 """
 
 FIRST1_ANGIO_MONO = """
-    sim.addSubpop('p1', SPO_POP_SIZE);
-    sim.addSubpop('p0', 0);
-    p1.individuals.tag = 3;
+    sim.addSubpop('p2', SPO_POP_SIZE);
+    sim.addSubpop('p1', 0);
+    p2.individuals.tag = 3;
 """
 
 FIRST1_ANGIO_DIO = """
-    sim.addSubpop('p1', SPO_POP_SIZE);
-    sim.addSubpop('p0', 0);
-    p1.individuals.tag = 3;
-    p1.individuals.setValue('maternal_fitness', 1.0);
-    p1.individuals.tagL0 = (runif(p1.individualCount) < SPO_FEMALE_TO_MALE_RATIO);
+    sim.addSubpop('p2', SPO_POP_SIZE);
+    sim.addSubpop('p1', 0);
+    p2.individuals.tag = 3;
+    p2.individuals.setValue('maternal_fitness', 1.0);
+    p2.individuals.tagL0 = (runif(p2.individualCount) < SPO_FEMALE_TO_MALE_RATIO);
 """
 
 
@@ -99,14 +99,14 @@ FIRST1_ANGIO_DIO = """
 # -------------------------
 # TAGS
 # 1, 2, 41, 42
-REPRO_ANGIO_DIO_P1 = """
+REPRO_ANGIO_DIO_P2 = """
     ind = individual;
     
-    // clonal individual get added to the p0 pool for next round.
+    // clonal individual get added to the p1 pool for next round.
     // NOTE: this doesn't allow clones to reproduce this round.
     if (runif(1) < SPO_CLONE_RATE) {{
         for (i in seqLen(SPO_CLONES_PER)) {{
-            child = p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome2, NULL, NULL);
+            child = p2.addRecombinant(individual.genome1, NULL, NULL, individual.genome2, NULL, NULL);
             child.tag = 4; // sporophyte clone
             child.tagL0 = ind.tagL0;
             
@@ -123,7 +123,7 @@ REPRO_ANGIO_DIO_P1 = """
         //one egg per archegonia (fertilized ovule)
         for (rep in meiosis_reps){{
             breaks = sim.chromosome.drawBreakpoints(individual);
-            egg = p0.addRecombinant(ind.genome1, ind.genome2, breaks, NULL, NULL, NULL);
+            egg = p1.addRecombinant(ind.genome1, ind.genome2, breaks, NULL, NULL, NULL);
             egg.tag = 1;
             egg.tagL0 = T;
         }}
@@ -137,10 +137,10 @@ REPRO_ANGIO_DIO_P1 = """
             breaks2 = sim.chromosome.drawBreakpoints(ind);
         
             // create four meiotic products
-            child1 = p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL);
-            child2 = p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL);
-            child3 = p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL);
-            child4 = p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL);
+            child1 = p1.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL);
+            child2 = p1.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL);
+            child3 = p1.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL);
+            child4 = p1.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL);
             children = c(child1, child2, child3, child4);
             children.tag = 1;       
             children.tagL0 = F;
@@ -156,16 +156,16 @@ REPRO_ANGIO_DIO_P1 = """
 # -------------------------
 # TAGS
 # 1, 2
-REPRO_ANGIO_DIO_P0 = """
+REPRO_ANGIO_DIO_P1 = """
     //reproduction scripts run only females
     if (individual.tagL0) {{
     
     // get all males that could fertilize an egg of this female
-    males = p0.individuals[p0.individuals.tagL0==F];
+    males = p1.individuals[p1.individuals.tagL0==F];
     
     // Each egg is outcrossed in this model
     {pollen_selection}
-    child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
+    child = p2.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
     child.tag = 3;
     child.tagL0 = ifelse(runif(1) > SPO_FEMALE_TO_MALE_RATIO, T, F);
     }}
@@ -183,14 +183,14 @@ REPRO_ANGIO_DIO_P0 = """
 # TAGS
 # 0, 1, 2, 44, 5, 45
 
-REPRO_ANGIO_MONO_P1 = """
+REPRO_ANGIO_MONO_P2 = """
     ind = individual;
     
-    // clonal individual get added to the p0 pool for next round.
+    // clonal individual get added to the p1 pool for next round.
     // NOTE: this doesn't allow clones to reproduce this round.
     if (runif(1) < SPO_CLONE_RATE) {{
         for (i in seqLen(SPO_CLONES_PER)) {{
-            child = p1.addRecombinant(individual.genome1, NULL, NULL, individual.genome2, NULL, NULL);
+            child = p2.addRecombinant(individual.genome1, NULL, NULL, individual.genome2, NULL, NULL);
             child.tag = 4; // sporophyte clone
             
             //sporophyte maternal effect not applicable for clones = neutral
@@ -204,7 +204,7 @@ REPRO_ANGIO_MONO_P1 = """
     //one egg per archegonia (fertilized ovule)
     for (rep in meiosis_reps){{
         breaks = sim.chromosome.drawBreakpoints(individual);
-        egg = p0.addRecombinant(ind.genome1, ind.genome2, breaks, NULL, NULL, NULL);
+        egg = p1.addRecombinant(ind.genome1, ind.genome2, breaks, NULL, NULL, NULL);
         egg.tag = 1;
         egg.tagL0 = T;
     }}
@@ -216,10 +216,10 @@ REPRO_ANGIO_MONO_P1 = """
         breaks2 = sim.chromosome.drawBreakpoints(ind);
         
         // create four meiotic products
-        child1 = p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL);
-        child2 = p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL);
-        child3 = p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL);
-        child4 = p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL);
+        child1 = p1.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL);
+        child2 = p1.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL);
+        child3 = p1.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL);
+        child4 = p1.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL);
         children = c(child1, child2, child3, child4);
         children.tag = 1;       
         children.tagL0 = F;
@@ -235,12 +235,12 @@ REPRO_ANGIO_MONO_P1 = """
 # TAGS
 # 1, 2, 44, 5
 
-REPRO_ANGIO_MONO_P0 = """
+REPRO_ANGIO_MONO_P1 = """
     //reproduction scripts run only females
     if (individual.tagL0) {{
     
     // get all males that could fertilize an egg of this female
-    males = p0.individuals[p0.individuals.tagL0==F];
+    males = p1.individuals[p1.individuals.tagL0==F];
     
     // if selfing is possible then get all sibling males
    if (SPO_SELF_RATE_PER_EGG > 0)
@@ -261,7 +261,7 @@ REPRO_ANGIO_MONO_P0 = """
       if (mode == 2) {{
         if (siblings.size() > 0) {{
             sibling = sample(siblings, 1);
-            child = p1.addRecombinant(individual.genome1, NULL, NULL,
+            child = p2.addRecombinant(individual.genome1, NULL, NULL,
             sibling.genome1, NULL, NULL, parent1 = individual, parent2 = sibling);
             child.tag = 3; //sporophyte tag
                 }}
@@ -270,7 +270,7 @@ REPRO_ANGIO_MONO_P0 = """
         if (mode == 3) {{
             {pollen_selection}
         
-            child = p1.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
+            child = p2.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
             child.tag = 3;
         }}
     }}

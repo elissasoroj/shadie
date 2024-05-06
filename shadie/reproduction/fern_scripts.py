@@ -5,13 +5,13 @@
 ...
 """
 
-PTER_FITNESS_SCALE = """p0.fitnessScaling = (GAM_POP_SIZE*(1/GAM_FEMALE_TO_MALE_RATIO))/
-(GAM_ARCHEGONIA_PER*p0.individualCount);"""
+PTER_FITNESS_SCALE = """p1.fitnessScaling = (GAM_POP_SIZE*(1/GAM_FEMALE_TO_MALE_RATIO))/
+(GAM_ARCHEGONIA_PER*p1.individualCount);"""
 
 DEFS_PTER_HOMOSPORE = """
 // model: homosporous pteridophyte
-// p0 = haploid population
-// p1 = diploid population
+// p1 = haploid population
+// p2 = diploid population
 // 1 = gametophyte (1N) tag
 // 2 = gametophyte clones (1N) tag
 // 3 = sporophyte (2N) tag
@@ -33,15 +33,15 @@ DEFS_PTER_HOMOSPORE = """
 # DISCUSS parental pedigree tracking for clones - perhaps this
 # should be a toggle (i.e. to address strict selfing rates)?
 
-REPRO_PTER_HOMOSPORE_P1 = """
+REPRO_PTER_HOMOSPORE_P2 = """
     ind = individual;
 
-    // clonal individual get added to the p0 pool for next round.
+    // clonal individual get added to the p1 pool for next round.
     // NOTE: this doesn't allow clones to reproduce this round.
 
     if (runif(1) < SPO_CLONE_RATE) {{
         for (i in seqLen(SPO_CLONES_PER)) {{
-            child = p1.addRecombinant(individual.genome1, NULL, NULL,
+            child = p2.addRecombinant(individual.genome1, NULL, NULL,
             individual.genome2, NULL, NULL, parent1 = individual, parent2 = individual);
             child.tag = 4; // sporophyte clone
             //sporophyte maternal effect not applicable for clones = neutral
@@ -60,10 +60,10 @@ REPRO_PTER_HOMOSPORE_P1 = """
         // create four meiotic products. If later two of these mate with each other
         // it is an example of sporophytic selfing. Because we need to be able to match
         // sibling gametes at that time we tag them now with their sporophyte parent's index.
-        child1 = p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL, parent1 = ind);
-        child2 = p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL, parent1 = ind);
-        child3 = p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL, parent1 = ind);
-        child4 = p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL, parent1 = ind);
+        child1 = p1.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL, parent1 = ind);
+        child2 = p1.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL, parent1 = ind);
+        child3 = p1.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL, parent1 = ind);
+        child4 = p1.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL, parent1 = ind);
         children = c(child1, child2, child3, child4);
         children.tag = 1; //gametophyte tag
         children.tagL0 = (runif(4) < GAM_FEMALE_TO_MALE_RATIO); // CHANGED THIS LINES
@@ -83,12 +83,12 @@ REPRO_PTER_HOMOSPORE_P1 = """
 # -------------------------
 # TAGS
 # 2, >1M-
-REPRO_PTER_HOMOSPORE_P0 = """
-    // clonal individual get added to the p0 pool for next round.
+REPRO_PTER_HOMOSPORE_P1 = """
+    // clonal individual get added to the p1 pool for next round.
     // NOTE: this doesn't allow clones to reproduce this round.
     if (runif(1) < GAM_CLONE_RATE) {{
         for (i in seqLen(GAM_CLONES_PER)) {{
-            child = p0.addRecombinant(individual.genome1, NULL, NULL,
+            child = p1.addRecombinant(individual.genome1, NULL, NULL,
             NULL, NULL, NULL, parent1 = individual); //only 1 parent recorded
             child.tag = 2; //marked as clone
             child.tagL0 = individual.tagL0; //inherits parent sex
@@ -109,7 +109,7 @@ REPRO_PTER_HOMOSPORE_P0 = """
         // get all males that could fertilize an egg of this hermaphrodite
         //In homosporous ferns, most gametophytes are hermaphroditic or male,
         //so "males" includes all the hermaphrodites as well as male gametophytes
-        males = p0.individuals;
+        males = p1.individuals;
 
         // if selfing is possible then get all sibling males
         if (SPO_SELF_RATE_PER_EGG > 0)
@@ -129,7 +129,7 @@ REPRO_PTER_HOMOSPORE_P0 = """
 
             // intra-gametophytic selfed
             if (mode == 1) {{
-                child = p1.addRecombinant(individual.genome1, NULL, NULL,
+                child = p2.addRecombinant(individual.genome1, NULL, NULL,
                 individual.genome1, NULL, NULL, parent1 = individual, parent2 = individual);
                 child.tag = 3; //sporophyte tag
                 //gametophyte maternal effect on new sporophyte
@@ -142,7 +142,7 @@ REPRO_PTER_HOMOSPORE_P0 = """
             else if (mode == 2) {{
                 if (siblings.size() > 0) {{
                     sibling = sample(siblings, 1);
-                    child = p1.addRecombinant(individual.genome1, NULL, NULL,
+                    child = p2.addRecombinant(individual.genome1, NULL, NULL,
                     sibling.genome1, NULL, NULL, parent1 = individual, parent2 = sibling);
                     child.tag = 3; //sporophyte tag
                     //gametophyte maternal effect on new sporophyte
@@ -150,14 +150,14 @@ REPRO_PTER_HOMOSPORE_P0 = """
                         child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
                 }}
             }}
-            // outcrossing individual samples any other p0, and checks that it is outcrossing
+            // outcrossing individual samples any other p1, and checks that it is outcrossing
             // only occurs if a non-sib gametophyte is still alive.
 
             else {{
                 outcross_sperms = males[individual.sharedParentCount(males)==0];
                 if (! isNULL(outcross_sperms)) {{
                     {sperm_sampling}
-                    child = p1.addRecombinant(individual.genome1, NULL, NULL,
+                    child = p2.addRecombinant(individual.genome1, NULL, NULL,
                     sperm.genome1, NULL, NULL, parent1 = individual, parent2=sperm);
                     child.tag = 3; //sporophyte tag
                     //gametophyte maternal effect on new sporophyte
@@ -179,8 +179,8 @@ REPRO_PTER_HOMOSPORE_P0 = """
 # -----------------------------------------------------------------------
 DEFS_PTER_HETEROSPORE = """
 // model: heterosporous pteridophyte
-// p0 = haploid population
-// p1 = diploid population
+// p1 = haploid population
+// p2 = diploid population
 // 1 = gametophyte (1N) tag
 // 2 = gametophyte clones (1N) tag
 // 3 = sporophyte (2N) tag
@@ -199,10 +199,10 @@ DEFS_PTER_HETEROSPORE = """
 # -------------------------
 # TAGS
 # 4, >1M-
-REPRO_PTER_HETEROSPORE_P1 = """
+REPRO_PTER_HETEROSPORE_P2 = """
      ind = individual;
 
-    // clonal individual get added to the p0 pool for next round.
+    // clonal individual get added to the p1 pool for next round.
     // NOTE: this doesn't allow clones to reproduce this round.
 
     //Typically, there is no cloning in heterosporous pteridophytes,
@@ -210,7 +210,7 @@ REPRO_PTER_HETEROSPORE_P1 = """
     //theoretical comparisons
     if (runif(1) < SPO_CLONE_RATE) {{
         for (i in seqLen(SPO_CLONES_PER)) {{
-            child = p1.addRecombinant(individual.genome1, NULL, NULL,
+            child = p2.addRecombinant(individual.genome1, NULL, NULL,
             individual.genome2, NULL, NULL, parent1 = individual, parent2 = individual);
             child.tag = 4; // sporophyte clone
             //sporophyte maternal effect not applicable for clones = neutral
@@ -229,10 +229,10 @@ REPRO_PTER_HETEROSPORE_P1 = """
         // create four meiotic products. If later two of these mate with each other
         // it is an example of sporophytic selfing. Because we need to be able to match
         // sibling gametes at that time we tag them now with their sporophyte parent's index.
-        child1 = p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL, parent1 = ind);
-        child2 = p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL, parent1 = ind);
-        child3 = p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL, parent1 = ind);
-        child4 = p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL, parent1 = ind);
+        child1 = p1.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL, parent1 = ind);
+        child2 = p1.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL, parent1 = ind);
+        child3 = p1.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL, parent1 = ind);
+        child4 = p1.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL, parent1 = ind);
         children = c(child1, child2, child3, child4);
         children.tag = 1; //gametophyte tag
         children.tagL0 = (runif(4) < GAM_FEMALE_TO_MALE_RATIO); // CHANGED THIS LINES
@@ -249,7 +249,7 @@ REPRO_PTER_HETEROSPORE_P1 = """
 # -------------------------
 # TAGS
 #3, >1M-
-REPRO_PTER_HETEROSPORE_P0 = """
+REPRO_PTER_HETEROSPORE_P1 = """
     // iterate over each egg to find a mate (sib, or outcross)
     // NOTE: each gametophyte gives rise to antheridia that produce thousands of
     // clonal sperm. Because of this, sperm is not removed from the mating pool when used.
@@ -260,7 +260,7 @@ REPRO_PTER_HETEROSPORE_P0 = """
     if (individual.tagL0) {{
 
         // get all males that could fertilize an egg of this hermaphrodite
-        males = p0.individuals[p0.individuals.tagL0==F];
+        males = p1.individuals[p1.individuals.tagL0==F];
 
         // if selfing is possible then get all sibling males
         if (SPO_SELF_RATE_PER_EGG > 0)
@@ -281,7 +281,7 @@ REPRO_PTER_HETEROSPORE_P0 = """
             // intra-gametophytic selfed
             //does not occur in heterosporous pteridophytes
             if (mode == 1) {{
-                child = p1.addRecombinant(individual.genome1, NULL, NULL,
+                child = p2.addRecombinant(individual.genome1, NULL, NULL,
                 individual.genome1, NULL, NULL, parent1 = individual, parent2 = individual);
                 child.tag = 3; //sporophyte tag
             }}
@@ -290,19 +290,19 @@ REPRO_PTER_HETEROSPORE_P0 = """
             else if (mode == 2) {{
                 if (siblings.size() > 0) {{
                     sibling = sample(siblings, 1);
-                    child = p1.addRecombinant(individual.genome1, NULL, NULL,
+                    child = p2.addRecombinant(individual.genome1, NULL, NULL,
                     sibling.genome1, NULL, NULL, parent1 = individual, parent2 = sibling);
                     child.tag = 3; //sporophyte tag
                 }}
             }}
-            // outcrossing individual samples any other p0, and checks that it is outcrossing
+            // outcrossing individual samples any other p1, and checks that it is outcrossing
             // only occurs if a non-sib gametophyte is still alive.
 
             else {{
                 outcross_sperms = males[individual.sharedParentCount(males)==0];
                 if (! isNULL(outcross_sperms)) {{
                     {sperm_sampling}
-                    child = p1.addRecombinant(individual.genome1, NULL, NULL,
+                    child = p2.addRecombinant(individual.genome1, NULL, NULL,
                     sperm.genome1, NULL, NULL, parent1 = individual, parent2=sperm);
                     child.tag = 3; //sporophyte tag
                 }}

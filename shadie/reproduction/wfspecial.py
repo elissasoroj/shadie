@@ -22,8 +22,8 @@ from dataclasses import dataclass, field
 from shadie.reproduction.base import ReproductionBase
 from shadie.reproduction.base import WrightFisher
 from shadie.reproduction.scripts import (
-    GAM_MATERNAL_EFFECT_ON_P1,
-    P0_FITNESS_SCALE_DEFAULT,
+    GAM_MATERNAL_EFFECT_ON_P2,
+    P1_FITNESS_SCALE_DEFAULT,
     # EARLY_WITH_GAM_K,
     EARLY,
     HAP_MUT_FITNESS,
@@ -36,10 +36,10 @@ from shadie.reproduction.specialWF_scripts import (
     REPRO_HAPLOID_SOFT_WF,
     REPRO_CLONAL_WF,
     REPRO_CLONAL_SOFT_WF,
+    REPRO_ALTGEN_P2,
+    REPRO_ALTGEN_SOFT_P2,
     REPRO_ALTGEN_P1,
     REPRO_ALTGEN_SOFT_P1,
-    REPRO_ALTGEN_P0,
-    REPRO_ALTGEN_SOFT_P0,
     OLD_SURV_WF,
     WF_ALTGEN_EARLY,
 )
@@ -76,7 +76,7 @@ class HaploidWF(ReproductionBase):
         else:
             self.model.first(
                 time=1,
-                scripts="sim.addSubpop('p1', K, haploid=T);",
+                scripts="sim.addSubpop('p2', K, haploid=T);",
                 comment="define starting haploid population.",
             )
 
@@ -84,27 +84,27 @@ class HaploidWF(ReproductionBase):
         """fitness and mating of diploid population."""
         if self.fitness_affects_survival:
             self.model.repro(
-                population="p1",
+                population="p2",
                 scripts= REPRO_HAPLOID_WF,
                 comment="haploid random mating; mating success weighted by fitness."
             )
 
             self.model.early(
                 time=None,
-                scripts="p1.fitnessScaling = K / p1.individualCount",
+                scripts="p2.fitnessScaling = K / p2.individualCount",
                 comment="calculate relative fitness.",
             ) 
 
         elif self.fitness_affects_reproduction:
             self.model.repro(
-                population="p1",
+                population="p2",
                 scripts= REPRO_HAPLOID_SOFT_WF,
                 comment="haploid random mating; mating success weighted by fitness."
             )
 
         else:
             self.model.repro(
-                population="p1",
+                population="p2",
                 scripts= REPRO_HAPLOID_WF,
                 comment="haploid random mating; mating success weighted by fitness."
             )
@@ -164,7 +164,7 @@ class ClonalHaploidWF(ReproductionBase):
         else:
             self.model.first(
                 time=1,
-                scripts="sim.addSubpop('p1', K, haploid=T);",
+                scripts="sim.addSubpop('p2', K, haploid=T);",
                 comment="define starting haploid population.",
             )
 
@@ -172,27 +172,27 @@ class ClonalHaploidWF(ReproductionBase):
         """fitness and mating of diploid population."""
         if self.fitness_affects_reproduction:
             self.model.repro(
-                population="p1",
+                population="p2",
                 scripts= REPRO_CLONAL_SOFT_WF,
                 comment="haploid random mating; mating success weighted by fitness."
             )
 
         elif self.fitness_affects_survival:
             self.model.repro(
-                population="p1",
+                population="p2",
                 scripts= REPRO_CLONAL_WF,
                 comment="haploid random mating; mating success weighted by fitness."
             )
 
             self.model.early(
                 time=None,
-                scripts="p1.fitnessScaling = K / p1.individualCount",
+                scripts="p2.fitnessScaling = K / p2.individualCount",
                 comment="calculate relative fitness.",
             ) 
 
         else:
             self.model.repro(
-                population="p1",
+                population="p2",
                 scripts= REPRO_CLONAL_WF,
                 comment="haploid random mating; mating success weighted by fitness."
             )
@@ -256,8 +256,8 @@ class AltGenWF(ReproductionBase):
         else:
             self.model.first(
                 time=1,
-                scripts=("sim.addSubpop('p1', SPO_POP_SIZE);\n"
-                		 "sim.addSubpop('p0', 0);"),
+                scripts=("sim.addSubpop('p2', SPO_POP_SIZE);\n"
+                		 "sim.addSubpop('p1', 0);"),
                 comment="define starting haploid population.",
             )
 
@@ -266,27 +266,27 @@ class AltGenWF(ReproductionBase):
 
         if self.fitness_affects_reproduction:
             self.model.repro(
+                population="p2",
+                scripts= REPRO_ALTGEN_SOFT_P2,
+                comment="clonal random mating; mating success weighted by fitness."
+            )
+
+            self.model.repro(
                 population="p1",
                 scripts= REPRO_ALTGEN_SOFT_P1,
                 comment="clonal random mating; mating success weighted by fitness."
             )
 
+        elif self.fitness_affects_survival:
             self.model.repro(
-                population="p0",
-                scripts= REPRO_ALTGEN_SOFT_P0,
+                population="p2",
+                scripts= REPRO_ALTGEN_P2,
                 comment="clonal random mating; mating success weighted by fitness."
             )
 
-        elif self.fitness_affects_survival:
             self.model.repro(
                 population="p1",
                 scripts= REPRO_ALTGEN_P1,
-                comment="clonal random mating; mating success weighted by fitness."
-            )
-
-            self.model.repro(
-                population="p0",
-                scripts= REPRO_ALTGEN_P0,
                 comment="clonal random mating; mating success weighted by fitness."
             )
 
@@ -298,14 +298,14 @@ class AltGenWF(ReproductionBase):
 
         else:
             self.model.repro(
-                population="p1",
-                scripts= REPRO_ALTGEN_P1,
+                population="p2",
+                scripts= REPRO_ALTGEN_P2,
                 comment="clonal random mating; mating success weighted by fitness."
             )
 
             self.model.repro(
-                population="p0",
-                scripts= REPRO_ALTGEN_P0,
+                population="p1",
+                scripts= REPRO_ALTGEN_P1,
                 comment="clonal random mating; mating success weighted by fitness."
             )
 
