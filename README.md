@@ -11,21 +11,25 @@ module for creating simulations of alternating hapliod/diploid lifecycles.
 
 Docs (under construction): https://elissasoroj.github.io/shadie/
 
-### *`shadie` is Under Active Development*
 
-As such, the current release of `shadie` may not always be working. Please 
-don't hesitate to start a discussion if you have any questions. 
+### *`shadie` is Under Active Development*
+We are working on integrating a more rigorous testing framework into shadie. 
+In the mean time, you can verify your analyses by checking that the generated
+SLiM code matches your expectations. Please don't hesitate to start a 
+discussion if you have any questions. 
 
 
 ### Installation
-
-To install locally:
+To install `shadie` and all of its dependencies we recommend using conda. This
+will install all required Python packages in addition to slim.
 ```bash
 # recommended installation method (installs shadie and slim>=4.2)
 conda install shadie -c conda-forge
 ```
 
-Alternatively, for developers:
+An alternative strategy that may be useful for developers is to install all
+dependencies with conda and then to install a development version of shadie
+from source (or a fork):
 ```bash
 conda install shadie -c conda-forge --only-deps
 git clone https://github.com/elissasoroj/shadie.git
@@ -33,7 +37,9 @@ cd ./shadie/
 pip install -e . --no-deps
 ```
 
-<!-- You can install SLiM4 [here](https://messerlab.org/slim/). `shadie` now requires the latest release of SLiM 4.1.  -->
+If you follow one of these instructions then shadie will automatically find
+the SLiM binary. If you wish to call a different version of SLiM installed
+locally on your machine this can be done easily when running shadie code.
 
 ~
 
@@ -54,4 +60,4 @@ pip install -e . --no-deps
 Planned implementation:
 * additional models (currently implementing: red algae, *Vittaria appalachiana*)
 * convert user-provided phylogeny into SLiM3-compatible subpopulation demography. 
-* post-sim analysis module
+* further extensions of the post-sim analysis module
