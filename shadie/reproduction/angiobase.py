@@ -35,7 +35,8 @@ from shadie.reproduction.angio_scripts import (
     REPRO_ANGIO_MONO_P1,
     FIRST1_ANGIO_MONO,
     FIRST1_ANGIO_DIO,
-    ANGIO_DIO_FITNESS_SCALE,
+    P1_ANGIO_FITNESS_SCALE,
+    P2_ANGIO_FITNESS_SCALE,
     DEFS_ANGIO_MONO,
     DEFS_ANGIO_DIO,
     POLLEN_COMPETITION,
@@ -154,12 +155,12 @@ class AngiospermDioecious(AngiospermBase):
         This overrides the NonWrightFisher class function of same name.
         """
         if self.fitness_affects_gam_survival:
-            p1_survival_effects = ANGIO_DIO_FITNESS_SCALE
+            p1_survival_effects = P1_ANGIO_FITNESS_SCALE
         else:
             p1_survival_effects = P1_RANDOM_SURVIVAL
 
         if self.fitness_affects_spo_survival:
-            p2_survival_effects = P2_FITNESS_SCALE_DEFAULT
+            p2_survival_effects = P2_ANGIO_FITNESS_SCALE
         else:
             p2_survival_effects = P2_RANDOM_SURVIVAL
         early_script = (
@@ -202,13 +203,13 @@ class AngiospermDioecious(AngiospermBase):
         self.model.repro(
             population="p1",
             scripts=repro_script_p1,
-            idx="s0",
+            idx="s1",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
             population="p2",
             scripts=repro_script_p2,
-            idx="s1",
+            idx="s2",
             comment="generates gametes from sporophytes"
         )
 
@@ -272,12 +273,12 @@ class AngiospermMonoecious(AngiospermBase):
         This overrides the NonWrightFisher class function of same name.
         """
         if self.fitness_affects_gam_survival:
-            p1_survival_effects = P1_FITNESS_SCALE_DEFAULT
+            p1_survival_effects = P1_ANGIO_FITNESS_SCALE
         else:
             p1_survival_effects = P1_RANDOM_SURVIVAL
 
         if self.fitness_affects_spo_survival:
-            p2_survival_effects = P2_FITNESS_SCALE_DEFAULT
+            p2_survival_effects = P2_ANGIO_FITNESS_SCALE
         else:
             p2_survival_effects = P2_RANDOM_SURVIVAL
         early_script = (EARLY.format(
@@ -319,13 +320,13 @@ class AngiospermMonoecious(AngiospermBase):
         self.model.repro(
             population="p1",
             scripts=repro_script_p1,
-            idx="s0",
+            idx="s1",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
             population="p2",
             scripts=repro_script_p2,
-            idx="s1",
+            idx="s2",
             comment="generates gametes from sporophytes"
         )
 
@@ -369,10 +370,10 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.angiosperm_dioecious(
+        mod.reproduction.angiosperm_monoecious(
             spo_pop_size=1000,
             gam_pop_size=1000,
-            spo_female_to_male_ratio = (1,1)
+            #spo_female_to_male_ratio = (1,1)
         )
 
     print(mod.script)
