@@ -14,8 +14,8 @@ import tskit
 from loguru import logger
 # from shadie.reproduction.scripts import ITER_CHECK_MUT_IS_SUB
 from shadie.reproduction.scripts import (
-    P0_FITNESS_SCALE_DEFAULT,
     P1_FITNESS_SCALE_DEFAULT,
+    P2_FITNESS_SCALE_DEFAULT,
     FIRST,
     EARLY,
     WF_REPRO_SOFT,
@@ -94,14 +94,50 @@ class NonWrightFisher(ReproductionBase):
 
     This is a subclass that is extended for organism specific
     reproduction models in shadie.reproduction. All NonWF models
-    include alternation of generations (p0 and p1 subpops). The
+    include alternation of generations (p1 and p2 subpops). The
     alternative is to implement a WF model.
     """
 
-    def _set_gametophyte_k(self):
-        """Set carrying capacity for gametophyte holding pop (p1).
+    def _print_warning(self):
+        """Print any warnings that may cause the model to 
+        behave unexpectedly. 
+        """
+        if (self.fitness_affects_gam_survival and self.fitness_affects_gam_mating):
+            logger.warning("Based on your parameter settings, selection will"
+                " occur twice in the gametophyte (haploid) generation."
+                " This may cause the simulation to deviate from expectations"
+                " based on wright-fisher-like models.")
 
-        During p1 generation, to avoid lagging in the simulation, this
+        if (self.fitness_affects_spo_survival and self.fitness_affects_spo_reproduction):
+            logger.warning("Based on your parameter settings, selection will"
+                " occur twice in the sporophyte (diploid) generation."
+                " This may cause the simulation to deviate from expectations"
+                " based on wright-fisher-like models.")
+
+        if (self.fitness_affects_spo_survival and self.fitness_affects_gam_mating):
+            logger.warning("Based on your parameter settings, selection will"
+                " affect survival in the sporophyte (diploid) generation, but"
+                " will affect mating success in the gametophyte (haploid)"
+                " generation. This may cause unexpected behavior.")
+
+        if (self.fitness_affects_gam_survival and self.fitness_affects_spo_reproduction):
+            logger.warning("Based on your parameter settings, selection will"
+                " affect survival in the gametophyte (haploid) generation, but"
+                " will affect spore production in the sporophyte (diploid)"
+                " generation. This may cause unexpected behavior.")
+
+        if not (self.fitness_affects_gam_survival or self.fitness_affects_gam_mating):
+            logger.warning("Based on your parameter settings, selection will" 
+                " not occur during the gametophyte (haploid) generation.")
+
+        if not (self.fitness_affects_spo_survival or self.fitness_affects_spo_reproduction):
+            logger.warning("Based on your parameter settings, selection will" 
+                " not occur during the sporophyte (diploid) generation.")
+
+    def _set_gametophyte_k(self):
+        """Set carrying capacity for gametophyte holding pop (p2).
+
+        During p2 generation, to avoid lagging in the simulation, this
         automatically sets to 10x user-defined popsize.
         """
         if not self.gam_ceiling:
@@ -110,27 +146,27 @@ class NonWrightFisher(ReproductionBase):
     def _define_subpopulations(self):
         """add haploid and diploid life stages as subpopulations.
         """
-        # load a trees file that already has p0 and p1 pops
+        # load a trees file that already has p1 and p2 pops
         if self.model.metadata['file_in']:
-            # set p1 to tag=3 (sporophytes) and p0 to tag=[0,1] (gametophytes)
+            # set p2 to tag=3 (sporophytes) and p1 to tag=[0,1] (gametophytes)
             self.model._read_from_file(tag_scripts=[
-                "p1.individuals.tag = 3;",
-                "tags = rbinom(1, p0.individualCount, 0.5);",
-                "p0.individuals.tag = tags;",
+                "p2.individuals.tag = 3;",
+                "tags = rbinom(1, p1.individualCount, 0.5);",
+                "p1.individuals.tag = tags;",
             ])
 
-        # create new p0 and p1 populations
+        # create new p1 and p2 populations
         else:
             self.model.first(
                 time=1,
                 scripts=[
-                    "sim.addSubpop('p1', SPO_POP_SIZE)",
-                    "sim.addSubpop('p0', 0)",
-                    "p1.individuals.tag = 3",
-                    "p1.individuals.setValue('maternal_fitness', 1.0);",
-                    "p1.individuals.tagL0 = (runif(p1.individualCount) < GAM_FEMALE_TO_MALE_RATIO);",
+                    "sim.addSubpop('p2', SPO_POP_SIZE)",
+                    "sim.addSubpop('p1', 0)",
+                    "p2.individuals.tag = 3",
+                    "p2.individuals.setValue('maternal_fitness', 1.0);",
+                    "p2.individuals.tagL0 = (runif(p2.individualCount) < GAM_FEMALE_TO_MALE_RATIO);",
                 ],
-                comment="define subpops: p1=diploid sporophytes, p0=haploid gametophytes",
+                comment="define subpops: p2=diploid sporophytes, p1=haploid gametophytes",
             )
 
     def _add_initialize_globals(self):
@@ -145,8 +181,8 @@ class NonWrightFisher(ReproductionBase):
         # exclude parent class attributes
         exclude = [
             "_substitution_str", "model",
-            "_p0activate_str", "_p0deactivate_str",
             "_p1activate_str", "_p1deactivate_str",
+            "_p2activate_str", "_p2deactivate_str",
         ]
         asdict = {
             i: j for (i, j) in self.__dict__.items()
@@ -168,8 +204,10 @@ class NonWrightFisher(ReproductionBase):
             "lineage", "mode", "model", "gens_per_lifecycle",
             "full_lifecycles", "slim_gens",
             "model_source","_substitution_str",
-            "_p0activate_str", "_p0deactivate_str",
             "_p1activate_str", "_p1deactivate_str",
+            "_p2activate_str", "_p2deactivate_str",
+            "fitness_affects_gam_survival", "fitness_affects_gam_mating",
+            "fitness_affects_spo_survival", "fitness_affects_spo_reproduction",
         ]
 
         asdict = {
@@ -231,14 +269,23 @@ class NonWrightFisher(ReproductionBase):
 
         This is overridden by callbacks of the same name in subclasses
         """
-        early_script = (
-            EARLY.format(
-                p0_fitnessScaling=P0_FITNESS_SCALE_DEFAULT,
-                p1_fitnessScaling=P1_FITNESS_SCALE_DEFAULT,
-                gametophyte_clones=GAM_CLONES,
-                gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
-                sporophyte_clones=SPO_CLONES,
-                spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P0,
+        if self.fitness_affects_gam_survival:
+            p1_survival_effects = P1_FITNESS_SCALE_DEFAULT
+        else:
+            p1_survival_effects = P1_RANDOM_SURVIVAL
+
+        if self.fitness_affects_spo_survival:
+            p2_survival_effects = P2_FITNESS_SCALE_DEFAULT
+        else:
+            p2_survival_effects = P2_RANDOM_SURVIVAL
+
+        early_script = (EARLY.format(
+            p1_survival_effects= p1_survival_effects,
+            p2_survival_effects= p2_survival_effects,
+            gametophyte_clones=GAM_CLONES,
+            gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P2,
+            sporophyte_clones=SPO_CLONES,
+            spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P1,
             )
         )
         self.model.early(
@@ -252,9 +299,10 @@ class NonWrightFisher(ReproductionBase):
 class WrightFisher(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
-    selection: str = "none"  # soft selection on by default
     _gens_per_lifecycle: int = 1  # internal param
-    sexes: bool = False  # not yet used?
+    fitness_affects_survival: bool = True
+    fitness_affects_reproduction: bool = False
+    separate_sexes: bool = False
 
     def run(self):
         """Updates self.model.map with new component scripts for running
@@ -273,34 +321,40 @@ class WrightFisher(ReproductionBase):
         else:
             self.model.first(
                 time=1,
-                scripts="sim.addSubpop('p1', K);",
+                scripts="sim.addSubpop('p2', K);",
                 comment="define starting diploid population.",
             )
 
     def _add_scripts(self):
         """fitness and mating of diploid population."""
-        if self.selection == "soft":
+        # check only one reproduction mode for WF
+        if (self.fitness_affects_survival and self.fitness_affects_reproduction):
+            raise ValueError(f"WF models in shadie requires only one of "
+             "`fitness_affects_reproduction` and `fitness_affects_survival "
+             "to be equal to `True`.")
+
+        if self.fitness_affects_reproduction:
             self.model.repro(
-                population="p1",
+                population="p2",
                 scripts= WF_REPRO_SOFT,
                 comment="WF model with soft selection (parent fitness determines mating success)"
             )
 
-        elif self.selection == "hard":
+        elif self.fitness_affects_survival:
             self.model.repro(
-                population="p1",
+                population="p2",
                 scripts= WF_REPRO_HARD,
                 comment="WF model with hard selection (random mating)"
             )
             self.model.early(
                 time=None,
-                scripts="p1.fitnessScaling = K / p1.individualCount",
+                scripts="p2.fitnessScaling = K / p2.individualCount",
                 comment="calculate relative fitness.",
             )
 
-        elif self.selection == "none":
+        else:
             self.model.repro(
-                population="p1",
+                population="p2",
                 scripts= "subpop.addCrossed(individual, subpop.sampleIndividuals(1));",
                 comment="WF model with no selection; random mating"
             )
@@ -314,7 +368,6 @@ class WrightFisher(ReproductionBase):
             'gam_pop_size': "NA",
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
             'recombination_rate': self.model.metadata['recomb_rate'],
-            'selection': self.selection,
             'gens_per_lifecycle': self._gens_per_lifecycle,
         }
 
@@ -362,7 +415,8 @@ if __name__ == "__main__":
     # generate a model w/ slim script
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=1000, )  # file_in="/tmp/test.trees")
-        mod.reproduction.wright_fisher_haploid_sexual(pop_size=1000)
-    # print(mod.script)
-    mod.write("/tmp/slim.slim")
-    mod.run(seed=123, binary="/home/deren/miniconda3/envs/shadie/bin/slim")  # /usr/local/bin/slim")
+        mod.reproduction.wright_fisher(pop_size=1000, fitness_affects_reproduction=True,
+            fitness_affects_survival=False)
+    print(mod.script)
+    #mod.write("/tmp/slim.slim")
+    #mod.run(seed=123, binary="/home/deren/miniconda3/envs/shadie/bin/slim")  # /usr/local/bin/slim")

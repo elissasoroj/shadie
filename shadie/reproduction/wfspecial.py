@@ -22,36 +22,37 @@ from dataclasses import dataclass, field
 from shadie.reproduction.base import ReproductionBase
 from shadie.reproduction.base import WrightFisher
 from shadie.reproduction.scripts import (
-    GAM_MATERNAL_EFFECT_ON_P1,
-    P0_FITNESS_SCALE_DEFAULT,
+    GAM_MATERNAL_EFFECT_ON_P2,
+    P1_FITNESS_SCALE_DEFAULT,
     # EARLY_WITH_GAM_K,
     EARLY,
     HAP_MUT_FITNESS,
     DIP_MUT_FITNESS
 )
+
 from shadie.reproduction.specialWF_scripts import (
     REPRO_WF,
     REPRO_HAPLOID_WF,
     REPRO_HAPLOID_SOFT_WF,
     REPRO_CLONAL_WF,
     REPRO_CLONAL_SOFT_WF,
+    REPRO_ALTGEN_P2,
+    REPRO_ALTGEN_SOFT_P2,
     REPRO_ALTGEN_P1,
     REPRO_ALTGEN_SOFT_P1,
-    REPRO_ALTGEN_P0,
-    REPRO_ALTGEN_SOFT_P0,
     OLD_SURV_WF,
     WF_ALTGEN_EARLY,
 )
-
 
 @dataclass
 class HaploidWF(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model with clonal
      haploid individuals."""
     pop_size: int  # number of haploid individuals
-    selection: str = "none"
+    separate_sexes: bool = False
+    fitness_affects_survival: bool = True
+    fitness_affects_reproduction: bool = False
     _gens_per_lifecycle: int = 1
-    sexes: bool = False  # not yet used?
 
     def run(self):
         """Updates self.model.map with new component scripts for running
@@ -75,39 +76,38 @@ class HaploidWF(ReproductionBase):
         else:
             self.model.first(
                 time=1,
-                scripts="sim.addSubpop('p1', K, haploid=T);",
+                scripts="sim.addSubpop('p2', K, haploid=T);",
                 comment="define starting haploid population.",
             )
 
     def _add_mode_scripts(self):
         """fitness and mating of diploid population."""
-
-        if self.selection == "none":
+        if self.fitness_affects_survival:
             self.model.repro(
-                population="p1",
-                scripts= REPRO_HAPLOID_WF,
-                comment="haploid random mating; mating success weighted by fitness."
-            )
-
-        elif self.selection == "soft":
-            self.model.repro(
-                population="p1",
-                scripts= REPRO_HAPLOID_SOFT_WF,
-                comment="haploid random mating; mating success weighted by fitness."
-            )
-
-        elif self.selection == "hard":
-            self.model.repro(
-                population="p1",
+                population="p2",
                 scripts= REPRO_HAPLOID_WF,
                 comment="haploid random mating; mating success weighted by fitness."
             )
 
             self.model.early(
                 time=None,
-                scripts="p1.fitnessScaling = K / p1.individualCount",
+                scripts="p2.fitnessScaling = K / p2.individualCount",
                 comment="calculate relative fitness.",
             ) 
+
+        elif self.fitness_affects_reproduction:
+            self.model.repro(
+                population="p2",
+                scripts= REPRO_HAPLOID_SOFT_WF,
+                comment="haploid random mating; mating success weighted by fitness."
+            )
+
+        else:
+            self.model.repro(
+                population="p2",
+                scripts= REPRO_HAPLOID_WF,
+                comment="haploid random mating; mating success weighted by fitness."
+            )
 
     def _add_initialize_constants(self):
         """Add defineConstant calls to init for new variables."""
@@ -118,7 +118,8 @@ class HaploidWF(ReproductionBase):
             'gam_pop_size': self.pop_size,
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
             'recombination_rate': self.model.metadata['recomb_rate'],
-            'selection': self.selection,
+            'fitness_affects_survival': self.fitness_affects_survival,
+            'fitness_affects_reproduction': self.fitness_affects_reproduction,
             'gens_per_lifecycle': self._gens_per_lifecycle,
         }
 
@@ -136,16 +137,14 @@ class HaploidWF(ReproductionBase):
             comment="non-overlapping generations",
         )
 
-
 @dataclass
 class ClonalHaploidWF(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model with clonal
      haploid individuals."""
-    
     pop_size: int #number of haploid individuals
-    selection:str = "none"
+    fitness_affects_survival: bool = True
+    fitness_affects_reproduction: bool = False
     _gens_per_lifecycle: int = 1
-    sexes: bool = False  # not yet used?
 
     def run(self):
         """
@@ -165,38 +164,38 @@ class ClonalHaploidWF(ReproductionBase):
         else:
             self.model.first(
                 time=1,
-                scripts="sim.addSubpop('p1', K, haploid=T);",
+                scripts="sim.addSubpop('p2', K, haploid=T);",
                 comment="define starting haploid population.",
             )
 
     def _add_scripts(self):
         """fitness and mating of diploid population."""
-        if self.selection == "none":
+        if self.fitness_affects_reproduction:
             self.model.repro(
-                population="p1",
-                scripts= REPRO_CLONAL_WF,
-                comment="haploid random mating; mating success weighted by fitness."
-            )
-
-        elif self.selection == "soft":
-            self.model.repro(
-                population="p1",
+                population="p2",
                 scripts= REPRO_CLONAL_SOFT_WF,
                 comment="haploid random mating; mating success weighted by fitness."
             )
 
-        elif self.selection == "hard":
+        elif self.fitness_affects_survival:
             self.model.repro(
-                population="p1",
+                population="p2",
                 scripts= REPRO_CLONAL_WF,
                 comment="haploid random mating; mating success weighted by fitness."
             )
 
             self.model.early(
                 time=None,
-                scripts="p1.fitnessScaling = K / p1.individualCount",
+                scripts="p2.fitnessScaling = K / p2.individualCount",
                 comment="calculate relative fitness.",
             ) 
+
+        else:
+            self.model.repro(
+                population="p2",
+                scripts= REPRO_CLONAL_WF,
+                comment="haploid random mating; mating success weighted by fitness."
+            )
 
     def _add_initialize_constants(self):
         """Add defineConstant calls to init for new variables."""
@@ -207,7 +206,8 @@ class ClonalHaploidWF(ReproductionBase):
             'gam_pop_size': self.pop_size,
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
             'recombination_rate': self.model.metadata['recomb_rate'],
-            'selection': self.selection,
+            'fitness_affects_survival': self.fitness_affects_survival,
+            'fitness_affects_reproduction': self.fitness_affects_reproduction,
             'gens_per_lifecycle': self._gens_per_lifecycle,
         }
 
@@ -230,12 +230,12 @@ class ClonalHaploidWF(ReproductionBase):
 class AltGenWF(ReproductionBase):
     """Reproduction mode based on Wright-Fisher model with clonal
      haploid individuals."""
-    
     spo_pop_size: int # number of diploid individuals
     gam_pop_size: int # number of haploid individuals
-    selection:str = "none"
+    fitness_affects_survival: bool = True
+    fitness_affects_reproduction: bool = False
+    separate_sexes: bool = False
     _gens_per_lifecycle: int = 2
-    sexes: bool = False  # not yet used?
 
     def run(self):
         """Updates self.model.map with new component scripts for running
@@ -256,29 +256,20 @@ class AltGenWF(ReproductionBase):
         else:
             self.model.first(
                 time=1,
-                scripts=("sim.addSubpop('p1', SPO_POP_SIZE);\n"
-                		 "sim.addSubpop('p0', 0);"),
+                scripts=("sim.addSubpop('p2', SPO_POP_SIZE);\n"
+                		 "sim.addSubpop('p1', 0);"),
                 comment="define starting haploid population.",
             )
 
     def _add_scripts(self):
         """fitness and mating of diploid population."""
 
-        if self.selection == "none":
-
+        if self.fitness_affects_reproduction:
             self.model.repro(
-                population="p1",
-                scripts= REPRO_ALTGEN_P1,
+                population="p2",
+                scripts= REPRO_ALTGEN_SOFT_P2,
                 comment="clonal random mating; mating success weighted by fitness."
             )
-
-            self.model.repro(
-                population="p0",
-                scripts= REPRO_ALTGEN_P0,
-                comment="clonal random mating; mating success weighted by fitness."
-            )
-
-        elif self.selection == "soft":
 
             self.model.repro(
                 population="p1",
@@ -286,13 +277,12 @@ class AltGenWF(ReproductionBase):
                 comment="clonal random mating; mating success weighted by fitness."
             )
 
+        elif self.fitness_affects_survival:
             self.model.repro(
-                population="p0",
-                scripts= REPRO_ALTGEN_SOFT_P0,
+                population="p2",
+                scripts= REPRO_ALTGEN_P2,
                 comment="clonal random mating; mating success weighted by fitness."
             )
-
-        elif self.selection == "hard":
 
             self.model.repro(
                 population="p1",
@@ -300,16 +290,23 @@ class AltGenWF(ReproductionBase):
                 comment="clonal random mating; mating success weighted by fitness."
             )
 
-            self.model.repro(
-                population="p0",
-                scripts= REPRO_ALTGEN_P0,
-                comment="clonal random mating; mating success weighted by fitness."
-            )
-
             self.model.early(
                 time = None,
                 scripts=WF_ALTGEN_EARLY,
                 comment="Fitness scaling for hard selection"
+            )
+
+        else:
+            self.model.repro(
+                population="p2",
+                scripts= REPRO_ALTGEN_P2,
+                comment="clonal random mating; mating success weighted by fitness."
+            )
+
+            self.model.repro(
+                population="p1",
+                scripts= REPRO_ALTGEN_P1,
+                comment="clonal random mating; mating success weighted by fitness."
             )
 
     def _add_initialize_constants(self):
@@ -320,7 +317,8 @@ class AltGenWF(ReproductionBase):
             'spo_pop_size': self.spo_pop_size,
             'gam_pop_size': self.gam_pop_size,
             'spo_mutation_rate': self.model.metadata['mutation_rate'],
-            'selection': self.selection,
+            'fitness_affects_survival': self.fitness_affects_survival,
+            'fitness_affects_reproduction': self.fitness_affects_reproduction,
             'recombination_rate': self.model.metadata['recomb_rate']
         }
 
@@ -377,7 +375,8 @@ class AltGenWF(ReproductionBase):
 class Moran(WrightFisher):
     """Reproduction mode based on Wright-Fisher model."""
     pop_size: int
-    sexes: bool = False  # not yet used?
+    separate_sexes: bool = False
+    age_of_death: int = 10
     _gens_per_lifecycle: int = 1
 
     def run(self):
@@ -395,7 +394,14 @@ class Moran(WrightFisher):
         self._add_survival_script()
 
     def _add_survival_script(self):
-        pass
+        """Defines the late() callbacks for each gen.
+        This overrides the NonWrightFisher class function of same name.
+        """
+        self.model.survival(
+            population=None,
+            scripts=f"return (individual.age < {self.age_of_death});",
+            comment=f"Individuals will die at age {self.age_of_death}",
+        )
 
 
 if __name__ == "__main__":
@@ -428,9 +434,10 @@ if __name__ == "__main__":
     )
 
     with shadie.Model() as mod:
-        mod.initialize(chromosome=chrom, sim_time=50, file_out="/tmp/test.trees")
-        mod.reproduction.wright_fisher_haploid_clonal(
-            pop_size=500,
+        mod.initialize(chromosome=chrom, sim_time=100, file_out="/tmp/test.trees")
+        mod.reproduction.wright_fisher_altgen(
+            spo_pop_size=500,
+            gam_pop_size=500,
         )
     print(mod.script)
     # mod.write("/tmp/slim.slim")

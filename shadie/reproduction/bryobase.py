@@ -20,32 +20,29 @@ from shadie.reproduction.scripts import (
     NO_SPO_CLONES,
     GAM_CLONES,
     NO_GAM_CLONES,
-    GAM_MATERNAL_EFFECT_ON_P1,
+    GAM_MATERNAL_EFFECT_ON_P2,
     NO_GAM_MATERNAL_EFFECT,
-    SPO_MATERNAL_EFFECT_ON_P0,
+    SPO_MATERNAL_EFFECT_ON_P1,
     NO_SPO_MATERNAL_EFFECT,
-    P0_FITNESS_SCALE_DEFAULT,
-    EARLY,
-    P0_FITNESS_SCALE_DEFAULT,
     P1_FITNESS_SCALE_DEFAULT,
+    EARLY,
+    P1_FITNESS_SCALE_DEFAULT,
+    P2_FITNESS_SCALE_DEFAULT,
+    P1_RANDOM_SURVIVAL,
+    P2_RANDOM_SURVIVAL,
+    FITNESS_AFFECTS_SPO_REPRODUCTION,
+    CONSTANT_SPORES,
+    FITNESS_AFFECTS_GAM_MATING,
+    RANDOM_MATING,
 )
 from shadie.reproduction.bryo_scripts import (
+    REPRO_BRYO_DIO_P2,
     REPRO_BRYO_DIO_P1,
-    REPRO_BRYO_DIO_P0,
+    REPRO_BRYO_MONO_P2,
     REPRO_BRYO_MONO_P1,
-    REPRO_BRYO_MONO_P0,
     DEFS_BRYO_MONO,
     DEFS_BRYO_DIO,
 )
-# from shadie.reproduction.bryo_scripts2 import (
-#     LATE_BRYO_MONO,
-#     EARLY_BRYO_MONO,
-#     FUNCTIONS_BRYO_MONO,
-#     SURVIVAL_BRYO_MONO,
-#     REPRO_BRYO_MONO_0, 
-#     REPRO_BRYO_MONO_P1,
-# )
-
 
 
 @dataclass
@@ -103,11 +100,21 @@ class BryophyteBase(NonWrightFisher):
         Defines the early() callbacks for each gen.
         This will be overridden by any callbacks of the same name in subclasses
         """
+        if self.fitness_affects_gam_survival:
+            p1_survival_effects = P1_FITNESS_SCALE_DEFAULT
+        else:
+            p1_survival_effects = P1_RANDOM_SURVIVAL
+
+        if self.fitness_affects_spo_survival:
+            p2_survival_effects = P2_FITNESS_SCALE_DEFAULT
+        else:
+            p2_survival_effects = P2_RANDOM_SURVIVAL
+
         early_script = (EARLY.format(
-            p0_fitnessScaling= P0_FITNESS_SCALE_DEFAULT,
-            p1_fitnessScaling= P1_FITNESS_SCALE_DEFAULT,
+            p1_survival_effects= p1_survival_effects,
+            p2_survival_effects= p2_survival_effects,
             gametophyte_clones=GAM_CLONES,
-            gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P1,
+            gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P2,
             sporophyte_clones=NO_SPO_CLONES,
             spo_maternal_effect=NO_SPO_MATERNAL_EFFECT,
             )
@@ -124,10 +131,15 @@ class BryophyteBase(NonWrightFisher):
 class BryophyteDioicous(BryophyteBase):
     mode: str = field(default="dioicous", init=False)
     gam_female_to_male_ratio: Tuple[float,float]
+    fitness_affects_spo_survival: bool = True
+    fitness_affects_spo_reproduction: bool = False
+    fitness_affects_gam_survival: bool = True
+    fitness_affects_gam_mating: bool = False
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
         # methods inherited from parent Bryophyte class
+        self._print_warning()
         self._set_mutation_rates()
         self._add_shared_mode_scripts()
         self._add_early_script()
@@ -138,8 +150,8 @@ class BryophyteDioicous(BryophyteBase):
         self._add_alternation_of_generations()
         self._set_gametophyte_k()
         self._add_initialize_globals()
-        self._add_initialize_constants()
         self._write_trees_file()
+        self._add_initialize_constants()
 
         # mode-specific functions
         self._add_mode_scripts()
@@ -147,16 +159,33 @@ class BryophyteDioicous(BryophyteBase):
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to heterosporous bryo."""
         self.model.custom(scripts=DEFS_BRYO_DIO, comment = "shadie DEFINITIONS")
+
+        #add fitness determination of sperm success (or not)
+        if self.fitness_affects_gam_mating:
+            repro_script_p1 = REPRO_BRYO_DIO_P1.format(
+                sperm_sampling=FITNESS_AFFECTS_GAM_MATING)
+        else:
+            repro_script_p1 = REPRO_BRYO_DIO_P1.format(
+                sperm_sampling=RANDOM_MATING)
+
+        #add fitness determination of spore # (or not)
+        if self.fitness_affects_spo_reproduction:
+            repro_script_p2 = REPRO_BRYO_DIO_P2.format(
+                spore_determination=FITNESS_AFFECTS_SPO_REPRODUCTION)
+
+        else: repro_script_p2 = REPRO_BRYO_DIO_P2.format(
+                spore_determination=CONSTANT_SPORES)
+
         self.model.repro(
-            population="p0",
-            scripts=REPRO_BRYO_DIO_P0,
-            idx = "s0",
+            population="p1",
+            scripts=repro_script_p1,
+            idx = "s1",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
-            population="p1",
-            scripts=REPRO_BRYO_DIO_P1,
-            idx = "s1",
+            population="p2",
+            scripts=repro_script_p2,
+            idx = "s2",
             comment="generates gametes from sporophytes"
         )
 
@@ -166,6 +195,10 @@ class BryophyteMonoicous(BryophyteBase):
     mode: str = field(default="monoicous", init=False)
     gam_self_rate_per_egg: float
     gam_female_to_male_ratio: Tuple[float,float]
+    fitness_affects_spo_survival: bool = True
+    fitness_affects_spo_reproduction: bool = False
+    fitness_affects_gam_survival: bool = True
+    fitness_affects_gam_mating: bool = False
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
@@ -190,19 +223,35 @@ class BryophyteMonoicous(BryophyteBase):
         """fills the model.map block with bryophyte-monoicous scripts."""
         # add reproduction scripts
         self.model.custom(scripts=DEFS_BRYO_MONO, comment = "shadie DEFINITIONS")
+        
+        #add fitness determination of sperm success (or not)
+        if self.fitness_affects_gam_mating:
+            repro_script_p1 = REPRO_BRYO_MONO_P1.format(
+                sperm_sampling=FITNESS_AFFECTS_GAM_MATING)
+        else:
+            repro_script_p1 = REPRO_BRYO_MONO_P1.format(
+                sperm_sampling=RANDOM_MATING)
+
+        #add fitness determination of spore # (or not)
+        if self.fitness_affects_spo_reproduction:
+            repro_script_p2 = REPRO_BRYO_MONO_P2.format(
+                spore_determination=FITNESS_AFFECTS_SPO_REPRODUCTION)
+
+        else: repro_script_p2 = REPRO_BRYO_MONO_P2.format(
+                spore_determination=CONSTANT_SPORES)
+
         self.model.repro(
-            population="p0",
-            scripts=REPRO_BRYO_MONO_P0,
-            idx = "s0",
+            population="p1",
+            scripts=repro_script_p1,
+            idx = "s1",
             comment="generates sporophytes from gametes"
         )
         self.model.repro(
-            population="p1",
-            scripts=REPRO_BRYO_MONO_P1,
-            idx="s1",
+            population="p2",
+            scripts=repro_script_p2,
+            idx = "s2",
             comment="generates gametes from sporophytes"
         )
-
 
 if __name__ == "__main__":
 
@@ -237,6 +286,10 @@ if __name__ == "__main__":
         mod.reproduction.bryophyte_monoicous(
             spo_pop_size=100,
             gam_pop_size=100,
+            fitness_affects_gam_mating = True,
+            fitness_affects_gam_survival = False,
+            fitness_affects_spo_survival = False,
+            fitness_affects_spo_reproduction = True,
             gam_self_rate_per_egg=0.8,
         )
     print(mod.script)
