@@ -144,15 +144,14 @@ class PteridophyteHomosporous(PteridophyteBase):
     gam_clone_rate: float
     gam_clones_per: int
     fitness_affects_spo_survival: bool = True
-    fitness_affects_spo_reproduction: bool = False
     fitness_affects_gam_survival: bool = True
+    fitness_affects_spo_reproduction: bool = False
     fitness_affects_gam_mating: bool = False
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
         # methods inherited from parent Pteridophyte class
         self._set_mutation_rates()
-        self._add_early_script()
 
         # methods inherited from parent NonWrightFisher class
         self._add_first_script()
@@ -165,6 +164,7 @@ class PteridophyteHomosporous(PteridophyteBase):
 
         # mode-specific functions
         self._add_mode_scripts()
+        self._add_early_script()
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to homosporous pteridophyte."""
@@ -301,8 +301,8 @@ class PteridophyteVittaria(PteridophyteBase):
     sex: str
     sex_rate: float
     fitness_affects_spo_survival: bool = True
-    fitness_affects_spo_reproduction: bool = False
     fitness_affects_gam_survival: bool = True
+    fitness_affects_spo_reproduction: bool = False
     fitness_affects_gam_mating: bool = False
 
     def run(self):
