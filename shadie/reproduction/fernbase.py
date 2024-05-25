@@ -370,7 +370,7 @@ class PteridophyteVittaria(PteridophyteBase):
             repro_script_p2 = REPRO_PTER_VITTARIA_P2.format(
                 spore_determination=FITNESS_AFFECTS_SPO_REPRODUCTION)
 
-        else: repro_script_p2 = REPRO_PTER_VITTARIA_P1.f2rmat(
+        else: repro_script_p2 = REPRO_PTER_VITTARIA_P2.format(
                 spore_determination=CONSTANT_SPORES)
 
         self.model.repro(
