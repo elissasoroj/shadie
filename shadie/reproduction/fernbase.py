@@ -357,20 +357,20 @@ class PteridophyteVittaria(PteridophyteBase):
 
         #add fitness determination of sperm success (or not)
         if self.fitness_affects_gam_mating:
-            repro_script_p1 = REPRO_PTER_HETEROSPORE_P1.format(
+            repro_script_p1 = REPRO_PTER_VITTARIA_P1.format(
                 sperm_sampling=FITNESS_AFFECTS_GAM_MATING,
                 clone_determination=P1_FITNESS_AFFECTS_CLONES)
         else:
-            repro_script_p1 = REPRO_PTER_HETEROSPORE_P1.format(
+            repro_script_p1 = REPRO_PTER_VITTARIA_P1.format(
                 sperm_sampling=RANDOM_MATING,
                 clone_determination=P1_FIXED_CLONES)
 
         #add fitness determination of spore # (or not)
         if self.fitness_affects_spo_reproduction:
-            repro_script_p2 = REPRO_PTER_HETEROSPORE_P2.format(
+            repro_script_p2 = REPRO_PTER_VITTARIA_P2.format(
                 spore_determination=FITNESS_AFFECTS_SPO_REPRODUCTION)
 
-        else: repro_script_p2 = REPRO_PTER_HETEROSPORE_P2.format(
+        else: repro_script_p2 = REPRO_PTER_VITTARIA_P1.f2rmat(
                 spore_determination=CONSTANT_SPORES)
 
         self.model.repro(
