@@ -110,7 +110,8 @@ class ChromosomeRandom(ChromosomeBase):
         of events per sampled region. A value of 0.005 means one
         intron per 200bp.
         """
-        length_scale = self.gene_size, 
+        #length_scale = self.gene_size, 
+        length_scale = self.cds_scale
         intron_scale = self.intron_scale
         cds_span = int(self.rng.exponential(scale=length_scale))
         n_introns = int(self.rng.poisson(lam=cds_span / intron_scale))
