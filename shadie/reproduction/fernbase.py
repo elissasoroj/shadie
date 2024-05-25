@@ -45,6 +45,8 @@ from shadie.reproduction.vittaria_scripts import (
     REPRO_PTER_VITTARIA_P1,
     REPRO_PTER_VITTARIA_P2,
     DEFS_PTER_VITTARIA,
+    P1_FITNESS_AFFECTS_CLONES,
+    P1_FIXED_CLONES,
     )
 
 DTYPES = ("dioicy", "dioicous", "heterosporous")
@@ -102,6 +104,36 @@ class PteridophyteBase(NonWrightFisher):
             self.spo_mutation_rate = 0.5 * self.model.metadata['mutation_rate']
             self.gam_mutation_rate = 0.5 * self.model.metadata['mutation_rate']
 
+    def _add_early_script(self):
+        """
+        Defines the early() callbacks for each gen.
+        This overrides the NonWrightFisher class function of same name.
+        """
+        if self.fitness_affects_gam_survival:
+            p1_survival_effects = P1_FITNESS_SCALE_DEFAULT
+        else:
+            p1_survival_effects = P1_RANDOM_SURVIVAL
+
+        if self.fitness_affects_spo_survival:
+            p2_survival_effects = P2_FITNESS_SCALE_DEFAULT
+        else:
+            p2_survival_effects = P2_RANDOM_SURVIVAL
+
+        early_script = (
+            EARLY.format(
+                p1_survival_effects= p1_FITNESS_SCALE_DEFAULT,
+                p2_survival_effects= P2_FITNESS_SCALE_DEFAULT,
+                gametophyte_clones=GAM_CLONES,
+                gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P2,
+                sporophyte_clones=SPO_CLONES,
+                spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P1,
+            )
+        )
+        self.model.early(
+            time=None,
+            scripts=early_script,
+        )
+
 @dataclass
 class PteridophyteHomosporous(PteridophyteBase):
     """Reproduction mode based on homosporoous ferns and lycophytes"""
@@ -120,6 +152,7 @@ class PteridophyteHomosporous(PteridophyteBase):
         """Fill self.model.map with SLiM script snippets."""
         # methods inherited from parent Pteridophyte class
         self._set_mutation_rates()
+        self._add_early_script()
 
         # methods inherited from parent NonWrightFisher class
         self._add_first_script()
@@ -132,39 +165,6 @@ class PteridophyteHomosporous(PteridophyteBase):
 
         # mode-specific functions
         self._add_mode_scripts()
-        self._add_early_script()
-
-    def _add_early_script(self):
-        """
-        Defines the early() callbacks for each gen.
-        This overrides the NonWrightFisher class function of same name.
-        """
-        if self.fitness_affects_gam_survival:
-            p1_survival_effects = P1_FITNESS_SCALE_DEFAULT
-        else:
-            p1_survival_effects = P1_RANDOM_SURVIVAL
-
-        if self.fitness_affects_spo_survival:
-            p2_survival_effects = P2_FITNESS_SCALE_DEFAULT
-        else:
-            p2_survival_effects = P2_RANDOM_SURVIVAL
-
-        early_script = (EARLY.format(
-            # TODO: do not use camelcase for argument
-            p1_survival_effects=p1_survival_effects,
-            p2_survival_effects=p2_survival_effects,
-            gametophyte_clones=GAM_CLONES,
-            gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P2,
-            sporophyte_clones=SPO_CLONES,
-            spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P1,
-            )
-        )
-
-        self.model.early(
-            time=None,
-            scripts=early_script,
-            comment="alternation of generations",
-        )
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to homosporous pteridophyte."""
@@ -300,6 +300,10 @@ class PteridophyteVittaria(PteridophyteBase):
     gam_clones_per: int
     sex: str
     sex_rate: float
+    fitness_affects_spo_survival: bool = True
+    fitness_affects_spo_reproduction: bool = False
+    fitness_affects_gam_survival: bool = True
+    fitness_affects_gam_mating: bool = False
 
     def run(self):
         """Fill self.model.map with SLiM script snippets."""
@@ -307,6 +311,7 @@ class PteridophyteVittaria(PteridophyteBase):
         self._set_mutation_rates()
         self._add_shared_mode_scripts()
         self._add_first_script()
+        self._add_early_script()
 
         # methods inherited from parent NonWrightFisher class
         self._define_subpopulations()
@@ -318,33 +323,30 @@ class PteridophyteVittaria(PteridophyteBase):
 
         # mode-specific functions
         self._add_mode_scripts()
-        self._add_early_script()
-
-    def _add_early_script(self):
-        """
-        Defines the early() callbacks for each gen.
-        This overrides the NonWrightFisher class function of same name.
-        """
-
-        early_script = (
-            EARLY.format(
-                p1_survival_effects= p1_FITNESS_SCALE_DEFAULT,
-                p2_survival_effects= P2_FITNESS_SCALE_DEFAULT,
-                gametophyte_clones=GAM_CLONES,
-                gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P2,
-                sporophyte_clones=SPO_CLONES,
-                spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P1,
-            )
-        )
-        self.model.early(
-            time=None,
-            scripts=early_script,
-        )
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to Vittaria."""
 
         self.model.custom(scripts=DEFS_PTER_VITTARIA, comment="shadie DEFINITIONS")
+
+        #add fitness determination of sperm success (or not)
+        if self.fitness_affects_gam_mating:
+            repro_script_p1 = REPRO_PTER_HETEROSPORE_P1.format(
+                sperm_sampling=FITNESS_AFFECTS_GAM_MATING,
+                clone_determination=P1_FITNESS_AFFECTS_CLONES)
+        else:
+            repro_script_p1 = REPRO_PTER_HETEROSPORE_P1.format(
+                sperm_sampling=RANDOM_MATING,
+                clone_determination=P1_FIXED_CLONES)
+
+        #add fitness determination of spore # (or not)
+        if self.fitness_affects_spo_reproduction:
+            repro_script_p2 = REPRO_PTER_HETEROSPORE_P2.format(
+                spore_determination=FITNESS_AFFECTS_SPO_REPRODUCTION)
+
+        else: repro_script_p2 = REPRO_PTER_HETEROSPORE_P2.format(
+                spore_determination=CONSTANT_SPORES)
+
         self.model.repro(
             population="p1",
             idx="s1",
