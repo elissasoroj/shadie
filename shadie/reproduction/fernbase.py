@@ -314,7 +314,6 @@ class PteridophyteVittaria(PteridophyteBase):
 
         # methods inherited from parent NonWrightFisher class
         self._add_first_script()
-        self._define_subpopulations()
         self._add_alternation_of_generations()
         self._set_gametophyte_k()
         self._add_initialize_globals()
@@ -322,7 +321,34 @@ class PteridophyteVittaria(PteridophyteBase):
         self._write_trees_file()
 
         # mode-specific functions
+        self._define_subpopulations()
         self._add_mode_scripts()
+
+    def _define_subpopulations(self):
+        """add haploid and diploid life stages as subpopulations.
+        """
+        # load a trees file that already has p1 and p2 pops
+        if self.model.metadata['file_in']:
+            # set p2 to tag=3 (sporophytes) and p1 to tag=[0,1] (gametophytes)
+            self.model._read_from_file(tag_scripts=[
+                "p2.individuals.tag = 3;",
+                "tags = rbinom(1, p1.individualCount, 0.5);",
+                "p1.individuals.tag = tags;",
+            ])
+
+        # create new p1 and p2 populations
+        else:
+            self.model.first(
+                time=1,
+                scripts=[
+                    "sim.addSubpop('p2', 0)",
+                    "sim.addSubpop('p1', GAM_SPO_SIZE)",
+                    "p1.individuals.tag = 1",
+                    "p1.individuals.setValue('maternal_fitness', 1.0);",
+                    "p1.individuals.tagL0 = (runif(p1.individualCount) < GAM_FEMALE_TO_MALE_RATIO);",
+                ],
+                comment="define subpops: p2=diploid sporophytes, p1=haploid gametophytes",
+            )
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to Vittaria."""
