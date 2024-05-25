@@ -121,7 +121,7 @@ class PteridophyteBase(NonWrightFisher):
 
         early_script = (
             EARLY.format(
-                p1_survival_effects= p1_FITNESS_SCALE_DEFAULT,
+                p1_survival_effects= P1_FITNESS_SCALE_DEFAULT,
                 p2_survival_effects= P2_FITNESS_SCALE_DEFAULT,
                 gametophyte_clones=GAM_CLONES,
                 gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P2,
