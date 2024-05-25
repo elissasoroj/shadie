@@ -69,6 +69,10 @@ class ChromosomeRandom(ChromosomeBase):
         intron: Union[None, ElementType, List[ElementType]]=None,
         exon: Union[None, ElementType, List[ElementType]]=None,
         noncds: ElementType=None,
+        gene_size: Union[int, None]=None,
+        intron_scale: Union[int, None]=None,
+        cds_scale: Union[int, None]=None,
+        noncds_scale: Union[int, None]=None,
         seed: Union[int, None]=None,
         use_nucleotides: bool=False,
         use_synonymous_sites_in_coding: bool=False,
@@ -84,22 +88,29 @@ class ChromosomeRandom(ChromosomeBase):
         self.exon = exon if exon is not None else EXON
         self.noncds = noncds if noncds is not None else NONCDS
         self.genome_size = int(genome_size - 1)
+        self.gene_size = genome_size
+        self.intron_scale = intron_scale
+        self.cds_scale = cds_scale
+        self.noncds_scale = noncds_scale
 
-    def get_noncds_span(self, scale:int=5000) -> int:
+    def get_noncds_span(self, scale:int) -> int:
         """
         Draws the number of bases until the next element from an
         exponential distribution. The scale is the average waiting
         time in number of bp.
         """
+        scale=self.noncds_scale
         return int(self.rng.exponential(scale=scale))
 
-    def get_cds_spans(self, length_scale:int=1000, intron_scale:int=1000) -> List[int]:
+    def get_cds_spans(self, length_scale:int, intron_scale:int) -> List[int]:
         """
         Draws the number of exons in a fixed length space from a
         Poisson distribution. The lam parameter is the average number
         of events per sampled region. A value of 0.005 means one
         intron per 200bp.
         """
+        length_scale = self.gene_size, 
+        intron_scale = self.intron_scale
         cds_span = int(self.rng.exponential(scale=length_scale))
         n_introns = int(self.rng.poisson(lam=cds_span / intron_scale))
         if n_introns:
@@ -113,12 +124,15 @@ class ChromosomeRandom(ChromosomeBase):
             splits = [cds_span]
         return splits
 
-    def run(self, noncds_scale=5000, cds_scale=1000, intron_scale=1000) -> None:
+    def run(self, noncds_scale, cds_scale, intron_scale) -> None:
         """Generates a random chromosome by sampling elements.
 
         Waiting times are randomly sampled between CDS regions, as are
         the number of introns within CDS regions.
         """
+        noncds_scale = self.noncds_scale
+        cds_scale = self.cds_scale
+        intron_scale = self.intron_scale
         idx = 0
         while 1:
             # start with a non-cds span
