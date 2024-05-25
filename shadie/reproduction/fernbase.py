@@ -152,6 +152,7 @@ class PteridophyteHomosporous(PteridophyteBase):
         """Fill self.model.map with SLiM script snippets."""
         # methods inherited from parent Pteridophyte class
         self._set_mutation_rates()
+        self._add_early_script()
 
         # methods inherited from parent NonWrightFisher class
         self._add_first_script()
@@ -164,7 +165,6 @@ class PteridophyteHomosporous(PteridophyteBase):
 
         # mode-specific functions
         self._add_mode_scripts()
-        self._add_early_script()
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to homosporous pteridophyte."""
@@ -213,6 +213,7 @@ class PteridophyteHeterosporous(PteridophyteBase):
         self._set_mutation_rates()
 
         # methods inherited from parent NonWrightFisher class
+        self._add_first_script()
         self._define_subpopulations()
         self._add_alternation_of_generations()
         self._set_gametophyte_k()
@@ -309,11 +310,10 @@ class PteridophyteVittaria(PteridophyteBase):
         """Fill self.model.map with SLiM script snippets."""
         # methods inherited from parent Pteridophyte class
         self._set_mutation_rates()
-        self._add_shared_mode_scripts()
-        self._add_first_script()
         self._add_early_script()
 
         # methods inherited from parent NonWrightFisher class
+        self._add_first_script()
         self._define_subpopulations()
         self._add_alternation_of_generations()
         self._set_gametophyte_k()
