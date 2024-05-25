@@ -342,7 +342,7 @@ class PteridophyteVittaria(PteridophyteBase):
                 time=1,
                 scripts=[
                     "sim.addSubpop('p2', 0)",
-                    "sim.addSubpop('p1', GAM_SPO_SIZE)",
+                    "sim.addSubpop('p1', GAM_POP_SIZE)",
                     "p1.individuals.tag = 1",
                     "p1.individuals.setValue('maternal_fitness', 1.0);",
                     "p1.individuals.tagL0 = (runif(p1.individualCount) < GAM_FEMALE_TO_MALE_RATIO);",
