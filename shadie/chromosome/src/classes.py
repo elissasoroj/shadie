@@ -84,7 +84,7 @@ class ChromosomeRandom(ChromosomeBase):
             use_synonymous_sites_in_coding=use_synonymous_sites_in_coding,
         )
         self.seed = seed if seed else int(np.random.rand() * (2**32 - 1))
-        self.rng = np.random.default_rng(seed)
+        self.rng = np.random.default_rng(self.seed)
         self.intron = intron if intron is not None else INTRON
         self.exon = exon if exon is not None else EXON
         self.noncds = noncds if noncds is not None else NONCDS
