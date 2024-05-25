@@ -350,13 +350,13 @@ class PteridophyteVittaria(PteridophyteBase):
         self.model.repro(
             population="p1",
             idx="s1",
-            scripts=REPRO_PTER_VITTARIA_P1,
+            scripts=repro_script_p1,
             comment="generates gametes from gametophytes"
         )
         self.model.repro(
             population="p2",
             idx="s2",
-            scripts=REPRO_PTER_VITTARIA_P2,
+            scripts=repro_script_p2,
             comment="generates spores from sporophytes"
         )
 
