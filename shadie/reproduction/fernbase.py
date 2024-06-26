@@ -113,11 +113,21 @@ class PteridophyteBase(NonWrightFisher):
             p1_survival_effects = P1_FITNESS_SCALE_DEFAULT
         else:
             p1_survival_effects = P1_RANDOM_SURVIVAL
+            self.model.survival(
+                comment = "fitness doesn't affect gametophyte survival;",
+                population = "p1",
+                scripts = "return T;"
+            )
 
         if self.fitness_affects_spo_survival:
             p2_survival_effects = P2_FITNESS_SCALE_DEFAULT
         else:
             p2_survival_effects = P2_RANDOM_SURVIVAL
+            self.model.survival(
+                comment = "fitness doesn't affect sporophyte survival;",
+                population = "p2",
+                scripts = "return T;"
+            )
 
         early_script = (
             EARLY.format(
@@ -183,7 +193,8 @@ class PteridophyteHomosporous(PteridophyteBase):
             repro_script_p2 = REPRO_PTER_HOMOSPORE_P2.format(
                 spore_determination=FITNESS_AFFECTS_SPO_REPRODUCTION)
 
-        else: repro_script_p2 = REPRO_PTER_HOMOSPORE_P2.format(
+        else: 
+            repro_script_p2 = REPRO_PTER_HOMOSPORE_P2.format(
                 spore_determination=CONSTANT_SPORES)
 
         self.model.repro(
@@ -234,11 +245,21 @@ class PteridophyteHeterosporous(PteridophyteBase):
             p1_survival_effects = PTER_FITNESS_SCALE
         else:
             p1_survival_effects = P1_RANDOM_SURVIVAL
+            self.model.survival(
+                comment = "fitness doesn't affect gametophyte survival;",
+                population = "p1",
+                scripts = "return T;"
+            )
 
         if self.fitness_affects_spo_survival:
             p2_survival_effects = P2_FITNESS_SCALE_DEFAULT
         else:
             p2_survival_effects = P2_RANDOM_SURVIVAL
+            self.model.survival(
+                comment = "fitness doesn't affect sporophyte survival;",
+                population = "p2",
+                scripts = "return T;"
+            )
 
         early_script = (
             EARLY.format(
@@ -364,14 +385,26 @@ class PteridophyteVittaria(PteridophyteBase):
             repro_script_p1 = REPRO_PTER_VITTARIA_P1.format(
                 sperm_sampling=RANDOM_MATING,
                 clone_determination=P1_FIXED_CLONES)
+            self.model.survival(
+                comment = "fitness doesn't affect gametophyte survival;",
+                population = "p1",
+                scripts = "return T;"
+            )
 
         #add fitness determination of spore # (or not)
         if self.fitness_affects_spo_reproduction:
             repro_script_p2 = REPRO_PTER_VITTARIA_P2.format(
                 spore_determination=FITNESS_AFFECTS_SPO_REPRODUCTION)
 
-        else: repro_script_p2 = REPRO_PTER_VITTARIA_P2.format(
+        else: 
+            repro_script_p2 = REPRO_PTER_VITTARIA_P2.format(
                 spore_determination=CONSTANT_SPORES)
+            self.model.survival(
+                comment = "fitness doesn't affect sporophyte survival;",
+                population = "p2",
+                scripts = "return T;"
+            )
+
 
         self.model.repro(
             population="p1",

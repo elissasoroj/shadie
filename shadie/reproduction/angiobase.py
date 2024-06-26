@@ -158,11 +158,22 @@ class AngiospermDioecious(AngiospermBase):
             p1_survival_effects = P1_ANGIO_FITNESS_SCALE
         else:
             p1_survival_effects = P1_RANDOM_SURVIVAL
+            self.model.survival(
+                comment = "fitness doesn't affect gametophyte survival;",
+                population = "p1",
+                scripts = "return T;"
+            )
 
         if self.fitness_affects_spo_survival:
             p2_survival_effects = P2_ANGIO_FITNESS_SCALE
         else:
             p2_survival_effects = P2_RANDOM_SURVIVAL
+            self.model.survival(
+                comment = "fitness doesn't affect sporophyte survival;",
+                population = "p2",
+                scripts = "return T;"
+            )
+
         early_script = (
             EARLY.format(
                 p1_survival_effects = p1_survival_effects,
@@ -276,11 +287,22 @@ class AngiospermMonoecious(AngiospermBase):
             p1_survival_effects = P1_ANGIO_FITNESS_SCALE
         else:
             p1_survival_effects = P1_RANDOM_SURVIVAL
+            self.model.survival(
+                comment = "fitness doesn't affect gametophyte survival;",
+                population = "p1",
+                scripts = "return T;"
+            )
 
         if self.fitness_affects_spo_survival:
             p2_survival_effects = P2_ANGIO_FITNESS_SCALE
         else:
             p2_survival_effects = P2_RANDOM_SURVIVAL
+            self.model.survival(
+                comment = "fitness doesn't affect sporophyte survival;",
+                population = "p2",
+                scripts = "return T;"
+            )
+
         early_script = (EARLY.format(
             p1_survival_effects = p1_survival_effects,
             p2_survival_effects = p2_survival_effects,
