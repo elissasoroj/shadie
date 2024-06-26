@@ -16,6 +16,7 @@ from shadie.reproduction.angiobase import (
     AngiospermMonoecious, AngiospermDioecious)
 from shadie.reproduction.fernbase import (
     PteridophyteHomosporous, PteridophyteHeterosporous, PteridophyteVittaria)
+from shadie.reproduction.triphasicbase import TriphasicPolysiphonia
 
 Model = TypeVar("Model")
 
@@ -563,7 +564,7 @@ class ReproductionApi:
         gam_pop_size: int,
         spo_female_to_male_ratio: Tuple[float,float],
         spo_mutation_rate: Optional[float]=None,
-        gam_mutation_rate: Optional[float]=0.0,
+        gam_mutation_rate: Optional[float]=None,
         spo_clone_rate: float=0.0,
         spo_clones_per: int=3,
         spo_random_death_chance: float=0.0,
@@ -606,6 +607,64 @@ class ReproductionApi:
             fitness_affects_gam_mating=fitness_affects_gam_mating,
         ).run()
     
+    def triphasic_polysiphonia(
+        self,
+        gam_pop_size: int,
+        tspo_pop_size: int,
+        gam_female_to_male_ratio: Tuple[float,float],
+        gam_mutation_rate: Optional[float]=None,
+        tspo_mutation_rate: Optional[float]=None,
+        cspo_mutation_rate: Optional[float]=None,
+        gam_clone_rate: float=0.1,
+        gam_clones_per: int=3,
+        tspo_clone_rate: float=0.1,
+        tspo_clones_per: int=3,
+        tspo_self_rate_per_egg: float = 0.0,
+        tspo_max_spores_per: int=50,
+        cspo_max_spores_per: int=50,
+        gam_max_carpogonia_per: int=30,
+        tspo_random_death_chance: float=0.0,
+        cspo_random_death_chance: float=0.0,
+        gam_random_death_chance: float=0.0,
+        gam_maternal_effect: float=0.0,
+        gam_ceiling: int=None,
+        cspo_recombination: str = "F",
+        fitness_affects_tspo_survival: bool=True,
+        fitness_affects_tspo_reproduction: bool=False,
+        fitness_affects_gam_survival: bool=True,
+        fitness_affects_sperm_success: bool = False,
+        fitness_affects_egg_num: bool = False
+    ):
+        TriphasicPolysiphonia(
+            model=self.model,
+            tspo_pop_size=tspo_pop_size,
+            gam_pop_size=gam_pop_size,
+            gam_female_to_male_ratio=gam_female_to_male_ratio,
+            tspo_mutation_rate=tspo_mutation_rate,
+            cspo_mutation_rate=cspo_mutation_rate,
+            gam_mutation_rate=gam_mutation_rate,
+            gam_clone_rate=gam_clone_rate,
+            gam_clones_per=gam_clones_per,
+            tspo_clone_rate=tspo_clone_rate,
+            tspo_clones_per=tspo_clones_per,
+            tspo_self_rate_per_egg=tspo_self_rate_per_egg,
+            tspo_max_spores_per=tspo_max_spores_per,
+            cspo_max_spores_per=cspo_max_spores_per,
+            gam_max_carpogonia_per=gam_max_carpogonia_per,
+            gam_random_death_chance=gam_random_death_chance,
+            tspo_random_death_chance=tspo_random_death_chance,
+            cspo_random_death_chance=cspo_random_death_chance,
+            gam_maternal_effect=gam_maternal_effect,
+            gam_ceiling=gam_ceiling,
+            cspo_recombination=cspo_recombination,
+            fitness_affects_tspo_survival=fitness_affects_tspo_survival,
+            fitness_affects_tspo_reproduction=fitness_affects_tspo_reproduction,
+            fitness_affects_gam_survival=fitness_affects_gam_survival,
+            fitness_affects_sperm_success=fitness_affects_sperm_success,
+            fitness_affects_egg_num=fitness_affects_egg_num,
+        ).run()
+
+
     # def gymnosperm_monosporous(...)
     # def gymnosperm_heterosporous(...)
 

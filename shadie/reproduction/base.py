@@ -151,8 +151,8 @@ class NonWrightFisher(ReproductionBase):
             # set p2 to tag=3 (sporophytes) and p1 to tag=[0,1] (gametophytes)
             self.model._read_from_file(tag_scripts=[
                 "p2.individuals.tag = 3;",
-                "tags = rbinom(1, p1.individualCount, 0.5);",
-                "p1.individuals.tag = tags;",
+                "tags = (runif(p1.individualCount) < GAM_FEMALE_TO_MALE_RATIO); ",
+                "p1.individuals.tagL0 = tags;",
             ])
 
         # create new p1 and p2 populations
@@ -208,6 +208,8 @@ class NonWrightFisher(ReproductionBase):
             "_p2activate_str", "_p2deactivate_str",
             "fitness_affects_gam_survival", "fitness_affects_gam_mating",
             "fitness_affects_spo_survival", "fitness_affects_spo_reproduction",
+            "fitness_affects_sperm_success", "fitness_affects_egg_num",
+            "fitness_affects_tspo_survival", "fitness_affects_tspo_reproduction"
         ]
 
         asdict = {

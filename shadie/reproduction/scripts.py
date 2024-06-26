@@ -72,7 +72,7 @@ EARLY = """
             sim.killIndividuals(p1.individuals[random_death]);
             }}
 
-       {spo_maternal_effect}
+        {spo_maternal_effect}
 
         // 3. Set up for next tick
         // fitness affects gametophyte survival
@@ -146,22 +146,20 @@ WF_FITNESS_SCALE = """inds = sim.subpopulations.individuals;
     p2.fitnessScaling = K / sum(inds.fitnessScaling);"""
 
 P1_RANDOM_SURVIVAL = """
+    //exact population is maintained
     num_to_kill = p1.individualCount - GAM_POP_SIZE;
     if (num_to_kill > 0) {
         random_inds = sample(p1.individuals, num_to_kill);
         sim.killIndividuals(p1.individuals[random_inds.index]);           
     }
-    //exact population is maintained
-    p1.fitnessScaling = GAM_POP_SIZE / p1.individualCount;
 """
 P2_RANDOM_SURVIVAL = """
+    //exact population is maintained
     num_to_kill = p2.individualCount - SPO_POP_SIZE;
     if (num_to_kill > 0) {
         random_inds = sample(p2.individuals, num_to_kill);
         sim.killIndividuals(p2.individuals[random_inds.index]);           
     }
-    //exact population is maintained
-    p2.fitnessScaling = SPO_POP_SIZE / p2.individualCount;
 """
 
 # -----------------------

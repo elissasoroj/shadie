@@ -66,7 +66,7 @@ REPRO_PTER_HOMOSPORE_P2 = """
         child4 = p1.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL, parent1 = ind);
         children = c(child1, child2, child3, child4);
         children.tag = 1; //gametophyte tag
-        children.tagL0 = (runif(4) < GAM_FEMALE_TO_MALE_RATIO); // CHANGED THIS LINES
+        children.tagL0 = (runif(4) < GAM_FEMALE_TO_MALE_RATIO); 
 
         //sporophyte maternal effect on new spores
         if (SPO_MATERNAL_EFFECT > 0)
