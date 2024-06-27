@@ -1,0 +1,365 @@
+
+initialize() {
+
+  // model type
+  initializeSLiMModelType("nonWF");
+
+  // config
+  initializeRecombinationRate(1e-09, 1000000);
+  initializeMutationRate(1e-08);
+  initializeTreeSeq(simplificationInterval=NULL);
+
+  // MutationType init
+  initializeMutationType('m2', 0.1, 'g', -3.0, 1.5);
+  initializeMutationType('m3', 0.8, 'e', 0.04);
+  c(m2, m3).haploidDominanceCoeff = 1.0;
+  c(m2, m3).convertToSubstitution = T;
+
+  
+
+  // ElementType init
+  initializeGenomicElementType('g1', c(m2,m3), c(8,0.1));
+  initializeGenomicElementType('g2', m2, 1);
+
+  // Chromosome (GenomicElement init)
+  initializeGenomicElement(g1, 200001, 400000);
+  initializeGenomicElement(g2, 400001, 600000);
+  initializeGenomicElement(g1, 600001, 800000);
+
+  // constants (Population sizes and others)
+  defineConstant('SPO_POP_SIZE', 500);
+  defineConstant('GAM_POP_SIZE', 1000);
+  defineConstant('SPO_MUTATION_RATE', 5e-09);
+  defineConstant('GAM_MUTATION_RATE', 5e-09);
+  defineConstant('SPO_CLONE_RATE', 0.0);
+  defineConstant('SPO_CLONES_PER', 1);
+  defineConstant('SPO_SELF_RATE', 0.0);
+  defineConstant('SPO_SELF_RATE_PER_EGG', 0.1);
+  defineConstant('SPO_SPORES_PER', 100);
+  defineConstant('SPO_RANDOM_DEATH_CHANCE', 0);
+  defineConstant('GAM_RANDOM_DEATH_CHANCE', 0);
+  defineConstant('SPO_MATERNAL_EFFECT', 0);
+  defineConstant('GAM_ARCHEGONIA_PER', 1);
+  defineConstant('GAM_CEILING', 10000);
+  defineConstant('GAM_FEMALE_TO_MALE_RATIO', 0.6666666666666666);
+  defineConstant('GAM_SELF_RATE', 0.0);
+  defineConstant('GAM_SELF_RATE_PER_EGG', 0.1);
+  defineConstant('GAM_MATERNAL_EFFECT', 0);
+  defineConstant('GAM_CLONE_RATE', 0.0);
+  defineConstant('GAM_CLONES_PER', 1);
+
+  // globals (metadata dictionary)
+  defineGlobal('METADATA', Dictionary('file_in', 'None', 'file_out', 'recap_ex.trees', 'mutation_rate', '1e-08', 'recomb_rate', '1e-09', 'spo_pop_size', '500', 'gam_pop_size', '1000', 'spo_mutation_rate', '5e-09', 'gam_mutation_rate', '5e-09', 'spo_clone_rate', '0.0', 'spo_clones_per', '1', 'spo_self_rate', '0.0', 'spo_self_rate_per_egg', '0.1', 'spo_spores_per', '100', 'spo_random_death_chance', '0', 'gam_random_death_chance', '0', 'spo_maternal_effect', '0', 'gam_archegonia_per', '1', 'gam_ceiling', '10000', 'gam_female_to_male_ratio', '0.6666666666666666', 'gam_self_rate', '0.0', 'gam_self_rate_per_egg', '0.1', 'gam_maternal_effect', '0', 'gam_clone_rate', '0.0', 'gam_clones_per', '1', 'model_source', 'shadie', 'lineage', 'Pteridophyte', 'mode', 'homosporous', 'gens_per_lifecycle', '2', 'full_lifecycles', '100', 'slim_gens', '201'));
+
+  // extra scripts (Optional)
+  
+}
+
+// shadie DEFINITIONS
+// model: homosporous pteridophyte
+// p0 = haploid population
+// p1 = diploid population
+// 1 = gametophyte (1N) tag
+// 2 = gametophyte clones (1N) tag
+// 3 = sporophyte (2N) tag
+// 4 = sporophyte clones (2N) tag;
+
+// L0: Female = True, Male = False;
+
+// executes before offspring are generated
+// define subpops: p1=diploid sporophytes, p0=haploid gametophytes
+
+1 first() {
+    sim.addSubpop('p1', SPO_POP_SIZE);
+    sim.addSubpop('p0', 0);
+    p1.individuals.tag = 3;
+    p1.individuals.setValue('maternal_fitness', 1.0);
+    p1.individuals.tagL0 = (runif(p1.individualCount) < GAM_FEMALE_TO_MALE_RATIO);
+}
+
+
+// executes before offspring are generated
+// alternation of generations
+
+first() {
+    // alternate generations
+    if (sim.cycle % 2 == 1) {
+        // reproduction(p0) will create SPOROPHYTES in p1.
+        
+        // set reproduction function to be used this generation     
+        s0.active = 1;
+        s1.active = 0;
+        
+        // set mutation rate that will apply to the offspring
+        sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
+    }
+    
+    else {  //(sim.cycle % 2 == 0)
+        // reproduction(p1) will produce GAMETOPHYTES into p0.
+        
+        // set reproduction function to be used this generation  
+        s0.active = 0; //GAM
+        s1.active = 1; //SPO
+        
+        // set mutation rate that will apply to the offspring
+        sim.chromosome.setMutationRate(SPO_MUTATION_RATE);
+    }
+}
+
+
+// generates offspring
+// generates gametes from sporophytes
+s0 reproduction(p0 ) {
+    // clonal individual get added to the p0 pool for next round.
+    // NOTE: this doesn't allow clones to reproduce this round.
+    if (runif(1) < GAM_CLONE_RATE) {
+        for (i in seqLen(GAM_CLONES_PER)) {
+            child = p0.addRecombinant(individual.genome1, NULL, NULL, 
+            NULL, NULL, NULL, parent1 = individual); //only 1 parent recorded
+            child.tag = 2; //marked as clone
+            child.tagL0 = individual.tagL0; //inherits parent sex
+            //gametophyte maternal effect not applicable for clones = neutral
+            if (GAM_MATERNAL_EFFECT > 0)
+                child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+        }
+    }
+    
+    // iterate over each egg to find a mate (self, sib, or outcross)
+    // NOTE: each gametophyte gives rise to antheridia that produce thousands of
+    // clonal sperm. Because of this, sperm is not removed from the mating pool when used. 
+    
+    //Reproduction scripts run only on hermaphroditic gametophytes
+    //Females: L0 = T
+    if (individual.tagL0) {
+        
+        // get all males that could fertilize an egg of this hermaphrodite
+        //In homosporous ferns, most gametophytes are hermaphroditic or male, 
+        //so "males" includes all the hermaphrodites as well as male gametophytes
+        males = p0.individuals;
+        
+        // if selfing is possible then get all sibling males
+        if (SPO_SELF_RATE_PER_EGG > 0)
+            //shared parent count for sibs is > 0 (1 or 2)
+            siblings = males[individual.sharedParentCount(males)!=0];
+        
+        // iterate over each reproductive opportunity (archegonia) in this hermaphrodite.
+        for (rep in seqLen(GAM_ARCHEGONIA_PER)) {
+            
+            // weighted sampling: each egg gets gam-selfed, spo-selfed, or outcrossed.
+            // Note: shadie enforces that GAM_SELF_RATE + SPO_SELF_RATE !> 1
+            mode = sample(
+                x=c(1, 2, 3),
+                size=1,
+                weights=c(GAM_SELF_RATE_PER_EGG, SPO_SELF_RATE_PER_EGG, 1 - (GAM_SELF_RATE_PER_EGG + SPO_SELF_RATE_PER_EGG))
+                );
+            
+            // intra-gametophytic selfed
+            if (mode == 1) {
+                child = p1.addRecombinant(individual.genome1, NULL, NULL, 
+                individual.genome1, NULL, NULL, parent1 = individual, parent2 = individual);
+                child.tag = 3; //sporophyte tag
+                //gametophyte maternal effect on new sporophyte
+                if (GAM_MATERNAL_EFFECT > 0)
+                    child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+            }
+            
+            // inter-gametophytic selfed individual (same sporo parent)
+            // only occurs IF a sibling gametophyte is still alive.
+            else if (mode == 2) {
+                if (siblings.size() > 0) {
+                    sibling = sample(siblings, 1);
+                    child = p1.addRecombinant(individual.genome1, NULL, NULL, 
+                    sibling.genome1, NULL, NULL, parent1 = individual, parent2 = sibling);
+                    child.tag = 3; //sporophyte tag
+                    //gametophyte maternal effect on new sporophyte
+                    if (GAM_MATERNAL_EFFECT > 0)
+                        child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+                }
+            }
+            // outcrossing individual samples any other p0, and checks that it is outcrossing
+            // only occurs if a non-sib gametophyte is still alive.
+            
+            else {
+                outcross_sperms = males[individual.sharedParentCount(males)==0];
+                if (! isNULL(outcross_sperms)) {
+                    sperm = sample(outcross_sperms, 1);
+                    child = p1.addRecombinant(individual.genome1, NULL, NULL, 
+                    sperm.genome1, NULL, NULL, parent1 = individual, parent2=sperm);
+                    child.tag = 3; //sporophyte tag
+                    //gametophyte maternal effect on new sporophyte
+                    if (GAM_MATERNAL_EFFECT > 0)
+                        child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+                
+                
+                }
+            }
+        
+        }
+    }
+}
+
+
+// generates offspring
+// generates gametes from sporophytes
+s1 reproduction(p1 ) {
+    ind = individual;
+    
+    // clonal individual get added to the p0 pool for next round.
+    // NOTE: this doesn't allow clones to reproduce this round.
+    
+    //DISCUSS parental pedigree tracking for clones - perhaps this 
+    //should be a toggle (i.e. to address strict selfing rates)
+    if (runif(1) < SPO_CLONE_RATE) {
+        for (i in seqLen(SPO_CLONES_PER)) {
+            child = p1.addRecombinant(individual.genome1, NULL, NULL, 
+            individual.genome2, NULL, NULL, parent1 = individual, parent2 = individual);
+            child.tag = 4; // sporophyte clone
+            //sporophyte maternal effect not applicable for clones = neutral
+            if (SPO_MATERNAL_EFFECT > 0)
+                child.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+        }
+    }
+    
+    // fitness-based determination of how many spores are created by this ind
+    ind_fitness = p1.cachedFitness(ind.index);
+    max_fitness = max(p1.cachedFitness(NULL));
+    ind_fitness_scaled = ind_fitness/max_fitness;
+    
+    //spore_vector = sample(c(0,1), SPO_SPORES_PER, replace = T, weights = c((1-ind_fitness_scaled), ind_fitness_scaled));
+    //spores = sum(spore_vector);
+    spores = rbinom(1, SPO_SPORES_PER, ind_fitness_scaled); // REPLACE ABOVE
+    
+    // each spore produces its own recombinant breakpoints 
+    for (rep in seqLen(spores)) {
+        breaks1 = sim.chromosome.drawBreakpoints(ind);
+        breaks2 = sim.chromosome.drawBreakpoints(ind);
+        
+        // create four meiotic products. If later two of these mate with each other
+        // it is an example of sporophytic selfing. Because we need to be able to match
+        // sibling gametes at that time we tag them now with their sporophyte parent's index.
+        child1 = p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL, parent1 = ind);
+        child2 = p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL, parent1 = ind);
+        child3 = p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL, parent1 = ind);
+        child4 = p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL, parent1 = ind);
+        children = c(child1, child2, child3, child4);
+        children.tag = 1; //gametophyte tag
+        children.tagL0 = (runif(4) < GAM_FEMALE_TO_MALE_RATIO); // CHANGED THIS LINES
+        
+        //sporophyte maternal effect on new spores
+        if (SPO_MATERNAL_EFFECT > 0)
+            children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
+    }
+}
+
+
+// executes after offspring are generated
+// alternation of generations
+
+early() {
+    // diploids (p1) just generated haploid gametophytes into p0
+    if (community.tick % 2 == 0) {
+        // alternate generations.
+        
+        
+    // remove parents, except for clones
+    non_clones = p1.individuals[p1.individuals.tag != 4];
+    sim.killIndividuals(non_clones);
+    //reset clone tags to regular tag
+    p1.individuals.tag = 3;
+
+        
+        // new p0s removed by three possible mechanisms: 
+        // 1. random chance of death.
+        // 2. using fitness re-calculated to include maternal effect.
+        // 3. individual goes on next tick (unless fitness kills it)
+        
+        // 1. make a mask for random death
+        if (GAM_RANDOM_DEATH_CHANCE > 0) {
+            random_death = (runif(p0.individualCount) < GAM_RANDOM_DEATH_CHANCE);
+            sim.killIndividuals(p0.individuals[random_death]);
+        }
+
+        //random death also occurs to implement GAM_CEILING
+        if (p0.individualCount > GAM_CEILING) {
+            to_kill = GAM_CEILING - GAM_POP_SIZE;
+            death_chance = to_kill/p0.individualCount;
+            random_death = sample(c(F,T), p0.individualCount, T, c(1-death_chance, death_chance));
+            sim.killIndividuals(p0.individuals[random_death]);
+            }
+        
+       
+    // 2. maternal effect re-calculation 
+    if (SPO_MATERNAL_EFFECT > 0) {
+        //temp fitness scaling
+        scale = SPO_POP_SIZE / p1.individualCount;
+        //calculations
+        maternal_fitnesses = SPO_MATERNAL_EFFECT*p0.individuals.getValue("maternal_fitness");
+        child_fitnesses = (1 - SPO_MATERNAL_EFFECT)*p0.cachedFitness(NULL);
+        corrected_fitnesses = scale * (maternal_fitnesses + child_fitnesses);
+        
+        //remove inds based on maternal effects
+        to_kill = (runif(p0.individualCount) > corrected_fitnesses);
+        sim.killIndividuals(p0.individuals[to_kill]);
+        }
+
+        
+        //3. Set up for next tick
+        // fitness affects gametophyte survival
+        p0.fitnessScaling = GAM_POP_SIZE / p0.individualCount;
+    }
+    
+    
+    // odd generations = gametophytes (p0) just generated sporophytes
+    else {
+        // alternate generations.
+        
+// removes parents, except clones
+        non_clones = p0.individuals[p0.individuals.tag != 2];
+        sim.killIndividuals(non_clones);
+        //reset clone tags to regular tag
+        p0.individuals.tag = 1;
+
+        
+        // remove new p1s by three possible mechanisms: 
+        // 1. random chance of death.
+        // 2. using fitness re-calculated to include maternal effect.
+        // 3. individual goes on next tick (unless fitness kills it)
+        
+        // 1. make a mask for random death
+        if (SPO_RANDOM_DEATH_CHANCE > 0) {
+            random_death = (runif(p1.individualCount) < GAM_RANDOM_DEATH_CHANCE);
+            sim.killIndividuals(p1.individuals[random_death]);
+        }
+        
+        
+    // 2. maternal effect re-calculation 
+    if (GAM_MATERNAL_EFFECT > 0) {
+        //temp fitness scaling
+        scale = SPO_POP_SIZE / p1.individualCount;
+
+        //calculations
+        maternal_fitnesses = GAM_MATERNAL_EFFECT*p1.individuals.getValue("maternal_fitness");
+        child_fitnesses = (1 - GAM_MATERNAL_EFFECT)*p1.cachedFitness(NULL);
+        corrected_fitnesses = scale*(maternal_fitnesses + child_fitnesses);
+        
+        //remove inds based on maternal effects
+        to_kill = (runif(p1.individualCount) > corrected_fitnesses);
+        sim.killIndividuals(p1.individuals[to_kill]);
+    }
+
+        
+        
+        //3. Set up for next tick
+        // fitness is scaled relative to number of inds in p1
+        p1.fitnessScaling = SPO_POP_SIZE / p1.individualCount;
+    }
+}
+
+
+// executes after selection occurs
+// end of sim; save .trees file
+
+201 late() {
+    sim.treeSeqRememberIndividuals(sim.subpopulations.individuals);
+    sim.treeSeqOutput('recap_ex.trees', metadata = METADATA);
+}
