@@ -13,7 +13,7 @@ Example
 >>> ...
 """
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 from shadie.base.defaults import NONCDS, EXON, INTRON, NEUT, DEL, BEN
 from shadie.base.mutations import mtype
