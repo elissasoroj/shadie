@@ -12,6 +12,7 @@ initialize() {{
 
   // model type
   initializeSLiMModelType("nonWF");
+  initializeSLiMOptions(keepPedigrees=T);
 
   // config
   initializeRecombinationRate({recombination_rate});
