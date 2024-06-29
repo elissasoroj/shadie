@@ -174,15 +174,11 @@ FITNESS_AFFECTS_SPO_REPRODUCTION = """
     spores = rbinom(1, SPO_SPORES_PER, ind_fitness_scaled);
 """
 
-CONSTANT_SPORES = "spores = SPO_SPORES_PER;"
-
 FITNESS_AFFECTS_GAM_MATING = """
 // fitness-based determination of sperm sampling
     sperm_fitness_vector = p1.cachedFitness(outcross_sperms.index);
     sperm = sample(outcross_sperms, 1, weights = sperm_fitness_vector);
 """
-
-RANDOM_MATING = "sperm = sample(outcross_sperms, 1);"
 
 WF_REPRO_SOFT = """
     // parents are chosen proportional to fitness
@@ -195,15 +191,34 @@ WF_REPRO_SOFT = """
     self.active = 0;
 """
 
+# ==SCRIPTS FOR HARD SELECTION==
+
+RANDOM_MATING = "sperm = sample(outcross_sperms, 1);"
+
+CONSTANT_SPORES = "spores = SPO_SPORES_PER;"
+
 WF_REPRO_HARD = """
     // parents are chosen randomly (irrespective of fitness)
+    // child number is poisson draw w/ lambda=2
     inds = p2.individuals;
-    fitness = p2.cachedFitness(NULL);
-    parents1 = p2.sampleIndividuals(K, replace=T);
-    parents2 = p2.sampleIndividuals(K, replace=T);
-    for (i in seqLen(K))
+    poisson_draws = rpois(length(inds), 2);
+    parents1 = repEach(inds, poisson_draws);
+    num_children = length(parents1);
+    parents2 = p2.sampleIndividuals(num_children , replace=T);
+    for (i in seqLen(num_children))
         p2.addCrossed(parents1[i], parents2[i]);
     self.active = 0;
+"""
+
+WF_SELECTION = """
+    //implements fitness effects on survival
+    //enforces constant population size
+    numtokill = length(p2.individuals) - K;
+    if (numtokill > 0){
+        fitness = p2.cachedFitness(NULL);
+        tokill = sample(p2.individuals, numtokill, weights = (-1*fitness));
+        sim.killIndividuals(tokill);
+    }
 """
 
 #################################################################
