@@ -143,7 +143,7 @@ NO_GAM_CLONES = """
 P1_FITNESS_SCALE_DEFAULT = "p1.fitnessScaling = GAM_POP_SIZE / p1.individualCount;"
 P2_FITNESS_SCALE_DEFAULT = "p2.fitnessScaling = SPO_POP_SIZE / p2.individualCount;"
 WF_FITNESS_SCALE = """inds = sim.subpopulations.individuals;
-    p2.fitnessScaling = K / sum(inds.fitnessScaling);"""
+    p2.fitnessScaling = N / sum(inds.fitnessScaling);"""
 
 P1_RANDOM_SURVIVAL = """
     //exact population is maintained
@@ -184,9 +184,9 @@ WF_REPRO_SOFT = """
     // parents are chosen proportional to fitness
     inds = p2.individuals;
     fitness = p2.cachedFitness(NULL);
-    parents1 = sample(inds, K, replace=T, weights=fitness);
-    parents2 = sample(inds, K, replace=T, weights=fitness);
-    for (i in seqLen(K))
+    parents1 = sample(inds, N, replace=T, weights=fitness);
+    parents2 = sample(inds, N, replace=T, weights=fitness);
+    for (i in seqLen(N))
         p2.addCrossed(parents1[i], parents2[i]);
     self.active = 0;
 """
