@@ -198,25 +198,48 @@ RANDOM_MATING = "sperm = sample(outcross_sperms, 1);"
 CONSTANT_SPORES = "spores = SPO_SPORES_PER;"
 
 WF_REPRO_HARD = """
-    // parents are chosen randomly (irrespective of fitness)
-    // child number is poisson draw w/ lambda=2
-    inds = p2.individuals;
-    poisson_draws = rpois(length(inds), 2);
-    parents1 = repEach(inds, poisson_draws);
-    num_children = length(parents1);
-    parents2 = p2.sampleIndividuals(num_children , replace=T);
-    for (i in seqLen(num_children))
-        p2.addCrossed(parents1[i], parents2[i]);
+    //parents chosen at random for mating
+
+    //adjust parents to maintain K
+    if (p2.individualCount < 3000){
+        add_num = 3000-p2.individualCount;
+        add_par = sample(p2.individuals, add_num);
+        parents = c(p2.individuals, add_par);
+    }
+    else
+        parents = p2.individuals;
+
+    //create the gamete pool based on poisson sampling
+    gamete_pool = repEach(parents, num_offspring);
+
+    //randomize the gamete pool
+    rand_gamete_pool = sample(gamete_pool, length(gamete_pool), replace=F);
+    
+    //split the gametes into two parent vectors
+    matings = asInteger(floor(length(gamete_pool)/2));
+    parents1 = gamete_pool[0:matings];
+    end = length(gamete_pool) - 1;
+    parents2 = gamete_pool[matings:end];
+    
+    //make the offspring
+    for (i in seqLen(matings))
+       p2.addCrossed(parents1[i], parents2[i]);
     self.active = 0;
 """
 
+#implemented directly in base
+WF_EARLY_HARD = """
+//kill parents first
+    sim.killIndividuals(p2.individuals[p2.individuals.age > 0]);
+"""
+
+#goes in late() call
 WF_SELECTION = """
-    //implements fitness effects on survival
     //enforces constant population size
     numtokill = length(p2.individuals) - K;
     if (numtokill > 0){
         fitness = p2.cachedFitness(NULL);
-        tokill = sample(p2.individuals, numtokill, weights = (-1*fitness));
+        tokill = sample(p2.individuals, numtokill, weights = (1/fitness));
         sim.killIndividuals(tokill);
     }
 """
