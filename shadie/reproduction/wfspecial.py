@@ -76,7 +76,7 @@ class HaploidWF(ReproductionBase):
         else:
             self.model.first(
                 time=1,
-                scripts="sim.addSubpop('p2', K, haploid=T);",
+                scripts="sim.addSubpop('p2', N, haploid=T);",
                 comment="define starting haploid population.",
             )
 
@@ -91,7 +91,7 @@ class HaploidWF(ReproductionBase):
 
             self.model.early(
                 time=None,
-                scripts="p2.fitnessScaling = K / p2.individualCount",
+                scripts="p2.fitnessScaling = N / p2.individualCount",
                 comment="calculate relative fitness.",
             ) 
 
@@ -123,7 +123,7 @@ class HaploidWF(ReproductionBase):
             'gens_per_lifecycle': self._gens_per_lifecycle,
         }
 
-        self.model.map["initialize"][0]['constants']["K"] = self.pop_size
+        self.model.map["initialize"][0]['constants']["N"] = self.pop_size
         self.model.map["initialize"][0]['simglobals']["METADATA"] = metadata_dict
 
     def _add_survival_script(self):
@@ -164,7 +164,7 @@ class ClonalHaploidWF(ReproductionBase):
         else:
             self.model.first(
                 time=1,
-                scripts="sim.addSubpop('p2', K, haploid=T);",
+                scripts="sim.addSubpop('p2', N, haploid=T);",
                 comment="define starting haploid population.",
             )
 
@@ -186,7 +186,7 @@ class ClonalHaploidWF(ReproductionBase):
 
             self.model.early(
                 time=None,
-                scripts="p2.fitnessScaling = K / p2.individualCount",
+                scripts="p2.fitnessScaling = N / p2.individualCount",
                 comment="calculate relative fitness.",
             ) 
 
@@ -211,7 +211,7 @@ class ClonalHaploidWF(ReproductionBase):
             'gens_per_lifecycle': self._gens_per_lifecycle,
         }
 
-        self.model.map["initialize"][0]['constants']["K"] = self.pop_size
+        self.model.map["initialize"][0]['constants']["N"] = self.pop_size
         self.model.map["initialize"][0]['simglobals']["METADATA"] = metadata_dict
 
     def _add_survival_script(self):
