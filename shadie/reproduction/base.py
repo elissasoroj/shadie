@@ -316,6 +316,7 @@ class WrightFisher(ReproductionBase):
     fitness_affects_survival: bool = True
     fitness_affects_reproduction: bool = False
     separate_sexes: bool = False
+    lambda_pois: float = 4 # lambda for poisson sampling
 
     def run(self):
         """Updates self.model.map with new component scripts for running
@@ -334,7 +335,7 @@ class WrightFisher(ReproductionBase):
         else:
             self.model.first(
                 time=1,
-                scripts="sim.addSubpop('p2', K);",
+                scripts="sim.addSubpop('p2', N);",
                 comment="define starting diploid population.",
             )
 
@@ -354,9 +355,12 @@ class WrightFisher(ReproductionBase):
             )
 
         elif self.fitness_affects_survival:
+            repro_script_p2 = WF_REPRO_HARD.format(
+                lambda_pois=self.lambda_pois)
+
             self.model.repro(
                 population="p2",
-                scripts= WF_REPRO_HARD,
+                scripts= repro_script_p2,
                 comment="WF model with hard selection (random mating)"
             )
             self.model.late(
@@ -384,7 +388,7 @@ class WrightFisher(ReproductionBase):
             'gens_per_lifecycle': self._gens_per_lifecycle,
         }
 
-        self.model.map["initialize"][0]['constants']["K"] = self.pop_size
+        self.model.map["initialize"][0]['constants']["N"] = self.pop_size
         self.model.map["initialize"][0]['simglobals']["METADATA"] = metadata_dict
 
         # save initalize metadata and update from dict
@@ -428,8 +432,8 @@ if __name__ == "__main__":
     # generate a model w/ slim script
     with shadie.Model() as mod:
         mod.initialize(chromosome=chrom, sim_time=1000, )  # file_in="/tmp/test.trees")
-        mod.reproduction.wright_fisher(pop_size=1000, fitness_affects_reproduction=True,
-            fitness_affects_survival=False)
+        mod.reproduction.wright_fisher(pop_size=1000, fitness_affects_reproduction=False,
+            fitness_affects_survival=True)
     print(mod.script)
     #mod.write("/tmp/slim.slim")
     #mod.run(seed=123, binary="/home/deren/miniconda3/envs/shadie/bin/slim")  # /usr/local/bin/slim")

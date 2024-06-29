@@ -199,13 +199,15 @@ CONSTANT_SPORES = "spores = SPO_SPORES_PER;"
 
 WF_REPRO_HARD = """
     //parents chosen at random for mating
+    // child number is poisson draw w/ lambda=2
+    num_offspring = rpois(N, {lambda_pois}); 
 
     //adjust parents to maintain K
-    if (p2.individualCount < 3000){
-        add_num = 3000-p2.individualCount;
+    if (p2.individualCount < N){{
+        add_num = N-p2.individualCount;
         add_par = sample(p2.individuals, add_num);
         parents = c(p2.individuals, add_par);
-    }
+    }}
     else
         parents = p2.individuals;
 
@@ -236,10 +238,11 @@ WF_EARLY_HARD = """
 #goes in late() call
 WF_SELECTION = """
     //enforces constant population size
-    numtokill = length(p2.individuals) - K;
+    numtokill = length(p2.individuals) - N;
     if (numtokill > 0){
         fitness = p2.cachedFitness(NULL);
-        tokill = sample(p2.individuals, numtokill, weights = (1/fitness));
+        fitness_weights = (1+max(fitness))-fitness;
+        tokill = sample(p2.individuals, numtokill, weights = fitness_weights);
         sim.killIndividuals(tokill);
     }
 """

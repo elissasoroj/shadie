@@ -674,6 +674,7 @@ class ReproductionApi:
         separate_sexes: bool = False,
         fitness_affects_reproduction: bool=False,
         fitness_affects_survival: bool=True,
+        lambda_pois: float=2.05,
     ):
         """Generate scripts appropriate for basic WF model, set up as a
         SLiM nonWF model
@@ -687,16 +688,17 @@ class ReproductionApi:
             default = "none": fitness has no effect; sim is effectively neutral
             "hard": fitenss affects survival only, mating is random
             "soft"; fitness affects mating success
-        sexes: bool
-            default = False; individuals are hemraphroditic. If True,
-            individuals will be male and female
+        lambda_pois: float
+            default = 4; only affects models with hard selection
+            lambda determines the mean children per parent
         """
         WrightFisher(
             model=self.model,
             pop_size=pop_size,
             separate_sexes=separate_sexes,
             fitness_affects_reproduction=fitness_affects_reproduction,
-            fitness_affects_survival=fitness_affects_survival
+            fitness_affects_survival=fitness_affects_survival,
+            lambda_pois=lambda_pois,
         ).run()
 
     def moran(
@@ -705,6 +707,7 @@ class ReproductionApi:
         separate_sexes: bool = False,
         fitness_affects_reproduction: bool=False,
         fitness_affects_survival: bool=True,
+        lambda_pois: float=2.05,
     ):
         """Generate scripts appropriate for Moran model. This is similar
         to a WF model, but with overlapping generations
@@ -727,7 +730,8 @@ class ReproductionApi:
             pop_size=pop_size,
             separate_sexes=separate_sexes,
             fitness_affects_reproduction=fitness_affects_reproduction,
-            fitness_affects_survival=fitness_affects_survival
+            fitness_affects_survival=fitness_affects_survival,
+            lambda_pois=lambda_pois
         ).run()
 
     def wright_fisher_haploid_sexual(
