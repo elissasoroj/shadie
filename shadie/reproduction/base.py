@@ -21,7 +21,8 @@ from shadie.reproduction.scripts import (
     WF_REPRO_SOFT,
     WF_REPRO_HARD,
     HAP_MUT_FITNESS,
-    DIP_MUT_FITNESS
+    DIP_MUT_FITNESS,
+    WF_SELECTION,
 )
 
 logger = logger.bind(name="shadie")
@@ -358,11 +359,11 @@ class WrightFisher(ReproductionBase):
                 scripts= WF_REPRO_HARD,
                 comment="WF model with hard selection (random mating)"
             )
-            self.model.early(
+            self.model.late(
                 time=None,
-                scripts="p2.fitnessScaling = K / p2.individualCount",
-                comment="calculate relative fitness.",
-            )
+                scripts=WF_SELECTION,
+                comment="implements fitness effects on survival for hard selection"
+                )
 
         else:
             self.model.repro(
