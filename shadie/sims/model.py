@@ -301,7 +301,7 @@ class Model(AbstractContextManager):
         """
         scripts = [f"sim.readFromPopulationFile('{self.metadata['file_in']}')"]
         scripts.extend(tag_scripts)
-        self.first(
+        self.early(
             time=1,
             scripts=scripts,
             comment="read starting populations from file_in"
