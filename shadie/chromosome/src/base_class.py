@@ -177,7 +177,7 @@ class ChromosomeBase:
             # genomic element, so that SLiM doesn't complain
             start = int(self.genome_size-1)
             end = int(self.genome_size)
-            commands.extend(
+            commands.append(
                     f"initializeGenomicElement({NONCDS.name}, {start}, {end});\n",
                 )
             # raise ValueError(
