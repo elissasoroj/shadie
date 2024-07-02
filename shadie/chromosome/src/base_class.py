@@ -88,7 +88,7 @@ class ChromosomeBase:
         neutral elements (contains only neutral mut) in the list.
         """
         if self._skip_neutral_mutations:
-            if not self.is_coding(idx):
+            if not self.is_coding(None):
                 return list(set(self.data.script))
             else:
                 return list(set(i for i in self.data.script if i.is_coding))
