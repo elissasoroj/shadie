@@ -88,7 +88,10 @@ class ChromosomeBase:
         neutral elements (contains only neutral mut) in the list.
         """
         if self._skip_neutral_mutations:
-            return list(set(i for i in self.data.script if i.is_coding))
+            if not self.is_coding(idx):
+                return list(set(self.data.script))
+            else:
+                return list(set(i for i in self.data.script if i.is_coding))
         else:
             return list(set(self.data.script))
 
@@ -174,7 +177,7 @@ class ChromosomeBase:
             # genomic element, so that SLiM doesn't complain
             start = int(self.genome_size-1)
             end = int(self.genome_size)
-            commands.append(
+            commands.extend(
                     f"initializeGenomicElement({NONCDS.name}, {start}, {end});\n",
                 )
             # raise ValueError(
@@ -185,7 +188,7 @@ class ChromosomeBase:
         for idx in self.data.index:
             ele = self.data.loc[idx]
 
-            # nuetral region is written depending on toggle.
+            # neutral region is written depending on toggle.
             if not self.is_coding(idx):
                 if not self._skip_neutral_mutations:
                     commands.append(
