@@ -23,6 +23,7 @@ from shadie.reproduction.scripts import (
     HAP_MUT_FITNESS,
     DIP_MUT_FITNESS,
     WF_SELECTION,
+    WF_DEFS,
 )
 
 logger = logger.bind(name="shadie")
@@ -341,6 +342,8 @@ class WrightFisher(ReproductionBase):
 
     def _add_scripts(self):
         """fitness and mating of diploid population."""
+        self.model.custom(scripts=DEFS_WF, comment="shadie DEFINITIONS")
+
         # check only one reproduction mode for WF
         if (self.fitness_affects_survival and self.fitness_affects_reproduction):
             raise ValueError(f"WF models in shadie requires only one of "

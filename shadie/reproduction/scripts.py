@@ -4,6 +4,14 @@
 
 """
 
+WF_DEFS = """
+// model: wright fisher
+// p2 = diploid population
+
+// L0: Female = True, Male = False
+"""
+
+
 ######################################################################
 # standard first script
 
