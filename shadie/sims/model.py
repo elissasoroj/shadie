@@ -161,9 +161,10 @@ class Model(AbstractContextManager):
             if key == "custom":
                 for i in range(0, len(mapped[key])):
                     script = mapped[key][i]
+                    self.defindex = None
                     if "DEFINITIONS" in script['comment']:
-                        defindex=i
-                if defindex:
+                        self.defindex=i
+                if self.defindex is not None:
                     mapped['shadie'].append(mapped[key].pop(defindex))
 
         #     for item in mapped[key]:
