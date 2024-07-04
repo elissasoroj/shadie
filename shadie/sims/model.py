@@ -165,7 +165,7 @@ class Model(AbstractContextManager):
                     if "DEFINITIONS" in script['comment']:
                         self.defindex=i
                 if self.defindex is not None:
-                    mapped['shadie'].append(mapped[key].pop(defindex))
+                    mapped['shadie'].append(mapped[key].pop(self.defindex))
 
         #     for item in mapped[key]:
         #         print(item)
