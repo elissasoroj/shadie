@@ -342,7 +342,7 @@ class WrightFisher(ReproductionBase):
 
     def _add_scripts(self):
         """fitness and mating of diploid population."""
-        self.model.custom(scripts=DEFS_WF, comment="shadie DEFINITIONS")
+        self.model.custom(scripts=WF_DEFS, comment="shadie DEFINITIONS")
 
         # check only one reproduction mode for WF
         if (self.fitness_affects_survival and self.fitness_affects_reproduction):
