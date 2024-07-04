@@ -163,7 +163,7 @@ class Model(AbstractContextManager):
                     script = mapped[key][i]
                     if "DEFINITIONS" in script['comment']:
                         defindex=i
-                if "DEFINITIONS" in script['comment']:
+                if defindex:
                     mapped['shadie'].append(mapped[key].pop(defindex))
 
         #     for item in mapped[key]:
