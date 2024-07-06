@@ -43,6 +43,8 @@ from shadie.reproduction.angio_scripts import (
     NO_POLLEN_COMPETITION,
     NO_EGG_FITNESS,
     EGG_FITNESS_AFFECTS_VIABILITY,
+    FITNESS_AFFECTS_POLLEN_NUM,
+    CONSTANT_POLLEN_NUM
 )
 
 DTYPES = ("d", "dio", "dioecy", "dioecious",)
@@ -63,10 +65,14 @@ class AngiospermBase(NonWrightFisher):
     spo_pollen_per: int
     spo_archegonia_per: int
     fertilization_rate: float
-    pollen_success_rate: float
+    pollen_success_rate: float 
     pollen_competition: str
     stigma_pollen_per: int
     gam_ceiling: int
+    fitness_affects_spo_survival: bool = True
+    fitness_affects_gam_survival: bool = True
+    fitness_affects_egg_num: bool = False
+    fitness_affects_pollen_num: bool = False
     _gens_per_lifecycle: int = field(default=2, init=False)
 
     def __post_init__(self):
@@ -98,11 +104,7 @@ class AngiospermBase(NonWrightFisher):
 class AngiospermDioecious(AngiospermBase):
     """Superclass of Spermatophyte base with dioecious functions."""
     mode: str = field(default="dioecious", init=False)
-    spo_female_to_male_ratio: Tuple[float,float]
-    fitness_affects_spo_survival: bool = True
-    fitness_affects_spo_reproduction: bool = False
-    fitness_affects_gam_survival: bool = True
-    fitness_affects_gam_mating: bool = False
+    spo_female_to_male_ratio: Tuple[float,float]=(1,1)
 
     def __post_init__(self):
         """set ratio as a float."""
@@ -195,20 +197,33 @@ class AngiospermDioecious(AngiospermBase):
         self.model.custom(scripts=DEFS_ANGIO_DIO, comment = "shadie DEFINITIONS")
 
         #add fitness determination of sperm success (or not)
-        if self.fitness_affects_gam_mating:
+        if self.pollen_competition:
             repro_script_p1 = REPRO_ANGIO_DIO_P1.format(
-                pollen_selection=POLLEN_COMPETITION)
+                pollen_competition=POLLEN_COMPETITION)
         else:
             repro_script_p1 = REPRO_ANGIO_DIO_P1.format(
-                pollen_selection=NO_POLLEN_COMPETITION)
+                pollen_competition=NO_POLLEN_COMPETITION)
 
         #add fitness determination of spore # (or not)
-        if self.fitness_affects_spo_reproduction:
-            repro_script_p2 = REPRO_ANGIO_DIO_P2.format(
-                egg_selection = EGG_FITNESS_AFFECTS_VIABILITY)
+        if self.fitness_affects_egg_num:
+            if self.fitness_affects_pollen_num:
+                repro_script_p2 = REPRO_ANGIO_DIO_P2.format(
+                    egg_production = EGG_FITNESS_AFFECTS_VIABILITY,
+                    pollen_production = FITNESS_AFFECTS_POLLEN_NUM)
+            else:
+                repro_script_p2 = REPRO_ANGIO_DIO_P2.format(
+                    egg_production = EGG_FITNESS_AFFECTS_VIABILITY,
+                    pollen_production = CONSTANT_POLLEN_NUM)
 
-        else: repro_script_p2 = REPRO_ANGIO_DIO_P2.format(
-                 egg_selection = NO_EGG_FITNESS)
+        else: 
+            if self.fitness_affects_pollen_num:
+                repro_script_p2 = REPRO_ANGIO_DIO_P2.format(
+                    egg_production = NO_EGG_FITNESS,
+                    pollen_production = FITNESS_AFFECTS_POLLEN_NUM)
+            else:
+                repro_script_p2 = REPRO_ANGIO_DIO_P2.format(
+                     egg_production = NO_EGG_FITNESS,
+                     pollen_production = CONSTANT_POLLEN_NUM)
 
         # add reproduction calls
         self.model.repro(
@@ -229,12 +244,8 @@ class AngiospermDioecious(AngiospermBase):
 class AngiospermMonoecious(AngiospermBase):
     """Superclass of Spermatophyte base with dioecious functions."""
     mode: str = field(default="monecious", init=False)
-    spo_self_rate_per_egg: float
-    spo_self_rate: float
-    fitness_affects_spo_survival: bool = True
-    fitness_affects_spo_reproduction: bool = False
-    fitness_affects_gam_survival: bool = True
-    fitness_affects_gam_mating: bool = False
+    spo_self_rate_per_egg: float = 0.01
+    spo_self_rate: float = 0.01
 
     def __post_init__(self):
         # set pollen competition as string
@@ -324,20 +335,34 @@ class AngiospermMonoecious(AngiospermBase):
         self.model.custom(scripts=DEFS_ANGIO_MONO, comment = "shadie DEFINITIONS")
         
         #add fitness determination of sperm success (or not)
-        if self.fitness_affects_gam_mating:
+        if self.pollen_competition:
             repro_script_p1 = REPRO_ANGIO_MONO_P1.format(
-                 pollen_selection=POLLEN_COMPETITION)
+                 pollen_competition=POLLEN_COMPETITION)
         else:
             repro_script_p1 = REPRO_ANGIO_MONO_P1.format(
-                 pollen_selection=NO_POLLEN_COMPETITION)
+                 pollen_competition=NO_POLLEN_COMPETITION)
 
         #add fitness determination of spore # (or not)
-        if self.fitness_affects_spo_reproduction:
-            repro_script_p2 = REPRO_ANGIO_MONO_P2.format(
-                egg_selection = EGG_FITNESS_AFFECTS_VIABILITY)
+        if self.fitness_affects_egg_num:
+            if self.fitness_affects_pollen_num:
+                repro_script_p2 = REPRO_ANGIO_MONO_P2.format(
+                    egg_production = EGG_FITNESS_AFFECTS_VIABILITY,
+                    pollen_production = FITNESS_AFFECTS_POLLEN_NUM)
+            else:
+                repro_script_p2 = REPRO_ANGIO_MONO_P2.format(
+                    egg_production = EGG_FITNESS_AFFECTS_VIABILITY,
+                    pollen_production = CONSTANT_POLLEN_NUM)
 
-        else: repro_script_p2 = REPRO_ANGIO_MONO_P2.format(
-                egg_selection = NO_EGG_FITNESS)
+        else: 
+            if self.fitness_affects_pollen_num:
+                repro_script_p2 = REPRO_ANGIO_MONO_P2.format(
+                    egg_production = NO_EGG_FITNESS,
+                    pollen_production = FITNESS_AFFECTS_POLLEN_NUM)
+            else:
+                repro_script_p2 = REPRO_ANGIO_MONO_P2.format(
+                    egg_production = NO_EGG_FITNESS,
+                    pollen_production = CONSTANT_POLLEN_NUM)
+
 
         self.model.repro(
             population="p1",
@@ -392,7 +417,7 @@ if __name__ == "__main__":
         # init the model
         mod.initialize(chromosome=chrom)
 
-        mod.reproduction.angiosperm_monoecious(
+        mod.reproduction.angiosperm_dioecious(
             spo_pop_size=1000,
             gam_pop_size=1000,
             #spo_female_to_male_ratio = (1,1)

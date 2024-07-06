@@ -530,7 +530,9 @@ class ReproductionApi:
         fitness_affects_spo_survival: bool=True,
         fitness_affects_spo_reproduction: bool=False,
         fitness_affects_gam_survival: bool=True,
-        fitness_affects_gam_mating: bool=False,
+        fitness_affects_egg_num: bool=False,
+        fitness_affects_pollen_num: bool=False,
+        fitness_affects_pollen_success: bool=False,
     ):
         AngiospermMonoecious(
             model=self.model,
@@ -553,16 +555,16 @@ class ReproductionApi:
             stigma_pollen_per=stigma_pollen_per,
             gam_ceiling=gam_ceiling,
             fitness_affects_spo_survival=fitness_affects_spo_survival,
-            fitness_affects_spo_reproduction=fitness_affects_spo_reproduction,
             fitness_affects_gam_survival=fitness_affects_gam_survival,
-            fitness_affects_gam_mating=fitness_affects_gam_mating,
+            fitness_affects_egg_num=fitness_affects_egg_num,
+            fitness_affects_pollen_num=fitness_affects_pollen_num,
         ).run()
 
     def angiosperm_dioecious(
         self,
         spo_pop_size: int,
         gam_pop_size: int,
-        spo_female_to_male_ratio: Tuple[float,float],
+        spo_female_to_male_ratio: Tuple[float,float]=(1,1),
         spo_mutation_rate: Optional[float]=None,
         gam_mutation_rate: Optional[float]=None,
         spo_clone_rate: float=0.0,
@@ -578,9 +580,9 @@ class ReproductionApi:
         stigma_pollen_per: int=5,
         gam_ceiling: int=None,
         fitness_affects_spo_survival: bool=True,
-        fitness_affects_spo_reproduction: bool=False,
         fitness_affects_gam_survival: bool=True,
-        fitness_affects_gam_mating: bool=False,
+        fitness_affects_egg_num: bool=False,
+        fitness_affects_pollen_num: bool=False,
     ):
         AngiospermDioecious(
             model=self.model,
@@ -602,9 +604,9 @@ class ReproductionApi:
             stigma_pollen_per=stigma_pollen_per,
             gam_ceiling=gam_ceiling,
             fitness_affects_spo_survival=fitness_affects_spo_survival,
-            fitness_affects_spo_reproduction=fitness_affects_spo_reproduction,
             fitness_affects_gam_survival=fitness_affects_gam_survival,
-            fitness_affects_gam_mating=fitness_affects_gam_mating,
+            fitness_affects_egg_num=fitness_affects_egg_num,
+            fitness_affects_pollen_num=fitness_affects_pollen_num,
         ).run()
     
     def triphasic_polysiphonia(
@@ -686,7 +688,7 @@ class ReproductionApi:
         selection:
             Defines what kind of selection occurs in the sim.
             default = "none": fitness has no effect; sim is effectively neutral
-            "hard": fitenss affects survival only, mating is random
+            "hard": fitness affects survival only, mating is random
             "soft"; fitness affects mating success
         lambda_pois: float
             default = 4; only affects models with hard selection
@@ -784,7 +786,7 @@ class ReproductionApi:
         selection:
             Defines what kind of selection occurs in the sim.
             default =  "none": fitness has no effect; sim is effectively neutral
-            "hard": fitenss affects survival only, mating is random
+            "hard": fitness affects survival only, mating is random
             "soft"; fitness affects mating success
         sexes: bool
             default = False; individuals are hemraphroditic. If True,
@@ -818,7 +820,7 @@ class ReproductionApi:
         selection:
             Defines what kind of selection occurs in the sim.
             default =  "none": fitness has no effect; sim is effectively neutral
-            "hard": fitenss affects survival only, mating is random
+            "hard": fitness affects survival only, mating is random
             "soft"; fitness affects mating success
         sexes: bool
             default = False; individuals are hemraphroditic. If True,

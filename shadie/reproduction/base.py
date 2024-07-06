@@ -211,7 +211,8 @@ class NonWrightFisher(ReproductionBase):
             "fitness_affects_gam_survival", "fitness_affects_gam_mating",
             "fitness_affects_spo_survival", "fitness_affects_spo_reproduction",
             "fitness_affects_sperm_success", "fitness_affects_egg_num",
-            "fitness_affects_tspo_survival", "fitness_affects_tspo_reproduction"
+            "fitness_affects_tspo_survival", "fitness_affects_tspo_reproduction",
+            "fitness_affects_pollen_num"
         ]
 
         asdict = {

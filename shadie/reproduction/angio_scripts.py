@@ -62,12 +62,24 @@ EGG_FITNESS_AFFECTS_VIABILITY = """
 
 NO_EGG_FITNESS = "meiosis_reps = SPO_ARCHEGONIA_PER;"
 
+FITNESS_AFFECTS_POLLEN_NUM = """
+    // determine how many pollen grains produced
+    ind_fitness = p2.cachedFitness(ind.index);
+    max_fitness = max(p2.cachedFitness(NULL));
+    ind_fitness_scaled = ind_fitness/max_fitness;
+    
+    pollen = rbinom(1, SPO_POLLEN_PER, ind_fitness_scaled);
+"""
+
+CONSTANT_POLLEN_NUM = "pollen = SPO_POLLEN_PER;"
+
+
 POLLEN_COMPETITION = """
     // sperm land on stigma
-    pollen_pool = sample(outcross_sperms, POLLEN_PER_STIGMA);
+    pollen_pool = sample(males, STIGMA_POLLEN_PER);
     for (pollen in pollen_pool) {
         // store fitness value
-        pollen.setValue("fitness", p1.cachedFitness(pollen.index));
+        pollen.setValue("fitness", p0.cachedFitness(pollen.index));
     }
 
     if (length(pollen_pool)>0) {
@@ -150,7 +162,7 @@ REPRO_ANGIO_DIO_P2 = """
     
     //only females will make eggs
     if (individual.tagL0) {{
-    {egg_selection}
+    {egg_production}
     
         //one egg per archegonia (fertilized ovule)
         for (rep in seqLen(meiosis_reps)){{
@@ -163,7 +175,8 @@ REPRO_ANGIO_DIO_P2 = """
 
     //males will make pollen
     else {{
-        meiosis_reps = asInteger(floor(SPO_POLLEN_PER/4));
+        {pollen_production}
+        meiosis_reps = asInteger(floor(pollen/4));
         for (rep in seqLen(meiosis_reps)){{
             breaks1 = sim.chromosome.drawBreakpoints(ind);
             breaks2 = sim.chromosome.drawBreakpoints(ind);
@@ -183,7 +196,7 @@ REPRO_ANGIO_DIO_P2 = """
 """
 
 # PARAMETERS
-# pollen_per_stigma
+# stigma_pollen_per
 # spo_female_to_male_ratio
 # -------------------------
 # TAGS
@@ -196,7 +209,7 @@ REPRO_ANGIO_DIO_P1 = """
     males = p0.individuals;
     
     // Each egg is outcrossed in this model
-    {pollen_selection}
+    {pollen_competition}
     child = p2.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
     child.tag = 3;
     child.tagL0 = ifelse(runif(1) > SPO_FEMALE_TO_MALE_RATIO, T, F);
@@ -230,7 +243,7 @@ REPRO_ANGIO_MONO_P2 = """
         }}
     }}
     
-    {egg_selection}
+    {egg_production}
     
     //one egg per archegonia (fertilized ovule)
     for (rep in seqLen(meiosis_reps)){{
@@ -240,7 +253,9 @@ REPRO_ANGIO_MONO_P2 = """
         egg.tagL0 = T;
     }}
     
-    meiosis_reps = asInteger(floor(SPO_POLLEN_PER/4));
+    {pollen_production}
+
+    meiosis_reps = asInteger(floor(pollen/4));
     for (rep in seqLen(meiosis_reps))
     {{
         breaks1 = sim.chromosome.drawBreakpoints(ind);
@@ -260,7 +275,7 @@ REPRO_ANGIO_MONO_P2 = """
 """
 
 # PARAMETERS
-# pollen_per_stigma
+# stigma_pollen_per
 # spo_female_to_male_ratio
 # -------------------------
 # TAGS
@@ -298,7 +313,7 @@ REPRO_ANGIO_MONO_P1 = """
                 }}
             }}
         if (mode == 3) {{
-            {pollen_selection}
+            {pollen_competition}
             child = p2.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
             child.tag = 3;
         }}
