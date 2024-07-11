@@ -28,7 +28,7 @@ FIRST = """
         s1.active = 1; // GAM
         s2.active = 0; // SPO
 
-        // set mutation rate that will apply to the offspring
+        // set mutation rate (parent rate)
         sim.chromosome.setMutationRate(GAM_MUTATION_RATE);
     }
 
@@ -39,7 +39,7 @@ FIRST = """
         s1.active = 0;  // GAM
         s2.active = 1;  // SPO
 
-        // set mutation rate that will apply to the offspring
+        // set mutation rate (parent rate)
         sim.chromosome.setMutationRate(SPO_MUTATION_RATE);
     }
 """
