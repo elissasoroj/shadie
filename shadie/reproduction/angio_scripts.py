@@ -212,7 +212,7 @@ REPRO_ANGIO_DIO_P1 = """
     
     // Each egg is outcrossed in this model
     {pollen_competition}
-    child = p2.addRecombinant(ind.genome1, NULL, NULL, sperm.genome1, NULL, NULL, , parent1=ind, parent2=sperm);
+    child = p2.addRecombinant(ind.genome1, NULL, NULL, sperm.genome1, NULL, NULL, parent1=ind, parent2=sperm);
     child.tag = 3;
     child.tagL0 = ifelse(runif(1) > SPO_FEMALE_TO_MALE_RATIO, T, F);
     }}
