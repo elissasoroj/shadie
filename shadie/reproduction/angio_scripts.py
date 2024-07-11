@@ -150,7 +150,7 @@ REPRO_ANGIO_DIO_P2 = """
     // NOTE: this doesn't allow clones to reproduce this round.
     if (runif(1) < SPO_CLONE_RATE) {{
         for (i in seqLen(SPO_CLONES_PER)) {{
-            child = p2.addRecombinant(individual.genome1, NULL, NULL, individual.genome2, NULL, NULL);
+            child = p2.addRecombinant(ind.genome1, NULL, NULL, ind.genome2, NULL, NULL, parent1=ind);
             child.tag = 4; // sporophyte clone
             child.tagL0 = ind.tagL0;
             
@@ -167,7 +167,7 @@ REPRO_ANGIO_DIO_P2 = """
         //one egg per archegonia (fertilized ovule)
         for (rep in seqLen(meiosis_reps)){{
             breaks = sim.chromosome.drawBreakpoints(individual);
-            egg = p1.addRecombinant(ind.genome1, ind.genome2, breaks, NULL, NULL, NULL);
+            egg = p1.addRecombinant(ind.genome1, ind.genome2, breaks, NULL, NULL, NULL, parent1=ind);
             egg.tag = 1;
             egg.tagL0 = T;
         }}
@@ -182,10 +182,10 @@ REPRO_ANGIO_DIO_P2 = """
             breaks2 = sim.chromosome.drawBreakpoints(ind);
         
             // create four meiotic products
-            child1 = p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL);
-            child2 = p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL);
-            child3 = p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL);
-            child4 = p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL);
+            child1 = p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL, parent1=ind);
+            child2 = p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL, parent1=ind);
+            child3 = p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL, parent1=ind);
+            child4 = p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL, parent1=ind);
             children = c(child1, child2, child3, child4);
             children.tag = 1;       
             children.tagL0 = F;
@@ -202,6 +202,8 @@ REPRO_ANGIO_DIO_P2 = """
 # TAGS
 # 1, 2
 REPRO_ANGIO_DIO_P1 = """
+    ind = individual;
+
     //reproduction scripts run only females
     if (individual.tagL0) {{
     
@@ -210,7 +212,7 @@ REPRO_ANGIO_DIO_P1 = """
     
     // Each egg is outcrossed in this model
     {pollen_competition}
-    child = p2.addRecombinant(individual.genome1, NULL, NULL, sperm.genome1, NULL, NULL);
+    child = p2.addRecombinant(ind.genome1, NULL, NULL, sperm.genome1, NULL, NULL, , parent1=ind, parent2=sperm);
     child.tag = 3;
     child.tagL0 = ifelse(runif(1) > SPO_FEMALE_TO_MALE_RATIO, T, F);
     }}
@@ -234,7 +236,7 @@ REPRO_ANGIO_MONO_P2 = """
     // NOTE: this doesn't allow clones to reproduce this round.
     if (runif(1) < SPO_CLONE_RATE) {{
         for (i in seqLen(SPO_CLONES_PER)) {{
-            child = p2.addRecombinant(individual.genome1, NULL, NULL, individual.genome2, NULL, NULL);
+            child = p2.addRecombinant(ind.genome1, NULL, NULL, ind.genome2, NULL, NULL, parent1=ind);
             child.tag = 4; // sporophyte clone
             
             //sporophyte maternal effect not applicable for clones = neutral
@@ -262,10 +264,10 @@ REPRO_ANGIO_MONO_P2 = """
         breaks2 = sim.chromosome.drawBreakpoints(ind);
         
         // create four meiotic products
-        child1 = p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL);
-        child2 = p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL);
-        child3 = p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL);
-        child4 = p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL);
+        child1 = p0.addRecombinant(ind.genome1, ind.genome2, breaks1, NULL, NULL, NULL, parent1=ind);
+        child2 = p0.addRecombinant(ind.genome2, ind.genome1, breaks1, NULL, NULL, NULL, parent1=ind);
+        child3 = p0.addRecombinant(ind.genome1, ind.genome2, breaks2, NULL, NULL, NULL, parent1=ind);
+        child4 = p0.addRecombinant(ind.genome2, ind.genome1, breaks2, NULL, NULL, NULL, parent1=ind);
         children = c(child1, child2, child3, child4);
         children.tag = 1;       
         children.tagL0 = F;
