@@ -336,12 +336,12 @@ class AngiospermMonoecious(AngiospermBase):
         self.model.custom(scripts=DEFS_ANGIO_MONO, comment = "shadie DEFINITIONS")
         
         #add fitness determination of sperm success (or not)
-        if self.pollen_competition:
+        if self.pollen_competition == "F":
             repro_script_p1 = REPRO_ANGIO_MONO_P1.format(
-                 pollen_competition=POLLEN_COMPETITION)
+                pollen_competition=NO_POLLEN_COMPETITION)
         else:
             repro_script_p1 = REPRO_ANGIO_MONO_P1.format(
-                 pollen_competition=NO_POLLEN_COMPETITION)
+                pollen_competition=POLLEN_COMPETITION)
 
         #add fitness determination of spore # (or not)
         if self.fitness_affects_egg_num:
