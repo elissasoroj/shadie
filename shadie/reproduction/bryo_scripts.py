@@ -126,7 +126,7 @@ REPRO_BRYO_DIO_P1 = """
             // intra-gametophytic selfed
             if (mode == 1) {{
                 child = p2.addRecombinant(individual.genome1, NULL, NULL,
-                individual.genome1, NULL, NULL, parent1 = individual, parent2 = individual);
+                    individual.genome1, NULL, NULL, parent1 = individual, parent2 = individual);
                 child.tag = 3; //sporophyte tag
                 // gametophyte maternal effect on new sporophyte
                 if (GAM_MATERNAL_EFFECT > 0)
@@ -139,7 +139,7 @@ REPRO_BRYO_DIO_P1 = """
                 if (siblings.size() > 0) {{
                     sibling = sample(siblings, 1);
                     child = p2.addRecombinant(individual.genome1, NULL, NULL,
-                    sibling.genome1, NULL, NULL, parent1 = individual, parent2=sibling);
+                        sibling.genome1, NULL, NULL, parent1 = individual, parent2=sibling);
                     child.tag = 3; //sporophyte tag
                     // gametophyte maternal effect on new sporophyte
                     if (GAM_MATERNAL_EFFECT > 0)
@@ -290,7 +290,7 @@ REPRO_BRYO_MONO_P1 = """
                 if (! isNULL(outcross_sperms)) {{
                     {sperm_sampling}
                     child = p2.addRecombinant(individual.genome1, NULL, NULL,
-                    sperm.genome1, NULL, NULL, parent1 = individual, parent2=sperm);
+                        sperm.genome1, NULL, NULL, parent1 = individual, parent2=sperm);
                     child.tag = 3; //sporophyte tag
                     //gametophyte maternal effect on new sporophyte
                     if (GAM_MATERNAL_EFFECT > 0)

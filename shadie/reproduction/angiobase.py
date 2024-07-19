@@ -246,7 +246,7 @@ class AngiospermMonoecious(AngiospermBase):
     """Superclass of Spermatophyte base with dioecious functions."""
     mode: str = field(default="monecious", init=False)
     spo_self_rate_per_egg: float = 0.01
-    spo_self_rate: float = 0.01
+    #spo_self_rate: float = 0.01
 
     def __post_init__(self):
         # set pollen competition as string

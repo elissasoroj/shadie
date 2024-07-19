@@ -302,6 +302,11 @@ if __name__ == "__main__":
             fitness_affects_spo_reproduction = True,
             gam_self_rate_per_egg=0.8,
         )
+
+        mod.custom(
+            scripts = "Test",
+            comment= "write out sim-specific metadata")
+    
     print(mod.script)
     # mod.write("/tmp/slim.slim")
     # mod.run(seed=123)

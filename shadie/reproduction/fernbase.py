@@ -62,7 +62,7 @@ class PteridophyteBase(NonWrightFisher):
     gam_mutation_rate: Optional[float]
     spo_clone_rate: float
     spo_clones_per: int
-    spo_self_rate: float
+    #spo_self_rate: float
     spo_self_rate_per_egg: float
     spo_spores_per: int
     spo_random_death_chance: float
@@ -148,7 +148,7 @@ class PteridophyteBase(NonWrightFisher):
 class PteridophyteHomosporous(PteridophyteBase):
     """Reproduction mode based on homosporoous ferns and lycophytes"""
     mode: str = field(default="homosporous", init=False)
-    gam_self_rate: float
+    #gam_self_rate: float
     gam_self_rate_per_egg: float
     gam_maternal_effect: float
     gam_clone_rate: float
@@ -315,7 +315,7 @@ class PteridophyteHeterosporous(PteridophyteBase):
 @dataclass
 class PteridophyteVittaria(PteridophyteBase):
     mode: str = field(default="vittaria", init=False)
-    gam_self_rate: float
+    #gam_self_rate: float
     gam_self_rate_per_egg: float
     gam_maternal_effect: float
     gam_clone_rate: float
@@ -405,7 +405,6 @@ class PteridophyteVittaria(PteridophyteBase):
                 scripts = "return T;"
             )
 
-
         self.model.repro(
             population="p1",
             idx="s1",
@@ -434,8 +433,8 @@ if __name__ == "__main__":
         # OK: a good use case for logger.warning('fitness is too high...')
 
         # define elements types
-        e0 = shadie.EXON
-        e1 = shadie.INTRON
+        e0 = shadie.INTRON
+        e1 = shadie.etype([m1], [1])
 
         # design chromosome of elements
         chrom = shadie.chromosome.random(
@@ -461,7 +460,7 @@ if __name__ == "__main__":
             spo_clones_per=0,
             #gam_clone_rate=0,
             #gam_clones_per=0,
-            spo_self_rate=0,
+            #spo_self_rate=0,
             spo_self_rate_per_egg=0,
             #gam_self_rate=0,
             #gam_self_rate_per_egg=0,
