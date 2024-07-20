@@ -103,6 +103,16 @@ EARLY = """
             random_death = (runif(p2.individualCount) < GAM_RANDOM_DEATH_CHANCE);
             sim.killIndividuals(p2.individuals[random_death]);
         }}
+        
+        // high cloning leads to many gams, so ceiling can be implemented here too        
+        // random death also occurs to implement GAM_CEILING
+        if (p1.individualCount > GAM_CEILING) {
+            to_kill = GAM_CEILING - GAM_POP_SIZE;
+            death_chance = to_kill/p1.individualCount;
+            random_death = sample(c(F,T), p1.individualCount, T, c(1-death_chance, death_chance));
+            sim.killIndividuals(p1.individuals[random_death]);
+            }
+
         {gam_maternal_effect}
 
         // 3. Set up for next tick
