@@ -170,6 +170,8 @@ REPRO_ANGIO_DIO_P2 = """
             egg = p1.addRecombinant(ind.genome1, ind.genome2, breaks, NULL, NULL, NULL, parent1=ind);
             egg.tag = 1;
             egg.tagL0 = T;
+            if (SPO_MATERNAL_EFFECT > 0)
+                egg.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
         }}
     }}
 
@@ -189,10 +191,10 @@ REPRO_ANGIO_DIO_P2 = """
             children = c(child1, child2, child3, child4);
             children.tag = 1;       
             children.tagL0 = F;
+            if (SPO_MATERNAL_EFFECT > 0)
+                children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
         }}
     }}
-    if (SPO_MATERNAL_EFFECT > 0)
-        children.setValue("maternal_fitness", subpop.cachedFitness(individual.index));
 """
 
 # PARAMETERS
