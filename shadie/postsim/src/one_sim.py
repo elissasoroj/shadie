@@ -566,7 +566,7 @@ class OneSim:
         rep_values = []
         for _ in range(reps):
             rep_seed = rng.integers(2**31)
-            tts = toytree_sequence(self.tree_sequence, sample=sample_size, seed=rep_seed)
+            tts = ToyTreeSequence(self.tree_sequence, sample=sample_size, seed=rep_seed)
             sample_sets = np.arange(sample_size).tolist()
 
             # select a supported statistic to measure
