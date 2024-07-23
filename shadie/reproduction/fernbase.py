@@ -399,10 +399,10 @@ class PteridophyteVittaria(PteridophyteBase):
 
         early_script = (
             EARLY.format(
-                p1_survival_effects=p1_survival_effects,
-                p2_survival_effects=p2_survival_effects,
+                p1_survival_effects= p1_survival_effects,
+                p2_survival_effects= p2_survival_effects,
                 gametophyte_clones=GAM_CLONES,
-                gam_maternal_effect=GAM_MATERNAL_EFFECT,
+                gam_maternal_effect=GAM_MATERNAL_EFFECT_ON_P2,
                 sporophyte_clones=SPO_CLONES,
                 spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P1,
             )
