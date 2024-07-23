@@ -47,6 +47,7 @@ from shadie.reproduction.vittaria_scripts import (
     DEFS_PTER_VITTARIA,
     P1_FITNESS_AFFECTS_CLONES,
     P1_FIXED_CLONES,
+    P1_FITNESS_SCALE_VITTARIA,
     )
 
 DTYPES = ("dioicy", "dioicous", "heterosporous")
@@ -370,6 +371,48 @@ class PteridophyteVittaria(PteridophyteBase):
                 ],
                 comment="define subpops: p2=diploid sporophytes, p1=haploid gametophytes",
             )
+
+    def _add_early_script(self):
+        """
+        Defines the early() callbacks for each gen.
+        This overrides the NonWrightFisher class function of same name.
+        """
+        if self.fitness_affects_gam_survival:
+            p1_survival_effects = P1_FITNESS_SCALE_VITTARIA
+        else:
+            p1_survival_effects = P1_RANDOM_SURVIVAL
+            self.model.survival(
+                comment = "fitness doesn't affect gametophyte survival;",
+                population = "p1",
+                scripts = "return T;"
+            )
+
+        if self.fitness_affects_spo_survival:
+            p2_survival_effects = P2_FITNESS_SCALE_DEFAULT
+        else:
+            p2_survival_effects = P2_RANDOM_SURVIVAL
+            self.model.survival(
+                comment = "fitness doesn't affect sporophyte survival;",
+                population = "p2",
+                scripts = "return T;"
+            )
+
+        early_script = (
+            EARLY.format(
+                p1_survival_effects=p1_survival_effects,
+                p2_survival_effects=p2_survival_effects,
+                gametophyte_clones=NO_GAM_CLONES,
+                gam_maternal_effect=NO_GAM_MATERNAL_EFFECT,
+                sporophyte_clones=SPO_CLONES,
+                spo_maternal_effect=SPO_MATERNAL_EFFECT_ON_P1,
+            )
+        )
+
+        self.model.early(
+            time=None,
+            scripts=early_script,
+            comment="alternation of generations",
+        )
 
     def _add_mode_scripts(self):
         """Add reproduction scripts unique to Vittaria."""
