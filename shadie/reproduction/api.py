@@ -491,7 +491,7 @@ class ReproductionApi:
             gam_self_rate_per_egg=gam_self_rate_per_egg,
             spo_self_rate_per_egg=spo_self_rate_per_egg,
             #spo_self_rate=spo_self_rate,
-            gam_self_rate=gam_self_rate,
+            #gam_self_rate=gam_self_rate,
             spo_random_death_chance=spo_random_death_chance,
             gam_random_death_chance=gam_random_death_chance,
             gam_maternal_effect=gam_maternal_effect,
