@@ -31,13 +31,12 @@ P1_FIXED_CLONES = """
 
 P1_FITNESS_SCALE_VITTARIA = """
 // random death also occurs to implement GAM_POP_SIZE
-if (p1.individualCount > GAM_POP_SIZE) {
-    to_kill = p1.individualCount - GAM_POP_SIZE; //to_kill = p1.individualCount - GAM_CEILING;
-    death_chance = to_kill/p1.individualCount;
-    random_death = sample(c(F,T), p1.individualCount, T, c(1-death_chance, death_chance));
-    sim.killIndividuals(p1.individuals[random_death]);
-    cat(to_kill);
-    }
+	if (p1.individualCount > GAM_POP_SIZE) {
+	    to_kill = p1.individualCount - GAM_POP_SIZE; //to_kill = p1.individualCount - GAM_CEILING;
+	    death_chance = to_kill/p1.individualCount;
+	    random_death = sample(c(F,T), p1.individualCount, T, c(1-death_chance, death_chance));
+	    sim.killIndividuals(p1.individuals[random_death]);
+	    }
 """
 
 
